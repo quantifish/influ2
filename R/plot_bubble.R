@@ -1,10 +1,19 @@
-# Bubble plot
-#
+#' A bubble plot
+#' 
+#' @param df a data frame
+#' @param group the groups to plot
+#' @param fill the colour to use in the plot
+#' @param xlab the x axis label
+#' @param ylab the y axis label
+#' @return a ggplot object
+#' @import ggplot2
+#' @import dplyr
+#' @export
+#' 
 plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple", alpha = 0.5, ylab = NULL, xlab = NULL, blab = "N") {
 
-  for (i in 2:ncol(df)) {
-    df[,i] <- factor(df[,i])
-  }
+  df <- df %>%
+    mutate_at(vars(matches(group[2])), factor)
 
   if (fill %in% names(df)) {
     group <- c(group, fill)
@@ -27,7 +36,8 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple"
       geom_point(aes(size = size), shape = 1, colour = fill)
   }
 
-  p <- p + labs(x = xlab, y = ylab, size = blab) +
+  p <- p + 
+    labs(x = xlab, y = ylab, size = blab) +
     theme_bw() +
     scale_size(range = c(0, 10)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))

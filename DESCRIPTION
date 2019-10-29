@@ -7,10 +7,28 @@ Authors@R:
            role = c("aut", "cre"),
            email = "darcy.webber@quantifish.co.nz")
 Description: What the package does (one paragraph).
-License: What license it uses
+URL: https://github.com/quantifish/influ2
+BugReports: https://github.com/quantifish/influ2/issues
+License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
-    tidyverse,
+    R (>= 2.10),
+    brms,
     reshape2,
-    patchwork
-LazyData: true
+    stringr,
+    readr,
+    dplyr,
+    ggplot2,
+    patchwork,
+    gtable
+Suggests: 
+    knitr,
+    devtools,
+    rmarkdown,
+    roxygen2,
+    testthat,
+    usethis,
+    viridis
+LazyData: false
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
