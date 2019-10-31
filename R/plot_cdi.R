@@ -56,7 +56,6 @@ plot_bayesian_cdi <- function(fit,
       mutate(iteration = 1:n()) %>%
       melt(id.vars = "iteration") %>%
       mutate(variable = parse_number(as.character(variable)))
-    head(ps)
     n_iterations <- max(ps$iteration)
     coefs <- ps
     X <- model.matrix(as.formula(paste0(names(data)[1], " ~ 0 + ", group[2])), data = data)
