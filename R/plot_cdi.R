@@ -10,7 +10,11 @@
 #' @importFrom gtable is.gtable
 #' @importFrom readr parse_number
 #' @importFrom stringr str_detect regex
+#' @importFrom nlme fixef ranef
+#' @importFrom brms posterior_samples
+#' @importFrom stats model.matrix as.formula quantile
 #' @import dplyr
+#' @import patchwork
 #' @export
 #' 
 plot_bayesian_cdi <- function(fit,
@@ -41,15 +45,11 @@ plot_bayesian_cdi <- function(fit,
     eff <- rbind(e2, eff)
     is_ranef <- FALSE
   }
-  head(eff)
-
 
   # Model data
   data <- fit$data %>%
     mutate_at(vars(matches(group[2])), factor) %>%
     mutate(id = 1:n())
-  head(data)
-
 
   if (is_ranef) {
     ps <- posterior_samples(fit, pars = paste0("r_", group[2])) %>%
@@ -131,7 +131,7 @@ plot_bayesian_cdi <- function(fit,
     scale_x_discrete(position = "top") +
     theme_bw() +
     theme(axis.title.x = element_blank(), axis.text.x = element_blank(), plot.margin = margin(b = sp, r = sp, unit = "cm"))
-  p3a <- plot_bubble(df = data, group = group, xlab = xlab, ylab = ylab, blab = "", fill = colour)
+  p3a <- plot_bubble(df = data, group = group, xlab = xlab, ylab = ylab, zlab = "", fill = colour)
   p2 <- g1(p3a)
   p3 <- p3a +
     theme(legend.position = "none", plot.margin = margin(t = sp, r = sp, unit = "cm"), axis.text.x = element_text(angle = 45, hjust = 1))

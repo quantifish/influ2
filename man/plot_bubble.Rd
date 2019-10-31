@@ -5,7 +5,7 @@
 \title{A bubble plot}
 \usage{
 plot_bubble(df, group = c("fishing_year", "vessel"), fill = "purple",
-  alpha = 0.5, ylab = NULL, xlab = NULL, blab = "N")
+  alpha = 0.5, ylab = NULL, xlab = NULL, zlab = "N")
 }
 \arguments{
 \item{df}{a data frame}
@@ -14,9 +14,13 @@ plot_bubble(df, group = c("fishing_year", "vessel"), fill = "purple",
 
 \item{fill}{the colour to use in the plot}
 
+\item{alpha}{the alpha level of the bubbles}
+
 \item{ylab}{the y axis label}
 
 \item{xlab}{the x axis label}
+
+\item{zlab}{the z axis label}
 }
 \value{
 a ggplot object

@@ -13,14 +13,16 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
     R (>= 2.10),
-    brms,
+    dplyr,
+    ggplot2,
+    patchwork
+Imports:
     reshape2,
     stringr,
     readr,
-    dplyr,
-    ggplot2,
-    patchwork,
-    gtable
+    gtable,
+    nlme,
+    brms
 Suggests: 
     knitr,
     devtools,
