@@ -2,7 +2,7 @@
 #' 
 #' @param df a data frame
 #' @param group the groups to plot
-#' @param fill the colour to use in the plot
+#' @param fill the colour to use in the plot, can either be a colour or a factor to colour by
 #' @param alpha the alpha level of the bubbles
 #' @param xlab the x axis label
 #' @param ylab the y axis label
@@ -12,7 +12,7 @@
 #' @import dplyr
 #' @export
 #' 
-plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple", alpha = 0.5, ylab = NULL, xlab = NULL, zlab = "N") {
+plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple", alpha = 0.5, ylab = NA, xlab = NA, zlab = "N") {
 
   df <- df %>%
     mutate_at(vars(matches(group[2])), factor)
@@ -37,7 +37,10 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple"
       geom_point(aes(size = size), alpha = alpha, shape = 16, colour = fill) +
       geom_point(aes(size = size), shape = 1, colour = fill)
   }
-
+  
+  if (is.na(xlab)) xlab <- group[2]
+  if (is.na(ylab)) ylab <- group[1]
+  
   p <- p + 
     labs(x = xlab, y = ylab, size = zlab) +
     theme_bw() +
