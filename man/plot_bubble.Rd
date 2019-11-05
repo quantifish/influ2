@@ -26,5 +26,5 @@ plot_bubble(df, group = c("fishing_year", "vessel"), fill = "purple",
 a ggplot object
 }
 \description{
-A bubble plot
+Generates a bubble plot
 }
