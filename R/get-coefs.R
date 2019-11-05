@@ -67,6 +67,5 @@ get_coefs <- function(fit, var = "area", normalise = TRUE) {
   #   coefs$variable <- factor(coefs$variable, levels = eff$variable)
   # }
   
-  # return(eff)
   return(coefs)
 }

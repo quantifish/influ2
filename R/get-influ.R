@@ -34,17 +34,17 @@ get_influ <- function(fit, group = c("fishing_year", "area")) {
   }
   
   influ_var <- melt(Xbeta) %>%
-    rename(iteration = Var1, id = Var2) %>%
+    rename(iteration = .data$Var1, id = .data$Var2) %>%
     left_join(data, by = "id")
   influ_rho <- influ_var %>%
-    group_by(iteration) %>%
-    summarise(rho = mean(value))
+    group_by(.data$iteration) %>%
+    summarise(rho = mean(.data$value))
   influ_delta <- left_join(influ_var, influ_rho, by = "iteration") %>%
     group_by(.dots = c("iteration", group[1])) %>%
-    summarise(delta = mean(value - rho))
-  influ <- influ_delta %>%
-    group_by(.dots = group[1]) %>%
-    summarise(estimate = mean(exp(delta)), lower = quantile(exp(delta), probs = 0.05), upper = quantile(exp(delta), probs = 0.95))
+    summarise(delta = mean(.data$value - .data$rho))
+  # influ <- influ_delta %>%
+  #   group_by(.dots = group[1]) %>%
+  #   summarise(estimate = mean(exp(.data$delta)), lower = quantile(exp(.data$delta), probs = 0.05), upper = quantile(exp(.data$delta), probs = 0.95))
   
   return(influ_delta)
 }
