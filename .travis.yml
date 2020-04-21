@@ -1,5 +1,8 @@
 language: r
 
+os: linux
+dist: xenial
+
 r:
   - oldrel
   - release
@@ -12,6 +15,7 @@ warnings_are_errors: false
 r_packages:
   - roxygen2
   - testthat
+  - proto
   
 r_github_packages: 
   - thomasp85/patchwork
