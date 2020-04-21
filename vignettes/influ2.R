@@ -1,50 +1,88 @@
-## ---- include = FALSE----------------------------------------------------
+## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE-----------------
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 library(influ2)
 library(brms)
+source("../tests/testthat/influ.R")
+
+# options(mc.cores = parallel::detectCores())
 
 # Get some data to use
 data(iris)
 glimpse(iris)
-iris <- iris %>% 
-  mutate(PetalLength = Petal.Length, 
-         SepalLength = factor(round(Sepal.Length)), 
-         SepalWidth = factor(round(Sepal.Width)))
 
-plot_bubble(df = iris, group = c("SepalLength", "SepalWidth"), fill = "pink")
+iris2 <- iris %>% 
+  mutate(CPUE = Petal.Length, 
+         Year = factor(Sepal.Width * 10 + 1970), 
+         Area = factor(round(Petal.Width)), 
+         Area2 = factor(Petal.Width)) %>%  # Area2 is a random-effects version
+  select(CPUE, Year, Species, Area, Area2)
+glimpse(iris2)
 
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE-----------------
-# Fit a model using brms
-fit0 <- brm(PetalLength ~ SepalLength + SepalWidth, data = iris, family = lognormal())
+plot_bubble(df = iris2, group = c("Year", "Species"), fill = "green")
+plot_bubble(df = iris2, group = c("Year", "Area"), fill = "green")
+plot_bubble(df = iris2, group = c("Year", "Area2"), fill = "green")
 
-# Generate a CDI plot - note this only works for integer factor levels at this stage
-get_coefs(fit0, var = "SepalWidth") %>% head()
-get_influ(fit0, group = c("SepalLength", "SepalWidth")) %>% head()
-plot_bayesian_cdi(fit = fit0, group = c("SepalLength", "SepalWidth"))
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Fit a series of models using brms
+fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal())
+fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal())
+fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal())
 
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE-----------------
+get_coefs(fit2, var = "Species") %>% head()
+get_influ(fit2, group = c("Year", "Species")) %>% head()
+
+# Also fit a model using glm
+fit_glm <- glm(log(CPUE) ~ Year + Species + Area, data = iris2)
+myInfl <- Influence$new(fit_glm)
+myInfl$calc()
+
+# Generate a CDI plot
+plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
+myInfl$cdiPlot(term = "Species")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Fit a model with random-effects using brms
-fit1 <- brm(PetalLength ~ SepalLength + (1|SepalWidth), data = iris, family = lognormal())
+fit_re <- brm(CPUE ~ Year + (1|Area2), data = iris2, family = lognormal(), verbose = FALSE, refresh = 500)
 
-# Generate a CDI plot - note this only works for integer factor levels at this stage
-plot_bayesian_cdi(fit = fit1, group = c("SepalLength", "SepalWidth"))
+unique(get_coefs(fit = fit_re, var = "Area2")$variable)
 
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE-----------------
-# data(iris)
-# glimpse(iris)
-# iris <- iris %>% mutate(Sepal.Width = factor(round(Sepal.Width)))
-# library(reshape2)
-# library(readr)
-# 
-# # Get it working for non-integer factors too and with full stops in it
-# fit0 <- brm(Petal.Length ~ Species + Sepal.Width + Sepal.Length, data = iris, family = lognormal())
-# fit=fit0
-# group = c("Species", "Sepal.Width")
-# plot_bayesian_cdi(fit0, group = c("Species", "Sepal.Width"))
+# Generate a CDI plot
+plot_bayesian_cdi(fit = fit_re, group = c("Year", "Area2"), xlab = "Area")
 
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Generate a step plot
+fits <- list(fit0, fit1, fit2)
+step_plot(fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
+
+myInfl$stepPlot()
+
+index_plot(fit2, year = "Year")
+
+dev.new()
+myInfl$stanPlot()
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+plot_influ(fit2, year = "Year")
+myInfl$influPlot()
+
+i1 <- myInfl$influences
+
+i2 <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
+  group_by(Year) %>%
+  summarise(delta = mean(delta))
+
+plot(i1$Species, type = "b")
+lines(i2$delta, col = 2)
+
+i2 <- get_influ(fit = fit2, group = c("Year", "Area")) %>%
+  group_by(Year) %>%
+  summarise(delta = mean(delta))
+
+plot(i1$Area, type = "b")
+lines(i2$delta, col = 2)
 

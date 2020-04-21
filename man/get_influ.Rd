@@ -4,12 +4,14 @@
 \alias{get_influ}
 \title{Get the influence metric}
 \usage{
-get_influ(fit, group = c("fishing_year", "area"))
+get_influ(fit, group = c("fishing_year", "area"), hurdle = FALSE)
 }
 \arguments{
 \item{fit}{a model fit}
 
 \item{group}{the variable to obtain}
+
+\item{hurdle}{if a hurdle model then use the hurdle}
 }
 \value{
 a data frame

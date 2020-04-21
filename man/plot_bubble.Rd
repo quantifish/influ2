@@ -4,8 +4,15 @@
 \alias{plot_bubble}
 \title{A bubble plot}
 \usage{
-plot_bubble(df, group = c("fishing_year", "vessel"), fill = "purple",
-  alpha = 0.5, ylab = NA, xlab = NA, zlab = "N")
+plot_bubble(
+  df,
+  group = c("fishing_year", "vessel"),
+  fill = "purple",
+  alpha = 0.5,
+  ylab = NA,
+  xlab = NA,
+  zlab = "N"
+)
 }
 \arguments{
 \item{df}{a data frame}
