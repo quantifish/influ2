@@ -54,35 +54,3 @@ unique(get_coefs(fit = fit_re, var = "Area2")$variable)
 # Generate a CDI plot
 plot_bayesian_cdi(fit = fit_re, group = c("Year", "Area2"), xlab = "Area")
 
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-# Generate a step plot
-fits <- list(fit0, fit1, fit2)
-step_plot(fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
-
-myInfl$stepPlot()
-
-index_plot(fit2, year = "Year")
-
-dev.new()
-myInfl$stanPlot()
-
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-plot_influ(fit2, year = "Year")
-myInfl$influPlot()
-
-i1 <- myInfl$influences
-
-i2 <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta))
-
-plot(i1$Species, type = "b")
-lines(i2$delta, col = 2)
-
-i2 <- get_influ(fit = fit2, group = c("Year", "Area")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta))
-
-plot(i1$Area, type = "b")
-lines(i2$delta, col = 2)
-

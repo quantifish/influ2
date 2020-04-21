@@ -21,7 +21,7 @@ plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
   
   ggplot(data = df, aes_string(x = year)) +
     geom_hline(yintercept = 1, linetype = "dashed") +
-    geom_violin(aes(y = exp(delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     facet_wrap(variable ~ ., ncol = 1, strip.position = "top") +
     labs(x = NULL, y = "Influence") +
     theme_bw() +
