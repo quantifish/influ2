@@ -4,13 +4,21 @@
 \alias{plot_bayesian_cdi}
 \title{Bayesian version of the CDI plot}
 \usage{
-plot_bayesian_cdi(fit, group = c("fishing_year", "area"),
-  xlab = "Month", ylab = "Fishing year", colour = "purple")
+plot_bayesian_cdi(
+  fit,
+  group = c("fishing_year", "area"),
+  hurdle = FALSE,
+  xlab = "Month",
+  ylab = "Fishing year",
+  colour = "purple"
+)
 }
 \arguments{
 \item{fit}{a model fit}
 
 \item{group}{the groups to plot}
+
+\item{hurdle}{if a hurdle model then use the hurdle}
 
 \item{xlab}{the x axis label}
 

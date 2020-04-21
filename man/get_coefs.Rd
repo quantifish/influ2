@@ -4,7 +4,7 @@
 \alias{get_coefs}
 \title{Get model coefficients}
 \usage{
-get_coefs(fit, var = "area", normalise = TRUE)
+get_coefs(fit, var = "area", normalise = TRUE, hurdle = FALSE)
 }
 \arguments{
 \item{fit}{a model fit}
@@ -12,6 +12,8 @@ get_coefs(fit, var = "area", normalise = TRUE)
 \item{var}{the variable to obtain}
 
 \item{normalise}{normalise to mean of zero}
+
+\item{hurdle}{if a hurdle model then use the hurdle}
 }
 \value{
 a data frame

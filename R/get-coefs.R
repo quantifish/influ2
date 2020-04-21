@@ -3,6 +3,7 @@
 #' @param fit a model fit
 #' @param var the variable to obtain
 #' @param normalise normalise to mean of zero
+#' @param hurdle if a hurdle model then use the hurdle
 #' @return a data frame
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
@@ -11,7 +12,7 @@
 #' @import dplyr
 #' @export
 #' 
-get_coefs <- function(fit, var = "area", normalise = TRUE) {
+get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE) {
   
   if (nrow(fit$ranef) > 0) {
     # Group-level effects
@@ -19,10 +20,11 @@ get_coefs <- function(fit, var = "area", normalise = TRUE) {
     #   data.frame() %>%
     #   mutate(variable = rownames(.))
     
-    coefs <- posterior_samples(fit, pars = paste0("r_", var)) %>%
+    ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
       mutate(iteration = 1:n()) %>%
       melt(id.vars = "iteration") %>%
-      mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
+      mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
+      mutate(variable = gsub(",Intercept", "", .data$variable))
   } else {
     # Population-level effects
     # eff <- fixef(fit, probs = c(0.05, 0.95)) %>%
@@ -38,24 +40,46 @@ get_coefs <- function(fit, var = "area", normalise = TRUE) {
     ps <- posterior_samples(fit, pars = var) %>%
       mutate(iteration = 1:n()) %>%
       melt(id.vars = "iteration") %>%
-      mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
-
-    if (normalise) {
-      # Get the missing variable and normalise
-      data <- fit$data
-      data[,var] <- paste0(var, data[,var])
-      ps0 <- data.frame(iteration = 1:max(ps$iteration),
-                        variable = unique(data[,var])[!unique(data[,var]) %in% unique(ps$variable)],
-                        value = 0)
-      ps1 <- rbind(ps0, ps)
-      mean_coefs <- ps1 %>% 
-        group_by(.data$iteration) %>% 
-        summarise(mean_coef = mean(.data$value))
-      coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
-        mutate(value = .data$value - .data$mean_coef)
+      mutate(variable = gsub("b_", "", .data$variable))
+      #mutate(variable = paste0(var, gregexpr("[[:digit:]]+", .data$variable)))
+      #mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
+    #head(ps)
+  }
+  
+  # If it is a hurdle model then choose whether to plot the hurdle component or the positive distribution component
+  if (any(grepl("hu", ps$variable))) {
+    if (hurdle) {
+      ps <- ps %>%
+        filter(grepl("hu", .data$variable)) %>%
+        mutate(variable = gsub("hu_", "", .data$variable))
     } else {
-      coefs <- ps
+      ps <- ps %>%
+        filter(!grepl("hu", .data$variable))
     }
+  }
+  
+  # Get the missing variable and normalise
+  if (nrow(fit$ranef) == 0 & normalise) {
+    data <- fit$data
+    data[,var] <- paste0(var, data[,var])
+    ps0 <- data.frame(iteration = 1:max(ps$iteration),
+                      variable = unique(data[,var])[!unique(data[,var]) %in% unique(ps$variable)],
+                      value = 0)
+    ps1 <- rbind(ps0, ps)
+    mean_coefs <- ps1 %>% 
+      group_by(.data$iteration) %>% 
+      summarise(mean_coef = mean(.data$value))
+    coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
+      mutate(value = .data$value - .data$mean_coef)
+  } else if (nrow(fit$ranef) == 0 & !normalise) {
+    data <- fit$data
+    data[,var] <- paste0(var, data[,var])
+    ps0 <- data.frame(iteration = 1:max(ps$iteration),
+                      variable = unique(data[,var])[!unique(data[,var]) %in% unique(ps$variable)],
+                      value = 0)
+    coefs <- rbind(ps0, ps)
+  } else {
+    coefs <- ps
   }
   
   # Arrange by vessel coefficient if vessel chosen

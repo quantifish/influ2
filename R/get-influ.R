@@ -1,7 +1,38 @@
+#' Plot the influence metric for all variables in a model
+#' 
+#' @param fit a model fit
+#' @param year the year variable label
+#' @param fill the colour to use in the plot
+#' @import ggplot2
+#' @export
+#' 
+plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
+  # Extract the models variable names
+  x1 <- gsub(paste0(as.character(fit$formula)[4], " ~ "), "", as.character(fit$formula)[1])
+  x2 <- strsplit(x1, split = " + ", fixed = TRUE)[[1]]
+  x <- x2[x2 != year]
+  
+  df <- NULL
+  for (i in 1:length(x)) {
+    inf1 <- get_influ(fit, group = c(year, x[i])) %>% mutate(variable = x[i])
+    df <- rbind(df, inf1)
+  }
+  df$variable <- factor(df$variable, levels = x)
+  
+  ggplot(data = df, aes_string(x = year)) +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_violin(aes(y = exp(delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    facet_wrap(variable ~ ., ncol = 1, strip.position = "top") +
+    labs(x = NULL, y = "Influence") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
+}
+
 #' Get the influence metric
 #' 
 #' @param fit a model fit
 #' @param group the variable to obtain
+#' @param hurdle if a hurdle model then use the hurdle
 #' @return a data frame
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
@@ -9,7 +40,7 @@
 #' @import dplyr
 #' @export
 #' 
-get_influ <- function(fit, group = c("fishing_year", "area")) {
+get_influ <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
   
   # Model data
   data <- fit$data %>%
@@ -18,7 +49,8 @@ get_influ <- function(fit, group = c("fishing_year", "area")) {
   y <- names(data)[1]
   
   # Posterior of coefficients
-  coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE)
+  # coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
+  coefs <- get_coefs(fit = fit, var = group[2], normalise = FALSE, hurdle = hurdle)
   n_iterations <- max(coefs$iteration)
   
   if (nrow(fit$ranef) > 0) {

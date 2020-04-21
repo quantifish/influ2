@@ -2,6 +2,7 @@
 #' 
 #' @param fit a model fit
 #' @param group the groups to plot
+#' @param hurdle if a hurdle model then use the hurdle
 #' @param xlab the x axis label
 #' @param ylab the y axis label
 #' @param colour the colour to use in the plot
@@ -14,17 +15,20 @@
 #' 
 plot_bayesian_cdi <- function(fit,
                               group = c("fishing_year", "area"),
-                              xlab = "Month", ylab = "Fishing year", colour = "purple") {
+                              hurdle = FALSE,
+                              xlab = "Month", 
+                              ylab = "Fishing year", 
+                              colour = "purple") {
 
   # Model data
   data <- fit$data %>%
     mutate_at(vars(matches(group[2])), factor)
 
-  # Posterior of coefficients
-  coefs <- get_coefs(fit = fit, var = group[2])
+  # Posterior samples of coefficients
+  coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
 
   # Influence
-  influ <- get_influ(fit = fit, group = group)
+  influ <- get_influ(fit = fit, group = group, hurdle = hurdle)
   
   if (nrow(fit$ranef) > 0) {
     ylab1 <- "Coefficient"
@@ -43,8 +47,9 @@ plot_bayesian_cdi <- function(fit,
   sp <- 0.05
   
   # The coefficients (top-left)
-  p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = exp(.data$value))) +
-    geom_hline(yintercept = 1, linetype = "dashed") +
+  # p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = exp(.data$value))) + # exp only applies to lognormal
+  p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = .data$value)) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
     geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     labs(x = NULL, y = ylab1) +
     scale_x_discrete(position = "top") +
