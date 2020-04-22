@@ -38,9 +38,12 @@ index_plot <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
   
   fout <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2])) %>% 
     data.frame() %>%
-    mutate(Q25 = .data$Q25 / geo_mean(.), Q50 = .data$Q50 / geo_mean(.), Q75 = .data$Q75 / geo_mean(.)) %>%
+    # mutate(Q25 = .data$Q25 / geo_mean(.), Q50 = .data$Q50 / geo_mean(.), Q75 = .data$Q75 / geo_mean(.)) %>%
     mutate(model = "Standardised", year = yrs)
-
+  fout$Q25 <- fout$Q25 / geo_mean(fout$Q50)
+  fout$Q75 <- fout$Q75 / geo_mean(fout$Q50)
+  fout$Q50 <- fout$Q50 / geo_mean(fout$Q50)
+  
   unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
     group_by(year) %>%
     summarise(cpue = exp(mean(log(.data$y))))# %>%
@@ -99,9 +102,12 @@ step_plot <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
 
     fout[[i]] <- fitted(object = fits[[i]], newdata = newdata, probs = c(probs[1], 0.5, probs[2])) %>% 
       data.frame() %>%
-      mutate(Q25 = .data$Q25 / geo_mean(.), Q50 = .data$Q50 / geo_mean(.), Q75 = .data$Q75 / geo_mean(.)) %>%
+      # mutate(Q25 = .data$Q25 / geo_mean(.), Q50 = .data$Q50 / geo_mean(.), Q75 = .data$Q75 / geo_mean(.)) %>%
       mutate(model = as.character(fits[[i]]$formula)[1], year = yrs, colour = "a")
-
+    fout[[i]]$Q25 <- fout[[i]]$Q25 / geo_mean(fout[[i]]$Q50)
+    fout[[i]]$Q75 <- fout[[i]]$Q75 / geo_mean(fout[[i]]$Q50)
+    fout[[i]]$Q50 <- fout[[i]]$Q50 / geo_mean(fout[[i]]$Q50)
+    
     if (i > 2) {
       xx <- fout[[i - 2]] %>% mutate(model = fout[[i]]$model, line = i)
       df_grey <- rbind(df_grey, xx)
