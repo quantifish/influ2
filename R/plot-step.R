@@ -1,6 +1,3 @@
-utils::globalVariables(".")
-
-
 #' Geometric mean
 #' 
 #' @param a a vector
