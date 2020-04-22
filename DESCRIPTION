@@ -22,8 +22,7 @@ Imports:
     readr,
     gtable,
     nlme,
-    brms,
-    proto
+    brms
 Suggests: 
     knitr,
     devtools,
@@ -31,7 +30,8 @@ Suggests:
     roxygen2,
     testthat,
     usethis,
-    viridis
+    viridis,
+    proto
 LazyData: false
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
