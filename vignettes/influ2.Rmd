@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package and compares outputs with the original `influ` package.
 
-In this vignette I use the `iris` data set to generate a fake catch per unit effort (CPUE) data set. This data set has a resonse variable labelled `CPUE` and has the dependent variables `Year` (from 1990 to 2014), `Species` (3 species), `Area` (3 areas) and `Area2` (22 areas). No step-wise variable selection or model selection is done in this vignette.
+In this vignette I use the `iris` data set to generate a fake catch per unit effort (CPUE) data set. This data set has a response variable labelled `CPUE` and has the dependent variables `Year` (from 1990 to 2014), `Species` (3 species), `Area` (3 areas) and `Area2` (22 areas). No step-wise variable selection or model selection is done in this vignette.
 
 I fit three different models of increasing complexity. A basic `glm` of the third model, which includes the explanatory variables `Year`, `Species` and `Area`, is also done for comparison. Influence plots from the original `influ` package are generated and compared with plots from the new `influ2` package.
 

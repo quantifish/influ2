@@ -22,7 +22,8 @@ Imports:
     readr,
     gtable,
     nlme,
-    brms
+    brms,
+    proto
 Suggests: 
     knitr,
     devtools,
