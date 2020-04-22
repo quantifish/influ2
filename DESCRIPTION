@@ -31,7 +31,8 @@ Suggests:
     testthat,
     usethis,
     viridis,
-    proto
+    proto,
+    bayesplot
 LazyData: false
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0

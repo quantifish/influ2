@@ -1,6 +1,6 @@
 #' Get model coefficients
 #' 
-#' @param fit a model fit
+#' @param fit a brmsfit object
 #' @param var the variable to obtain
 #' @param normalise normalise to mean of zero
 #' @param hurdle if a hurdle model then use the hurdle
