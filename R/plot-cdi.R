@@ -34,7 +34,7 @@ plot_bayesian_cdi <- function(fit,
     } else {
       stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
     }
-  } else if (fit$family$family == "Gamma") {
+  } else if (fit$family$family == "gamma") {
     if (fit$family$link == "inverse") {
       coefs <- coefs %>% mutate(value = 1.0 / .data$value)
     } else if (fit$family$link == "identity") {

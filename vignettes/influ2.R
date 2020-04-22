@@ -5,8 +5,9 @@ knitr::opts_chunk$set(
 )
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-library(influ2)
 library(brms)
+library(influ2)
+library(bayesplot)
 source("../tests/testthat/influ.R")
 
 # options(mc.cores = parallel::detectCores())
@@ -84,4 +85,27 @@ i2 <- get_influ(fit = fit2, group = c("Year", "Area")) %>%
 
 plot(i1$Area, type = "b")
 lines(i2$delta, col = 2)
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Here I evaluate model fit using loo and waic. 
+# Other options include kfold, loo_subsample, bayes_R2, loo_R2 and marglik
+fit0 <- add_criterion(fit0, criterion = c("loo", "waic"))
+fit1 <- add_criterion(fit0, criterion = c("loo", "waic"))
+fit2 <- add_criterion(fit0, criterion = c("loo", "waic"))
+loo_compare(fit0, fit1, fit2, criterion = "loo")
+loo_compare(fit0, fit1, fit2, criterion = "waic")
+fit0$criteria$loo
+fit1$criteria$waic
+
+yrep <- posterior_predict(fit2, draws = 500)
+ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 
+  theme_bw() +
+  labs(x = "CPUE", y = "Density")
+
+plot_predicted_residuals(fit2)
+
+fit_g <- brm(CPUE ~ Year + Species, data = iris2, family = Gamma(link = "log"), refresh = 0)
+plot_qq(fit_g)
+
+plot(fit_glm)
 
