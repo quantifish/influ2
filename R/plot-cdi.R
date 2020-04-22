@@ -26,6 +26,27 @@ plot_bayesian_cdi <- function(fit,
 
   # Posterior samples of coefficients
   coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
+  
+  # Transform the coefficients using the link function - this might be better placed in get-coefs.R
+  if (fit$family$family == "lognormal") {
+    if (fit$family$link == "identity") {
+      coefs <- coefs %>% mutate(value = exp(.data$value))
+    } else {
+      stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+    }
+  } else if (fit$family$family == "Gamma") {
+    if (fit$family$link == "inverse") {
+      coefs <- coefs %>% mutate(value = 1.0 / .data$value)
+    } else if (fit$family$link == "identity") {
+      coefs <- coefs %>% mutate(value = .data$value)
+    } else if (fit$family$link == "log") {
+      coefs <- coefs %>% mutate(value = exp(.data$value))
+    } else {
+      stop("This link function for the Gamma family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+    }
+  } else {
+    stop("This family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+  }
 
   # Influence
   influ <- get_influ(fit = fit, group = group, hurdle = hurdle)
@@ -47,9 +68,8 @@ plot_bayesian_cdi <- function(fit,
   sp <- 0.05
   
   # The coefficients (top-left)
-  # p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = exp(.data$value))) + # exp only applies to lognormal
   p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = .data$value)) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_hline(yintercept = 1, linetype = "dashed") +
     geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     labs(x = NULL, y = ylab1) +
     scale_x_discrete(position = "top") +

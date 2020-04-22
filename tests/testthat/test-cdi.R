@@ -60,6 +60,7 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
 test_that("this matches Nokome Bentley's influ package", {
   
   library(brms)
+  library(proto)
   
   data(iris)
   iris <- iris %>% mutate(Sepal.Width = factor(Sepal.Width))
