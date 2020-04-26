@@ -7,7 +7,7 @@
 get_coefs(fit, var = "area", normalise = TRUE, hurdle = FALSE)
 }
 \arguments{
-\item{fit}{a model fit}
+\item{fit}{a brmsfit object}
 
 \item{var}{the variable to obtain}
 

@@ -7,7 +7,7 @@
 plot_influ(fit, year = "fishing_year", fill = "purple")
 }
 \arguments{
-\item{fit}{a model fit}
+\item{fit}{a brmsfit object}
 
 \item{year}{the year variable label}
 

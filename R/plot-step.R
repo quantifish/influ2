@@ -8,7 +8,64 @@ geo_mean <- function(a) {
 }
 
 
-#' Get model coefficients
+#' Compare indices
+#' 
+#' @param fits a list of model fits in the order that you want to compare them
+#' @param labels the labels for the fits
+#' @param year the year or time label
+#' @param probs the quantiles to plot
+#' @param show_probs plot the quantiles or not
+#' @import brms
+#' @import ggplot2
+#' @export
+#' 
+plot_compare <- function(fits, labels = NULL,
+                         year = "year", probs = c(0.25, 0.75), show_probs = TRUE) {
+  
+  m <- length(fits)
+  df <- NULL
+
+  for (i in 1:m) {
+    yrs <- sort(unique(fits[[i]]$data[,year]))
+    n <- length(yrs)
+    
+    # Create newdata for prediction (using fitted)
+    newdata <- fits[[i]]$data %>% slice(rep(1, n))
+    for (j in 1:ncol(newdata)) {
+      x <- fits[[i]]$data[,j]
+      newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
+    }
+    newdata[,year] <- yrs
+    
+    fout <- data.frame(fitted(object = fits[[i]], newdata = newdata, probs = c(probs[1], 0.5, probs[2])))
+    if (is.null(labels)) {
+      fout$model <- as.character(fits[[i]]$formula)[1]
+    } else {
+      fout$model <- labels[i]
+    }
+    fout$year <- yrs
+    fout$Q25 <- fout$Q25 / geo_mean(fout$Q50)
+    fout$Q75 <- fout$Q75 / geo_mean(fout$Q50)
+    fout$Q50 <- fout$Q50 / geo_mean(fout$Q50)
+    df <- rbind(df, fout)
+  }
+  
+  p <- ggplot(data = df)
+  if (show_probs) {
+    p <- p + geom_ribbon(data = df, aes(x = .data$year, ymin = .data$Q25, ymax = .data$Q75, group = .data$model, fill = .data$model), alpha = 0.3, colour = NA)
+  }
+  p <- p + 
+    geom_line(data = df, aes(x = .data$year, y = .data$Q50, colour = .data$model, group = .data$model)) +
+    labs(x = NULL, y = "Index") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
+  p
+}
+
+
+#' Plot the standardised and unstandardised indices
+#' 
+#' In this plot the unstandardised indices is the geometric mean of the data.
 #' 
 #' @param fit a list of model fits in the order that you want to compare them
 #' @param year the year or time label
@@ -20,7 +77,7 @@ geo_mean <- function(a) {
 #' @import dplyr
 #' @export
 #' 
-index_plot <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75)) {
+plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75)) {
   # std <- get_coefs(fit = fit, var = year)
   yrs <- sort(unique(fit$data[,year]))
   n <- length(yrs)
@@ -66,7 +123,9 @@ index_plot <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
 }
 
 
-#' Get model coefficients
+#' A Bayesian version of the step-plot
+#' 
+#' This requires that all steps be run using brms and then provided as a list of model fits.
 #' 
 #' @param fits a list of model fits in the order that you want to compare them
 #' @param year the year or time label
@@ -77,7 +136,7 @@ index_plot <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
 #' @import dplyr
 #' @export
 #' 
-step_plot <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = TRUE) {
+plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = TRUE) {
   
   m <- length(fits)
   
