@@ -5,6 +5,7 @@ knitr::opts_chunk$set(
 )
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+library(readr)
 library(brms)
 library(influ2)
 library(bayesplot)
@@ -59,10 +60,10 @@ plot_bayesian_cdi(fit = fit_re, group = c("Year", "Area2"), xlab = "Area")
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Generate a step plot
 fits <- list(fit0, fit1, fit2)
-step_plot(fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
+plot_step(fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
 myInfl$stepPlot()
 
-index_plot(fit2, year = "Year")
+plot_index(fit2, year = "Year")
 dev.new()
 myInfl$stanPlot()
 
@@ -90,12 +91,13 @@ lines(i2$delta, col = 2)
 # Here I evaluate model fit using loo and waic. 
 # Other options include kfold, loo_subsample, bayes_R2, loo_R2 and marglik
 fit0 <- add_criterion(fit0, criterion = c("loo", "waic"))
-fit1 <- add_criterion(fit0, criterion = c("loo", "waic"))
-fit2 <- add_criterion(fit0, criterion = c("loo", "waic"))
+fit1 <- add_criterion(fit1, criterion = c("loo", "waic"))
+fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
+
+fit0$criteria$loo
+fit0$criteria$waic
 loo_compare(fit0, fit1, fit2, criterion = "loo")
 loo_compare(fit0, fit1, fit2, criterion = "waic")
-fit0$criteria$loo
-fit1$criteria$waic
 
 yrep <- posterior_predict(fit2, draws = 500)
 ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 

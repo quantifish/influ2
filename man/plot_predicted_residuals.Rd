@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot-diagnostics.R
 \name{plot_predicted_residuals}
 \alias{plot_predicted_residuals}
-\title{Bayesian version of the CDI plot}
+\title{Plots predicted values versus residuals}
 \usage{
 plot_predicted_residuals(fit, loess = TRUE)
 }
 \arguments{
-\item{fit}{a model fit}
+\item{fit}{a brmsfit object}
 
 \item{loess}{show a loess smoother}
 }
@@ -15,5 +15,5 @@ plot_predicted_residuals(fit, loess = TRUE)
 a ggplot object
 }
 \description{
-Bayesian version of the CDI plot
+This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
 }
