@@ -4,10 +4,18 @@
 \alias{plot_compare}
 \title{Compare indices}
 \usage{
-plot_compare(fits, year = "year", probs = c(0.25, 0.75), show_probs = TRUE)
+plot_compare(
+  fits,
+  labels = NULL,
+  year = "year",
+  probs = c(0.25, 0.75),
+  show_probs = TRUE
+)
 }
 \arguments{
 \item{fits}{a list of model fits in the order that you want to compare them}
+
+\item{labels}{the labels for the fits}
 
 \item{year}{the year or time label}
 
