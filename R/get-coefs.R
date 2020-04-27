@@ -4,6 +4,7 @@
 #' @param var the variable to obtain
 #' @param normalise normalise to mean of zero
 #' @param hurdle if a hurdle model then use the hurdle
+#' @param transform if the coefficients should be transformed using the link function
 #' @return a data frame
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
@@ -12,7 +13,7 @@
 #' @import dplyr
 #' @export
 #' 
-get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE) {
+get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, transform = FALSE) {
   
   if (nrow(fit$ranef) > 0) {
     # Group-level effects
@@ -90,6 +91,31 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE) {
   #   data$vessel <- factor(data$vessel, levels = eff$variable)
   #   coefs$variable <- factor(coefs$variable, levels = eff$variable)
   # }
+  
+  # Transform the coefficients using the link function
+  if (transform) {
+    if (fit$family$family %in% c("lognormal", "hurdle_lognormal")) {
+      if (fit$family$link == "identity") {
+        coefs <- coefs %>% mutate(value = exp(.data$value))
+      } else {
+        stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+      }
+    } else if (fit$family$family %in% c("gamma", "hurdle_gamma")) {
+      if (fit$family$link == "inverse") {
+        coefs <- coefs %>% mutate(value = 1.0 / .data$value)
+      } else if (fit$family$link == "identity") {
+        coefs <- coefs %>% mutate(value = .data$value)
+      } else if (fit$family$link == "log") {
+        coefs <- coefs %>% mutate(value = exp(.data$value))
+      }
+    } else if (fit$family$family %in% c("bernoulli")) {
+      if (fit$family$link == "logit") {
+        coefs <- coefs %>% mutate(value = exp(.data$value) / (1.0 + exp(.data$value)))
+      }
+    } else {
+      stop("This family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+    }
+  }
   
   return(coefs)
 }

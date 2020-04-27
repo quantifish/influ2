@@ -26,31 +26,6 @@ plot_bayesian_cdi <- function(fit,
 
   # Posterior samples of coefficients
   coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
-  
-  # Transform the coefficients using the link function
-  # this might be better placed in get-coefs.R
-  # actually, I dont think we should do this, it does not make sense for bernouli models, so keep it the same for lognormal too
-  # if (fit$family$family %in% c("lognormal", "hurdle_lognormal")) {
-  #   if (fit$family$link == "identity") {
-  #     coefs <- coefs %>% mutate(value = exp(.data$value))
-  #   } else {
-  #     stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
-  #   }
-  # } else if (fit$family$family %in% c("gamma", "hurdle_gamma")) {
-  #   if (fit$family$link == "inverse") {
-  #     coefs <- coefs %>% mutate(value = 1.0 / .data$value)
-  #   } else if (fit$family$link == "identity") {
-  #     coefs <- coefs %>% mutate(value = .data$value)
-  #   } else if (fit$family$link == "log") {
-  #     coefs <- coefs %>% mutate(value = exp(.data$value))
-  #   }
-  # } else if (fit$family$family %in% c("bernoulli")) {
-  #   if (fit$family$link == "logit") {
-  #     coefs <- coefs %>% mutate(value = exp(.data$value) / (1.0 + exp(.data$value)))
-  #   }
-  # } else {
-  #   stop("This family has not been coded in influ2 yet - please update the plot-cdi.R function.")
-  # }
 
   # Influence
   influ <- get_influ(fit = fit, group = group, hurdle = hurdle)
