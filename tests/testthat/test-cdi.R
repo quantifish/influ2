@@ -67,6 +67,7 @@ test_that("this matches Nokome Bentley's influ package", {
   data(iris)
   iris <- iris %>% mutate(Sepal.Width = factor(Sepal.Width))
 
+  # Test glm
   fit1 <- glm(Petal.Length ~ Sepal.Width + Species, data = iris)
   
   source("influ.R")
@@ -83,29 +84,39 @@ test_that("this matches Nokome Bentley's influ package", {
   # myInfl$cdiPlot('Species', 'Sepal.Length')
   # myInfl$cdiPlotAll()
   
-  # In brms
+  # Test brms
   fit2 <- brm(Petal.Length ~ Sepal.Width + Species, data = iris)
   
-  c2a <- get_coefs(fit = fit2, var = "Sepal.Width", normalise = FALSE) %>%
+  c2a <- get_coefs(fit = fit2, var = "Sepal.Width", normalise = FALSE, transform = FALSE) %>%
     filter(variable != "Sepal.Width2") %>%
     group_by(variable) %>%
-    summarise(Estimate = mean(value), Est.Error = sd(value), Q5 = quantile(value, probs = 0.05), Q95 = quantile(value, probs = 0.95))
+    summarise(Estimate = mean(value), Est.Error = sd(value), Q5 = quantile(value, probs = 0.05), 
+              Q50 = quantile(value, probs = 0.5), Q95 = quantile(value, probs = 0.95))
   c2b <- fixef(fit2, probs = c(0.05, 0.95)) %>%
     data.frame() %>%
     mutate(variable = rownames(.)) %>%
     filter(grepl("Sepal.Width", variable))
   
-  # Check the coefficients are the same
+  # Test Nokomes coeffs are the same as stats::coef function
+  plot(c1a, type = "b")
+  lines(c1b, col = 2)
+  expect_equal(c1a, c1b)
+  
+  # Check that my get_coefs function is the same as the nlme::fixef function
+  plot(c2a$Estimate, type = "b")
+  lines(c2b$Estimate, col = 2)
+  expect_equal(c2a$Estimate, c2b$Estimate)
+
+  # Check that Nokomes coeffs are the same as mine. This is maximum likelihood vs Bayesian so tolerance needs to be a little higher.
   plot(c1a, type = "b")
   lines(c2a$Estimate, col = 2)
-  
+  expect_equal(as.numeric(c1a), c2a$Estimate, tolerance = 0.07)
+
+  # Check that stats::coef is the same as nlme::fixef. This is maximum likelihood vs Bayesian so tolerance needs to be a little higher.
   plot(c1b, type = "b")
   lines(c2b$Estimate, col = 2)
+  expect_equal(as.numeric(c1b), c2b$Estimate, tolerance = 0.07)
   
-  expect_equal(c1a, c1b, tolerance = 0.01)
-  expect_equal(c2a$Estimate, c2b$Estimate)
-  expect_equal(as.numeric(c1a), c2a$Estimate, tolerance = 0.06)
-  expect_equal(as.numeric(c1b), c2b$Estimate, tolerance = 0.06)
   
   # Check the influences are the same - I couldn't get this to work as Noko's code is broken
   # myInfl$calc()
