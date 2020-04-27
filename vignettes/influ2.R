@@ -60,7 +60,7 @@ plot_bayesian_cdi(fit = fit_re, group = c("Year", "Area2"), xlab = "Area")
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Generate a step plot
 fits <- list(fit0, fit1, fit2)
-plot_step(fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
+plot_step(fits = fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
 myInfl$stepPlot()
 
 plot_index(fit2, year = "Year")
