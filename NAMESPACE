@@ -2,6 +2,7 @@
 
 export(geo_mean)
 export(get_coefs)
+export(get_index)
 export(get_influ)
 export(plot_bayesian_cdi)
 export(plot_bubble)

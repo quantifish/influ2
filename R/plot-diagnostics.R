@@ -1,6 +1,6 @@
 #' Bayesian version of the quantile-quantile plot
 #' 
-#' This is similar to plot(fit_glm, 2). It works for different distributions.
+#' This is similar to plot(fit, 2). It works for different distributions.
 #' 
 #' @param fit a model fit
 #' @param probs numeric vector of length two, representing probabilities. Corresponding quantile pairs define the line drawn.

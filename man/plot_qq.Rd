@@ -15,5 +15,5 @@ plot_qq(fit, probs = c(0.25, 0.75))
 a ggplot object
 }
 \description{
-This is similar to plot(fit_glm, 2). It works for different distributions.
+This is similar to plot(fit, 2). It works for different distributions.
 }
