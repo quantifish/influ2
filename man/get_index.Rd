@@ -4,7 +4,7 @@
 \alias{get_index}
 \title{Get the standardised indices}
 \usage{
-get_index(fit, year = "year", probs = c(0.2, 0.8), do_plot = FALSE)
+get_index(fit, year = "year", probs = c(0.025, 0.975), do_plot = FALSE)
 }
 \arguments{
 \item{fit}{a list of model fits in the order that you want to compare them}

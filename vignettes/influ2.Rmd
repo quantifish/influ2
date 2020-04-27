@@ -56,6 +56,7 @@ fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh =
 fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
 
 get_coefs(fit2, var = "Species") %>% head()
+get_coefs(fit2, var = "Species", transform = TRUE) %>% head()
 get_influ(fit2, group = c("Year", "Species")) %>% head()
 
 # Also fit a model using glm and generate influence statistics using the original influ package
@@ -133,4 +134,24 @@ fit_g <- brm(CPUE ~ Year + Species, data = iris2, family = Gamma(link = "log"), 
 plot_qq(fit_g)
 
 plot(fit_glm)
+```
+
+Finally, in order to fit to the data in a model then we need to do the following
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+cpue1 <- get_index(fit2, year = "Year", probs = c(0.025, 0.975)) %>% mutate(Type = "GLM")
+head(cpue1)
+
+cpue2 <- cpue1 %>% mutate(Type = "Simulated")
+for (ii in 1:nrow(cpue1)) {
+  # sdd <- cpue1$Est.Error[ii] # wrong
+  sdd <- log(1 + cpue1$Est.Error[ii] / cpue1$Estimate[ii])
+  r1 <- rlnorm(n = 5000, log(cpue1$Q50[ii]), sdd)
+  cpue2$Q50[ii] <- median(r1)
+  cpue2$Qlower[ii] <- quantile(r1, probs = 0.025)
+  cpue2$Qupper[ii] <- quantile(r1, probs = 0.975)
+}
+ggplot(data = rbind(cpue1, cpue2), aes(x = Year)) +
+  geom_pointrange(aes(y = Q50, ymin = Qlower, ymax = Qupper, colour = Type), position = position_dodge(width = 0.5)) +
+  theme_bw()
 ```

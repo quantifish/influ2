@@ -21,7 +21,7 @@ geo_mean <- function(a) {
 #' @import dplyr
 #' @export
 #' 
-get_index <- function(fit, year = "year", probs = c(0.2, 0.8), do_plot = FALSE) {
+get_index <- function(fit, year = "year", probs = c(0.025, 0.975), do_plot = FALSE) {
   # std <- get_coefs(fit = fit, var = year)
   yrs <- sort(unique(fit$data[,year]))
   n <- length(yrs)

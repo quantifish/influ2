@@ -64,7 +64,7 @@ plot_predicted_residuals <- function(fit, loess = TRUE) {
   names(resid) <- paste0("resid.", names(resid))
   
   p <- ggplot(data = cbind(resid, pred), aes(x = .data$pred.Estimate, y = .data$resid.Estimate)) +
-    geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_hline(yintercept = 0, linetype = "dashed") +
     geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
     geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
     labs(x = "Predicted values", y = "Residuals") +

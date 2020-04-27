@@ -4,7 +4,13 @@
 \alias{get_coefs}
 \title{Get model coefficients}
 \usage{
-get_coefs(fit, var = "area", normalise = TRUE, hurdle = FALSE)
+get_coefs(
+  fit,
+  var = "area",
+  normalise = TRUE,
+  hurdle = FALSE,
+  transform = FALSE
+)
 }
 \arguments{
 \item{fit}{a brmsfit object}
@@ -14,6 +20,8 @@ get_coefs(fit, var = "area", normalise = TRUE, hurdle = FALSE)
 \item{normalise}{normalise to mean of zero}
 
 \item{hurdle}{if a hurdle model then use the hurdle}
+
+\item{transform}{if the coefficients should be transformed using the link function}
 }
 \value{
 a data frame
