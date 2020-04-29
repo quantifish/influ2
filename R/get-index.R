@@ -10,6 +10,8 @@ geo_mean <- function(a) {
 
 #' Get the standardised indices
 #' 
+#' Get the standardised indices each year with associated uncertainty as a table.
+#' 
 #' @param fit a list of model fits in the order that you want to compare them
 #' @param year the year or time label
 #' @param probs the quantiles to plot
@@ -38,7 +40,8 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), do_plot = FAL
   fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2])) %>% 
     data.frame() %>%
     rename(Qlower = 3, Qupper = 5) %>%
-    mutate(CV = .data$Est.Error / .data$Estimate, Model = as.character(fit$formula)[1], Year = yrs)
+    mutate(CV = .data$Est.Error / .data$Estimate, Year = yrs) %>%
+    mutate(Model = as.character(fit$formula)[1], Distribution = as.character(fit$family)[1], Link = as.character(fit$family)[2])
   
   p1 <- ggplot(fout1, aes(x = .data$Year)) +
     geom_pointrange(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +

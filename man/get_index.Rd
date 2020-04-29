@@ -16,5 +16,5 @@ get_index(fit, year = "year", probs = c(0.025, 0.975), do_plot = FALSE)
 \item{do_plot}{return a plot instead of a data frame}
 }
 \description{
-Get the standardised indices
+Get the standardised indices each year with associated uncertainty as a table.
 }
