@@ -12,23 +12,33 @@
 #' 
 get_influ <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
   
-  # Model data
-  data <- fit$data %>%
-    mutate_at(vars(matches(group[2])), factor) %>%
-    mutate(id = 1:n())
-  y <- names(data)[1]
-  
   # Posterior of coefficients
-  # coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
   coefs <- get_coefs(fit = fit, var = group[2], normalise = FALSE, hurdle = hurdle)
-  n_iterations <- max(coefs$iteration)
   
-  if (nrow(fit$ranef) > 0) {
-    X <- model.matrix(as.formula(paste0(y, " ~ 0 + ", group[2])), data = data)
+  # Model data
+  n_iterations <- max(coefs$iteration)
+  is_poly <- FALSE
+  if (any(grepl("poly", coefs$variable))) {
+    data <- fit$data %>%
+      mutate(id = 1:n())
+    y <- names(data)[1]
+    is_poly <- TRUE
   } else {
-    X <- model.matrix(as.formula(paste0(y, " ~ ", group[2])), data = data)
+    data <- fit$data %>%
+      mutate_at(vars(matches(group[2])), factor) %>%
+      mutate(id = 1:n())
+    y <- names(data)[1]
   }
   
+  if (nrow(fit$ranef) > 0 & !is_poly) {
+    X <- model.matrix(as.formula(paste0(y, " ~ 0 + ", group[2])), data = data)
+  } else if (!is_poly) {
+    X <- model.matrix(as.formula(paste0(y, " ~ ", group[2])), data = data)
+  } else {
+    X <- model.matrix(as.formula(paste0(y, " ~ 0 + poly(", group[2], ", 3)")), data = data)
+    colnames(X) <- gsub("[^[:alnum:]]", "", colnames(X))
+  }
+
   # Do the matrix multiplication
   Xbeta <- matrix(NA, nrow = n_iterations, ncol = nrow(data))
   for (i in 1:n_iterations) {

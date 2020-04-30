@@ -39,8 +39,9 @@ iris2 <- iris %>%
   mutate(CPUE = Petal.Length, 
          Year = factor(Sepal.Width * 10 + 1970), 
          Area = factor(round(Petal.Width)), 
-         Area2 = factor(Petal.Width)) %>%  # Area2 is a random-effects version
-  select(CPUE, Year, Species, Area, Area2)
+         Area2 = factor(Petal.Width),
+         Duration = Sepal.Length) %>%  # Area2 is a random-effects version
+  select(CPUE, Year, Species, Area, Area2, Duration)
 glimpse(iris2)
 as.character(sort(unique(iris2$Year)))
 
@@ -54,6 +55,7 @@ plot_bubble(df = iris2, group = c("Year", "Area2"), fill = "green")
 fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
 fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
 fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
+fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, family = lognormal(), refresh = 0)
 
 get_coefs(fit2, var = "Species") %>% head()
 get_coefs(fit2, var = "Species", transform = TRUE) %>% head()
@@ -67,6 +69,9 @@ myInfl$calc()
 # Generate a CDI plot
 plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
 myInfl$cdiPlot(term = "Species")
+
+# Generate a CDI plot for polynomial
+plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
