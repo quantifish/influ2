@@ -15,6 +15,8 @@
 #' 
 get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, transform = FALSE) {
   
+  is_poly <- FALSE
+  
   if (nrow(fit$ranef) > 0) {
     # Group-level effects
     # eff <- ranef(fit, groups = var, probs = c(0.05, 0.95))[[1]][,,1] %>%
@@ -47,6 +49,14 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
     #head(ps)
   }
   
+  # Check to see if this is a polynomial
+  if (any(grepl("poly", ps$variable))) {
+    # ps <- ps %>%
+    #   mutate(variable = gsub("poly", "", .data$variable))
+    is_poly <- TRUE
+    # order_poly <- unique(sub(".*?(\\d).*", "\\1", ps$variable))
+  }
+  
   # If it is a hurdle model then choose whether to plot the hurdle component or the positive distribution component
   if (any(grepl("hu", ps$variable))) {
     if (hurdle) {
@@ -60,7 +70,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   }
   
   # Get the missing variable and normalise
-  if (nrow(fit$ranef) == 0 & normalise) {
+  if (nrow(fit$ranef) == 0 & normalise & !is_poly) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
     ps0 <- data.frame(iteration = 1:max(ps$iteration),
@@ -72,7 +82,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
       summarise(mean_coef = mean(.data$value))
     coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
       mutate(value = .data$value - .data$mean_coef)
-  } else if (nrow(fit$ranef) == 0 & !normalise) {
+  } else if (nrow(fit$ranef) == 0 & !normalise & !is_poly) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
     ps0 <- data.frame(iteration = 1:max(ps$iteration),
@@ -93,7 +103,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   # }
   
   # Transform the coefficients using the link function
-  if (transform) {
+  if (transform & !is_poly) {
     if (fit$family$family %in% c("lognormal", "hurdle_lognormal")) {
       if (fit$family$link == "identity") {
         coefs <- coefs %>% mutate(value = exp(.data$value))

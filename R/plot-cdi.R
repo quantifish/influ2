@@ -8,6 +8,7 @@
 #' @param colour the colour to use in the plot
 #' @return a ggplot object
 #' @importFrom gtable is.gtable gtable_filter
+#' @importFrom stats poly
 #' @import ggplot2
 #' @import dplyr
 #' @import patchwork
@@ -20,13 +21,45 @@ plot_bayesian_cdi <- function(fit,
                               ylab = "Fishing year", 
                               colour = "purple") {
 
-  # Model data
-  data <- fit$data %>%
-    mutate_at(vars(matches(group[2])), factor)
-
   # Posterior samples of coefficients
   coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
+  n_iterations <- max(coefs$iteration)
+  
+  get_midpoint <- function(cut_label) {
+    mean(as.numeric(unlist(strsplit(gsub("\\(|\\)|\\[|\\]", "", as.character(cut_label)), ","))))
+  }
+  
+  # Model data
+  is_poly <- FALSE
+  if (any(grepl("poly", coefs$variable))) {
+    is_poly <- TRUE
+    data <- fit$data %>%
+      select(-starts_with("poly"))
+    dmin <- min(data[,group[2]])
+    dmax <- max(data[,group[2]])
+    data[,group[2]] <- cut(data[,group[2]], breaks = seq(dmin, dmax, length.out = 20), include.lowest = TRUE)
+    # breaks <- unique(quantile(data[,group[2]], probs = seq(0, 1, length.out = 15)))
+    # data[,group[2]] <- cut(data[,group[2]], breaks = breaks, include.lowest = TRUE)
+    data[,group[2]] <- sapply(data[,group[2]], get_midpoint)
 
+    d <- fit$data[,group[2]]
+    z <- poly(d, 3)
+    x_new <- data.frame(id = 1:length(unique(data[,group[2]])), variable = sort(unique(data[,group[2]])))
+    x_poly <- poly(x_new$variable, 3, coefs = attr(z, "coefs"))
+
+    # Do the matrix multiplication
+    Xbeta <- matrix(NA, nrow = n_iterations, ncol = nrow(x_poly))
+    for (i in 1:n_iterations) {
+      Xbeta[i,] <- x_poly %*% filter(coefs, .data$iteration == i)$value
+    }
+    coefs <- melt(Xbeta, varnames = c("iteration", "id")) %>%
+      left_join(x_new, by = "id") %>%
+      select(-id)
+  } else {
+    data <- fit$data %>%
+      mutate_at(vars(matches(group[2])), factor)
+  }
+  
   # Influence
   influ <- get_influ(fit = fit, group = group, hurdle = hurdle)
   
