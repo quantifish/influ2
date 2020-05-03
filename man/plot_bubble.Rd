@@ -33,5 +33,5 @@ plot_bubble(
 a ggplot object
 }
 \description{
-Generates a bubble plot
+Generates a bubble plot by group for a data set
 }

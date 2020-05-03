@@ -4,17 +4,25 @@
 \alias{get_index}
 \title{Get the standardised indices}
 \usage{
-get_index(fit, year = "year", probs = c(0.025, 0.975), do_plot = FALSE)
+get_index(
+  fit,
+  year = "year",
+  probs = c(0.025, 0.975),
+  rescale = "one",
+  do_plot = FALSE
+)
 }
 \arguments{
-\item{fit}{a list of model fits in the order that you want to compare them}
+\item{fit}{A brmsfit object}
 
-\item{year}{the year or time label}
+\item{year}{The year or time label (e.g. year, Year, fishing_year, etc)}
 
-\item{probs}{the quantiles to plot}
+\item{probs}{The percentiles to be computed by the quantile function}
 
-\item{do_plot}{return a plot instead of a data frame}
+\item{rescale}{How to rescale the series}
+
+\item{do_plot}{Return a plot instead of a data frame}
 }
 \description{
-Get the standardised indices each year with associated uncertainty as a table.
+Get the standardised indices each year with associated uncertainty and return either as a table or a ggplot.
 }

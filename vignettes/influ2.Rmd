@@ -1,6 +1,10 @@
 ---
 title: "influ2"
-output: rmarkdown::html_vignette
+author: "Darcy Webber"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{influ2}
   %\VignetteEngine{knitr::rmarkdown}
@@ -14,20 +18,21 @@ knitr::opts_chunk$set(
 )
 ```
 
-The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package and compares outputs with the original `influ` package.
+# Introduction
 
-In this vignette I use the `iris` data set to generate a fake catch per unit effort (CPUE) data set. This data set has a response variable labelled `CPUE` and has the dependent variables `Year` (from 1990 to 2014), `Species` (3 species), `Area` (3 areas) and `Area2` (22 areas). No step-wise variable selection or model selection is done in this vignette.
+The `influ2` package is based on the original `influ` package which was developed to generate influence statistics and associated plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package.
 
-I fit three different models of increasing complexity. A basic `glm` of the third model, which includes the explanatory variables `Year`, `Species` and `Area`, is also done for comparison. Influence plots from the original `influ` package are generated and compared with plots from the new `influ2` package.
 
-Note that the bubble size in `influ` represents the proportion of records for each species each year (i.e. rows sum to 1), while in `influ2` the bubble size represents the number of records across the entire data set.
+# Functions for exploring data
+
+In this vignette I use the `iris` data set to generate a fake catch per unit effort (CPUE) data set. This data set has a response variable labelled `CPUE` and has the dependent variables `Year` (from 1990 to 2014), `Species` (3 species), `Area` (3 areas) and `Duration`. No step-wise variable selection or model selection is done in this vignette.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+library(reshape2)
 library(readr)
 library(brms)
 library(influ2)
 library(bayesplot)
-source("../tests/testthat/influ.R")
 
 # options(mc.cores = parallel::detectCores())
 
@@ -39,81 +44,47 @@ iris2 <- iris %>%
   mutate(CPUE = Petal.Length, 
          Year = factor(Sepal.Width * 10 + 1970), 
          Area = factor(round(Petal.Width)), 
-         Area2 = factor(Petal.Width),
-         Duration = Sepal.Length) %>%  # Area2 is a random-effects version
-  select(CPUE, Year, Species, Area, Area2, Duration)
+         Duration = Sepal.Length,
+         Duration2 = cut(Sepal.Length, 20)) %>%
+  select(CPUE, Year, Species, Area, Duration, Duration2)
 glimpse(iris2)
-as.character(sort(unique(iris2$Year)))
-
-plot_bubble(df = iris2, group = c("Year", "Species"), fill = "green")
-plot_bubble(df = iris2, group = c("Year", "Area"), fill = "green")
-plot_bubble(df = iris2, group = c("Year", "Area2"), fill = "green")
 ```
+
+The main function for exploring data in `influ2` is `plot_bubble` which presents the number of records by two user defined groups within a data set. The bubble size in `plot_bubble` represents the number of records across the entire data set, and bubbles can either be a single colour or coloured by a third variable in the data set.
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+plot_bubble(df = iris2, group = c("Year", "Duration2"), fill = "green")
+plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
+```
+
+
+# Functions for exploring models
+
+First I fit three different models of increasing complexity in `brms`. The third model includes the explanatory variables `Year`, `Species` and `Area`. I then fit another four models which include `Year` and different forms of the variable `Duration`. The different forms include a linear predictor, a third-order polynomial, a spline, and a random-effect.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
-fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
-fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
-fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, family = lognormal(), refresh = 0)
-
-get_coefs(fit2, var = "Species") %>% head()
-get_coefs(fit2, var = "Species", transform = TRUE) %>% head()
-get_influ(fit2, group = c("Year", "Species")) %>% head()
-
-# Also fit a model using glm and generate influence statistics using the original influ package
-fit_glm <- glm(log(CPUE) ~ Year + Species + Area, data = iris2)
-myInfl <- Influence$new(fit_glm)
-myInfl$calc()
-
-# Generate a CDI plot
-plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
-myInfl$cdiPlot(term = "Species")
-
-# Generate a CDI plot for polynomial
-plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-# Fit a model with random-effects using brms
-fit_re <- brm(CPUE ~ Year + (1|Area2), data = iris2, family = lognormal(), verbose = FALSE, refresh = 0)
-
-unique(get_coefs(fit = fit_re, var = "Area2")$variable)
-
-# Generate a CDI plot
-plot_bayesian_cdi(fit = fit_re, group = c("Year", "Area2"), xlab = "Area")
+do_mcmc <- TRUE
+if (do_mcmc) {
+  fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
+  fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
+  fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
+  
+  fit3 <- brm(CPUE ~ Year + Duration, data = iris2, refresh = 0)
+  fit4 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
+  fit5 <- brm(CPUE ~ Year + s(Duration), data = iris2, refresh = 0)
+  fit6 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, refresh = 0)
+  
+  save(fit0, fit1, fit2, fit3, fit4, fit5, fit6, file = "mcmc.rda")
+} else{
+  load("mcmc.rda")
+}
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Generate a step plot
 fits <- list(fit0, fit1, fit2)
 plot_step(fits = fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
-myInfl$stepPlot()
-
-plot_index(fit2, year = "Year")
-dev.new()
-myInfl$stanPlot()
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-plot_influ(fit2, year = "Year")
-myInfl$influPlot()
-
-i1 <- myInfl$influences
-
-i2 <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta))
-
-plot(i1$Species, type = "b")
-lines(i2$delta, col = 2)
-
-i2 <- get_influ(fit = fit2, group = c("Year", "Area")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta))
-
-plot(i1$Area, type = "b")
-lines(i2$delta, col = 2)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -125,28 +96,63 @@ fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
 
 fit0$criteria$loo
 fit0$criteria$waic
-loo_compare(fit0, fit1, fit2, criterion = "loo")
-loo_compare(fit0, fit1, fit2, criterion = "waic")
-
-yrep <- posterior_predict(fit2, draws = 500)
-ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 
-  theme_bw() +
-  labs(x = "CPUE", y = "Density")
-
-plot_predicted_residuals(fit2)
-
-fit_g <- brm(CPUE ~ Year + Species, data = iris2, family = Gamma(link = "log"), refresh = 0)
-plot_qq(fit_g)
-
-plot(fit_glm)
 ```
 
-Finally, in order to fit to the data in a model then we need to do the following
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+loo_compare(fit0, fit1, fit2, criterion = "loo") %>%
+  knitr::kable(digits = 1)
+```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-cpue1 <- get_index(fit2, year = "Year", probs = c(0.025, 0.975)) %>% mutate(Type = "GLM")
-head(cpue1)
+loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
+  knitr::kable(digits = 1)
+```
 
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+plot_influ(fit = fit2, year = "Year")
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+# Generate a CDI plot for a factor
+plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+# Generate a CDI plot for a continuous variable
+plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
+
+# Generate a CDI plot for a polynomial variable
+plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
+
+# Generate a CDI plot for a spline
+plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration"), xlab = "Duration")
+
+# Generate a CDI plot for a random-effect
+plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Area")
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+fits <- list(fit3, fit4, fit5, fit6)
+plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect"), year = "Year")
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+plot_index(fit = fit4, year = "Year")
+```
+
+
+# Functions for generating outputs for stock assessment
+
+Finally, in order to fit to the data in a stock assessment model then indices can be produced using the `get_index` function.
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+get_index(fit = fit2, year = "Year") %>%
+  select(Year, Estimate, Est.Error, Qlower, Q50, Qupper) %>%
+  knitr::kable(digits = 3)
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+cpue1 <- get_index(fit = fit2, year = "Year") %>% mutate(Type = "GLM")
 cpue2 <- cpue1 %>% mutate(Type = "Simulated")
 for (ii in 1:nrow(cpue1)) {
   # sdd <- cpue1$Est.Error[ii] # wrong

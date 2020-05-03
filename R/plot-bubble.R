@@ -1,6 +1,6 @@
 #' A bubble plot
 #' 
-#' Generates a bubble plot 
+#' Generates a bubble plot by group for a data set
 #' 
 #' @param df a data frame
 #' @param group the groups to plot
@@ -26,7 +26,7 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple"
       summarise(size = n()) %>%
       mutate(size = ifelse(.data$size == 0, NA, .data$size))
 
-    p <- ggplot(data = df1, aes_string(x = factor(group[2]), y = group[1], fill = fill, colour = fill)) +
+    p <- ggplot(data = df1, aes_string(x = group[2], y = group[1], fill = fill, colour = fill)) +
       geom_point(aes(size = .data$size), alpha = alpha, shape = 16) +
       geom_point(aes(size = .data$size), shape = 1)
   } else {
@@ -35,7 +35,7 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"), fill = "purple"
       summarise(size = n()) %>%
       mutate(size = ifelse(.data$size == 0, NA, .data$size))
 
-    p <- ggplot(data = df1, aes_string(x = as.character(group[2]), y = group[1])) +
+    p <- ggplot(data = df1, aes_string(x = group[2], y = group[1])) +
       geom_point(aes(size = .data$size), alpha = alpha, shape = 16, colour = fill) +
       geom_point(aes(size = .data$size), shape = 1, colour = fill)
   }
