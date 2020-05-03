@@ -20,9 +20,9 @@ get_influ2 <- function(fit, group = c("fishing_year", "area")) {
   # Identify the type of variable we are dealing with
   form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
   form_var <- form_split[grepl(group[2], form_split)]
-  if (is.factor(data[,group[2]]) & nrow(fit$ranef) == 0) {
+  if (!is.numeric(data[,group[2]]) & nrow(fit$ranef) == 0) {
     type <- "fixed_effect"
-  } else if (is.factor(data[,group[2]]) & nrow(fit$ranef) > 0) {
+  } else if (!is.numeric(data[,group[2]]) & nrow(fit$ranef) > 0) {
     type <- "random_effect"
   } else if (is.numeric(data[,group[2]]) & any(grepl("poly\\(", form_var))) {
     type <- "polynomial"
