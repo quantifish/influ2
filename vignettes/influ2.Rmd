@@ -64,7 +64,7 @@ First I fit three different models of increasing complexity in `brms`. The third
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-do_mcmc <- FALSE
+do_mcmc <- TRUE
 if (do_mcmc) {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
