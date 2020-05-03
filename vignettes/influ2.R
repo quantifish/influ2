@@ -32,7 +32,7 @@ plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Fit a series of models using brms
-do_mcmc <- TRUE
+do_mcmc <- FALSE
 if (do_mcmc) {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
@@ -90,7 +90,7 @@ plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
 plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a random-effect
-plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Area")
+plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Duration")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 fits <- list(fit1, fit3, fit4, fit5)
@@ -125,7 +125,66 @@ for (ii in 1:nrow(cpue1)) {
   cpue2$Qlower[ii] <- quantile(r1, probs = 0.025)
   cpue2$Qupper[ii] <- quantile(r1, probs = 0.975)
 }
+
 ggplot(data = rbind(cpue1, cpue2), aes(x = Year)) +
   geom_pointrange(aes(y = Q50, ymin = Qlower, ymax = Qupper, colour = Type), position = position_dodge(width = 0.5)) +
+  theme_bw()
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+source("../tests/testthat/influ.R")
+
+# Fit a model using glm and generate influence statistics using the original influ package
+fit_glm <- glm(log(CPUE) ~ Year + Duration + Species, data = iris2)
+myInfl <- Influence$new(fit_glm)
+myInfl$calc()
+myInfl$cdiPlot(term = "Species")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Generate a CDI plot for a factor
+plot_bayesian_cdi2(fit = fit2, group = c("Year", "Species"), xlab = "Species")
+plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Generate a step plot
+fits <- list(fit0, fit1, fit2)
+plot_step(fits = fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
+myInfl$stepPlot()
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+plot_index(fit2, year = "Year")
+myInfl$stanPlot()
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+plot_influ(fit2, year = "Year")
+myInfl$influPlot()
+
+i1 <- myInfl$influences
+
+i2 <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
+  group_by(Year) %>%
+  summarise(delta = mean(delta))
+
+plot(i1$Species, type = "b")
+lines(i2$delta, col = 2)
+
+i2 <- get_influ(fit = fit2, group = c("Year", "Duration")) %>%
+  group_by(Year) %>%
+  summarise(delta = mean(delta))
+
+plot(i1$Duration, type = "b")
+lines(i2$delta, col = 2)
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+fit <- fit2
+yrs <- sort(unique(fit$data$Year))
+ce <- conditional_effects(x = fit, effects = "Year", method = "pp_expect")
+newdata <- data.frame(id = 1:length(yrs), Year = yrs, Species = NA, Duration = mean(fit$data$Duration))
+pp <- pp_expect(fit, newdata = newdata) %>%
+  melt(varnames = c("iteration", "id")) %>%
+  left_join(newdata, by = "id")
+
+ggplot(data = pp, aes(x = Year, y = value)) +
+  geom_violin(fill = "orange", colour = NA, alpha = 0.75) +
+  geom_pointrange(data = ce[[1]], aes(x = Year, y = estimate__, ymin = lower__, ymax = upper__), colour = "blue", alpha = 0.5) +
   theme_bw()
 
