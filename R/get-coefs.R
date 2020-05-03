@@ -1,3 +1,90 @@
+#' Get model coefficients new version
+#' 
+#' @param fit a brmsfit object
+#' @param var the variable to obtain
+#' @return a data frame
+#' @importFrom reshape2 melt
+#' @importFrom readr parse_number
+#' @importFrom nlme fixef ranef
+#' @importFrom brms posterior_samples
+#' @import dplyr
+#' @export
+#' 
+get_marginal <- function(fit, var = "area") {
+  
+  # Create newdata for prediction (using fitted)
+  data <- fit$data
+  if (is.factor(data[,var])) {
+    levs <- unique(data[,var])
+    n <- length(levs)
+  } else {
+    levs <- seq(min(data[,var]), max(data[,var]), length.out = 100)
+    n <- length(levs)
+  }
+  newdata <- data %>% slice(rep(1, n))
+  for (j in 1:ncol(newdata)) {
+    x <- data[,j]
+    newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
+  }
+  newdata[,var] <- levs    
+  newdata$id <- 1:n
+  
+  # Posterior samples of coefficients
+  coefs <- pp_expect(object = fit, newdata = newdata) %>%
+    melt(varnames = c("iteration", "id")) %>%
+    left_join(newdata, by = "id") %>%
+    rename(variable = var)
+
+  return(coefs)
+}
+
+
+
+get_coefs_raw <- function(fit, var = "area") {
+  
+  if (nrow(fit$ranef) > 0) {
+    ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
+      mutate(iteration = 1:n()) %>%
+      melt(id.vars = "iteration") %>%
+      mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
+      mutate(variable = gsub(",Intercept", "", .data$variable))
+  } else {
+    ps <- posterior_samples(fit, pars = var) %>%
+      mutate(iteration = 1:n()) %>%
+      melt(id.vars = "iteration") %>%
+      mutate(variable = gsub("b_", "", .data$variable))
+  }
+  
+  # Get the missing variable and normalise
+  # if (nrow(fit$ranef) == 0 & normalise & !is_poly & length(unique(ps$variable)) != 1) {
+  #   data <- fit$data
+  #   data[,var] <- paste0(var, data[,var])
+  #   ps0 <- data.frame(iteration = 1:max(ps$iteration),
+  #                     variable = unique(data[,var])[!unique(data[,var]) %in% unique(ps$variable)],
+  #                     value = 0)
+  #   ps1 <- rbind(ps0, ps)
+  #   mean_coefs <- ps1 %>% 
+  #     group_by(.data$iteration) %>% 
+  #     summarise(mean_coef = mean(.data$value))
+  #   coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
+  #     mutate(value = .data$value - .data$mean_coef) %>%
+  #     select(-.data$mean_coef)
+  # } else if (nrow(fit$ranef) == 0 & !normalise & !is_poly & length(unique(ps$variable)) != 1) {
+  #   data <- fit$data
+  #   data[,var] <- paste0(var, data[,var])
+  #   ps0 <- data.frame(iteration = 1:max(ps$iteration),
+  #                     variable = unique(data[,var])[!unique(data[,var]) %in% unique(ps$variable)],
+  #                     value = 0)
+  #   coefs <- rbind(ps0, ps)
+  # } else {
+    coefs <- ps
+  # }
+  
+  return(coefs)
+}
+
+
+
 #' Get model coefficients
 #' 
 #' @param fit a brmsfit object
@@ -70,7 +157,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   }
   
   # Get the missing variable and normalise
-  if (nrow(fit$ranef) == 0 & normalise & !is_poly) {
+  if (nrow(fit$ranef) == 0 & normalise & !is_poly & length(unique(ps$variable)) != 1) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
     ps0 <- data.frame(iteration = 1:max(ps$iteration),
@@ -81,8 +168,9 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
       group_by(.data$iteration) %>% 
       summarise(mean_coef = mean(.data$value))
     coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
-      mutate(value = .data$value - .data$mean_coef)
-  } else if (nrow(fit$ranef) == 0 & !normalise & !is_poly) {
+      mutate(value = .data$value - .data$mean_coef) %>%
+      select(-.data$mean_coef)
+  } else if (nrow(fit$ranef) == 0 & !normalise & !is_poly & length(unique(ps$variable)) != 1) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
     ps0 <- data.frame(iteration = 1:max(ps$iteration),

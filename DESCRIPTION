@@ -18,6 +18,7 @@ Depends:
     patchwork
 Imports:
     reshape2,
+    tidyselect,
     stringr,
     readr,
     gtable,
@@ -25,6 +26,7 @@ Imports:
     brms
 Suggests: 
     knitr,
+    tidyr,
     devtools,
     rmarkdown,
     roxygen2,

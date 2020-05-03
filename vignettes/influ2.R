@@ -5,11 +5,11 @@ knitr::opts_chunk$set(
 )
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+library(reshape2)
 library(readr)
 library(brms)
 library(influ2)
 library(bayesplot)
-source("../tests/testthat/influ.R")
 
 # options(mc.cores = parallel::detectCores())
 
@@ -21,77 +21,37 @@ iris2 <- iris %>%
   mutate(CPUE = Petal.Length, 
          Year = factor(Sepal.Width * 10 + 1970), 
          Area = factor(round(Petal.Width)), 
-         Area2 = factor(Petal.Width),
-         Duration = Sepal.Length) %>%  # Area2 is a random-effects version
-  select(CPUE, Year, Species, Area, Area2, Duration)
+         Duration = Sepal.Length,
+         Duration2 = cut(Sepal.Length, 20)) %>%
+  select(CPUE, Year, Species, Area, Duration, Duration2)
 glimpse(iris2)
-as.character(sort(unique(iris2$Year)))
 
-plot_bubble(df = iris2, group = c("Year", "Species"), fill = "green")
-plot_bubble(df = iris2, group = c("Year", "Area"), fill = "green")
-plot_bubble(df = iris2, group = c("Year", "Area2"), fill = "green")
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+plot_bubble(df = iris2, group = c("Year", "Duration2"), fill = "green")
+plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Fit a series of models using brms
-fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
-fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
-fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
-fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, family = lognormal(), refresh = 0)
-
-get_coefs(fit2, var = "Species") %>% head()
-get_coefs(fit2, var = "Species", transform = TRUE) %>% head()
-get_influ(fit2, group = c("Year", "Species")) %>% head()
-
-# Also fit a model using glm and generate influence statistics using the original influ package
-fit_glm <- glm(log(CPUE) ~ Year + Species + Area, data = iris2)
-myInfl <- Influence$new(fit_glm)
-myInfl$calc()
-
-# Generate a CDI plot
-plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
-myInfl$cdiPlot(term = "Species")
-
-# Generate a CDI plot for polynomial
-plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
-
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-# Fit a model with random-effects using brms
-fit_re <- brm(CPUE ~ Year + (1|Area2), data = iris2, family = lognormal(), verbose = FALSE, refresh = 0)
-
-unique(get_coefs(fit = fit_re, var = "Area2")$variable)
-
-# Generate a CDI plot
-plot_bayesian_cdi(fit = fit_re, group = c("Year", "Area2"), xlab = "Area")
+do_mcmc <- FALSE
+if (do_mcmc) {
+  fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
+  fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
+  fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
+  
+  fit3 <- brm(CPUE ~ Year + Duration, data = iris2, refresh = 0)
+  fit4 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
+  fit5 <- brm(CPUE ~ Year + s(Duration), data = iris2, refresh = 0)
+  fit6 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, refresh = 0)
+  
+  save(fit0, fit1, fit2, fit3, fit4, fit5, fit6, file = "mcmc.rda")
+} else{
+  load("mcmc.rda")
+}
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Generate a step plot
 fits <- list(fit0, fit1, fit2)
 plot_step(fits = fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
-myInfl$stepPlot()
-
-plot_index(fit2, year = "Year")
-dev.new()
-myInfl$stanPlot()
-
-## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-plot_influ(fit2, year = "Year")
-myInfl$influPlot()
-
-i1 <- myInfl$influences
-
-i2 <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta))
-
-plot(i1$Species, type = "b")
-lines(i2$delta, col = 2)
-
-i2 <- get_influ(fit = fit2, group = c("Year", "Area")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta))
-
-plot(i1$Area, type = "b")
-lines(i2$delta, col = 2)
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Here I evaluate model fit using loo and waic. 
@@ -102,25 +62,49 @@ fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
 
 fit0$criteria$loo
 fit0$criteria$waic
-loo_compare(fit0, fit1, fit2, criterion = "loo")
-loo_compare(fit0, fit1, fit2, criterion = "waic")
-
-yrep <- posterior_predict(fit2, draws = 500)
-ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 
-  theme_bw() +
-  labs(x = "CPUE", y = "Density")
-
-plot_predicted_residuals(fit2)
-
-fit_g <- brm(CPUE ~ Year + Species, data = iris2, family = Gamma(link = "log"), refresh = 0)
-plot_qq(fit_g)
-
-plot(fit_glm)
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-cpue1 <- get_index(fit2, year = "Year", probs = c(0.025, 0.975)) %>% mutate(Type = "GLM")
-head(cpue1)
+loo_compare(fit0, fit1, fit2, criterion = "loo") %>%
+  knitr::kable(digits = 1)
 
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
+  knitr::kable(digits = 1)
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+plot_influ(fit = fit2, year = "Year")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Generate a CDI plot for a factor
+plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+# Generate a CDI plot for a continuous variable
+plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
+
+# Generate a CDI plot for a polynomial variable
+plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
+
+# Generate a CDI plot for a spline
+plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration"), xlab = "Duration")
+
+# Generate a CDI plot for a random-effect
+plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Area")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+fits <- list(fit3, fit4, fit5, fit6)
+plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect"), year = "Year")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+plot_index(fit = fit4, year = "Year")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+get_index(fit = fit2, year = "Year") %>%
+  select(Year, Estimate, Est.Error, Qlower, Q50, Qupper) %>%
+  knitr::kable(digits = 3)
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+cpue1 <- get_index(fit = fit2, year = "Year") %>% mutate(Type = "GLM")
 cpue2 <- cpue1 %>% mutate(Type = "Simulated")
 for (ii in 1:nrow(cpue1)) {
   # sdd <- cpue1$Est.Error[ii] # wrong
