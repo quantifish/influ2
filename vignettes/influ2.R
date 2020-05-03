@@ -32,18 +32,19 @@ plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 # Fit a series of models using brms
-do_mcmc <- FALSE
+do_mcmc <- TRUE
 if (do_mcmc) {
+  # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
-  fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
-  fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
+  fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0)
+  fit2 <- brm(CPUE ~ Year + Duration + Species, data = iris2, family = lognormal(), refresh = 0)
   
-  fit3 <- brm(CPUE ~ Year + Duration, data = iris2, refresh = 0)
-  fit4 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
-  fit5 <- brm(CPUE ~ Year + s(Duration), data = iris2, refresh = 0)
-  fit6 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, refresh = 0)
+  # Gaussian, Gamma, and Weibull
+  fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
+  fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0)
+  fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0)
   
-  save(fit0, fit1, fit2, fit3, fit4, fit5, fit6, file = "mcmc.rda")
+  save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
 } else{
   load("mcmc.rda")
 }
@@ -79,24 +80,34 @@ plot_influ(fit = fit2, year = "Year")
 plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-# Generate a CDI plot for a continuous variable
-plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
+# Generate a CDI plot for a linear variable
+plot_bayesian_cdi(fit = fit1, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a polynomial variable
-plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a spline
-plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a random-effect
-plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Area")
+plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Area")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
-fits <- list(fit3, fit4, fit5, fit6)
+fits <- list(fit1, fit3, fit4, fit5)
 plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect"), year = "Year")
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 plot_index(fit = fit4, year = "Year")
+
+## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
+yrep <- posterior_predict(fit4, draws = 500)
+ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 
+  theme_bw() +
+  labs(x = "CPUE", y = "Density")
+
+plot_predicted_residuals(fit4)
+
+plot_qq(fit4)
 
 ## ----echo=TRUE, fig.height=6, fig.width=6, message=FALSE----------------------
 get_index(fit = fit2, year = "Year") %>%

@@ -66,16 +66,17 @@ First I fit three different models of increasing complexity in `brms`. The third
 # Fit a series of models using brms
 do_mcmc <- TRUE
 if (do_mcmc) {
+  # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
-  fit1 <- brm(CPUE ~ Year + Species, data = iris2, family = lognormal(), refresh = 0)
-  fit2 <- brm(CPUE ~ Year + Species + Area, data = iris2, family = lognormal(), refresh = 0)
+  fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0)
+  fit2 <- brm(CPUE ~ Year + Duration + Species, data = iris2, family = lognormal(), refresh = 0)
   
-  fit3 <- brm(CPUE ~ Year + Duration, data = iris2, refresh = 0)
-  fit4 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
-  fit5 <- brm(CPUE ~ Year + s(Duration), data = iris2, refresh = 0)
-  fit6 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, refresh = 0)
+  # Gaussian, Gamma, and Weibull
+  fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
+  fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0)
+  fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0)
   
-  save(fit0, fit1, fit2, fit3, fit4, fit5, fit6, file = "mcmc.rda")
+  save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
 } else{
   load("mcmc.rda")
 }
@@ -118,21 +119,21 @@ plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-# Generate a CDI plot for a continuous variable
-plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
+# Generate a CDI plot for a linear variable
+plot_bayesian_cdi(fit = fit1, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a polynomial variable
-plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a spline
-plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
 
 # Generate a CDI plot for a random-effect
-plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Area")
+plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-fits <- list(fit3, fit4, fit5, fit6)
+fits <- list(fit1, fit3, fit4, fit5)
 plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect"), year = "Year")
 ```
 
@@ -140,6 +141,20 @@ plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect"
 plot_index(fit = fit4, year = "Year")
 ```
 
+# Diagnostics
+
+The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+yrep <- posterior_predict(fit4, draws = 500)
+ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 
+  theme_bw() +
+  labs(x = "CPUE", y = "Density")
+
+plot_predicted_residuals(fit4)
+
+plot_qq(fit4)
+```
 
 # Functions for generating outputs for stock assessment
 

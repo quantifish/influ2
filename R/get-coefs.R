@@ -14,7 +14,7 @@ get_marginal <- function(fit, var = "area") {
   
   # Create newdata for prediction (using fitted)
   data <- fit$data
-  if (is.factor(data[,var])) {
+  if (!is.numeric(data[,var])) {
     levs <- unique(data[,var])
     n <- length(levs)
   } else {
