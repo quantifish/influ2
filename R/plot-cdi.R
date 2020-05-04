@@ -83,8 +83,9 @@ plot_bayesian_cdi <- function(fit,
   
   # The influence plot (bottom-right)
   p4 <- ggplot(data = influ, aes_string(x = as.character(group[1]))) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_violin(aes(y = .data$delta), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_violin(aes(y = exp(.data$delta)), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    # geom_violin(aes(y = .data$delta), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     coord_flip() +
     scale_x_discrete(position = "top") +
     labs(x = NULL, y = "Influence") +
@@ -192,8 +193,8 @@ plot_bayesian_cdi2 <- function(fit,
   sp <- 0.05
   
   # The coefficients (top-left)
-  p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = .data$value)) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
+  p1 <- ggplot(data = coefs, aes(x = factor(.data$variable), y = exp(.data$value))) +
+    geom_hline(yintercept = 1, linetype = "dashed") +
     geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     labs(x = NULL, y = ylab1) +
     scale_x_discrete(position = "top") +
@@ -208,9 +209,9 @@ plot_bayesian_cdi2 <- function(fit,
 
   # The influence plot (bottom-right)
   p4 <- ggplot(data = influ, aes_string(x = as.character(group[1]))) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_violin(aes(y = .data$delta), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
-    # geom_violin(aes(y = exp(.data$delta)), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    # geom_violin(aes(y = .data$delta), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    geom_violin(aes(y = exp(.data$delta)), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     coord_flip() +
     scale_x_discrete(position = "top") +
     labs(x = NULL, y = "Influence") +

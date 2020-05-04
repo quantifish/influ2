@@ -73,7 +73,7 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "on
     fout$Qupper <- fout$Qupper / geo_mean(fout$Q50) * rescale
     fout$Q50 <- fout$Q50 / geo_mean(fout$Q50) * rescale
   }
-
+  
   fout$Est.Error <- fout$CV * fout$Estimate # SD = CV * mu
   
   p2 <- ggplot(fout, aes(x = .data$Year)) +
@@ -124,9 +124,23 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
   fout <- get_index(fit = fit, year = year, probs = probs) %>%
     mutate(model = "Standardised")
   
-  unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-    group_by(year) %>%
-    summarise(cpue = exp(mean(log(.data$y))))
+  if (grepl("hurdle", fit$family$family)) {
+    prop <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
+      mutate(y = ifelse(y > 0, 1, 0)) %>%
+      group_by(year) %>%
+      summarise(p = sum(.data$y) / n())
+    unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
+      filter(y > 0) %>%
+      group_by(year) %>%
+      summarise(cpue = exp(mean(log(.data$y)))) %>%
+      left_join(prop, by = "year") %>%
+      mutate(cpue = cpue * p)
+  } else {
+    unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
+      group_by(year) %>%
+      summarise(cpue = exp(mean(log(.data$y))))
+  }
+  
   df1 <- fout %>%
     mutate(Estimate = NA, Est.Error = NA, Qlower = NA, Q50 = unstd$cpue / geo_mean(unstd$cpue), Qupper = NA, model = "Unstandardised")
   
@@ -141,6 +155,7 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
     scale_colour_manual(values = c("grey", fill)) +
     scale_fill_manual(values = c("grey", fill)) +
     scale_linetype_manual(values = c("dashed", "solid")) +
+    scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +
     theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank(), legend.key.width = unit(2, "cm")) +
     guides(color = guide_legend(override.aes = list(fill = NA)))

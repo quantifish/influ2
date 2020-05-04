@@ -49,6 +49,7 @@ plot_compare <- function(fits, labels = NULL,
   p <- p + 
     geom_line(data = df, aes(x = .data$Year, y = .data$Q50, colour = .data$model, group = .data$model)) +
     labs(x = NULL, y = "Index") +
+    scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
   
@@ -127,6 +128,7 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
     scale_colour_manual(values = c("black", "black")) +
     scale_linetype_manual(values = c("dashed", "solid")) +
     scale_shape_manual(values = c(NA, 19)) +
+    scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +
     theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
   p

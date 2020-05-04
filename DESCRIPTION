@@ -26,6 +26,7 @@ Imports:
     brms
 Suggests: 
     knitr,
+    tidyverse,
     tidyr,
     devtools,
     rmarkdown,
