@@ -36,7 +36,16 @@ get_influ2 <- function(fit, group = c("fishing_year", "area")) {
   
   # Posterior of coefficients
   if (type == "fixed_effect") {
-    coefs <- get_marginal(fit = fit, var = group[2])
+    # coefs <- get_marginal(fit = fit, var = group[2])
+    # mean_coefs <- coefs %>% 
+    #   group_by(.data$iteration) %>% 
+    #   summarise(mean_coef = geo_mean(.data$value))
+    # coefs <- left_join(coefs, mean_coefs, by = "iteration") %>%
+    #   mutate(value = .data$value / .data$mean_coef) %>%
+    #   select(-.data$mean_coef)
+    # xxx <- coefs %>% group_by(variable) %>% summarise(value = mean(value))
+    # geo_mean(xxx$value)
+    coefs <- get_coefs(fit = fit, var = group[2])
   } else {
     coefs <- get_coefs_raw(fit = fit, var = group[2])
   }
@@ -187,8 +196,8 @@ plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
   ggplot(data = df, aes_string(x = year)) +
     # geom_hline(yintercept = 1, linetype = "dashed") +
     # geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_violin(aes(y = .data$delta), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     facet_wrap(variable ~ ., ncol = 1, strip.position = "top") +
     labs(x = NULL, y = "Influence") +
     theme_bw() +
