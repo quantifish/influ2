@@ -124,9 +124,9 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
   fout <- get_index(fit = fit, year = year, probs = probs) %>%
     mutate(model = "Standardised")
   
-  if (grepl("hurdle", fit$family$family)) {
+  if (fit$family$family == "bernoulli" | grepl("hurdle", fit$family$family)) {
     prop <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-      mutate(y = ifelse(y > 0, 1, 0)) %>%
+      mutate(y = ifelse(.data$y > 0, 1, 0)) %>%
       group_by(year) %>%
       summarise(p = sum(.data$y) / n())
     unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
@@ -134,7 +134,7 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
       group_by(year) %>%
       summarise(cpue = exp(mean(log(.data$y)))) %>%
       left_join(prop, by = "year") %>%
-      mutate(cpue = cpue * p)
+      mutate(cpue = .data$cpue * .data$p)
   } else {
     unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
       group_by(year) %>%

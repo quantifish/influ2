@@ -7,6 +7,7 @@
 plot_bubble(
   df,
   group = c("fishing_year", "vessel"),
+  sum_by = "raw",
   fill = "purple",
   alpha = 0.5,
   ylab = NA,
@@ -18,6 +19,8 @@ plot_bubble(
 \item{df}{a data frame}
 
 \item{group}{the groups to plot}
+
+\item{sum_by}{sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.}
 
 \item{fill}{the colour to use in the plot, can either be a colour or a factor to colour by}
 

@@ -10,7 +10,7 @@
 #' @import dplyr
 #' @export
 #' 
-get_influ2 <- function(fit, group = c("fishing_year", "area")) {
+get_influ2 <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
   
   # Model data
   data <- fit$data %>%
@@ -18,21 +18,7 @@ get_influ2 <- function(fit, group = c("fishing_year", "area")) {
   y <- names(data)[1]
   
   # Identify the type of variable we are dealing with
-  form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
-  form_var <- form_split[grepl(group[2], form_split)]
-  if (!is.numeric(data[,group[2]]) & nrow(fit$ranef) == 0) {
-    type <- "fixed_effect"
-  } else if (!is.numeric(data[,group[2]]) & nrow(fit$ranef) > 0) {
-    type <- "random_effect"
-  } else if (is.numeric(data[,group[2]]) & any(grepl("poly\\(", form_var))) {
-    type <- "polynomial"
-  } else if (is.numeric(data[,group[2]]) & any(grepl("s\\(", form_var))) {
-    type <- "spline"
-  } else if (is.numeric(data[,group[2]]) & any(grepl("t2\\(", form_var))) {
-    type <- "spline"
-  } else if (is.numeric(data[,group[2]])) {
-    type <- "linear"
-  }
+  type <- id_var_type(fit = fit, var = group[2], hurdle = hurdle)
   
   # Posterior of coefficients
   if (type == "fixed_effect") {
@@ -45,11 +31,10 @@ get_influ2 <- function(fit, group = c("fishing_year", "area")) {
     #   select(-.data$mean_coef)
     # xxx <- coefs %>% group_by(variable) %>% summarise(value = mean(value))
     # geo_mean(xxx$value)
-    coefs <- get_coefs(fit = fit, var = group[2])
+    coefs <- get_coefs(fit = fit, var = group[2], hurdle = hurdle)
   } else {
     coefs <- get_coefs_raw(fit = fit, var = group[2])
   }
-  n_iterations <- max(coefs$iteration)
   
   if (type == "random_effect") {
     X <- model.matrix(as.formula(paste0(y, " ~ 0 + ", group[2])), data = data)
@@ -76,6 +61,7 @@ get_influ2 <- function(fit, group = c("fishing_year", "area")) {
   }
 
   # Do the matrix multiplication
+  n_iterations <- max(coefs$iteration)
   Xbeta <- matrix(NA, nrow = n_iterations, ncol = nrow(data))
   for (i in 1:n_iterations) {
     Xbeta[i,] <- X %*% filter(coefs, .data$iteration == i)$value

@@ -39,7 +39,16 @@ get_marginal <- function(fit, var = "area") {
 }
 
 
-
+#' Get raw coefficients
+#' 
+#' @param fit a brmsfit object
+#' @param var the variable to obtain
+#' @return a data frame
+#' @importFrom reshape2 melt
+#' @importFrom brms posterior_samples
+#' @import dplyr
+#' @export
+#' 
 get_coefs_raw <- function(fit, var = "area") {
   
   if (nrow(fit$ranef) > 0) {
@@ -82,7 +91,6 @@ get_coefs_raw <- function(fit, var = "area") {
   
   return(coefs)
 }
-
 
 
 #' Get model coefficients
@@ -191,29 +199,29 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   # }
   
   # Transform the coefficients using the link function
-  if (transform & !is_poly) {
-    if (fit$family$family %in% c("lognormal", "hurdle_lognormal")) {
-      if (fit$family$link == "identity") {
-        coefs <- coefs %>% mutate(value = exp(.data$value))
-      } else {
-        stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
-      }
-    } else if (fit$family$family %in% c("gamma", "hurdle_gamma")) {
-      if (fit$family$link == "inverse") {
-        coefs <- coefs %>% mutate(value = 1.0 / .data$value)
-      } else if (fit$family$link == "identity") {
-        coefs <- coefs %>% mutate(value = .data$value)
-      } else if (fit$family$link == "log") {
-        coefs <- coefs %>% mutate(value = exp(.data$value))
-      }
-    } else if (fit$family$family %in% c("bernoulli")) {
-      if (fit$family$link == "logit") {
-        coefs <- coefs %>% mutate(value = exp(.data$value) / (1.0 + exp(.data$value)))
-      }
-    } else {
-      stop("This family has not been coded in influ2 yet - please update the plot-cdi.R function.")
-    }
-  }
+  # if (transform & !is_poly) {
+  #   if (fit$family$family %in% c("lognormal", "hurdle_lognormal")) {
+  #     if (fit$family$link == "identity") {
+  #       coefs <- coefs %>% mutate(value = exp(.data$value))
+  #     } else {
+  #       stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+  #     }
+  #   } else if (fit$family$family %in% c("gamma", "hurdle_gamma")) {
+  #     if (fit$family$link == "inverse") {
+  #       coefs <- coefs %>% mutate(value = 1.0 / .data$value)
+  #     } else if (fit$family$link == "identity") {
+  #       coefs <- coefs %>% mutate(value = .data$value)
+  #     } else if (fit$family$link == "log") {
+  #       coefs <- coefs %>% mutate(value = exp(.data$value))
+  #     }
+  #   } else if (fit$family$family %in% c("bernoulli")) {
+  #     if (fit$family$link == "logit") {
+  #       coefs <- coefs %>% mutate(value = exp(.data$value) / (1.0 + exp(.data$value)))
+  #     }
+  #   } else {
+  #     stop("This family has not been coded in influ2 yet - please update the plot-cdi.R function.")
+  #   }
+  # }
   
   return(coefs)
 }
