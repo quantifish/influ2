@@ -66,8 +66,7 @@ First I fit three different models of increasing complexity in `brms`. The third
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-do_mcmc <- FALSE
-if (do_mcmc) {
+if (getwd() != "/home/darcy/Projects/influ2") {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
   fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0)
@@ -77,7 +76,7 @@ if (do_mcmc) {
   fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
   fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0)
   fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0)
-  fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
+  # fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
   
   save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
 } else{
@@ -206,7 +205,7 @@ plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
 plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Duration")
 
 # Generate a CDI plot for a fixed-effect
-plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Duration")
+# plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
