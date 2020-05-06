@@ -66,7 +66,7 @@ First I fit three different models of increasing complexity in `brms`. The third
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-do_mcmc <- TRUE
+do_mcmc <- FALSE
 if (do_mcmc) {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
@@ -77,6 +77,7 @@ if (do_mcmc) {
   fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
   fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0)
   fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0)
+  fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
   
   save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
 } else{
@@ -156,12 +157,13 @@ ggplot(data = rbind(i2, i3)) +
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Here I evaluate model fit using loo and waic. 
 # Other options include kfold, loo_subsample, bayes_R2, loo_R2 and marglik
-fit0 <- add_criterion(fit0, criterion = c("loo", "waic"))
-fit1 <- add_criterion(fit1, criterion = c("loo", "waic"))
-fit2 <- add_criterion(fit2, criterion = c("loo", "waic"))
-fit3 <- add_criterion(fit3, criterion = c("loo", "waic"))
-fit4 <- add_criterion(fit4, criterion = c("loo", "waic"))
-fit5 <- add_criterion(fit5, criterion = c("loo", "waic"))
+criterion <- c("loo", "waic", "bayes_R2")
+fit0 <- add_criterion(fit0, criterion = criterion)
+fit1 <- add_criterion(fit1, criterion = criterion)
+fit2 <- add_criterion(fit2, criterion = criterion)
+fit3 <- add_criterion(fit3, criterion = criterion)
+fit4 <- add_criterion(fit4, criterion = criterion)
+fit5 <- add_criterion(fit5, criterion = criterion)
 
 fit0$criteria$loo
 fit0$criteria$waic
@@ -175,6 +177,13 @@ loo_compare(fit0, fit1, fit2, fit3, fit4, fit5, criterion = "loo") %>%
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 loo_compare(fit0, fit1, fit2, fit3, fit4, fit5, criterion = "waic") %>%
   knitr::kable(digits = 1)
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+fits <- list(fit0, fit1, fit2, fit3, fit4, fit5)
+r2 <- matrix(NA, nrow = nrow(fits[[1]]$criteria$bayes_R2), ncol = length(fits))
+for (i in 1:length(fits)) r2[,i] <- fits[[i]]$criteria$bayes_R2
+colMeans(r2)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -195,6 +204,9 @@ plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Generate a CDI plot for a random-effect
 plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Duration")
+
+# Generate a CDI plot for a fixed-effect
+plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -211,14 +223,50 @@ plot_index(fit = fit4, year = "Year")
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-yrep <- posterior_predict(fit4, draws = 500)
-ppc_dens_overlay(y = iris2$CPUE, yrep = yrep[1:100,]) + 
+yrep <- posterior_predict(fit4, draws = 100)
+
+ppc_dens_overlay(y = iris2$CPUE, yrep = yrep) + 
   labs(x = "CPUE", y = "Density") +
+  theme_bw()
+
+ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) +
+  coord_cartesian(xlim = c(0, 10)) +
   theme_bw()
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-plot_predicted_residuals(fit4)
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother."}
+plot_predicted_residuals(fit = fit4, trend = "loess")
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother."}
+plot_predicted_residuals(fit = fit4, trend = "lm") +
+  facet_wrap(Year ~ .)
+
+# A new style of residual plot
+  fit = fit4
+  # Extract predicted values
+  pred <- fitted(fit) %>% data.frame()
+  names(pred) <- paste0("pred.", names(pred))
+  
+  # Extract residuals
+  resid <- residuals(fit) %>% data.frame()
+  names(resid) <- paste0("resid.", names(resid))
+  
+  df <- cbind(resid, pred, iris2)
+  head(df)
+  
+  p <- ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
+    geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
+    facet_wrap(Area ~ Species) +
+    # geom_hline(yintercept = 0, linetype = "dashed") +
+    # geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
+    # labs(x = "Predicted values", y = "Residuals") +
+    theme_bw()
+  p
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Implied residuals."}
+plot_implied_residuals(fit = fit2, data = iris2, year = "Year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}

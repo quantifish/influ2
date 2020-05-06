@@ -1,3 +1,32 @@
+
+id_var_type <- function(fit, var, hurdle = FALSE) {
+  
+  if (hurdle) {
+    form_split <- str_split(as.character(fit$formula)[2], " \\+ ")[[1]]
+    form_var <- form_split[grepl(var, form_split)]
+  } else {
+    form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
+    form_var <- form_split[grepl(var, form_split)]
+  }
+  
+  if (!is.numeric(fit$data[,var]) & nrow(fit$ranef) == 0) {
+    type <- "fixed_effect"
+  } else if (!is.numeric(fit$data[,var]) & nrow(fit$ranef) > 0) {
+    type <- "random_effect"
+  } else if (is.numeric(fit$data[,var]) & any(grepl("poly\\(", form_var))) {
+    type <- "polynomial"
+  } else if (is.numeric(fit$data[,var]) & any(grepl("s\\(", form_var))) {
+    type <- "spline"
+  } else if (is.numeric(fit$data[,var]) & any(grepl("t2\\(", form_var))) {
+    type <- "spline"
+  } else if (is.numeric(fit$data[,var])) {
+    type <- "linear"
+  }
+  
+  return(type)
+}
+
+
 #' Bayesian version of the CDI plot
 #' 
 #' @param fit a model fit
@@ -24,8 +53,16 @@ plot_bayesian_cdi <- function(fit,
                               colour = "purple",  
                               p_margin = 0.05) {
   
+  # Identify the type of variable we are dealing with
+  type <- id_var_type(fit = fit, var = group[2], hurdle = hurdle)
+  
   # Posterior samples of coefficients
-  coefs <- get_marginal(fit = fit, var = group[2])
+  if (type == "fixed_effect") {
+    coefs <- get_coefs(fit = fit, var = group[2], hurdle = hurdle)
+  } else {
+    coefs <- get_marginal(fit = fit, var = group[2]) # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
+    # coefs <- get_coefs_raw(fit = fit, var = group[2])
+  }
   
   # Model data
   if (is.numeric(coefs$variable)) {
@@ -42,7 +79,7 @@ plot_bayesian_cdi <- function(fit,
   }
   
   # Influence
-  influ <- get_influ2(fit = fit, group = group)
+  influ <- get_influ2(fit = fit, group = group, hurdle = hurdle)
   
   # Extract the legend on its own
   g2 <- function(a.gplot) {
@@ -76,6 +113,7 @@ plot_bayesian_cdi <- function(fit,
   } else {
     p1 <- p1 +
       geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
+      geom_hline(yintercept = 0, linetype = "dashed") +
       scale_x_discrete(position = "top")# +
       # scale_x_discrete(position = "top", breaks = midpoints, minor_breaks = NULL, expand = expansion(mult = 0.05)) +
       # coord_cartesian(xlim = c(midpoints[1], midpoints[length(midpoints)]))
@@ -202,7 +240,7 @@ plot_bayesian_cdi2 <- function(fit,
     theme(axis.title.x = element_blank(), axis.text.x = element_blank(), plot.margin = margin(b = sp, r = sp, unit = "cm"))
   
   # The bubble plot (bottom-left) and the legend for the bubble plot (top-right)
-  p3a <- plot_bubble(df = data, group = group, xlab = xlab, ylab = ylab, zlab = "", fill = colour)
+  p3a <- plot_bubble(df = data, group = group, sum_by = "row", xlab = xlab, ylab = ylab, zlab = "", fill = colour)
   p2 <- g2(p3a)
   p3 <- p3a +
     theme(legend.position = "none", plot.margin = margin(t = sp, r = sp, unit = "cm"), axis.text.x = element_text(angle = 45, hjust = 1))

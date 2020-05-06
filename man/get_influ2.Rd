@@ -4,7 +4,7 @@
 \alias{get_influ2}
 \title{Get the influence metric new version}
 \usage{
-get_influ2(fit, group = c("fishing_year", "area"))
+get_influ2(fit, group = c("fishing_year", "area"), hurdle = FALSE)
 }
 \arguments{
 \item{fit}{a model fit}

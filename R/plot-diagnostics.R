@@ -47,14 +47,14 @@ plot_qq <- function(fit, probs = c(0.25, 0.75)) {
 #' This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
 #' 
 #' @param fit a brmsfit object
-#' @param loess show a loess smoother
+#' @param trend show a loess smoother or linear line
 #' @return a ggplot object
 #' @importFrom stats fitted residuals
 #' @import ggplot2
 #' @import dplyr
 #' @export
 #' 
-plot_predicted_residuals <- function(fit, loess = TRUE) {
+plot_predicted_residuals <- function(fit, trend = "loess") {
   # Extract predicted values
   pred <- fitted(fit) %>% data.frame()
   names(pred) <- paste0("pred.", names(pred))
@@ -63,14 +63,67 @@ plot_predicted_residuals <- function(fit, loess = TRUE) {
   resid <- residuals(fit) %>% data.frame()
   names(resid) <- paste0("resid.", names(resid))
   
-  p <- ggplot(data = cbind(resid, pred), aes(x = .data$pred.Estimate, y = .data$resid.Estimate)) +
+  p <- ggplot(data = cbind(resid, pred, fit$data), aes(x = .data$pred.Estimate, y = .data$resid.Estimate)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
     geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
     labs(x = "Predicted values", y = "Residuals") +
     theme_bw()
-  if (loess) {
+  if (trend == "loess") {
     p <- p + geom_smooth(method = "loess", se = FALSE, formula = y ~ x)
   }
+  if (trend %in% c("lm", "linear")) {
+    p <- p + geom_smooth(method = "lm", se = FALSE, formula = y ~ x)
+  }  
+  return(p)
+}
+
+
+#' Plots predicted values versus residuals
+#' 
+#' This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
+#' 
+#' @param fit a brmsfit object
+#' @param data a data frame with the same dimensions as the model data
+#' @param year the year column
+#' @return a ggplot object
+#' @importFrom stats fitted residuals
+#' @import ggplot2
+#' @import dplyr
+#' @export
+#' 
+plot_implied_residuals <- function(fit, data = NULL, year = "Year") {
+  # Get the data
+  if (is.null(data)) {
+    data <- fit$data
+  }
+  
+  # Extract predicted values
+  idx <- get_index(fit, year = year)
+  mean(idx$Estimate)
+  idx$Estimate <- idx$Estimate - mean(idx$Estimate)
+  mean(idx$Estimate)
+  
+  # Extract residuals
+  resid <- residuals(fit) %>% data.frame()
+  # names(resid) <- paste0("resid.", names(resid))
+  resid <- cbind(data, resid) %>%
+    group_by(Year, Area) %>%
+    summarise(residual = mean(Estimate))
+  head(resid)
+  
+  ires <- left_join(idx, resid, by = year) %>%
+    mutate(implied = Estimate + residual)
+  head(ires)
+
+  p <- ggplot(data = ires, aes(x = .data$Year, y = .data$implied)) +
+    geom_line(data = idx, aes(x = .data$Year, y = .data$Estimate), group = 1, colour = "grey") +
+    geom_line(group = 1, colour = "purple") +
+    labs(x = NULL, y = "Residuals") +
+    facet_wrap(Area ~ ., ncol = 2) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
   p
+  
+  return(p)
 }
