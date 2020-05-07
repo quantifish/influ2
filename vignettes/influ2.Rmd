@@ -62,11 +62,11 @@ plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
 
 # The origninal influ versus influ2
 
-First I fit three different models of increasing complexity in `brms`. The third model includes the explanatory variables `Year`, `Species` and `Area`. I then fit another four models which include `Year` and different forms of the variable `Duration`. The different forms include a linear predictor, a third-order polynomial, a spline, and a random-effect. A few different distributions are used to mix things up as well including lognormal, Gaussian, Gamma, and Weibull.
+First I fit three different models of increasing complexity in `brms`. The third model includes the explanatory variables `Year`, `Species` and `Area`. I then fit another four models which include `Year` and different forms of the variable `Duration`. The different forms include a linear predictor, a third-order polynomial, a spline, and a random-effect. A few different distributions are used to mix things up as well including lognormal, Gaussian, Gamma, and Weibull `r getwd()`.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-if (getwd() != "/home/darcy/Projects/influ2") {
+if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
   fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0)
@@ -160,26 +160,26 @@ criterion <- c("loo", "waic", "bayes_R2")
 fit0 <- add_criterion(fit0, criterion = criterion)
 fit1 <- add_criterion(fit1, criterion = criterion)
 fit2 <- add_criterion(fit2, criterion = criterion)
-fit3 <- add_criterion(fit3, criterion = criterion)
-fit4 <- add_criterion(fit4, criterion = criterion)
-fit5 <- add_criterion(fit5, criterion = criterion)
+# fit3 <- add_criterion(fit3, criterion = criterion)
+# fit4 <- add_criterion(fit4, criterion = criterion)
+# fit5 <- add_criterion(fit5, criterion = criterion)
 
 fit0$criteria$loo
 fit0$criteria$waic
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-loo_compare(fit0, fit1, fit2, fit3, fit4, fit5, criterion = "loo") %>%
+loo_compare(fit0, fit1, fit2, criterion = "loo") %>%
   knitr::kable(digits = 1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-loo_compare(fit0, fit1, fit2, fit3, fit4, fit5, criterion = "waic") %>%
+loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
   knitr::kable(digits = 1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-fits <- list(fit0, fit1, fit2, fit3, fit4, fit5)
+fits <- list(fit0, fit1, fit2)
 r2 <- matrix(NA, nrow = nrow(fits[[1]]$criteria$bayes_R2), ncol = length(fits))
 for (i in 1:length(fits)) r2[,i] <- fits[[i]]$criteria$bayes_R2
 colMeans(r2)
