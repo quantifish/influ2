@@ -66,22 +66,22 @@ First I fit three different models of increasing complexity in `brms`. The third
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
+# if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
   # A set of lognormal models
-  fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0)
-  fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0)
-  fit2 <- brm(CPUE ~ Year + Duration + Species, data = iris2, family = lognormal(), refresh = 0)
+  fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
+  fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
+  fit2 <- brm(CPUE ~ Year + Duration + Species, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
   
   # Gaussian, Gamma, and Weibull
-  fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0)
-  fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0)
-  fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0)
+  fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0, iter = 1000)
+  fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0, iter = 1000)
+  fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0, iter = 1000)
   # fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
   
-  # save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
-} else{
-  load("mcmc.rda")
-}
+  save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
+# } else{
+  # load("mcmc.rda")
+# }
 
 # Fit a model using glm and generate influence statistics using the original influ package
 fit_glm <- glm(log(CPUE) ~ Year + Duration + Species, data = iris2)
