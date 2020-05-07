@@ -62,7 +62,7 @@ plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
 
 # The origninal influ versus influ2
 
-First I fit three different models of increasing complexity in `brms`. The third model includes the explanatory variables `Year`, `Species` and `Area`. I then fit another four models which include `Year` and different forms of the variable `Duration`. The different forms include a linear predictor, a third-order polynomial, a spline, and a random-effect. A few different distributions are used to mix things up as well including lognormal, Gaussian, Gamma, and Weibull `r getwd()`.
+First I fit three different models of increasing complexity in `brms`. The third model includes the explanatory variables `Year`, `Species` and `Area`. I then fit another four models which include `Year` and different forms of the variable `Duration`. The different forms include a linear predictor, a third-order polynomial, a spline, and a random-effect. A few different distributions are used to mix things up as well including lognormal, Gaussian, Gamma, and Weibull.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
@@ -78,7 +78,7 @@ if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
   fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0)
   # fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
   
-  save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
+  # save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
 } else{
   load("mcmc.rda")
 }
