@@ -13,16 +13,22 @@ get_index(
 )
 }
 \arguments{
-\item{fit}{A brmsfit object}
+\item{fit}{An object of class \code{brmsfit}.}
 
-\item{year}{The year or time label (e.g. year, Year, fishing_year, etc)}
+\item{year}{The year or time label (e.g. year, Year, fishing_year, etc).}
 
-\item{probs}{The percentiles to be computed by the quantile function}
+\item{probs}{The percentiles to be computed by the \code{quantile} function.}
 
-\item{rescale}{How to rescale the series}
+\item{rescale}{How to rescale the series.}
 
-\item{do_plot}{Return a plot instead of a data frame}
+\item{do_plot}{Return a \code{ggplot} object instead of a \code{data.frame}.}
+}
+\value{
+a \code{data.frame} or a \code{ggplot} object.
 }
 \description{
 Get the standardised indices each year with associated uncertainty and return either as a table or a ggplot.
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }

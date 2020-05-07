@@ -7,7 +7,7 @@
 plot_predicted_residuals(fit, trend = "loess")
 }
 \arguments{
-\item{fit}{a brmsfit object}
+\item{fit}{An object of class \code{brmsfit}.}
 
 \item{trend}{show a loess smoother or linear line}
 }

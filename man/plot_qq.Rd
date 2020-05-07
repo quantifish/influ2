@@ -7,7 +7,7 @@
 plot_qq(fit, probs = c(0.25, 0.75))
 }
 \arguments{
-\item{fit}{a model fit}
+\item{fit}{An object of class \code{brmsfit}.}
 
 \item{probs}{numeric vector of length two, representing probabilities. Corresponding quantile pairs define the line drawn.}
 }

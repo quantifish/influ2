@@ -7,7 +7,7 @@
 plot_implied_residuals(fit, data = NULL, year = "Year")
 }
 \arguments{
-\item{fit}{a brmsfit object}
+\item{fit}{An object of class \code{brmsfit}.}
 
 \item{data}{a data frame with the same dimensions as the model data}
 

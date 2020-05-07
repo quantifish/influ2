@@ -1,42 +1,29 @@
-
-id_var_type <- function(fit, var, hurdle = FALSE) {
-  
-  if (hurdle) {
-    form_split <- str_split(as.character(fit$formula)[2], " \\+ ")[[1]]
-    form_var <- form_split[grepl(var, form_split)]
-  } else {
-    form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
-    form_var <- form_split[grepl(var, form_split)]
-  }
-  
-  if (!is.numeric(fit$data[,var]) & nrow(fit$ranef) == 0) {
-    type <- "fixed_effect"
-  } else if (!is.numeric(fit$data[,var]) & nrow(fit$ranef) > 0) {
-    type <- "random_effect"
-  } else if (is.numeric(fit$data[,var]) & any(grepl("poly\\(", form_var))) {
-    type <- "polynomial"
-  } else if (is.numeric(fit$data[,var]) & any(grepl("s\\(", form_var))) {
-    type <- "spline"
-  } else if (is.numeric(fit$data[,var]) & any(grepl("t2\\(", form_var))) {
-    type <- "spline"
-  } else if (is.numeric(fit$data[,var])) {
-    type <- "linear"
-  }
-  
-  return(type)
-}
-
-
 #' Bayesian version of the CDI plot
 #' 
-#' @param fit a model fit
-#' @param group the groups to plot
-#' @param hurdle if a hurdle model then use the hurdle
-#' @param xlab the x axis label
-#' @param ylab the y axis label
-#' @param colour the colour to use in the plot
-#' @param p_margin the margin between panels on the plot
-#' @return a ggplot object
+#' The CDI plot presents the coefficients for the variable of interest (top-left panel), the spread of the data 
+#' (bottom-left panel), and the influence statistic (bottom-right panel).
+#' 
+#' @param fit An object of class \code{brmsfit}.
+#' @param xfocus The column name of the variable to be plotted on the x axis. This column name must match one of the
+#'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument.
+#' @param yfocus The column name of the variable to be plotted on the y axis. This column name must match one of the
+#'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
+#'   temporal variable in a generalised linear model (e.g. year).
+#' @param hurdle If a hurdle model then use the hurdle.
+#' @param xlab The x axis label.
+#' @param ylab The y axis label.
+#' @param colour The colour to use in the plot.
+#' @param p_margin The margin between panels on the plot. This is passed to \code{margin} within \code{theme}.
+#' @param legend To show the legend or not.
+#' @param sum_by Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be 
+#'   the same for all and raw, but the legend will change from numbers of records to a proportion.
+#' @param ... Further arguments passed to nothing.
+#' @return a \code{ggplot} object.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
+#' @seealso \code{\link{get_coefs}}, \code{\link{get_influ}}, \code{\link{plot_bubble}}
+#' 
 #' @importFrom gtable is.gtable gtable_filter
 #' @importFrom stats poly
 #' @importFrom tidyselect all_of
@@ -45,41 +32,39 @@ id_var_type <- function(fit, var, hurdle = FALSE) {
 #' @import patchwork
 #' @export
 #' 
-plot_bayesian_cdi <- function(fit,
-                              group = c("fishing_year", "area"),
-                              hurdle = FALSE,
-                              xlab = "Month", 
-                              ylab = "Fishing year", 
-                              colour = "purple",  
-                              p_margin = 0.05) {
+plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
+                              xlab = "Month",  ylab = "Fishing year", hurdle = FALSE,
+                              colour = "purple", p_margin = 0.05, legend = TRUE, sum_by = "row", ...) {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   # Identify the type of variable we are dealing with
-  type <- id_var_type(fit = fit, var = group[2], hurdle = hurdle)
+  type <- id_var_type(fit = fit, xfocus = xfocus, hurdle = hurdle)
   
   # Posterior samples of coefficients
   if (type %in% c("fixed_effect", "random_effect")) {
-    coefs <- get_coefs(fit = fit, var = group[2], hurdle = hurdle)
+    coefs <- get_coefs(fit = fit, var = xfocus, hurdle = hurdle)
   } else {
-    coefs <- get_marginal(fit = fit, var = group[2]) # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
-    # coefs <- get_coefs_raw(fit = fit, var = group[2])
+    coefs <- get_marginal(fit = fit, var = xfocus) # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
+    # coefs <- get_coefs_raw(fit = fit, var = xfocus)
   }
   
   # Model data
   if (is.numeric(coefs$variable)) {
     data <- fit$data %>%
-      select(all_of(group))
+      select(all_of(c(yfocus, xfocus)))
     length.out <- 15
-    dmin <- min(data[,group[2]])
-    dmax <- max(data[,group[2]])
+    dmin <- min(data[,xfocus])
+    dmax <- max(data[,xfocus])
     breaks <- seq(dmin, dmax, length.out = length.out)
     midpoints <- breaks[-length(breaks)] + diff(breaks) / 2
-    data[,group[2]] <- cut(data[,group[2]], breaks = breaks, labels = sprintf("%.2f", round(midpoints, 2)), include.lowest = TRUE)
+    data[,xfocus] <- cut(data[,xfocus], breaks = breaks, labels = sprintf("%.2f", round(midpoints, 2)), include.lowest = TRUE)
   } else {
     data <- fit$data
   }
   
   # Influence
-  influ <- get_influ2(fit = fit, group = group, hurdle = hurdle)
+  influ <- get_influ2(fit = fit, group = c(yfocus, xfocus), hurdle = hurdle)
   
   # Extract the legend on its own
   g2 <- function(a.gplot) {
@@ -89,7 +74,7 @@ plot_bayesian_cdi <- function(fit,
   }
   
   # The bubble plot (bottom-left) and the legend for the bubble plot (top-right)
-  p3a <- plot_bubble(df = data, group = group, xlab = xlab, ylab = ylab, zlab = "", fill = colour)
+  p3a <- plot_bubble(df = data, group = c(yfocus, xfocus), sum_by = sum_by, xlab = xlab, ylab = ylab, zlab = "", fill = colour)
   p2 <- g2(p3a)
   p3 <- p3a + theme(legend.position = "none", plot.margin = margin(t = p_margin, r = p_margin, unit = "cm"), 
                     axis.text.x = element_text(angle = 45, hjust = 1))
@@ -120,7 +105,7 @@ plot_bayesian_cdi <- function(fit,
   }
   
   # The influence plot (bottom-right)
-  p4 <- ggplot(data = influ, aes_string(x = as.character(group[1]))) +
+  p4 <- ggplot(data = influ, aes_string(x = as.character(yfocus))) +
     geom_hline(yintercept = 1, linetype = "dashed") +
     geom_violin(aes(y = exp(.data$delta)), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     # geom_violin(aes(y = .data$delta), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
@@ -130,19 +115,73 @@ plot_bayesian_cdi <- function(fit,
     theme_bw() +
     theme(legend.position = "none", plot.margin = margin(t = p_margin, l = p_margin, unit = "cm"))
   
-  p1 + p2 + p3 + p4 + plot_layout(nrow = 2, ncol = 2, heights = c(1, 2), widths = c(2, 1))
+  if (legend) {
+    p <- p1 + p2 + p3 + p4 + plot_layout(nrow = 2, ncol = 2, heights = c(1, 2), widths = c(2, 1))
+  } else {
+    pv <- ggplot() + theme_void()
+    p <- p1 + pv + p3 + p4 + plot_layout(nrow = 2, ncol = 2, heights = c(1, 2), widths = c(2, 1))
+  }
+  
+  return(p)
 }
+
+
+#' Geometric mean
+#' 
+#' @param a a vector
+#' @export
+#' 
+geo_mean <- function(a) {
+  prod(a)^(1.0 / length(a))
+}
+
+
+
+id_var_type <- function(fit, xfocus, hurdle = FALSE) {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  if (hurdle) {
+    form_split <- str_split(as.character(fit$formula)[2], " \\+ ")[[1]]
+    form_var <- form_split[grepl(xfocus, form_split)]
+  } else {
+    form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
+    form_var <- form_split[grepl(xfocus, form_split)]
+  }
+  
+  if (!is.numeric(fit$data[,xfocus]) & nrow(fit$ranef) == 0) {
+    type <- "fixed_effect"
+  } else if (!is.numeric(fit$data[,xfocus]) & nrow(fit$ranef) > 0) {
+    type <- "random_effect"
+  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("poly\\(", form_var))) {
+    type <- "polynomial"
+  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("s\\(", form_var))) {
+    type <- "spline"
+  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("t2\\(", form_var))) {
+    type <- "spline"
+  } else if (is.numeric(fit$data[,xfocus])) {
+    type <- "linear"
+  }
+  
+  return(type)
+}
+
 
 
 #' Bayesian version of the CDI plot (depreciated)
 #' 
 #' @param fit a model fit
-#' @param group the groups to plot
+#' @param xfocus The column name of the variable to be plotted on the x axis. This column name must match one of the
+#'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument.
+#' @param yfocus The column name of the variable to be plotted on the y axis. This column name must match one of the
+#'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
+#'   temporal variable in a generalised linear model (e.g. year).
 #' @param hurdle if a hurdle model then use the hurdle
 #' @param xlab the x axis label
 #' @param ylab the y axis label
 #' @param colour the colour to use in the plot
 #' @return a ggplot object
+#' 
 #' @importFrom gtable is.gtable gtable_filter
 #' @importFrom stats poly
 #' @import ggplot2
@@ -151,14 +190,14 @@ plot_bayesian_cdi <- function(fit,
 #' @export
 #' 
 plot_bayesian_cdi2 <- function(fit,
-                              group = c("fishing_year", "area"),
+                               xfocus = "area", yfocus = "fishing_year",
                               hurdle = FALSE,
                               xlab = "Month", 
                               ylab = "Fishing year", 
                               colour = "purple") {
 
   # Posterior samples of coefficients
-  coefs <- get_coefs(fit = fit, var = group[2], normalise = TRUE, hurdle = hurdle)
+  coefs <- get_coefs(fit = fit, var = xfocus, normalise = TRUE, hurdle = hurdle)
   n_iterations <- max(coefs$iteration)
   
   get_midpoint <- function(cut_label) {
@@ -171,15 +210,15 @@ plot_bayesian_cdi2 <- function(fit,
     is_poly <- TRUE
     data <- fit$data %>%
       select(-starts_with("poly"))
-    dmin <- min(data[,group[2]])
-    dmax <- max(data[,group[2]])
-    data[,group[2]] <- cut(data[,group[2]], breaks = seq(dmin, dmax, length.out = 20), include.lowest = TRUE)
-    # breaks <- unique(quantile(data[,group[2]], probs = seq(0, 1, length.out = 15)))
-    # data[,group[2]] <- cut(data[,group[2]], breaks = breaks, include.lowest = TRUE)
-    data[,group[2]] <- sapply(data[,group[2]], get_midpoint)
+    dmin <- min(data[,xfocus])
+    dmax <- max(data[,xfocus])
+    data[,xfocus] <- cut(data[,xfocus], breaks = seq(dmin, dmax, length.out = 20), include.lowest = TRUE)
+    # breaks <- unique(quantile(data[,xfocus], probs = seq(0, 1, length.out = 15)))
+    # data[,xfocus] <- cut(data[,xfocus], breaks = breaks, include.lowest = TRUE)
+    data[,xfocus] <- sapply(data[,xfocus], get_midpoint)
 
-    z <- poly(fit$data[,group[2]], 3)
-    x_new <- data.frame(id = 1:length(unique(data[,group[2]])), variable = sort(unique(data[,group[2]])))
+    z <- poly(fit$data[,xfocus], 3)
+    x_new <- data.frame(id = 1:length(unique(data[,xfocus])), variable = sort(unique(data[,xfocus])))
     x_poly <- poly(x_new$variable, 3, coefs = attr(z, "coefs"))
 
     # Do the matrix multiplication
@@ -192,13 +231,13 @@ plot_bayesian_cdi2 <- function(fit,
       select(-id)
   } else if (length(unique(coefs$variable)) == 1) {
     data <- fit$data# %>%
-      # select(group[2])
-    dmin <- min(data[,group[2]])
-    dmax <- max(data[,group[2]])
-    data[,group[2]] <- cut(data[,group[2]], breaks = seq(dmin, dmax, length.out = 20), include.lowest = TRUE)
-    data[,group[2]] <- sapply(data[,group[2]], get_midpoint)
+      # select(xfocus)
+    dmin <- min(data[,xfocus])
+    dmax <- max(data[,xfocus])
+    data[,xfocus] <- cut(data[,xfocus], breaks = seq(dmin, dmax, length.out = 20), include.lowest = TRUE)
+    data[,xfocus] <- sapply(data[,xfocus], get_midpoint)
     
-    x_new <- data.frame(id = 1:length(unique(data[,group[2]])), variable = sort(unique(data[,group[2]])))
+    x_new <- data.frame(id = 1:length(unique(data[,xfocus])), variable = sort(unique(data[,xfocus])))
     Xbeta <- matrix(NA, nrow = n_iterations, ncol = nrow(x_new))
     for (i in 1:n_iterations) {
       Xbeta[i,] <- as.matrix(x_new$variable) %*% filter(coefs, .data$iteration == i)$value
@@ -208,11 +247,11 @@ plot_bayesian_cdi2 <- function(fit,
       select(-id)    
   } else {
     data <- fit$data %>%
-      mutate_at(vars(matches(group[2])), factor)
+      mutate_at(vars(matches(xfocus)), factor)
   }
   
   # Influence
-  influ <- get_influ(fit = fit, group = group, hurdle = hurdle)
+  influ <- get_influ(fit = fit, group = c(yfocus, xfocus), hurdle = hurdle)
   
   if (nrow(fit$ranef) > 0) {
     ylab1 <- "Coefficient"
@@ -240,13 +279,13 @@ plot_bayesian_cdi2 <- function(fit,
     theme(axis.title.x = element_blank(), axis.text.x = element_blank(), plot.margin = margin(b = sp, r = sp, unit = "cm"))
   
   # The bubble plot (bottom-left) and the legend for the bubble plot (top-right)
-  p3a <- plot_bubble(df = data, group = group, sum_by = "row", xlab = xlab, ylab = ylab, zlab = "", fill = colour)
+  p3a <- plot_bubble(df = data, group = c(yfocus, xfocus), sum_by = "row", xlab = xlab, ylab = ylab, zlab = "", fill = colour)
   p2 <- g2(p3a)
   p3 <- p3a +
     theme(legend.position = "none", plot.margin = margin(t = sp, r = sp, unit = "cm"), axis.text.x = element_text(angle = 45, hjust = 1))
 
   # The influence plot (bottom-right)
-  p4 <- ggplot(data = influ, aes_string(x = as.character(group[1]))) +
+  p4 <- ggplot(data = influ, aes_string(x = as.character(yfocus))) +
     geom_hline(yintercept = 1, linetype = "dashed") +
     # geom_violin(aes(y = .data$delta), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     geom_violin(aes(y = exp(.data$delta)), colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
