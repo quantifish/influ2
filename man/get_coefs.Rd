@@ -13,18 +13,18 @@ get_coefs(
 )
 }
 \arguments{
-\item{fit}{a brmsfit object}
+\item{fit}{An object of class \code{brmsfit}.}
 
-\item{var}{the variable to obtain}
+\item{var}{The variable to obtain.}
 
-\item{normalise}{normalise to mean of zero}
+\item{normalise}{Normalise to have a mean of zero.}
 
-\item{hurdle}{if a hurdle model then use the hurdle}
+\item{hurdle}{If a hurdle model then use the hurdle.}
 
-\item{transform}{if the coefficients should be transformed using the link function}
+\item{transform}{if the coefficients should be transformed using the link function.}
 }
 \value{
-a data frame
+A \code{data.frame}.
 }
 \description{
 Get model coefficients

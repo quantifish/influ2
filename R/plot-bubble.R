@@ -1,22 +1,28 @@
 #' A bubble plot
 #' 
-#' Generates a bubble plot by group for a data set
+#' Generates a bubble plot by group for a data set.
 #' 
-#' @param df a data frame
-#' @param group the groups to plot
-#' @param sum_by sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.
-#' @param fill the colour to use in the plot, can either be a colour or a factor to colour by
-#' @param alpha the alpha level of the bubbles
-#' @param xlab the x axis label
-#' @param ylab the y axis label
-#' @param zlab the z axis label
+#' @param df A \code{data.frame}.
+#' @param group The names of the columns in the \code{data.frame} to plot.
+#' @param sum_by Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.
+#' @param fill the colour to use in the plot, can either be a colour or a factor to colour by.
+#' @param alpha the alpha level of the bubbles.
+#' @param xlab the x axis label.
+#' @param ylab the y axis label.
+#' @param zlab the z axis label.
+#' @param ... Further arguments passed to nothing.
 #' @return a ggplot object
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @import ggplot2
 #' @import dplyr
 #' @export
 #' 
 plot_bubble <- function(df, group = c("fishing_year", "vessel"), sum_by = "raw", fill = "purple", alpha = 0.5, 
-                        ylab = NA, xlab = NA, zlab = "N") {
+                        ylab = NA, xlab = NA, zlab = "N", ...) {
+  
+  if (!is.data.frame(df)) stop("df is not an object of data.frame.")
 
   df <- df %>%
     mutate_at(vars(matches(group[2])), factor)

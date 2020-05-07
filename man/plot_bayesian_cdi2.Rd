@@ -6,7 +6,8 @@
 \usage{
 plot_bayesian_cdi2(
   fit,
-  group = c("fishing_year", "area"),
+  xfocus = "area",
+  yfocus = "fishing_year",
   hurdle = FALSE,
   xlab = "Month",
   ylab = "Fishing year",
@@ -16,7 +17,12 @@ plot_bayesian_cdi2(
 \arguments{
 \item{fit}{a model fit}
 
-\item{group}{the groups to plot}
+\item{xfocus}{The column name of the variable to be plotted on the x axis. This column name must match one of the
+column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument.}
+
+\item{yfocus}{The column name of the variable to be plotted on the y axis. This column name must match one of the
+column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
+temporal variable in a generalised linear model (e.g. year).}
 
 \item{hurdle}{if a hurdle model then use the hurdle}
 

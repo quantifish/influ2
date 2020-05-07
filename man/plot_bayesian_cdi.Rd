@@ -6,32 +6,55 @@
 \usage{
 plot_bayesian_cdi(
   fit,
-  group = c("fishing_year", "area"),
-  hurdle = FALSE,
+  xfocus = "area",
+  yfocus = "fishing_year",
   xlab = "Month",
   ylab = "Fishing year",
+  hurdle = FALSE,
   colour = "purple",
-  p_margin = 0.05
+  p_margin = 0.05,
+  legend = TRUE,
+  sum_by = "row",
+  ...
 )
 }
 \arguments{
-\item{fit}{a model fit}
+\item{fit}{An object of class \code{brmsfit}.}
 
-\item{group}{the groups to plot}
+\item{xfocus}{The column name of the variable to be plotted on the x axis. This column name must match one of the
+column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument.}
 
-\item{hurdle}{if a hurdle model then use the hurdle}
+\item{yfocus}{The column name of the variable to be plotted on the y axis. This column name must match one of the
+column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
+temporal variable in a generalised linear model (e.g. year).}
 
-\item{xlab}{the x axis label}
+\item{xlab}{The x axis label.}
 
-\item{ylab}{the y axis label}
+\item{ylab}{The y axis label.}
 
-\item{colour}{the colour to use in the plot}
+\item{hurdle}{If a hurdle model then use the hurdle.}
 
-\item{p_margin}{the margin between panels on the plot}
+\item{colour}{The colour to use in the plot.}
+
+\item{p_margin}{The margin between panels on the plot. This is passed to \code{margin} within \code{theme}.}
+
+\item{legend}{To show the legend or not.}
+
+\item{sum_by}{Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be 
+the same for all and raw, but the legend will change from numbers of records to a proportion.}
+
+\item{...}{Further arguments passed to nothing.}
 }
 \value{
-a ggplot object
+a \code{ggplot} object.
 }
 \description{
-Bayesian version of the CDI plot
+The CDI plot presents the coefficients for the variable of interest (top-left panel), the spread of the data 
+(bottom-left panel), and the influence statistic (bottom-right panel).
+}
+\seealso{
+\code{\link{get_coefs}}, \code{\link{get_influ}}, \code{\link{plot_bubble}}
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }

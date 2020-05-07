@@ -66,7 +66,7 @@ First I fit three different models of increasing complexity in `brms`. The third
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Fit a series of models using brms
-# if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
+if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
   fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
@@ -79,9 +79,9 @@ First I fit three different models of increasing complexity in `brms`. The third
   # fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
   
   save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
-# } else{
-  # load("mcmc.rda")
-# }
+} else{
+  load("mcmc.rda")
+}
 
 # Fit a model using glm and generate influence statistics using the original influ package
 fit_glm <- glm(log(CPUE) ~ Year + Duration + Species, data = iris2)
@@ -94,14 +94,9 @@ myInfl$calc()
 myInfl$cdiPlot(term = "Species")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "A Bayesian version of original CDI plot."}
-# Generate a CDI plot for a factor - this version aims to look the same as the old version
-plot_bayesian_cdi2(fit = fit2, group = c("Year", "Species"), xlab = "Species")
-```
-
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
 # Generate a CDI plot for a factor
-plot_bayesian_cdi(fit = fit2, group = c("Year", "Species"), xlab = "Species")
+plot_bayesian_cdi(fit = fit2, xfocus = "Species", yfocus = "Year", xlab = "Species")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original step-plot from the influ package."}
@@ -187,22 +182,22 @@ colMeans(r2)
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Generate a CDI plot for a linear variable
-plot_bayesian_cdi(fit = fit1, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit1, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Generate a CDI plot for a polynomial variable
-plot_bayesian_cdi(fit = fit3, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit3, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Generate a CDI plot for a spline
-plot_bayesian_cdi(fit = fit4, group = c("Year", "Duration"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit4, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # Generate a CDI plot for a random-effect
-plot_bayesian_cdi(fit = fit5, group = c("Year", "Duration2"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit5, xfocus = "Duration2", yfocus = "Year", xlab = "Duration")
 
 # Generate a CDI plot for a fixed-effect
 # plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Duration")

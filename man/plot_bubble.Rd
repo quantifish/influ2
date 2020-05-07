@@ -12,29 +12,35 @@ plot_bubble(
   alpha = 0.5,
   ylab = NA,
   xlab = NA,
-  zlab = "N"
+  zlab = "N",
+  ...
 )
 }
 \arguments{
-\item{df}{a data frame}
+\item{df}{A \code{data.frame}.}
 
-\item{group}{the groups to plot}
+\item{group}{The names of the columns in the \code{data.frame} to plot.}
 
-\item{sum_by}{sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.}
+\item{sum_by}{Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.}
 
-\item{fill}{the colour to use in the plot, can either be a colour or a factor to colour by}
+\item{fill}{the colour to use in the plot, can either be a colour or a factor to colour by.}
 
-\item{alpha}{the alpha level of the bubbles}
+\item{alpha}{the alpha level of the bubbles.}
 
-\item{ylab}{the y axis label}
+\item{ylab}{the y axis label.}
 
-\item{xlab}{the x axis label}
+\item{xlab}{the x axis label.}
 
-\item{zlab}{the z axis label}
+\item{zlab}{the z axis label.}
+
+\item{...}{Further arguments passed to nothing.}
 }
 \value{
 a ggplot object
 }
 \description{
-Generates a bubble plot by group for a data set
+Generates a bubble plot by group for a data set.
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }

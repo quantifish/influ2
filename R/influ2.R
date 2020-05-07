@@ -1,0 +1,19 @@
+#' Influence plots
+#'
+#' @description 
+#' \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
+#' 
+#' The influ2 package provides two categories of important functions:
+#' \code{get} and \code{plot}.
+#' 
+#' @section Get functions:
+#' The get functions obtain information from \code{brmsfit} objects and do some processing of that data before returning it as 
+#' a \code{data.frame}.
+#' 
+#' @section Plot functions:
+#' The plot functions include a get function and an appropriate \code{ggplot2} geom to plot the output.
+#'
+#' @docType package
+#' @name influ2
+#' 
+NULL

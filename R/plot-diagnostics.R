@@ -2,7 +2,7 @@
 #' 
 #' This is similar to plot(fit, 2). It works for different distributions.
 #' 
-#' @param fit a model fit
+#' @param fit An object of class \code{brmsfit}.
 #' @param probs numeric vector of length two, representing probabilities. Corresponding quantile pairs define the line drawn.
 #' @return a ggplot object
 #' @importFrom stats residuals qqplot quantile ppoints qnorm qgamma
@@ -46,7 +46,7 @@ plot_qq <- function(fit, probs = c(0.25, 0.75)) {
 #' 
 #' This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
 #' 
-#' @param fit a brmsfit object
+#' @param fit An object of class \code{brmsfit}.
 #' @param trend show a loess smoother or linear line
 #' @return a ggplot object
 #' @importFrom stats fitted residuals
@@ -83,7 +83,7 @@ plot_predicted_residuals <- function(fit, trend = "loess") {
 #' 
 #' This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
 #' 
-#' @param fit a brmsfit object
+#' @param fit An object of class \code{brmsfit}.
 #' @param data a data frame with the same dimensions as the model data
 #' @param year the year column
 #' @return a ggplot object

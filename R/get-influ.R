@@ -1,9 +1,12 @@
 #' Get the influence metric new version
 #' 
-#' @param fit a model fit
+#' @param fit An object of class \code{brmsfit}.
 #' @param group the variable to obtain
 #' @param hurdle if a hurdle model then use the hurdle
-#' @return a data frame
+#' @return a \code{data.frame}.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom stringr str_split str_detect
@@ -13,13 +16,15 @@
 #' 
 get_influ2 <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
   
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
   # Model data
   data <- fit$data %>%
     mutate(id = 1:n())
   y <- names(data)[1]
   
   # Identify the type of variable we are dealing with
-  type <- id_var_type(fit = fit, var = group[2], hurdle = hurdle)
+  type <- id_var_type(fit = fit, xfocus = group[2], hurdle = hurdle)
   
   # Posterior of coefficients
   if (type == "fixed_effect") {
@@ -99,6 +104,7 @@ get_influ2 <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
 #' @param group the variable to obtain
 #' @param hurdle if a hurdle model then use the hurdle
 #' @return a data frame
+#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom stats as.formula model.matrix quantile
@@ -106,6 +112,8 @@ get_influ2 <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
 #' @export
 #' 
 get_influ <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   # Posterior of coefficients
   coefs <- get_coefs(fit = fit, var = group[2], normalise = FALSE, hurdle = hurdle)
@@ -156,37 +164,4 @@ get_influ <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
   #   summarise(estimate = mean(exp(.data$delta)), lower = quantile(exp(.data$delta), probs = 0.05), upper = quantile(exp(.data$delta), probs = 0.95))
   
   return(influ_delta)
-}
-
-
-#' Plot the influence metric for all variables in a model
-#' 
-#' @param fit a brmsfit object
-#' @param year the year variable label
-#' @param fill the colour to use in the plot
-#' @import ggplot2
-#' @export
-#' 
-plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
-  # Extract the models variable names
-  x1 <- gsub(paste0(as.character(fit$formula)[4], " ~ "), "", as.character(fit$formula)[1])
-  x2 <- strsplit(x1, split = " + ", fixed = TRUE)[[1]]
-  x <- x2[x2 != year]
-  
-  df <- NULL
-  for (i in 1:length(x)) {
-    inf1 <- get_influ2(fit = fit, group = c(year, x[i])) %>% mutate(variable = x[i])
-    df <- rbind(df, inf1)
-  }
-  df$variable <- factor(df$variable, levels = x)
-  
-  ggplot(data = df, aes_string(x = year)) +
-    # geom_hline(yintercept = 1, linetype = "dashed") +
-    # geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
-    geom_hline(yintercept = 1, linetype = "dashed") +
-    geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
-    facet_wrap(variable ~ ., ncol = 1, strip.position = "top") +
-    labs(x = NULL, y = "Influence") +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
 }

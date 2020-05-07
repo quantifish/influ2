@@ -1,8 +1,11 @@
 #' Get model coefficients new version
 #' 
-#' @param fit a brmsfit object
-#' @param var the variable to obtain
-#' @return a data frame
+#' @param fit An object of class \code{brmsfit}.
+#' @param var The variable to obtain.
+#' @return A \code{data.frame}.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom nlme fixef ranef
@@ -11,6 +14,8 @@
 #' @export
 #' 
 get_marginal <- function(fit, var = "area") {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   # Create newdata for prediction (using fitted)
   data <- fit$data
@@ -41,15 +46,18 @@ get_marginal <- function(fit, var = "area") {
 
 #' Get raw coefficients
 #' 
-#' @param fit a brmsfit object
-#' @param var the variable to obtain
-#' @return a data frame
+#' @param fit An object of class \code{brmsfit}.
+#' @param var The variable to obtain.
+#' @return A \code{data.frame}.
+#' 
 #' @importFrom reshape2 melt
 #' @importFrom brms posterior_samples
 #' @import dplyr
 #' @export
 #' 
 get_coefs_raw <- function(fit, var = "area") {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   if (nrow(fit$ranef) > 0) {
     ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
@@ -95,12 +103,13 @@ get_coefs_raw <- function(fit, var = "area") {
 
 #' Get model coefficients
 #' 
-#' @param fit a brmsfit object
-#' @param var the variable to obtain
-#' @param normalise normalise to mean of zero
-#' @param hurdle if a hurdle model then use the hurdle
-#' @param transform if the coefficients should be transformed using the link function
-#' @return a data frame
+#' @param fit An object of class \code{brmsfit}.
+#' @param var The variable to obtain.
+#' @param normalise Normalise to have a mean of zero.
+#' @param hurdle If a hurdle model then use the hurdle.
+#' @param transform if the coefficients should be transformed using the link function.
+#' @return A \code{data.frame}.
+#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom nlme fixef ranef
@@ -109,6 +118,8 @@ get_coefs_raw <- function(fit, var = "area") {
 #' @export
 #' 
 get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, transform = FALSE) {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   is_poly <- FALSE
   

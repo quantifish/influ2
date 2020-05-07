@@ -7,12 +7,12 @@
 get_coefs_raw(fit, var = "area")
 }
 \arguments{
-\item{fit}{a brmsfit object}
+\item{fit}{An object of class \code{brmsfit}.}
 
-\item{var}{the variable to obtain}
+\item{var}{The variable to obtain.}
 }
 \value{
-a data frame
+A \code{data.frame}.
 }
 \description{
 Get raw coefficients

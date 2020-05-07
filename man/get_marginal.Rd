@@ -7,13 +7,16 @@
 get_marginal(fit, var = "area")
 }
 \arguments{
-\item{fit}{a brmsfit object}
+\item{fit}{An object of class \code{brmsfit}.}
 
-\item{var}{the variable to obtain}
+\item{var}{The variable to obtain.}
 }
 \value{
-a data frame
+A \code{data.frame}.
 }
 \description{
 Get model coefficients new version
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }
