@@ -2,6 +2,7 @@
 #' 
 #' @param fit a model fit
 #' @param group the variable to obtain
+#' @param hurdle if a hurdle model then use the hurdle
 #' @return a data frame
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number

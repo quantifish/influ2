@@ -10,6 +10,8 @@ get_influ2(fit, group = c("fishing_year", "area"), hurdle = FALSE)
 \item{fit}{a model fit}
 
 \item{group}{the variable to obtain}
+
+\item{hurdle}{if a hurdle model then use the hurdle}
 }
 \value{
 a data frame

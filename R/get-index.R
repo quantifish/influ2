@@ -130,7 +130,7 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
       group_by(year) %>%
       summarise(p = sum(.data$y) / n())
     unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-      filter(y > 0) %>%
+      filter(.data$y > 0) %>%
       group_by(year) %>%
       summarise(cpue = exp(mean(log(.data$y)))) %>%
       left_join(prop, by = "year") %>%

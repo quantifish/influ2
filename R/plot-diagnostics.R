@@ -108,22 +108,19 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year") {
   resid <- residuals(fit) %>% data.frame()
   # names(resid) <- paste0("resid.", names(resid))
   resid <- cbind(data, resid) %>%
-    group_by(Year, Area) %>%
-    summarise(residual = mean(Estimate))
-  head(resid)
-  
+    group_by(.data$Year, .data$Area) %>%
+    summarise(residual = mean(.data$Estimate))
+
   ires <- left_join(idx, resid, by = year) %>%
-    mutate(implied = Estimate + residual)
-  head(ires)
+    mutate(implied = .data$Estimate + .data$residual)
 
   p <- ggplot(data = ires, aes(x = .data$Year, y = .data$implied)) +
     geom_line(data = idx, aes(x = .data$Year, y = .data$Estimate), group = 1, colour = "grey") +
     geom_line(group = 1, colour = "purple") +
     labs(x = NULL, y = "Residuals") +
-    facet_wrap(Area ~ ., ncol = 2) +
+    facet_wrap(.data$Area ~ ., ncol = 2) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  p
-  
+
   return(p)
 }

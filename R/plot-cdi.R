@@ -57,7 +57,7 @@ plot_bayesian_cdi <- function(fit,
   type <- id_var_type(fit = fit, var = group[2], hurdle = hurdle)
   
   # Posterior samples of coefficients
-  if (type == "fixed_effect") {
+  if (type %in% c("fixed_effect", "random_effect")) {
     coefs <- get_coefs(fit = fit, var = group[2], hurdle = hurdle)
   } else {
     coefs <- get_marginal(fit = fit, var = group[2]) # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
