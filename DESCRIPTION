@@ -6,7 +6,7 @@ Authors@R:
            family = "Webber",
            role = c("aut", "cre"),
            email = "darcy.webber@quantifish.co.nz")
-Description: What the package does (one paragraph).
+Description: The infu2 package has been developed for use with brms. It works with population-level or group-level effects, linear effects, polynomials, and splines. It contains functions for extracting coefficients, calculating influence statistics for terms, generating CDI plots, step plots, and other diagnostic plots.
 URL: https://github.com/quantifish/influ2
 BugReports: https://github.com/quantifish/influ2/issues
 License: MIT + file LICENSE
