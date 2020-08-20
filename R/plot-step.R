@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 glm_term_table <- function(mod_list) {
   n <- length(mod_list)
   
@@ -84,6 +85,8 @@ get_bayes_R2 <- function(fits) {
 }
 
 
+=======
+>>>>>>> 30b0ad1c4f3de7cadc84c1343f232fa40c9166c5
 #' A Bayesian version of the step-plot
 #' 
 #' This requires that all steps be run using brms and then provided as a list of model fits.
@@ -107,6 +110,7 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
   fout <- list()
   
   for (i in 1:m) {
+<<<<<<< HEAD
     fout[[i]] <- get_index(fit = fits[[i]], year = year, probs = probs) %>% mutate(colour = "a")
   }
   
@@ -128,6 +132,41 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
   #   df <- rbind(df, fout[[i]])
   # }
   
+=======
+    # yrs <- sort(unique(fits[[i]]$data[,year]))
+    # n <- length(yrs)
+    # 
+    # # Create newdata for prediction (using fitted)
+    # newdata <- fits[[i]]$data %>% slice(rep(1, n))
+    # for (j in 1:ncol(newdata)) {
+    #   x <- fits[[i]]$data[,j]
+    #   newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
+    # }
+    # newdata[,year] <- yrs
+
+    fout[[i]] <- get_index(fit = fits[[i]], year = year, probs = probs) %>%
+      mutate(colour = "a")
+    
+    # fout[[i]] <- fitted(object = fits[[i]], newdata = newdata, probs = c(probs[1], 0.5, probs[2])) %>% 
+    #   data.frame() %>%
+    #   # mutate(Qlower = .data$Qlower / geo_mean(.), Q50 = .data$Q50 / geo_mean(.), Qupper = .data$Qupper / geo_mean(.)) %>%
+    #   mutate(model = as.character(fits[[i]]$formula)[1], year = yrs, colour = "a")
+    # fout[[i]]$Qlower <- fout[[i]]$Qlower / geo_mean(fout[[i]]$Q50)
+    # fout[[i]]$Qupper <- fout[[i]]$Qupper / geo_mean(fout[[i]]$Q50)
+    # fout[[i]]$Q50 <- fout[[i]]$Q50 / geo_mean(fout[[i]]$Q50)
+    
+    if (i > 2) {
+      xx <- fout[[i - 2]] %>% mutate(Model = fout[[i]]$Model, line = i)
+      df_grey <- rbind(df_grey, xx)
+    }
+    if (i > 1) f2 <- fout[[i]] %>% mutate(Q50 = f1$Q50, colour = "b")
+    f1 <- fout[[i]]
+    if (i > 1) fout[[i]] <- rbind(fout[[i]], f2)
+    
+    df <- rbind(df, fout[[i]])
+  }
+  
+>>>>>>> 30b0ad1c4f3de7cadc84c1343f232fa40c9166c5
   df$colour <- factor(df$colour, levels = c("b", "a"))
   
   p <- ggplot(data = df)
