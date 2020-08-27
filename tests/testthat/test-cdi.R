@@ -25,8 +25,8 @@ test_that("summary gives the same thing as get_coefs for population-level effect
   expect_error(ranef(fit))
   expect_equal(c1$Estimate, c2$Estimate)
   expect_equal(c1$Est.Error, c2$Est.Error)
-  expect_equal(c1$Q5, c2$Q5)
-  expect_equal(c1$Q95, c2$Q95)
+  expect_equal(as.numeric(c1$Q5), c2$Q5)
+  expect_equal(as.numeric(c1$Q95), c2$Q95)
 })
 
 
@@ -54,8 +54,8 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
   expect_is(fit, "brmsfit")
   expect_equal(c1$Estimate, c2$Estimate)
   expect_equal(c1$Est.Error, c2$Est.Error)
-  expect_equal(c1$Q5, c2$Q5)
-  expect_equal(c1$Q95, c2$Q95)
+  expect_equal(as.numeric(c1$Q5), c2$Q5)
+  expect_equal(as.numeric(c1$Q95), c2$Q95)
 })
 
 
@@ -92,6 +92,7 @@ test_that("this matches Nokome Bentley's influ package", {
     group_by(variable) %>%
     summarise(Estimate = mean(value), Est.Error = sd(value), Q5 = quantile(value, probs = 0.05), 
               Q50 = quantile(value, probs = 0.5), Q95 = quantile(value, probs = 0.95))
+  
   c2b <- fixef(fit2, probs = c(0.05, 0.95)) %>%
     data.frame() %>%
     mutate(variable = rownames(.)) %>%

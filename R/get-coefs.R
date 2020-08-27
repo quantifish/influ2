@@ -35,7 +35,7 @@ get_marginal <- function(fit, var = "area") {
   newdata$id <- 1:n
   
   # Posterior samples of coefficients
-  coefs <- pp_expect(object = fit, newdata = newdata) %>%
+  coefs <- posterior_epred(object = fit, newdata = newdata) %>%
     melt(varnames = c("iteration", "id")) %>%
     left_join(newdata, by = "id") %>%
     rename(variable = var)

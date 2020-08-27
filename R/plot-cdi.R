@@ -1,3 +1,33 @@
+id_var_type <- function(fit, xfocus, hurdle = FALSE) {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  if (hurdle) {
+    form_split <- str_split(as.character(fit$formula)[2], " \\+ ")[[1]]
+    form_var <- form_split[grepl(xfocus, form_split)]
+  } else {
+    form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
+    form_var <- form_split[grepl(xfocus, form_split)]
+  }
+  
+  if (!is.numeric(fit$data[,xfocus]) & nrow(fit$ranef) == 0) {
+    type <- "fixed_effect"
+  } else if (!is.numeric(fit$data[,xfocus]) & nrow(fit$ranef) > 0) {
+    type <- "random_effect"
+  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("poly\\(", form_var))) {
+    type <- "polynomial"
+  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("s\\(", form_var))) {
+    type <- "spline"
+  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("t2\\(", form_var))) {
+    type <- "spline"
+  } else if (is.numeric(fit$data[,xfocus])) {
+    type <- "linear"
+  }
+  
+  return(type)
+}
+
+
 #' Bayesian version of the CDI plot
 #' 
 #' The CDI plot presents the coefficients for the variable of interest (top-left panel), the spread of the data 
@@ -133,37 +163,6 @@ plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
 #' 
 geo_mean <- function(a) {
   prod(a)^(1.0 / length(a))
-}
-
-
-
-id_var_type <- function(fit, xfocus, hurdle = FALSE) {
-  
-  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
-  
-  if (hurdle) {
-    form_split <- str_split(as.character(fit$formula)[2], " \\+ ")[[1]]
-    form_var <- form_split[grepl(xfocus, form_split)]
-  } else {
-    form_split <- str_split(as.character(fit$formula)[1], " \\+ ")[[1]]
-    form_var <- form_split[grepl(xfocus, form_split)]
-  }
-  
-  if (!is.numeric(fit$data[,xfocus]) & nrow(fit$ranef) == 0) {
-    type <- "fixed_effect"
-  } else if (!is.numeric(fit$data[,xfocus]) & nrow(fit$ranef) > 0) {
-    type <- "random_effect"
-  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("poly\\(", form_var))) {
-    type <- "polynomial"
-  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("s\\(", form_var))) {
-    type <- "spline"
-  } else if (is.numeric(fit$data[,xfocus]) & any(grepl("t2\\(", form_var))) {
-    type <- "spline"
-  } else if (is.numeric(fit$data[,xfocus])) {
-    type <- "linear"
-  }
-  
-  return(type)
 }
 
 
