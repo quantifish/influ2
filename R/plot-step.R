@@ -103,36 +103,35 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
   
   m <- length(fits)
   
-  df <- NULL
-  df_grey <- NULL
   fout <- list()
-  
   for (i in 1:m) {
-    fout[[i]] <- get_index(fit = fits[[i]], year = year, probs = probs) %>% mutate(colour = "a")
+    fout[[i]] <- get_index(fit = fits[[i]], year = year, probs = probs)
   }
   
-  for (i in 2:m) {
+  df <- NULL
+  df_dash <- NULL
+  df_grey <- NULL
+  for (i in 1:m) {
+    df <- rbind(df, fout[[i]])
+    if (i > 1) {
+      xx <- fout[[i - 1]] %>% mutate(Model = fout[[i]]$Model, line = i)
+      df_dash <- rbind(df_dash, xx)
+    }
     if (i > 2) {
       xx <- fout[[i - 2]] %>% mutate(Model = fout[[i]]$Model, line = i)
       df_grey <- rbind(df_grey, xx)
     }
-    if (i > 1) f2 <- fout[[i]] %>% mutate(Q50 = fout[[1]]$Q50, colour = "b")
-    # f1 <- fout[[i]]
-    if (i > 1) fout[[i]] <- rbind(fout[[i]], f2)
-
-    df <- rbind(df, fout[[i]])
   }
   
-  df$colour <- factor(df$colour, levels = c("b", "a"))
-  
-  p <- ggplot(data = df)
-  p <- p + geom_line(data = df_grey, aes(x = .data$Year, y = .data$Q50, group = .data$line), colour = "grey", linetype = "solid")
+  p <- ggplot(data = df) +
+    geom_line(data = df_grey, aes(x = .data$Year, y = .data$Q50, group = .data$Model), colour = "grey", linetype = "solid") +
+    geom_line(data = df_dash, aes(x = .data$Year, y = .data$Q50, group = 1), colour = "black", linetype = "dashed")
   if (show_probs) {
-    p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = .data$colour, fill = .data$colour), alpha = 0.3, colour = NA)
+    p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = 1), alpha = 0.3, colour = NA)
   }
   p <- p + 
-    geom_line(data = df, aes(x = .data$Year, y = .data$Q50, colour = .data$colour, group = .data$colour, linetype = .data$colour)) +
-    geom_point(data = df, aes(x = .data$Year, y = .data$Q50, colour = .data$colour, shape = .data$colour)) +
+    geom_line(data = df, aes(x = .data$Year, y = .data$Q50, group = 1)) +
+    geom_point(data = df, aes(x = .data$Year, y = .data$Q50)) +
     facet_wrap(Model ~ ., ncol = 1, strip.position = "top") +
     labs(x = NULL, y = "Index") +
     scale_fill_manual(values = c(NA, "black")) +
@@ -142,6 +141,6 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +
     theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
-  
+  p
   return(p)
 }
