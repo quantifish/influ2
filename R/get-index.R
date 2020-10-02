@@ -34,6 +34,23 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "on
   }
   newdata[,year] <- yrs
   
+  
+  # fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA)
+  # newdata <- newdata[,1:5]
+  # newdata <- expand.grid(cpue = 1, period = unique(celr5$period), area2 = NA, vessel = NA, month = NA, "period:area2" = NA)
+  # names(newdata) <- names(fit5$data)
+  # head(fit$data)
+  # head(newdata)
+  # fout1 <- fitted(object = fit, newdata = newdata)
+  # fout1 <- fitted(object = fit4, newdata = newdata, probs = c(probs[1], 0.5, probs[2]))
+  # fout1 <- conditional_effects(x = fit, effects = "period")[[1]]
+  # conditions <- data.frame(area2 = c("916", "917", "933"))
+  # fout1 <- conditional_effects(x = fit, effects = "period", conditions = conditions)[[1]]
+  # fout1 <- posterior_epred(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]))
+  # fout1 <- posterior_predict(object = fit, newdata = newdata)
+  # fout1 <- fitted(object = fit)
+  # pred1 <- predict(fit, newdata = newdata, re_formula = NULL, allow_new_levels = TRUE)
+  
   # Get the predicted CPUE by year
   fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA) %>% 
     data.frame() %>%

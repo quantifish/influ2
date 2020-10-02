@@ -29,6 +29,8 @@ plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
   x1 <- gsub(paste0(as.character(fit$formula)[4], " ~ "), "", as.character(fit$formula)[1])
   x2 <- strsplit(x1, split = " + ", fixed = TRUE)[[1]]
   x <- x2[x2 != year]
+  x <- gsub("\\(1 \\| ", "", x)
+  x <- gsub("\\)", "", x)
   
   df <- NULL
   for (i in 1:length(x)) {

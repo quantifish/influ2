@@ -119,7 +119,7 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
     }
     if (i > 2) {
       xx <- fout[[i - 2]] %>% mutate(Model = fout[[i]]$Model, line = i)
-      df_grey <- rbind(df_grey, xx)
+      df_grey <- rbind(df_grey, xx) # bug - these needs to include all prevous models in grey (i.e. if 4 models are provided)
     }
   }
   
