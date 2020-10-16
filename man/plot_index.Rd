@@ -21,3 +21,6 @@ a \code{ggplot} object.
 \description{
 In this plot the unstandardised indices is the geometric mean of the data.
 }
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
+}

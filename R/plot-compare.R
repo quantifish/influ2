@@ -10,8 +10,7 @@
 #' @import ggplot2
 #' @export
 #' 
-plot_compare <- function(fits, labels = NULL,
-                         year = "year", probs = c(0.25, 0.75), show_probs = TRUE) {
+plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.75), show_probs = TRUE) {
   
   m <- length(fits)
   df <- NULL

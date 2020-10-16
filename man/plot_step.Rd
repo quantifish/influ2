@@ -18,3 +18,6 @@ plot_step(fits, year = "year", probs = c(0.25, 0.75), show_probs = TRUE)
 \description{
 This requires that all steps be run using brms and then provided as a list of model fits.
 }
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
+}

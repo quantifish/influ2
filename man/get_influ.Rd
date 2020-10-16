@@ -14,8 +14,11 @@ get_influ(fit, group = c("fishing_year", "area"), hurdle = FALSE)
 \item{hurdle}{if a hurdle model then use the hurdle}
 }
 \value{
-a data frame
+a \code{data.frame}
 }
 \description{
 Get the influence metric
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }

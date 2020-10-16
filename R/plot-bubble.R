@@ -58,7 +58,9 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"), sum_by = "raw",
       mutate(size = ifelse(.data$size == 0, NA, .data$size))
   }
 
-  if (sum_by == "all") df1$size = df1$size / sum(df1$size)
+  if (sum_by == "all") {
+    df1$size <- df1$size / sum(df1$size)
+  }
   
   if (fill %in% names(df)) {
     p <- ggplot(data = df1, aes_string(x = group[2], y = group[1], fill = fill, colour = fill)) +

@@ -8,6 +8,8 @@
 #' @param probs The percentiles to be computed by the \code{quantile} function.
 #' @return a \code{ggplot} object.
 #' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @importFrom stats fitted
 #' @import brms
 #' @import ggplot2
@@ -17,24 +19,7 @@
 plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75)) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
-  # yrs <- sort(unique(fit$data[,year]))
-  # n <- length(yrs)
-  # 
-  # # Create newdata for prediction (using fitted)
-  # newdata <- fit$data %>% slice(rep(1, n))
-  # for (j in 1:ncol(newdata)) {
-  #   x <- fit$data[,j]
-  #   newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
-  # }
-  # newdata[,year] <- yrs
-  # 
-  # fout <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2])) %>% 
-  #   data.frame() %>%
-  #   # mutate(Qlower = .data$Qlower / geo_mean(.), Q50 = .data$Q50 / geo_mean(.), Qupper = .data$Qupper / geo_mean(.)) %>%
-  #   mutate(model = "Standardised", year = yrs)
-  # fout$Qlower <- fout$Qlower / geo_mean(fout$Q50)
-  # fout$Qupper <- fout$Qupper / geo_mean(fout$Q50)
-  # fout$Q50 <- fout$Q50 / geo_mean(fout$Q50)
+
   fout <- get_index(fit = fit, year = year, probs = probs) %>%
     mutate(model = "Standardised")
   

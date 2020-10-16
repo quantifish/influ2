@@ -103,7 +103,9 @@ get_influ2 <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
 #' @param fit a model fit
 #' @param group the variable to obtain
 #' @param hurdle if a hurdle model then use the hurdle
-#' @return a data frame
+#' @return a \code{data.frame}
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
 #' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number

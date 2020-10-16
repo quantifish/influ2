@@ -62,37 +62,11 @@ glm_step_plot <- function(data, mod_list, ibest = 5) {
 #' This requires that all steps be run using brms and then provided as a list of model fits.
 #' 
 #' @param fits a list of model fits in the order that you want to compare them
-#' 
-#' @importFrom brms add_criterion
-#' @import dplyr
-#' @export
-#' 
-get_bayes_R2 <- function(fits) {
-  df <- NULL
-  for (i in 1:length(fits)) {
-    fit <- fits[[i]]
-    if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
-    fit <- add_criterion(x = fit, criterion = "bayes_R2")
-    rdf <- data.frame(R2 = fit$criteria$bayes_R2) %>%
-      mutate(Model = as.character(fit$formula)[1], Distribution = as.character(fit$family)[1], Link = as.character(fit$family)[2])
-    df <- rbind(df, rdf)
-  }
-  df <- df %>% 
-    group_by(.data$Model, .data$Distribution, .data$Link) %>% 
-    summarise(R2 = mean(.data$R2))
-  df$diff <- c(0, diff(df$R2))
-  return(df)
-}
-
-
-#' A Bayesian version of the step-plot
-#' 
-#' This requires that all steps be run using brms and then provided as a list of model fits.
-#' 
-#' @param fits a list of model fits in the order that you want to compare them
 #' @param year the year or time label
 #' @param probs the quantiles to plot
 #' @param show_probs plot the quantiles or not
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
 #' 
 #' @import brms
 #' @import ggplot2
@@ -126,9 +100,11 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
   p <- ggplot(data = df) +
     geom_line(data = df_grey, aes(x = .data$Year, y = .data$Q50, group = .data$Model), colour = "grey", linetype = "solid") +
     geom_line(data = df_dash, aes(x = .data$Year, y = .data$Q50, group = 1), colour = "black", linetype = "dashed")
+  
   if (show_probs) {
     p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = 1), alpha = 0.3, colour = NA)
   }
+  
   p <- p + 
     geom_line(data = df, aes(x = .data$Year, y = .data$Q50, group = 1)) +
     geom_point(data = df, aes(x = .data$Year, y = .data$Q50)) +
@@ -141,6 +117,6 @@ plot_step <- function(fits, year = "year", probs = c(0.25, 0.75), show_probs = T
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +
     theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))
-  p
+  
   return(p)
 }
