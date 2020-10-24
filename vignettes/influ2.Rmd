@@ -56,7 +56,7 @@ glimpse(iris2)
 plot_bubble(df = iris2, group = c("Year", "Duration2"), fill = "green")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and species."}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year, species, and area."}
 plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
 ```
 
@@ -77,9 +77,9 @@ if (TRUE) {
   fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0, iter = 1000)
   fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0, iter = 1000)
   fit5 <- brm(CPUE ~ Year + (1|Duration2), data = iris2, family = weibull, refresh = 0, iter = 1000)
-  # fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0)
+  fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0, iter = 1000)
   
-  save(fit0, fit1, fit2, fit3, fit4, fit5, file = "mcmc.rda")
+  save(fit0, fit1, fit2, fit3, fit4, fit5, fit6, file = "mcmc.rda")
 } else{
   load("mcmc.rda")
 }
@@ -106,7 +106,7 @@ myInfl$stepPlot()
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian step-plot from the influ2 package. Note that the new step-plot requires that all models/steps be run in brms before the function can be used."}
 fits <- list(fit0, fit1, fit2)
-plot_step(fits = fits, year = "Year", probs = c(0.25, 0.75), show_probs = TRUE)
+plot_step(fits = fits, year = "Year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -125,19 +125,19 @@ plot_influ(fit2, year = "Year")
 myInfl$influPlot()
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of influences produced by the original influ package (points) and the new influ2 calculation (lines)."}
 i1 <- myInfl$influences %>%
   pivot_longer(cols = -level, names_to = "variable")
-i2 <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
+i_species <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
   group_by(Year) %>%
   summarise(delta = mean(delta)) %>%
   mutate(variable = "Species")
-i3 <- get_influ(fit = fit2, group = c("Year", "Duration")) %>%
+i_duration <- get_influ(fit = fit2, group = c("Year", "Duration")) %>%
   group_by(Year) %>%
   summarise(delta = mean(delta)) %>%
   mutate(variable = "Duration")
 
-ggplot(data = rbind(i2, i3)) +
+ggplot(data = rbind(i_species, i_duration)) +
   geom_point(data = i1, aes(x = level, y = exp(value))) +
   geom_line(aes(x = Year, y = exp(delta), colour = variable, group = variable)) +
   facet_wrap(variable ~ ., ncol = 1, scales = "free_y") +
@@ -156,9 +156,10 @@ criterion <- c("loo", "waic", "bayes_R2")
 fit0 <- add_criterion(fit0, criterion = criterion)
 fit1 <- add_criterion(fit1, criterion = criterion)
 fit2 <- add_criterion(fit2, criterion = criterion)
-# fit3 <- add_criterion(fit3, criterion = criterion)
+fit3 <- add_criterion(fit3, criterion = criterion)
 # fit4 <- add_criterion(fit4, criterion = criterion)
 # fit5 <- add_criterion(fit5, criterion = criterion)
+# fit6 <- add_criterion(fit6, criterion = criterion)
 
 fit0$criteria$loo
 fit0$criteria$waic
@@ -175,41 +176,43 @@ loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-fits <- list(fit0, fit1, fit2)
+fits <- list(fit0, fit1, fit2, fit3)
 r2 <- matrix(NA, nrow = nrow(fits[[1]]$criteria$bayes_R2), ncol = length(fits))
 for (i in 1:length(fits)) r2[,i] <- fits[[i]]$criteria$bayes_R2
-colMeans(r2)
+colMeans(r2) # bayes_R2 for the three model runs
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a linear variable."}
 # Generate a CDI plot for a linear variable
 plot_bayesian_cdi(fit = fit1, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a polynomial."}
 # Generate a CDI plot for a polynomial variable
 plot_bayesian_cdi(fit = fit3, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a spline."}
 # Generate a CDI plot for a spline
 plot_bayesian_cdi(fit = fit4, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a random-effect"}
 # Generate a CDI plot for a random-effect
 plot_bayesian_cdi(fit = fit5, xfocus = "Duration2", yfocus = "Year", xlab = "Duration")
+```
 
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a fixed-effect"}
 # Generate a CDI plot for a fixed-effect
-# plot_bayesian_cdi(fit = fit6, group = c("Year", "Duration2"), xlab = "Duration")
+plot_bayesian_cdi(fit = fit6, xfocus = "Duration2", yfocus = "Year", xlab = "Duration")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-fits <- list(fit1, fit3, fit4, fit5)
-plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect"), year = "Year")
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison plot of all model runs."}
+fits <- list(fit1, fit3, fit4, fit5, fit6)
+plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect", "fixed-effect"), year = "Year")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Unstandardised versus standardised series."}
 plot_index(fit = fit4, year = "Year")
 ```
 
@@ -217,13 +220,15 @@ plot_index(fit = fit4, year = "Year")
 
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
 yrep <- posterior_predict(fit4, draws = 100)
 
 ppc_dens_overlay(y = iris2$CPUE, yrep = yrep) + 
   labs(x = "CPUE", y = "Density") +
   theme_bw()
+```
 
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
 ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) +
   coord_cartesian(xlim = c(0, 10)) +
   theme_bw()
@@ -233,44 +238,45 @@ ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) +
 plot_predicted_residuals(fit = fit4, trend = "loess")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother."}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother by year."}
 plot_predicted_residuals(fit = fit4, trend = "lm") +
   facet_wrap(Year ~ .)
 
 # A new style of residual plot
-  fit = fit4
-  # Extract predicted values
-  pred <- fitted(fit) %>% data.frame()
-  names(pred) <- paste0("pred.", names(pred))
-  
-  # Extract residuals
-  resid <- residuals(fit) %>% data.frame()
-  names(resid) <- paste0("resid.", names(resid))
-  
-  df <- cbind(resid, pred, iris2)
-  head(df)
-  
-  p <- ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
-    geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
-    facet_wrap(Area ~ Species) +
-    # geom_hline(yintercept = 0, linetype = "dashed") +
-    # geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
-    # labs(x = "Predicted values", y = "Residuals") +
-    theme_bw()
-  p
+fit <- fit4
+
+# Extract predicted values
+pred <- fitted(fit) %>% data.frame()
+names(pred) <- paste0("pred.", names(pred))
+
+# Extract residuals
+resid <- residuals(fit) %>% data.frame()
+names(resid) <- paste0("resid.", names(resid))
+
+df <- cbind(resid, pred, iris2)
+head(df)
+
+p <- ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
+  geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
+  facet_wrap(Area ~ Species) +
+  # geom_hline(yintercept = 0, linetype = "dashed") +
+  # geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
+  # labs(x = "Predicted values", y = "Residuals") +
+  theme_bw()
+p
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Implied residuals."}
 plot_implied_residuals(fit = fit2, data = iris2, year = "Year")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot."}
 plot_qq(fit4)
 ```
 
 # Functions for generating outputs for stock assessment
 
-Finally, in order to fit to the data in a stock assessment model then indices can be produced using the `get_index` function.
+Finally, in order to fit to the data in a stock assessment model then indices can be produced using the `get_index` function. The `Estimate` and `Est.Error` columns are what should be used in stock assessment.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 get_index(fit = fit2, year = "Year") %>%
@@ -278,12 +284,14 @@ get_index(fit = fit2, year = "Year") %>%
   knitr::kable(digits = 3)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Simulating from a lognormal distribution and comparing with table values."}
 cpue1 <- get_index(fit = fit2, year = "Year") %>% mutate(Type = "GLM")
+
 cpue2 <- cpue1 %>% mutate(Type = "Simulated")
 for (ii in 1:nrow(cpue1)) {
   # sdd <- cpue1$Est.Error[ii] # this is wrong
   sdd <- log(1 + cpue1$Est.Error[ii] / cpue1$Estimate[ii])
+  # r1 <- rlnorm(n = 5000, log(cpue1$Estimate[ii]), sdd)
   r1 <- rlnorm(n = 5000, log(cpue1$Q50[ii]), sdd)
   cpue2$Q50[ii] <- median(r1)
   cpue2$Qlower[ii] <- quantile(r1, probs = 0.025)

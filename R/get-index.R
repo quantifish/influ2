@@ -54,7 +54,8 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "on
   fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA) %>% 
     data.frame() %>%
     rename(Qlower = 3, Qupper = 5) %>%
-    mutate(CV = .data$Est.Error / .data$Estimate, Year = yrs) %>% # CV = SD / mu
+    mutate(CV = .data$Est.Error / .data$Estimate) %>% # CV = SD / mu
+    mutate(Year = yrs) %>%
     mutate(Model = as.character(fit$formula)[1], Distribution = as.character(fit$family)[1], Link = as.character(fit$family)[2])
   
   p1 <- ggplot(data = fout1, aes(x = .data$Year)) +
