@@ -209,7 +209,9 @@ plot_bayesian_cdi(fit = fit6, xfocus = "Duration2", yfocus = "Year", xlab = "Dur
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison plot of all model runs."}
 fits <- list(fit1, fit3, fit4, fit5, fit6)
-plot_compare(fits = fits, labels = c("linear", "poly", "spline", "random-effect", "fixed-effect"), year = "Year")
+plot_compare(fits = fits, 
+             labels = c("linear", "poly", "spline", "random-effect", "fixed-effect"), 
+             year = "Year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Unstandardised versus standardised series."}
