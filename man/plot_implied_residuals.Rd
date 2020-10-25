@@ -4,7 +4,7 @@
 \alias{plot_implied_residuals}
 \title{Plots predicted values versus residuals}
 \usage{
-plot_implied_residuals(fit, data = NULL, year = "Year")
+plot_implied_residuals(fit, data = NULL, year = "Year", groups = "Species")
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}

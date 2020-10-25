@@ -30,8 +30,8 @@ In this vignette I use the `iris` data set to generate a fake catch per unit eff
 The main function for exploring data in `influ2` is `plot_bubble` which presents the number of records by two user defined groups within a data set. The bubble size in `plot_bubble` represents the number of records across the entire data set, and bubbles can either be a single colour or coloured by a third variable in the data set.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-library(reshape2)
 library(tidyverse)
+library(reshape2)
 library(brms)
 library(influ2)
 library(bayesplot)
@@ -176,10 +176,8 @@ loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-fits <- list(fit0, fit1, fit2, fit3)
-r2 <- matrix(NA, nrow = nrow(fits[[1]]$criteria$bayes_R2), ncol = length(fits))
-for (i in 1:length(fits)) r2[,i] <- fits[[i]]$criteria$bayes_R2
-colMeans(r2) # bayes_R2 for the three model runs
+# bayes_R2 for the three model runs
+get_bayes_R2(fits)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a linear variable."}
@@ -222,7 +220,7 @@ plot_index(fit = fit4, year = "Year")
 
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of the empirical distribution of the data (y) to the distributions of simulated/replicated data (yrep) from the posterior predictive distribution."}
 yrep <- posterior_predict(fit4, draws = 100)
 
 ppc_dens_overlay(y = iris2$CPUE, yrep = yrep) + 
@@ -236,14 +234,27 @@ ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) +
   theme_bw()
 ```
 
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot from LOO."}
+loo <- loo(fit4, save_psis = TRUE)
+psis <- loo$psis_object
+lw <- weights(psis)
+ppc_loo_pit_qq(y = iris2$CPUE, yrep = yrep, lw = lw)
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot."}
+plot_qq(fit = fit4)
+```
+
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother."}
 plot_predicted_residuals(fit = fit4, trend = "loess")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother by year."}
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Residuals and a linear fit by year."}
 plot_predicted_residuals(fit = fit4, trend = "lm") +
   facet_wrap(Year ~ .)
+```
 
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Residuals and a loess smoother by year."}
 # A new style of residual plot
 fit <- fit4
 
@@ -256,25 +267,32 @@ resid <- residuals(fit) %>% data.frame()
 names(resid) <- paste0("resid.", names(resid))
 
 df <- cbind(resid, pred, iris2)
-head(df)
 
 p <- ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
   geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
   facet_wrap(Area ~ Species) +
-  # geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_hline(yintercept = 0, linetype = "dashed") +
   # geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
   # labs(x = "Predicted values", y = "Residuals") +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 p
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Implied residuals."}
-plot_implied_residuals(fit = fit2, data = iris2, year = "Year")
+# Implied residuals
+
+Implied coefficients (points) are calculated as the normalised fishing year coefficient (grey line) plus the mean of the standardised residuals in each year for each category of a variable. These values approximate the coefficients obtained when an area x year interaction term is fitted, particularly for those area x year combinations which have a substantial proportion of the records. The error bars indicate one standard error of the standardised residuals. The information at the top of each panel identifies the plotted category, provides the correlation coefficient (rho) between the category year index and the overall model index, and the number of records supporting the category.
+
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Area which is not included in the model."}
+plot_implied_residuals(fit = fit2, data = iris2, year = "Year", groups = "Area") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot."}
-plot_qq(fit4)
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Sepcies which is included in the model."}
+plot_implied_residuals(fit = fit2, data = iris2, year = "Year", groups = "Species") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
 
 # Functions for generating outputs for stock assessment
 

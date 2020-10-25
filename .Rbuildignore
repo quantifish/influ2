@@ -11,3 +11,4 @@ other/
 man/figures
 Bentleyetal2011Influenceplotsandmetrics.pdf
 influ_vignette.pdf
+R/testing.R

@@ -4,10 +4,12 @@
 \alias{get_bayes_R2}
 \title{Get Bayesian R2 for a list of models}
 \usage{
-get_bayes_R2(fits)
+get_bayes_R2(fits, ...)
 }
 \arguments{
 \item{fits}{a list of model fits in the order that you want to compare them}
+
+\item{...}{additional parameters passed to \code{add_criterion}}
 }
 \description{
 Calculates the Bayesian R2 for a list of brms models using the \code{add_criterion} function.
