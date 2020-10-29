@@ -70,18 +70,29 @@ First I fit three different models of increasing complexity in `brms`. The third
 if (FALSE) {
   # A set of lognormal models
   fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
+  save(fit0, file = "mcmc0.rda")
   fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
+  save(fit1, file = "mcmc1.rda")
   fit2 <- brm(CPUE ~ Year + Duration + Species, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
+  save(fit2, file = "mcmc2.rda")
   
   # Gaussian, Gamma, and Weibull
   fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0, iter = 1000)
+  save(fit3, file = "mcmc3.rda")
   fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0, iter = 1000)
+  save(fit4, file = "mcmc4.rda")
   fit5 <- brm(CPUE ~ Year + (1 | Duration2), data = iris2, family = weibull, refresh = 0, iter = 1000)
+  save(fit5, file = "mcmc5.rda")
   fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0, iter = 1000)
-  
-  save(fit0, fit1, fit2, fit3, fit4, fit5, fit6, file = "mcmc.rda")
+  save(fit6, file = "mcmc6.rda")
 } else{
-  load("mcmc.rda")
+  load("mcmc0.rda")
+  load("mcmc1.rda")
+  load("mcmc2.rda")
+  load("mcmc3.rda")
+  load("mcmc4.rda")
+  load("mcmc5.rda")
+  load("mcmc6.rda")
 }
 
 # Fit a model using glm and generate influence statistics using the original influ package

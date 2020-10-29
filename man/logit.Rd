@@ -7,8 +7,11 @@
 logit(p)
 }
 \arguments{
-\item{p}{a vector}
+\item{p}{a vector.}
 }
 \description{
 logit
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }

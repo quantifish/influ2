@@ -7,8 +7,11 @@
 inv_logit(a)
 }
 \arguments{
-\item{a}{a vector}
+\item{a}{a vector.}
 }
 \description{
 Inverse logit
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }
