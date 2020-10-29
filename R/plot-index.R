@@ -20,30 +20,15 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
 
+  # Get the standardised series
   fout <- get_index(fit = fit, year = year, probs = probs) %>%
     mutate(model = "Standardised")
   
-  if (fit$family$family == "bernoulli" | grepl("hurdle", fit$family$family)) {
-    prop <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-      mutate(y = ifelse(.data$y > 0, 1, 0)) %>%
-      group_by(year) %>%
-      summarise(p = sum(.data$y) / n())
-    unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-      filter(.data$y > 0) %>%
-      group_by(year) %>%
-      summarise(cpue = exp(mean(log(.data$y)))) %>%
-      left_join(prop, by = "year") %>%
-      mutate(cpue = .data$cpue * .data$p)
-  } else {
-    unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-      group_by(year) %>%
-      summarise(cpue = exp(mean(log(.data$y))))
-  }
+  # Get the unstandardised series
+  unstd <- get_unstandarsied(fit = fit, year = year, rescale = "one") %>%
+    mutate(model = "Unstandardised")
   
-  df1 <- fout %>%
-    mutate(Estimate = NA, Est.Error = NA, Qlower = NA, Q50 = unstd$cpue / geo_mean(unstd$cpue), Qupper = NA, model = "Unstandardised")
-  
-  df <- rbind(fout, df1)
+  df <- bind_rows(fout, unstd)
   df$model <- factor(df$model, levels = c("Unstandardised", "Standardised"))
   
   p <- ggplot(data = df, aes(x = .data$Year, y = .data$Q50, group = .data$model)) +
@@ -59,5 +44,79 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
     theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank(), legend.key.width = unit(2, "cm")) +
     guides(color = guide_legend(override.aes = list(fill = NA)))
   
+  return(p)
+}
+
+
+#' Plot the hurdle and positive components
+#' 
+#' @param fit An object of class \code{brmsfit}.
+#' @param year the year or time label.
+#' @param fill the fill colour for the percentiles.
+#' @param probs The percentiles to be computed by the \code{quantile} function.
+#' @return a \code{ggplot} object.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
+#' @importFrom stats fitted
+#' @import brms
+#' @import ggplot2
+#' @import dplyr
+#' @export
+#' 
+plot_hurdle <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75)) {
+  
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  yrs <- sort(unique(fit$data[,year]))
+  n <- length(yrs)
+  
+  # Create newdata for prediction (using fitted)
+  newdata <- fit$data %>% slice(rep(1, n))
+  for (j in 1:ncol(newdata)) {
+    x <- fit$data[,j]
+    newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
+  }
+  newdata[,year] <- yrs
+  
+  # Get the positive component
+  mu <- fitted(object = fit, newdata = newdata, re_formula = NA, dpar = "mu", scale = "response") %>% 
+    cbind(newdata) %>%
+    rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
+    mutate(model = "Lognormal")# %>%
+    # mutate(Estimate = exp(Estimate), Qlower = exp(Qlower), Qupper = exp(Qupper))
+  # head(mu)
+  
+  # Get the hurdle component
+  hu <- fitted(object = fit, newdata = newdata, re_formula = NA, dpar = "hu") %>% 
+    cbind(newdata) %>%
+    rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
+    mutate(model = "Hurdle")# %>%
+    # mutate(Estimate = inv_logit(Estimate), Qlower = inv_logit(Qlower), Qupper = inv_logit(Qupper))
+  # head(hu)
+  
+  # Get the combined series
+  bt <- fitted(object = fit, newdata = newdata, re_formula = NA) %>% 
+    cbind(newdata) %>%
+    rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
+    mutate(model = "Combined")
+  # head(bt)
+  
+  df <- bind_rows(mu, hu, bt)
+  # df$model <- factor(df$model, levels = c("Unstandardised", "Standardised"))
+  
+  p <- ggplot(data = df, aes(x = .data$year, y = .data$Estimate, group = .data$model)) +
+    geom_ribbon(aes(ymin = .data$Qlower, ymax = .data$Qupper, fill = .data$model), alpha = 0.5, colour = NA) +
+    geom_line(aes(colour = .data$model, linetype = .data$model)) +
+    geom_point(aes(colour = .data$model)) +
+    labs(x = NULL, y = "Index") +
+    # scale_colour_manual(values = c("grey", fill)) +
+    # scale_fill_manual(values = c("grey", fill)) +
+    # scale_linetype_manual(values = c("dashed", "solid")) +
+    # scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
+    theme_bw() +
+    theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank(), legend.key.width = unit(2, "cm")) +
+    guides(color = guide_legend(override.aes = list(fill = NA)))
+  p
   return(p)
 }

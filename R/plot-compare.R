@@ -28,7 +28,7 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
     # newdata[,year] <- yrs
     # 
     # fout <- data.frame(fitted(object = fits[[i]], newdata = newdata, probs = c(probs[1], 0.5, probs[2])))
-    fout <- get_index(fit = fits[[i]], year = year, probs = probs)
+    fout <- get_index(fit = fits[[i]], year = year, probs = probs, rescale = "one")
     
     if (is.null(labels)) {
       fout$model <- as.character(fits[[i]]$formula)[1]
@@ -43,9 +43,11 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
   }
   
   p <- ggplot(data = df)
+  
   if (show_probs) {
     p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = .data$model, fill = .data$model), alpha = 0.3, colour = NA)
   }
+  
   p <- p + 
     geom_line(data = df, aes(x = .data$Year, y = .data$Q50, colour = .data$model, group = .data$model)) +
     labs(x = NULL, y = "Index") +

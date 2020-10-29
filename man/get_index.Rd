@@ -9,7 +9,8 @@ get_index(
   year = "year",
   probs = c(0.025, 0.975),
   rescale = "one",
-  do_plot = FALSE
+  do_plot = FALSE,
+  ...
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ get_index(
 \item{rescale}{How to rescale the series.}
 
 \item{do_plot}{Return a \code{ggplot} object instead of a \code{data.frame}.}
+
+\item{...}{Additional parameters passed to \code{fitted}.}
 }
 \value{
 a \code{data.frame} or a \code{ggplot} object.

@@ -17,3 +17,6 @@ a ggplot object
 \description{
 This is similar to plot(fit, 2). It works for different distributions.
 }
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
+}

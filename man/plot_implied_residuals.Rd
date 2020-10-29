@@ -12,10 +12,15 @@ plot_implied_residuals(fit, data = NULL, year = "Year", groups = "Species")
 \item{data}{a data frame with the same dimensions as the model data}
 
 \item{year}{the year column}
+
+\item{groups}{the grouping/facet variable}
 }
 \value{
 a ggplot object
 }
 \description{
 This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }

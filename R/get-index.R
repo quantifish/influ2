@@ -1,3 +1,58 @@
+#' Get the unstandardised indices
+#' 
+#' @param fit An object of class \code{brmsfit}.
+#' @param year The year or time label (e.g. year, Year, fishing_year, etc).
+#' @param rescale How to rescale the series.
+#' @return a \code{data.frame} or a \code{ggplot} object.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
+#' @import brms
+#' @import dplyr
+#' @export
+#' 
+get_unstandarsied <- function(fit, year = "year", rescale = "one") {
+
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  if (fit$family$family == "bernoulli" | grepl("hurdle", fit$family$family)) {
+    prop <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
+      mutate(y = ifelse(.data$y > 0, 1, 0)) %>%
+      group_by(.data$Year) %>%
+      summarise(p = sum(.data$y) / n())
+    unstd <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
+      filter(.data$y > 0) %>%
+      group_by(.data$Year) %>%
+      summarise(cpue = exp(mean(log(.data$y)))) %>%
+      left_join(prop, by = "Year") %>%
+      mutate(cpue = .data$cpue * .data$p)
+  } else {
+    unstd <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
+      group_by(.data$Year) %>%
+      summarise(cpue = exp(mean(log(.data$y))))
+  }
+  
+  gm <- geo_mean(unstd$cpue)
+  
+  fout <- unstd %>%
+    mutate(Estimate = .data$cpue, Q50 = .data$cpue) %>%
+    select(-.data$cpue)
+  
+  # Rescale the series
+  if (rescale == "raw") {
+    # nothing to do
+  } else if (rescale == "one") {
+    fout$Estimate <- fout$Estimate / gm
+    fout$Q50 <- fout$Q50 / gm
+  } else if (is.numeric(rescale)) {
+    fout$Estimate <- fout$Estimate / gm * rescale
+    fout$Q50 <- fout$Q50 / gm * rescale
+  }
+  
+  return(fout)
+}
+
+
 #' Get the standardised indices
 #' 
 #' Get the standardised indices each year with associated uncertainty and return either as a table or a ggplot.
@@ -7,6 +62,7 @@
 #' @param probs The percentiles to be computed by the \code{quantile} function.
 #' @param rescale How to rescale the series.
 #' @param do_plot Return a \code{ggplot} object instead of a \code{data.frame}.
+#' @param ... Additional parameters passed to \code{fitted}.
 #' @return a \code{data.frame} or a \code{ggplot} object.
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}
@@ -18,7 +74,7 @@
 #' @import dplyr
 #' @export
 #' 
-get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "one", do_plot = FALSE) {
+get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "one", do_plot = FALSE, ...) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
@@ -51,16 +107,12 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "on
   # pred1 <- predict(fit, newdata = newdata, re_formula = NULL, allow_new_levels = TRUE)
   
   # Get the predicted CPUE by year
-  fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA) %>% 
+  fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA, ...) %>% 
     data.frame() %>%
-    rename(Qlower = 3, Qupper = 5) %>%
+    rename(Qlower = 3, Qupper = 5) %>% # this renames the 3rd and the 5th columns
     mutate(CV = .data$Est.Error / .data$Estimate) %>% # CV = SD / mu
     mutate(Year = yrs) %>%
     mutate(Model = as.character(fit$formula)[1], Distribution = as.character(fit$family)[1], Link = as.character(fit$family)[2])
-  
-  p1 <- ggplot(data = fout1, aes(x = .data$Year)) +
-    geom_pointrange(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
-    geom_pointrange(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.5)
   
   # Rescale the predicted CPUE. The options are:
   # 1. raw - don't rescale
@@ -68,33 +120,48 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "on
   # 3. unstandardised - rescale to the geometric mean of the unstandardised series
   # 4. a user defined number
   fout <- fout1
-  if (rescale == "one") {
+  if (rescale == "raw") {
+    # nothing to do
+  } else if (rescale == "one") {
     fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate)
     fout$Qlower <- fout$Qlower / geo_mean(fout$Q50)
     fout$Qupper <- fout$Qupper / geo_mean(fout$Q50)
     fout$Q50 <- fout$Q50 / geo_mean(fout$Q50)
   } else if (rescale == "unstandardised") {
-    unstd <- data.frame(y = fit$data[,1], year = fit$data[,year]) %>%
-      group_by(year) %>%
-      summarise(cpue = exp(mean(log(.data$y))))
-    fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate) * geo_mean(unstd$cpue)
-    fout$Qlower <- fout$Qlower / geo_mean(fout$Q50) * geo_mean(unstd$cpue)
-    fout$Qupper <- fout$Qupper / geo_mean(fout$Q50) * geo_mean(unstd$cpue)
-    fout$Q50 <- fout$Q50 / geo_mean(fout$Q50) * geo_mean(unstd$cpue)
+    unstd <- get_unstandarsied(fit = fit, year = year, rescale = "raw")
+    gm <- geo_mean(unstd$Estimate)
+    
+    fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate) * gm
+    fout$Qlower <- fout$Qlower / geo_mean(fout$Q50) * gm
+    fout$Qupper <- fout$Qupper / geo_mean(fout$Q50) * gm
+    fout$Q50 <- fout$Q50 / geo_mean(fout$Q50) * gm
   } else if (is.numeric(rescale)) {
     fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate) * rescale
     fout$Qlower <- fout$Qlower / geo_mean(fout$Q50) * rescale
     fout$Qupper <- fout$Qupper / geo_mean(fout$Q50) * rescale
     fout$Q50 <- fout$Q50 / geo_mean(fout$Q50) * rescale
   }
-  
   fout$Est.Error <- fout$CV * fout$Estimate # SD = CV * mu
   
-  p2 <- ggplot(fout, aes(x = .data$Year)) +
-    geom_pointrange(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
-    geom_pointrange(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.5)
+  # Make Year the first column
+  fout <- fout %>%
+    relocate(.data$Year)
   
   if (do_plot) {
+    p1 <- ggplot(data = fout1, aes(x = .data$Year)) +
+      geom_errorbar(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
+      geom_point(aes(y = .data$Q50)) +
+      geom_errorbar(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.75) +
+      geom_point(aes(y = .data$Estimate), colour = "red", alpha = 0.75) +
+      theme_bw()
+    
+    p2 <- ggplot(fout, aes(x = .data$Year)) +
+      geom_errorbar(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
+      geom_point(aes(y = .data$Q50)) +
+      geom_errorbar(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.75) +
+      geom_point(aes(y = .data$Estimate), colour = "red", alpha = 0.75) +
+      theme_bw()
+    
     return(p1 + p2)
   } else {
     return(fout)

@@ -17,3 +17,6 @@ a ggplot object
 \description{
 This plots predicted values against residuals including uncertainty, using the fitted and residual functions on a brmsfit object.
 }
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
+}

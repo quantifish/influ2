@@ -5,6 +5,9 @@
 #' @param fit An object of class \code{brmsfit}.
 #' @param probs numeric vector of length two, representing probabilities. Corresponding quantile pairs define the line drawn.
 #' @return a ggplot object
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @importFrom stats residuals qqplot quantile ppoints qnorm qgamma
 #' @import ggplot2
 #' @export

@@ -156,17 +156,6 @@ plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
 }
 
 
-#' Geometric mean
-#' 
-#' @param a a vector
-#' @export
-#' 
-geo_mean <- function(a) {
-  prod(a)^(1.0 / length(a))
-}
-
-
-
 #' Bayesian version of the CDI plot (depreciated)
 #' 
 #' @param fit a model fit

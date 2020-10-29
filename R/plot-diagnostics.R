@@ -5,7 +5,11 @@
 #' @param fit An object of class \code{brmsfit}.
 #' @param data a data frame with the same dimensions as the model data
 #' @param year the year column
+#' @param groups the grouping/facet variable
 #' @return a ggplot object
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @importFrom stats fitted residuals
 #' @import ggplot2
 #' @import dplyr
@@ -30,7 +34,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
   # Extract residuals
   ires <- residuals(fit, summary = FALSE) %>% 
     melt() %>%
-    rename(iteration = Var1, id = Var2, residual = value) %>%
+    rename(iteration = .data$Var1, id = .data$Var2, residual = .data$value) %>%
     left_join(data, by = "id") %>% 
     left_join(idx, by = year) %>%
     mutate(implied = .data$Estimate + .data$residual) %>%
@@ -39,7 +43,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
 
   p <- ggplot(data = ires, aes(x = .data$Year, y = .data$Estimate)) +
     geom_line(data = idx, aes(x = .data$Year, y = .data$Estimate), group = 1, linetype = "dashed") +
-    geom_pointrange(aes(min = Qlower, max = Qupper), colour = "purple") +
+    geom_pointrange(aes(min = .data$Qlower, max = .data$Qupper), colour = "purple") +
     geom_line(group = 1, colour = "purple") +
     labs(x = NULL, y = "Residuals") +
     facet_wrap(as.formula(paste("~", groups)), ncol = 2) +
@@ -56,6 +60,9 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
 #' @param fit An object of class \code{brmsfit}.
 #' @param trend show a loess smoother or linear line
 #' @return a ggplot object
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
 #' @importFrom stats fitted residuals
 #' @import ggplot2
 #' @import dplyr
