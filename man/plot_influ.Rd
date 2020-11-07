@@ -17,7 +17,7 @@ plot_influ(fit, year = "fishing_year", fill = "purple")
 a \code{ggplot} object.
 }
 \description{
-Plot the influence metric for all variables in a model
+The influence metric indicates how much of a standardisation effect the model is having.
 }
 \examples{
 \dontrun{

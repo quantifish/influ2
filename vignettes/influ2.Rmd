@@ -7,8 +7,10 @@ output:
     toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{influ2}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -29,7 +31,8 @@ In this vignette I use the `iris` data set to generate a fake catch per unit eff
 
 The main function for exploring data in `influ2` is `plot_bubble` which presents the number of records by two user defined groups within a data set. The bubble size in `plot_bubble` represents the number of records across the entire data set, and bubbles can either be a single colour or coloured by a third variable in the data set.
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r echo=TRUE, message=FALSE}
+library(knitr)
 library(tidyverse)
 library(reshape2)
 library(brms)
@@ -178,12 +181,12 @@ fit0$criteria$waic
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 loo_compare(fit0, fit1, fit2, criterion = "loo") %>%
-  knitr::kable(digits = 1)
+  kable(digits = 1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
-  knitr::kable(digits = 1)
+  kable(digits = 1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -192,27 +195,22 @@ get_bayes_R2(fits)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a linear variable."}
-# Generate a CDI plot for a linear variable
 plot_bayesian_cdi(fit = fit1, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a polynomial."}
-# Generate a CDI plot for a polynomial variable
 plot_bayesian_cdi(fit = fit3, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a spline."}
-# Generate a CDI plot for a spline
 plot_bayesian_cdi(fit = fit4, xfocus = "Duration", yfocus = "Year", xlab = "Duration")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a random-effect"}
-# Generate a CDI plot for a random-effect
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a random-effect."}
 plot_bayesian_cdi(fit = fit5, xfocus = "Duration2", yfocus = "Year", xlab = "Duration")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a fixed-effect"}
-# Generate a CDI plot for a fixed-effect
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a fixed-effect."}
 plot_bayesian_cdi(fit = fit6, xfocus = "Duration2", yfocus = "Year", xlab = "Duration")
 ```
 
@@ -232,7 +230,7 @@ plot_index(fit = fit4, year = "Year")
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of the empirical distribution of the data (y) to the distributions of simulated/replicated data (yrep) from the posterior predictive distribution."}
-yrep <- posterior_predict(fit4, draws = 100)
+yrep <- posterior_predict(fit4, nsamples = 100)
 
 ppc_dens_overlay(y = iris2$CPUE, yrep = yrep) + 
   labs(x = "CPUE", y = "Density") +
@@ -249,6 +247,7 @@ ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) +
 loo <- loo(fit4, save_psis = TRUE)
 psis <- loo$psis_object
 lw <- weights(psis)
+yrep <- posterior_predict(fit4)
 ppc_loo_pit_qq(y = iris2$CPUE, yrep = yrep, lw = lw)
 ```
 
@@ -315,7 +314,7 @@ unstd <- get_unstandarsied(fit = fit2, year = "Year")
 get_index(fit = fit2, year = "Year") %>%
   mutate(Unstandardised = unstd$Estimate) %>%
   select(Year, Unstandardised, Estimate, Est.Error, Qlower, Q50, Qupper) %>%
-  knitr::kable(digits = 3)
+  kable(digits = 3)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Simulating from a lognormal distribution and comparing with table values."}

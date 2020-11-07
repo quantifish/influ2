@@ -123,7 +123,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   
   is_poly <- FALSE
   
-  if (nrow(fit$ranef) > 0) {
+  if (any(grepl("\\(1 \\|", var))) {
     # Group-level effects
     # eff <- ranef(fit, groups = var, probs = c(0.05, 0.95))[[1]][,,1] %>%
     #   data.frame() %>%
@@ -176,7 +176,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   }
   
   # Get the missing variable and normalise
-  if (nrow(fit$ranef) == 0 & normalise & !is_poly & length(unique(ps$variable)) != 1) {
+  if (!any(grepl("\\(1 \\|", var)) & normalise & !is_poly & length(unique(ps$variable)) != 1) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
     ps0 <- data.frame(iteration = 1:max(ps$iteration),
@@ -199,7 +199,7 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   } else {
     coefs <- ps
   }
-  
+
   # Arrange by vessel coefficient if vessel chosen
   # if (str_detect(group[2], regex("vessel", ignore_case = TRUE))) {
   #   eff <- eff %>%

@@ -13,7 +13,10 @@ test_that("summary gives the same thing as get_coefs for population-level effect
   # This is get_coefs from influ2
   c1 <- get_coefs(fit = fit, var = "SepalWidth", normalise = FALSE) %>%
     group_by(variable) %>%
-    summarise(Estimate = mean(value), Est.Error = sd(value), Q5 = quantile(value, probs = 0.05), Q95 = quantile(value, probs = 0.95))
+    summarise(Estimate = mean(value), 
+              Est.Error = sd(value), 
+              Q5 = quantile(value, probs = 0.05), 
+              Q95 = quantile(value, probs = 0.95))
   
   # Here I use the fixef fuction from the nlme package
   c2 <- fixef(fit, probs = c(0.05, 0.95)) %>%
@@ -39,12 +42,15 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
     mutate(PetalLength = Petal.Length,
            SepalWidth = factor(round(Sepal.Width)))
 
-  fit <- brm(PetalLength ~ (1|SepalWidth), data = iris, family = lognormal())
+  fit <- brm(PetalLength ~ (1 | SepalWidth), data = iris, family = lognormal())
 
   # This is get_coefs from influ2
-  c1 <- get_coefs(fit = fit, var = "SepalWidth", normalise = FALSE) %>%
+  c1 <- get_coefs(fit = fit, var = "r_SepalWidth", normalise = FALSE) %>%
     group_by(variable) %>%
-    summarise(Estimate = mean(value), Est.Error = sd(value), Q5 = quantile(value, probs = 0.05), Q95 = quantile(value, probs = 0.95))
+    summarise(Estimate = mean(value), 
+              Est.Error = sd(value), 
+              Q5 = quantile(value, probs = 0.05), 
+              Q95 = quantile(value, probs = 0.95))
 
   # Here I use the ranef fuction from the nlme package
   c2 <- ranef(fit, groups = "SepalWidth", probs = c(0.05, 0.95))[[1]][,,1] %>%
@@ -90,8 +96,11 @@ test_that("this matches Nokome Bentley's influ package", {
   c2a <- get_coefs(fit = fit2, var = "Sepal.Width", normalise = FALSE, transform = FALSE) %>%
     filter(variable != "Sepal.Width2") %>%
     group_by(variable) %>%
-    summarise(Estimate = mean(value), Est.Error = sd(value), Q5 = quantile(value, probs = 0.05), 
-              Q50 = quantile(value, probs = 0.5), Q95 = quantile(value, probs = 0.95))
+    summarise(Estimate = mean(value), 
+              Est.Error = sd(value), 
+              Q5 = quantile(value, probs = 0.05), 
+              Q50 = quantile(value, probs = 0.5), 
+              Q95 = quantile(value, probs = 0.95))
   
   c2b <- fixef(fit2, probs = c(0.05, 0.95)) %>%
     data.frame() %>%
@@ -117,7 +126,6 @@ test_that("this matches Nokome Bentley's influ package", {
   plot(c1b, type = "b")
   lines(c2b$Estimate, col = 2)
   expect_equal(as.numeric(c1b), c2b$Estimate, tolerance = 0.07)
-  
   
   # Check the influences are the same - I couldn't get this to work as Noko's code is broken
   # myInfl$calc()

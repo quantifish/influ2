@@ -17,16 +17,16 @@
 #' 
 plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Species") {
   grp <- c(year, groups)
+  grp2 <- c("Year", groups)
   
   # Get the data
   if (is.null(data)) {
-    data <- fit$data %>%
-      mutate(id = 1:n())
-  } else {
-    data <- data %>%
-      mutate(id = 1:n())
+    data <- fit$data
   }
-  
+  data <- data %>%
+    mutate(id = 1:n()) %>%
+    rename(Year = all_of(year))
+
   # Extract predicted values and normalise
   idx <- get_index(fit, year = year)
   idx$Estimate <- idx$Estimate - mean(idx$Estimate)
@@ -36,9 +36,9 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
     melt() %>%
     rename(iteration = .data$Var1, id = .data$Var2, residual = .data$value) %>%
     left_join(data, by = "id") %>% 
-    left_join(idx, by = year) %>%
+    left_join(idx, by = "Year") %>%
     mutate(implied = .data$Estimate + .data$residual) %>%
-    group_by_at(grp) %>%
+    group_by_at(grp2) %>%
     summarise(Estimate = mean(.data$implied), Qlower = quantile(.data$implied, probs = 0.05), Qupper = quantile(.data$implied, probs = 0.95))
 
   p <- ggplot(data = ires, aes(x = .data$Year, y = .data$Estimate)) +

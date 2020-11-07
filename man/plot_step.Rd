@@ -4,12 +4,20 @@
 \alias{plot_step}
 \title{A Bayesian version of the step-plot}
 \usage{
-plot_step(fits, year = "year", probs = c(0.25, 0.75), show_probs = TRUE)
+plot_step(
+  fits,
+  year = "year",
+  fill = "purple",
+  probs = c(0.25, 0.75),
+  show_probs = TRUE
+)
 }
 \arguments{
 \item{fits}{a list of model fits in the order that you want to compare them}
 
 \item{year}{the year or time label}
+
+\item{fill}{the colour of the credible interval ribbon}
 
 \item{probs}{the quantiles to plot}
 

@@ -80,11 +80,15 @@ plot_hurdle <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.7
   newdata[,year] <- yrs
   
   # Get the positive component
-  mu <- fitted(object = fit, newdata = newdata, re_formula = NA, dpar = "mu", scale = "response") %>% 
+  mu <- fitted(object = fit, newdata = newdata, re_formula = NA, dpar = "mu") %>% 
     cbind(newdata) %>%
     rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
-    mutate(model = "Lognormal")# %>%
-    # mutate(Estimate = exp(Estimate), Qlower = exp(Qlower), Qupper = exp(Qupper))
+    mutate(model = "Lognormal") %>%
+    mutate(Estimate = exp(.data$Estimate), Qlower = exp(.data$Qlower), Qupper = exp(.data$Qupper))
+  mu$Estimate <- mu$Estimate / geo_mean(mu$Estimate)
+  mu$Qlower <- mu$Qlower / geo_mean(mu$Q50)
+  mu$Qupper <- mu$Qupper / geo_mean(mu$Q50)
+  # mu$Q50 <- mu$Q50 / geo_mean(mu$Q50)
   # head(mu)
   
   # Get the hurdle component
@@ -93,14 +97,20 @@ plot_hurdle <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.7
     rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
     mutate(model = "Hurdle")# %>%
     # mutate(Estimate = inv_logit(Estimate), Qlower = inv_logit(Qlower), Qupper = inv_logit(Qupper))
+  hu$Estimate <- hu$Estimate / geo_mean(hu$Estimate)
+  hu$Qlower <- hu$Qlower / geo_mean(hu$Q50)
+  hu$Qupper <- hu$Qupper / geo_mean(hu$Q50)
   # head(hu)
   
   # Get the combined series
-  bt <- fitted(object = fit, newdata = newdata, re_formula = NA) %>% 
-    cbind(newdata) %>%
-    rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
-    mutate(model = "Combined")
+  # bt <- fitted(object = fit, newdata = newdata, re_formula = NA) %>% 
+  #   cbind(newdata) %>%
+  #   rename(Qlower = 3, Qupper = 4) %>% # this renames the 3rd and the 5th columns
+  #   mutate(model = "Combined")
   # head(bt)
+  bt <- get_index(fit = fit, year = year, probs = probs) %>%
+    mutate(model = "Combined")
+  bt[year] <- bt$Year
   
   df <- bind_rows(mu, hu, bt)
   # df$model <- factor(df$model, levels = c("Unstandardised", "Standardised"))
@@ -117,6 +127,6 @@ plot_hurdle <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.7
     theme_bw() +
     theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank(), legend.key.width = unit(2, "cm")) +
     guides(color = guide_legend(override.aes = list(fill = NA)))
-  p
+  
   return(p)
 }

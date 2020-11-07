@@ -1,5 +1,7 @@
 #' Plot the influence metric for all variables in a model
 #' 
+#' The influence metric indicates how much of a standardisation effect the model is having.
+#' 
 #' @param fit An object of class \code{brmsfit}.
 #' @param year the year variable label.
 #' @param fill the colour to use in the plot.
@@ -40,8 +42,6 @@ plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
   df$variable <- factor(df$variable, levels = x)
   
   p <- ggplot(data = df, aes_string(x = year)) +
-    # geom_hline(yintercept = 1, linetype = "dashed") +
-    # geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     geom_hline(yintercept = 1, linetype = "dashed") +
     geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     facet_wrap(variable ~ ., ncol = 1, strip.position = "top") +

@@ -73,6 +73,7 @@ get_influ2 <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
     Xbeta[i,] <- X %*% filter(coefs, .data$iteration == i)$value
   }
   
+  # Another matrix multiplication if there is a spline
   if (type == "spline") {
     Xbeta2 <- matrix(NA, nrow = n_iterations, ncol = nrow(data))
     for (i in 1:n_iterations) {
