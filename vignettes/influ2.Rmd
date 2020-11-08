@@ -41,6 +41,9 @@ library(bayesplot)
 
 # options(mc.cores = parallel::detectCores())
 
+# Get Nokome's influ package code
+source("../tests/testthat/influ.R")
+
 # Get some data to use
 data(iris)
 glimpse(iris)
@@ -100,7 +103,6 @@ if (FALSE) {
 
 # Fit a model using glm and generate influence statistics using the original influ package
 fit_glm <- glm(log(CPUE) ~ Year + Duration + Species, data = iris2)
-source("../tests/testthat/influ.R")
 myInfl <- Influence$new(fit_glm)
 myInfl$calc()
 ```
@@ -216,6 +218,7 @@ plot_bayesian_cdi(fit = fit6, xfocus = "Duration2", yfocus = "Year", xlab = "Dur
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison plot of all model runs."}
 fits <- list(fit1, fit3, fit4, fit5, fit6)
+
 plot_compare(fits = fits, 
              labels = c("linear", "poly", "spline", "random-effect", "fixed-effect"), 
              year = "Year")
@@ -317,21 +320,26 @@ get_index(fit = fit2, year = "Year") %>%
   kable(digits = 3)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Simulating from a lognormal distribution and comparing with table values."}
-cpue1 <- get_index(fit = fit2, year = "Year") %>% mutate(Type = "GLM")
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Simulating from a lognormal distribution and comparing with table values. Simulating with the wrong SD underestimates the uncertainty at low values."}
+cpue1 <- get_index(fit = fit2, year = "Year") %>% mutate(Type = "Estimate")
+cpue2 <- cpue1 %>% mutate(Type = "Simulated wrong")
+cpue3 <- cpue1 %>% mutate(Type = "Simulated")
 
-cpue2 <- cpue1 %>% mutate(Type = "Simulated")
 for (ii in 1:nrow(cpue1)) {
-  # sdd <- cpue1$Est.Error[ii] # this is wrong
-  sdd <- log(1 + cpue1$Est.Error[ii] / cpue1$Estimate[ii])
-  # r1 <- rlnorm(n = 5000, log(cpue1$Estimate[ii]), sdd)
-  r1 <- rlnorm(n = 5000, log(cpue1$Q50[ii]), sdd)
+  sdd <- cpue1$Est.Error[ii] # this is wrong
+  r1 <- rlnorm(n = 5000, log(cpue1$Estimate[ii]), sdd)
   cpue2$Q50[ii] <- median(r1)
   cpue2$Qlower[ii] <- quantile(r1, probs = 0.025)
   cpue2$Qupper[ii] <- quantile(r1, probs = 0.975)
+  
+  sdd <- log(1 + cpue1$Est.Error[ii] / cpue1$Estimate[ii])
+  r1 <- rlnorm(n = 5000, log(cpue1$Q50[ii]), sdd)
+  cpue3$Q50[ii] <- median(r1)
+  cpue3$Qlower[ii] <- quantile(r1, probs = 0.025)
+  cpue3$Qupper[ii] <- quantile(r1, probs = 0.975)
 }
 
-ggplot(data = rbind(cpue1, cpue2), aes(x = Year, y = Q50, colour = Type)) +
+ggplot(data = rbind(cpue1, cpue2, cpue3), aes(x = Year, y = Q50, colour = Type)) +
   geom_pointrange(aes(ymin = Qlower, ymax = Qupper), position = position_dodge(width = 0.5)) +
   labs(x = NULL, y = "CPUE") +
   theme_bw() +
