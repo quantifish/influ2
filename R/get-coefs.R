@@ -149,9 +149,12 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
     ps <- posterior_samples(fit, pars = var) %>%
       mutate(iteration = 1:n()) %>%
       melt(id.vars = "iteration") %>%
-      mutate(variable = gsub("b_", "", .data$variable))
+      mutate(variable = gsub("b_", "", .data$variable)) %>%
+      mutate(variable = gsub("r_", "", .data$variable)) %>%
+      filter(!str_detect(variable, "sd_"))
       #mutate(variable = paste0(var, gregexpr("[[:digit:]]+", .data$variable)))
       #mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
+    unique(ps$variable)
     #head(ps)
   }
   
@@ -176,7 +179,9 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   }
   
   # Get the missing variable and normalise
-  if (!any(grepl("\\(1 \\|", var)) & normalise & !is_poly & length(unique(ps$variable)) != 1) {
+  if (type == "random_effect") {
+    coefs <- ps
+  } else if (!any(grepl("\\(1 \\|", var)) & normalise & !is_poly & length(unique(ps$variable)) != 1) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
     ps0 <- data.frame(iteration = 1:max(ps$iteration),
