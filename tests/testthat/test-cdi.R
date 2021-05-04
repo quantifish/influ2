@@ -45,7 +45,7 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
   fit <- brm(PetalLength ~ (1 | SepalWidth), data = iris, family = lognormal())
 
   # This is get_coefs from influ2
-  c1 <- get_coefs(fit = fit, var = "r_SepalWidth", normalise = FALSE) %>%
+  c1 <- get_coefs(fit = fit, var = "SepalWidth", normalise = FALSE) %>%
     group_by(variable) %>%
     summarise(Estimate = mean(value), 
               Est.Error = sd(value), 

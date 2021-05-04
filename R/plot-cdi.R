@@ -10,6 +10,8 @@
 #'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
 #'   temporal variable in a generalised linear model (e.g. year).
 #' @param hurdle If a hurdle model then use the hurdle.
+#' @param sort_coefs Should the coefficients be sorted from highest to lowest.
+#' @param axis.text.x.bl Include the x axis labels on the bottom-left (bl) bubble plot panel.
 #' @param xlab The x axis label.
 #' @param ylab The y axis label.
 #' @param colour The colour to use in the plot.
@@ -27,16 +29,26 @@
 #' @importFrom gtable is.gtable gtable_filter
 #' @importFrom stats poly
 #' @importFrom tidyselect all_of
+#' @importFrom stats median
 #' @import ggplot2
 #' @import dplyr
 #' @import patchwork
 #' @export
 #' 
-plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
-                              xlab = "Month",  ylab = "Fishing year", hurdle = FALSE,
-                              colour = "purple", p_margin = 0.05, legend = TRUE, sum_by = "row", ...) {
+plot_bayesian_cdi <- function(fit, 
+                              xfocus = "area", yfocus = "fishing_year",
+                              xlab = NULL,  ylab = NULL, 
+                              hurdle = FALSE,
+                              sort_coefs = FALSE, 
+                              axis.text.x.bl = TRUE,
+                              colour = "purple", 
+                              p_margin = 0.05, 
+                              legend = TRUE, 
+                              sum_by = "row", ...) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  if (is.null(xlab)) xlab <- xfocus
+  if (is.null(ylab)) ylab <- yfocus
   
   # Identify the type of variable we are dealing with
   type <- id_var_type(fit = fit, xfocus = xfocus, hurdle = hurdle)
@@ -53,6 +65,7 @@ plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
   if (is.numeric(coefs$variable)) {
     data <- fit$data %>%
       select(all_of(c(yfocus, xfocus)))
+    
     length.out <- 15
     dmin <- min(data[,xfocus])
     dmax <- max(data[,xfocus])
@@ -61,6 +74,28 @@ plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
     data[,xfocus] <- cut(data[,xfocus], breaks = breaks, labels = sprintf("%.2f", round(midpoints, 2)), include.lowest = TRUE)
   } else {
     data <- fit$data
+  }
+
+  # Sort the coefficients if required
+  sort_order <- NULL
+  if (sort_coefs) {
+    coefs_1 <- coefs %>%
+      group_by(.data$variable) %>%
+      summarise(value = median(.data$value))
+    coefs_s <- coefs_1 %>%
+      arrange(.data$value) %>% 
+      select(.data$variable)
+    
+    # reorder coefficients
+    coefs$variable <- factor(coefs$variable, levels = coefs_s$variable)
+    
+    # reorder bubbles
+    coefs_o <- match(coefs_1$variable, coefs_s$variable)
+    bubble_o <- data.frame(xfocus = data[,xfocus], order = as.numeric(data[,xfocus])) %>%
+      distinct()
+    bubble_o <- bubble_o[match(coefs_o, bubble_o$order),]
+    data[,xfocus] <- factor(data[,xfocus], levels = bubble_o$xfocus)
+    sort_order <- bubble_o$xfocus
   }
   
   # Influence
@@ -74,10 +109,16 @@ plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
   }
   
   # The bubble plot (bottom-left) and the legend for the bubble plot (top-right)
-  p3a <- plot_bubble(df = data, group = c(yfocus, xfocus), sum_by = sum_by, xlab = xlab, ylab = ylab, zlab = "", fill = colour)
+  p3a <- plot_bubble(df = data, group = c(yfocus, xfocus), sum_by = sum_by, 
+                     xlab = xlab, ylab = ylab, zlab = "", fill = colour, sort_order = sort_order)
   p2 <- g2(p3a)
-  p3 <- p3a + theme(legend.position = "none", plot.margin = margin(t = p_margin, r = p_margin, unit = "cm"), 
-                    axis.text.x = element_text(angle = 45, hjust = 1))
+  if (axis.text.x.bl) {
+    p3 <- p3a + theme(legend.position = "none", plot.margin = margin(t = p_margin, r = p_margin, unit = "cm"), 
+                      axis.text.x = element_text(angle = 45, hjust = 1))
+  } else {
+    p3 <- p3a + theme(legend.position = "none", plot.margin = margin(t = p_margin, r = p_margin, unit = "cm"), 
+                      axis.text.x = element_blank())
+  }
   
   # The coefficients (top-left)
   p1 <- ggplot(data = coefs, aes(x = .data$variable, y = .data$value)) +
@@ -86,8 +127,10 @@ plot_bayesian_cdi <- function(fit, xfocus = "area", yfocus = "fishing_year",
     theme(axis.title.x = element_blank(), 
           axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           plot.margin = margin(b = p_margin, r = p_margin, unit = "cm"))
+  
   if (is.numeric(coefs$variable)) {
     p3 <- p3 + scale_x_discrete(expand = expansion(mult = 0.05))
+    
     p1 <- p1 +
       stat_summary(geom = "ribbon", alpha = 0.5, fill = colour, 
                    fun.min = function(x) quantile(x, probs = 0.025), 

@@ -121,6 +121,8 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
+  type <- id_var_type(fit = fit, xfocus = var, hurdle = hurdle)
+  
   is_poly <- FALSE
   
   if (any(grepl("\\(1 \\|", var))) {

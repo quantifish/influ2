@@ -5,6 +5,7 @@
 #' @param fit An object of class \code{brmsfit}.
 #' @param year the year variable label.
 #' @param fill the colour to use in the plot.
+#' @param hurdle if a hurdle model then use the hurdle
 #' @return a \code{ggplot} object.
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}
@@ -23,7 +24,7 @@
 #' @import ggplot2
 #' @export
 #' 
-plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
+plot_influ <- function(fit, year = "fishing_year", fill = "purple", hurdle = FALSE) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
@@ -36,9 +37,13 @@ plot_influ <- function(fit, year = "fishing_year", fill = "purple") {
   
   df <- NULL
   for (i in 1:length(x)) {
-    inf1 <- get_influ2(fit = fit, group = c(year, x[i])) %>% mutate(variable = x[i])
+    inf1 <- get_influ2(fit = fit, group = c(year, x[i]), hurdle = hurdle) %>% 
+      mutate(variable = x[i])
+    
     df <- rbind(df, inf1)
   }
+  
+  # Order the factor levels
   df$variable <- factor(df$variable, levels = x)
   
   p <- ggplot(data = df, aes_string(x = year)) +

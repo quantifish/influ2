@@ -11,7 +11,7 @@
 #' @import dplyr
 #' @export
 #' 
-get_unstandarsied <- function(fit, year = "year", rescale = "one") {
+get_unstandarsied <- function(fit, year = "year", rescale = 1) {
 
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
@@ -41,9 +41,6 @@ get_unstandarsied <- function(fit, year = "year", rescale = "one") {
   # Rescale the series
   if (rescale == "raw") {
     # nothing to do
-  } else if (rescale == "one") {
-    fout$Estimate <- fout$Estimate / gm
-    fout$Q50 <- fout$Q50 / gm
   } else if (is.numeric(rescale)) {
     fout$Estimate <- fout$Estimate / gm * rescale
     fout$Q50 <- fout$Q50 / gm * rescale
@@ -60,7 +57,7 @@ get_unstandarsied <- function(fit, year = "year", rescale = "one") {
 #' @param fit An object of class \code{brmsfit}.
 #' @param year The year or time label (e.g. year, Year, fishing_year, etc).
 #' @param probs The percentiles to be computed by the \code{quantile} function.
-#' @param rescale How to rescale the series.
+#' @param rescale How to re-scale the series. Choose from "raw" to retain the raw series, "unstandardised" to re-scale to the geometric mean of the unstandardised series, or a number to re-scale by. 
 #' @param do_plot Return a \code{ggplot} object instead of a \code{data.frame}.
 #' @param ... Additional parameters passed to \code{fitted}.
 #' @return a \code{data.frame} or a \code{ggplot} object.
@@ -74,7 +71,7 @@ get_unstandarsied <- function(fit, year = "year", rescale = "one") {
 #' @import dplyr
 #' @export
 #' 
-get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "one", do_plot = FALSE, ...) {
+get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, do_plot = FALSE, ...) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
@@ -122,11 +119,6 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = "on
   fout <- fout1
   if (rescale == "raw") {
     # nothing to do
-  } else if (rescale == "one") {
-    fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate)
-    fout$Qlower <- fout$Qlower / geo_mean(fout$Q50)
-    fout$Qupper <- fout$Qupper / geo_mean(fout$Q50)
-    fout$Q50 <- fout$Q50 / geo_mean(fout$Q50)
   } else if (rescale == "unstandardised") {
     unstd <- get_unstandarsied(fit = fit, year = year, rescale = "raw")
     gm <- geo_mean(unstd$Estimate)

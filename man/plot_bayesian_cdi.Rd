@@ -8,9 +8,11 @@ plot_bayesian_cdi(
   fit,
   xfocus = "area",
   yfocus = "fishing_year",
-  xlab = "Month",
-  ylab = "Fishing year",
+  xlab = NULL,
+  ylab = NULL,
   hurdle = FALSE,
+  sort_coefs = FALSE,
+  axis.text.x.bl = TRUE,
   colour = "purple",
   p_margin = 0.05,
   legend = TRUE,
@@ -33,6 +35,10 @@ temporal variable in a generalised linear model (e.g. year).}
 \item{ylab}{The y axis label.}
 
 \item{hurdle}{If a hurdle model then use the hurdle.}
+
+\item{sort_coefs}{Should the coefficients be sorted from highest to lowest.}
+
+\item{axis.text.x.bl}{Include the x axis labels on the bottom-left (bl) bubble plot panel.}
 
 \item{colour}{The colour to use in the plot.}
 

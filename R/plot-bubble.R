@@ -19,7 +19,9 @@
 #' @import dplyr
 #' @export
 #' 
-plot_bubble <- function(df, group = c("fishing_year", "vessel"), sum_by = "raw", fill = "purple", alpha = 0.5, 
+plot_bubble <- function(df, group = c("fishing_year", "vessel"), 
+                        sort_order = NULL,
+                        sum_by = "raw", fill = "purple", alpha = 0.5, 
                         ylab = NA, xlab = NA, zlab = "N", ...) {
   
   if (!is.data.frame(df)) stop("df is not an object of data.frame.")
@@ -50,16 +52,25 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"), sum_by = "raw",
       summarise(nsum = sum(.data$n)) %>%
       right_join(df0, by = group[2]) %>%
       mutate(size = .data$n / .data$nsum) %>%
-      mutate(size = ifelse(.data$size == 0, NA, .data$size))
+      mutate(size = ifelse(.data$size == 0, NA, .data$size)) %>%
+      ungroup()
   } else if (sum_by %in% c("raw", "all")) {
     df1 <- df %>%
       group_by(.dots = group) %>%
       summarise(size = n()) %>%
-      mutate(size = ifelse(.data$size == 0, NA, .data$size))
+      mutate(size = ifelse(.data$size == 0, NA, .data$size)) %>%
+      ungroup()
   }
 
   if (sum_by == "all") {
     df1$size <- df1$size / sum(df1$size)
+  }
+  
+  df1 <- df1 %>% 
+    mutate(variable = data.frame(df1)[,group[2]])
+
+  if (!is.null(sort_order)) {
+    df1$variable <- factor(df1$variable, levels = sort_order)
   }
   
   if (fill %in% names(df)) {

@@ -7,6 +7,7 @@
 plot_bubble(
   df,
   group = c("fishing_year", "vessel"),
+  sort_order = NULL,
   sum_by = "raw",
   fill = "purple",
   alpha = 0.5,

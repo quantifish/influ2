@@ -4,7 +4,7 @@
 \alias{plot_influ}
 \title{Plot the influence metric for all variables in a model}
 \usage{
-plot_influ(fit, year = "fishing_year", fill = "purple")
+plot_influ(fit, year = "fishing_year", fill = "purple", hurdle = FALSE)
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}
@@ -12,6 +12,8 @@ plot_influ(fit, year = "fishing_year", fill = "purple")
 \item{year}{the year variable label.}
 
 \item{fill}{the colour to use in the plot.}
+
+\item{hurdle}{if a hurdle model then use the hurdle}
 }
 \value{
 a \code{ggplot} object.

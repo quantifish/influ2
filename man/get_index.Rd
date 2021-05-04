@@ -8,7 +8,7 @@ get_index(
   fit,
   year = "year",
   probs = c(0.025, 0.975),
-  rescale = "one",
+  rescale = 1,
   do_plot = FALSE,
   ...
 )
@@ -20,7 +20,7 @@ get_index(
 
 \item{probs}{The percentiles to be computed by the \code{quantile} function.}
 
-\item{rescale}{How to rescale the series.}
+\item{rescale}{How to re-scale the series. Choose from "raw" to retain the raw series, "unstandardised" to re-scale to the geometric mean of the unstandardised series, or a number to re-scale by.}
 
 \item{do_plot}{Return a \code{ggplot} object instead of a \code{data.frame}.}
 

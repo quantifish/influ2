@@ -59,6 +59,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
 #' 
 #' @param fit An object of class \code{brmsfit}.
 #' @param trend show a loess smoother or linear line
+#' @param type The type of the residuals, either "ordinary" or "pearson".
 #' @return a ggplot object
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}
@@ -68,13 +69,15 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
 #' @import dplyr
 #' @export
 #' 
-plot_predicted_residuals <- function(fit, trend = "loess") {
+plot_predicted_residuals <- function(fit, trend = "loess", type = "pearson") {
   # Extract predicted values
-  pred <- fitted(fit) %>% data.frame()
+  pred <- fitted(fit) %>% 
+    data.frame()
   names(pred) <- paste0("pred.", names(pred))
   
   # Extract residuals
-  resid <- residuals(fit) %>% data.frame()
+  resid <- residuals(fit, type = type) %>% 
+    data.frame()
   names(resid) <- paste0("resid.", names(resid))
   df <- cbind(resid, pred, fit$data)
   

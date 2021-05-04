@@ -42,6 +42,7 @@ library(bayesplot)
 # options(mc.cores = parallel::detectCores())
 
 # Get Nokome's influ package code
+# source("tests/testthat/influ.R")
 source("../tests/testthat/influ.R")
 
 # Get some data to use
