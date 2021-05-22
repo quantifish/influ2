@@ -21,11 +21,11 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
 
   # Get the standardised series
-  fout <- get_index(fit = fit, year = year, probs = probs) %>%
+  fout <- get_index(fit = fit, year = year, probs = probs, rescale = 1) %>%
     mutate(model = "Standardised")
   
   # Get the unstandardised series
-  unstd <- get_unstandarsied(fit = fit, year = year, rescale = "one") %>%
+  unstd <- get_unstandarsied(fit = fit, year = year, rescale = 1) %>%
     mutate(model = "Unstandardised")
   
   df <- bind_rows(fout, unstd)
