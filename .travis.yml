@@ -15,9 +15,6 @@ r_packages:
   - roxygen2
   - testthat
   - proto
-  
-r_github_packages: 
-  - thomasp85/patchwork
 
 apt_packages:
   - libudunits2-dev

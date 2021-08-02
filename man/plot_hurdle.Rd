@@ -4,7 +4,7 @@
 \alias{plot_hurdle}
 \title{Plot the hurdle and positive components}
 \usage{
-plot_hurdle(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75))
+plot_hurdle(fit, year = "Year", fill = "purple", probs = c(0.025, 0.975))
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}

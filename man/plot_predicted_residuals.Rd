@@ -4,12 +4,14 @@
 \alias{plot_predicted_residuals}
 \title{Plots predicted values versus residuals}
 \usage{
-plot_predicted_residuals(fit, trend = "loess")
+plot_predicted_residuals(fit, trend = "loess", type = "pearson")
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}
 
 \item{trend}{show a loess smoother or linear line}
+
+\item{type}{The type of the residuals, either "ordinary" or "pearson".}
 }
 \value{
 a ggplot object
