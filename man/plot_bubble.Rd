@@ -22,6 +22,8 @@ plot_bubble(
 
 \item{group}{The names of the columns in the \code{data.frame} to plot.}
 
+\item{sort_order}{A character vector containing the order of varables.}
+
 \item{sum_by}{Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.}
 
 \item{fill}{the colour to use in the plot, can either be a colour or a factor to colour by.}

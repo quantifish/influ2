@@ -117,7 +117,10 @@ get_coefs_raw <- function(fit, var = "area") {
 #' @import dplyr
 #' @export
 #' 
-get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, transform = FALSE) {
+get_coefs <- function(fit, var = "area", 
+                      normalise = TRUE, 
+                      hurdle = FALSE, 
+                      transform = FALSE) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
@@ -153,10 +156,10 @@ get_coefs <- function(fit, var = "area", normalise = TRUE, hurdle = FALSE, trans
       melt(id.vars = "iteration") %>%
       mutate(variable = gsub("b_", "", .data$variable)) %>%
       mutate(variable = gsub("r_", "", .data$variable)) %>%
-      filter(!str_detect(variable, "sd_"))
+      filter(!str_detect(.data$variable, "sd_"))
       #mutate(variable = paste0(var, gregexpr("[[:digit:]]+", .data$variable)))
       #mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
-    unique(ps$variable)
+    #unique(ps$variable)
     #head(ps)
   }
   

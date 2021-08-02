@@ -4,6 +4,7 @@
 #' 
 #' @param df A \code{data.frame}.
 #' @param group The names of the columns in the \code{data.frame} to plot.
+#' @param sort_order A character vector containing the order of varables.
 #' @param sum_by Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.
 #' @param fill the colour to use in the plot, can either be a colour or a factor to colour by.
 #' @param alpha the alpha level of the bubbles.
@@ -19,9 +20,11 @@
 #' @import dplyr
 #' @export
 #' 
-plot_bubble <- function(df, group = c("fishing_year", "vessel"), 
+plot_bubble <- function(df, 
+                        group = c("fishing_year", "vessel"), 
                         sort_order = NULL,
-                        sum_by = "raw", fill = "purple", alpha = 0.5, 
+                        sum_by = "raw", 
+                        fill = "purple", alpha = 0.5, 
                         ylab = NA, xlab = NA, zlab = "N", ...) {
   
   if (!is.data.frame(df)) stop("df is not an object of data.frame.")
