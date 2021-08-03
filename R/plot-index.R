@@ -16,7 +16,10 @@
 #' @import dplyr
 #' @export
 #' 
-plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75)) {
+plot_index <- function(fit, 
+                       year = "Year", 
+                       fill = "purple", 
+                       probs = c(0.25, 0.75)) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
 
@@ -29,15 +32,18 @@ plot_index <- function(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75
     mutate(model = "Unstandardised")
   
   df <- bind_rows(fout, unstd)
+  
   df$model <- factor(df$model, levels = c("Unstandardised", "Standardised"))
   
   p <- ggplot(data = df, aes(x = .data$Year, y = .data$Q50, group = .data$model)) +
-    geom_ribbon(aes(ymin = .data$Qlower, ymax = .data$Qupper, fill = .data$model), alpha = 0.5, colour = NA) +
+    # geom_ribbon(aes(ymin = .data$Qlower, ymax = .data$Qupper, fill = .data$model), alpha = 0.5, colour = NA) +
+    geom_ribbon(data = df %>% filter(.data$model != "Unstandardised"), aes(ymin = .data$Qlower, ymax = .data$Qupper), alpha = 0.5, colour = NA, fill = fill) +
     geom_line(aes(colour = .data$model, linetype = .data$model)) +
     geom_point(aes(colour = .data$model)) +
     labs(x = NULL, y = "Index") +
     scale_colour_manual(values = c("grey", fill)) +
-    scale_fill_manual(values = c("grey", fill)) +
+    # scale_fill_manual(values = c("grey", fill)) +
+    # scale_fill_manual(values = fill) +
     scale_linetype_manual(values = c("dashed", "solid")) +
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +

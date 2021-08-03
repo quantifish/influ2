@@ -2,7 +2,7 @@
 % Please edit documentation in R/get-influ.R
 \name{get_influ2}
 \alias{get_influ2}
-\title{Get the influence metric new version}
+\title{Get the influence metric}
 \usage{
 get_influ2(fit, group = c("fishing_year", "area"), hurdle = FALSE)
 }
@@ -17,7 +17,7 @@ get_influ2(fit, group = c("fishing_year", "area"), hurdle = FALSE)
 a \code{data.frame}.
 }
 \description{
-Get the influence metric new version
+Get the influence metric
 }
 \author{
 Darcy Webber \email{darcy@quantifish.co.nz}

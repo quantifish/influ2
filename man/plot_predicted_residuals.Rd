@@ -4,7 +4,7 @@
 \alias{plot_predicted_residuals}
 \title{Plots predicted values versus residuals}
 \usage{
-plot_predicted_residuals(fit, trend = "loess", type = "pearson")
+plot_predicted_residuals(fit, trend = "loess", type = "ordinary")
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}

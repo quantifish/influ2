@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-bubble.R
 \name{plot_bubble}
 \alias{plot_bubble}
-\title{A bubble plot}
+\title{Bubble plot}
 \usage{
 plot_bubble(
   df,
@@ -18,7 +18,7 @@ plot_bubble(
 )
 }
 \arguments{
-\item{df}{A \code{data.frame}.}
+\item{df}{A \code{data.frame} containing at least two columns.}
 
 \item{group}{The names of the columns in the \code{data.frame} to plot.}
 
@@ -42,7 +42,7 @@ plot_bubble(
 a ggplot object
 }
 \description{
-Generates a bubble plot by group for a data set.
+Generates a bubble plot for a data set.
 }
 \author{
 Darcy Webber \email{darcy@quantifish.co.nz}

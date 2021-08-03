@@ -69,7 +69,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
 #' @import dplyr
 #' @export
 #' 
-plot_predicted_residuals <- function(fit, trend = "loess", type = "pearson") {
+plot_predicted_residuals <- function(fit, trend = "loess", type = "ordinary") {
   # Extract predicted values
   pred <- fitted(fit) %>% 
     data.frame()

@@ -1,8 +1,8 @@
-#' A bubble plot
+#' Bubble plot
 #' 
-#' Generates a bubble plot by group for a data set.
+#' Generates a bubble plot for a data set.
 #' 
-#' @param df A \code{data.frame}.
+#' @param df A \code{data.frame} containing at least two columns.
 #' @param group The names of the columns in the \code{data.frame} to plot.
 #' @param sort_order A character vector containing the order of varables.
 #' @param sum_by Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.
@@ -38,10 +38,10 @@ plot_bubble <- function(df,
   
   if (sum_by %in% c("row", "rows", "y")) {
     df0 <- df %>%
-      group_by(.dots = group) %>%
+      group_by_at(all_of(group)) %>%
       summarise(n = n())
     df1 <- df0 %>%
-      group_by(.dots = group[1]) %>%
+      group_by_at(all_of(group[1])) %>%
       summarise(nsum = sum(.data$n)) %>%
       right_join(df0, by = group[1]) %>%
       mutate(size = .data$n / .data$nsum) %>%
@@ -51,7 +51,7 @@ plot_bubble <- function(df,
       group_by(.dots = group) %>%
       summarise(n = n())
     df1 <- df0 %>%
-      group_by(.dots = group[2]) %>%
+      group_by_at(all_of(group[2])) %>%
       summarise(nsum = sum(.data$n)) %>%
       right_join(df0, by = group[2]) %>%
       mutate(size = .data$n / .data$nsum) %>%
@@ -59,7 +59,7 @@ plot_bubble <- function(df,
       ungroup()
   } else if (sum_by %in% c("raw", "all")) {
     df1 <- df %>%
-      group_by(.dots = group) %>%
+      group_by_at(all_of(group)) %>%
       summarise(size = n()) %>%
       mutate(size = ifelse(.data$size == 0, NA, .data$size)) %>%
       ungroup()
