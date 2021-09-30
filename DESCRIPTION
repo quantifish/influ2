@@ -20,6 +20,7 @@ Imports:
     reshape2,
     tidyselect,
     stringr,
+    stringi,
     readr,
     gtable,
     nlme,
@@ -38,4 +39,4 @@ Suggests:
     bayesplot
 LazyData: false
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

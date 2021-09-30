@@ -135,10 +135,6 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   }
   fout$Est.Error <- fout$CV * fout$Estimate # SD = CV * mu
   
-  # Make Year the first column
-  fout <- fout %>%
-    relocate(.data$Year)
-  
   if (do_plot) {
     p1 <- ggplot(data = fout1, aes(x = .data$Year)) +
       geom_errorbar(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
@@ -153,9 +149,16 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
       geom_errorbar(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.75) +
       geom_point(aes(y = .data$Estimate), colour = "red", alpha = 0.75) +
       theme_bw()
-    
     return(p1 + p2)
   } else {
+    # Rename and reorder columns
+    fout <- fout %>%
+      rename(Mean = .data$Estimate, SD = .data$Est.Error, Median = .data$Q50) %>%
+      mutate(Qlow = .data$Qlower, Qup = .data$Qupper) %>%
+      rename_with(~paste0("Q", probs[1] * 100), .data$Qlow) %>%
+      rename_with(~paste0("Q", probs[2] * 100), .data$Qup) %>%
+      relocate(.data$Year, .data$Mean, .data$SD, .data$CV)
+    
     return(fout)
   }
 }

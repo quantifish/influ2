@@ -41,16 +41,16 @@ plot_step <- function(fits, year = "year", fill = "purple",
   }
   
   p <- ggplot(data = df) +
-    geom_line(data = df_grey, aes(x = .data$Year, y = .data$Q50, group = .data$Model), colour = "grey", linetype = "solid") +
-    geom_line(data = df_dash, aes(x = .data$Year, y = .data$Q50, group = 1), colour = "black", linetype = "dashed")
+    geom_line(data = df_grey, aes(x = .data$Year, y = .data$Median, group = .data$Model), colour = "grey", linetype = "solid") +
+    geom_line(data = df_dash, aes(x = .data$Year, y = .data$Median, group = 1), colour = "black", linetype = "dashed")
   
   if (show_probs) {
     p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = 1), alpha = 0.3, colour = NA, fill = fill)
   }
   
   p <- p + 
-    geom_line(data = df, aes(x = .data$Year, y = .data$Q50, group = 1)) +
-    geom_point(data = df, aes(x = .data$Year, y = .data$Q50)) +
+    geom_line(data = df, aes(x = .data$Year, y = .data$Median, group = 1)) +
+    geom_point(data = df, aes(x = .data$Year, y = .data$Median)) +
     facet_wrap(Model ~ ., ncol = 1, strip.position = "top") +
     labs(x = NULL, y = "Index") +
     scale_fill_manual(values = c(NA, "black")) +

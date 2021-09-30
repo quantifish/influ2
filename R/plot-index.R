@@ -35,7 +35,7 @@ plot_index <- function(fit,
   
   df$model <- factor(df$model, levels = c("Unstandardised", "Standardised"))
   
-  p <- ggplot(data = df, aes(x = .data$Year, y = .data$Q50, group = .data$model)) +
+  p <- ggplot(data = df, aes(x = .data$Year, y = .data$Median, group = .data$model)) +
     # geom_ribbon(aes(ymin = .data$Qlower, ymax = .data$Qupper, fill = .data$model), alpha = 0.5, colour = NA) +
     geom_ribbon(data = df %>% filter(.data$model != "Unstandardised"), aes(ymin = .data$Qlower, ymax = .data$Qupper), alpha = 0.5, colour = NA, fill = fill) +
     geom_line(aes(colour = .data$model, linetype = .data$model)) +

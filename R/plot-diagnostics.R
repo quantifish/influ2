@@ -16,6 +16,7 @@
 #' @export
 #' 
 plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Species") {
+  
   grp <- c(year, groups)
   grp2 <- c("Year", groups)
   
@@ -39,7 +40,9 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
     left_join(idx, by = "Year") %>%
     mutate(implied = .data$Estimate + .data$residual) %>%
     group_by_at(grp2) %>%
-    summarise(Estimate = mean(.data$implied), Qlower = quantile(.data$implied, probs = 0.05), Qupper = quantile(.data$implied, probs = 0.95))
+    summarise(Estimate = mean(.data$implied), 
+              Qlower = quantile(.data$implied, probs = 0.05, na.rm = TRUE), 
+              Qupper = quantile(.data$implied, probs = 0.95, na.rm = TRUE))
 
   p <- ggplot(data = ires, aes(x = .data$Year, y = .data$Estimate)) +
     geom_line(data = idx, aes(x = .data$Year, y = .data$Estimate), group = 1, linetype = "dashed") +
@@ -51,6 +54,47 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
   
   return(p)
 }
+
+
+
+# plot_implied_residuals2 <- function(fit, data = NULL, year = "Year", groups = "Species") {
+#   
+#   grp <- c(year, groups)
+#   grp2 <- c("Year", groups)
+#   
+#   # Get the data
+#   if (is.null(data)) {
+#     data <- fit$data
+#   }
+#   data <- data %>%
+#     mutate(id = 1:n()) %>%
+#     rename(Year = all_of(year))
+#   
+#   # Extract predicted values and normalise
+#   idx <- get_index(fit, year = year)
+#   idx$Estimate <- idx$Estimate - mean(idx$Estimate)
+#   
+#   # Extract residuals
+#   ires <- residuals(fit, summary = FALSE) %>% 
+#     melt() %>%
+#     rename(iteration = .data$Var1, id = .data$Var2, residual = .data$value) %>%
+#     left_join(data, by = "id") %>% 
+#     left_join(idx, by = "Year") %>%
+#     mutate(implied = .data$residual) %>%
+#     group_by_at(grp2) %>%
+#     summarise(Estimate = mean(.data$implied), 
+#               Qlower = quantile(.data$implied, probs = 0.05, na.rm = TRUE), 
+#               Qupper = quantile(.data$implied, probs = 0.95, na.rm = TRUE))
+#   
+#   p <- ggplot(data = ires, aes(x = .data$Year, y = .data$Estimate)) +
+#     geom_pointrange(aes(min = .data$Qlower, max = .data$Qupper), colour = "purple") +
+#     labs(x = NULL, y = "Residuals") +
+#     facet_wrap(as.formula(paste("~", groups)), ncol = 2) +
+#     theme_bw()
+#   
+#   return(p)
+# }
+
 
 
 #' Plots predicted values versus residuals

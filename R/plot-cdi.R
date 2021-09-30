@@ -37,7 +37,7 @@
 #' 
 plot_bayesian_cdi <- function(fit, 
                               xfocus = "area", yfocus = "fishing_year",
-                              xlab = NULL,  ylab = NULL, 
+                              xlab = NULL, ylab = NULL, 
                               hurdle = FALSE,
                               sort_coefs = FALSE, 
                               axis.text.x.bl = TRUE,

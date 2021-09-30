@@ -3,6 +3,7 @@
 #' Calculates various criterion for a list of brms models using the \code{add_criterion} function.
 #' 
 #' @param fits a list of model fits in the order that you want to compare them
+#' @param criterion the criterion to use
 #' @param ... additional parameters passed to \code{add_criterion}
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}
@@ -11,7 +12,7 @@
 #' @import dplyr
 #' @export
 #' 
-table_criterion <- function(fits, ...) {
+table_criterion <- function(fits, criterion = c("bayes_R2", "loo"), ...) {
   
   n <- length(fits)
   
@@ -19,7 +20,7 @@ table_criterion <- function(fits, ...) {
   for (i in 1:n) {
     fit <- fits[[i]]
     df <- data.frame(id = i,
-                     Model = as.character(fit$formula)[1], 
+                     Model = gsub(".*\\~ ", "", as.character(fit$formula)[1]), 
                      Distribution = as.character(fit$family)[1], 
                      Link = as.character(fit$family)[2])
     df_names <- rbind(df_names, df)
@@ -28,7 +29,7 @@ table_criterion <- function(fits, ...) {
   df_loo <- list()
   for (i in 1:n) {
     if (!is.brmsfit(fits[[i]])) stop("fit is not an object of class brmsfit.")
-    fits[[i]] <- add_criterion(x = fits[[i]], criterion = c("bayes_R2", "loo"), model_name = df_names$id[i], ...)
+    fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], ...)
     df_loo[[i]] <- fits[[i]]$criteria$loo
   }
   lout <- data.frame(loo_compare(df_loo))

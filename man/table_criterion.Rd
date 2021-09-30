@@ -4,10 +4,12 @@
 \alias{table_criterion}
 \title{Get table of various criterion}
 \usage{
-table_criterion(fits, ...)
+table_criterion(fits, criterion = c("bayes_R2", "loo"), ...)
 }
 \arguments{
 \item{fits}{a list of model fits in the order that you want to compare them}
+
+\item{criterion}{the criterion to use}
 
 \item{...}{additional parameters passed to \code{add_criterion}}
 }
