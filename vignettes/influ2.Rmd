@@ -33,7 +33,9 @@ The main function for exploring data in `influ2` is `plot_bubble` which presents
 
 ```{r echo=TRUE, message=FALSE}
 library(knitr)
-library(tidyverse)
+# library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(reshape2)
 library(brms)
 library(influ2)
@@ -290,6 +292,7 @@ p <- ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
   # labs(x = "Predicted values", y = "Residuals") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 p
 ```
 
@@ -316,8 +319,8 @@ Finally, in order to fit to the data in a stock assessment model then indices ca
 unstd <- get_unstandarsied(fit = fit2, year = "Year")
 
 get_index(fit = fit2, year = "Year") %>%
-  mutate(Unstandardised = unstd$Estimate) %>%
-  select(Year, Unstandardised, Estimate, Est.Error, Qlower, Q50, Qupper) %>%
+  mutate(Unstandardised = unstd$Median) %>%
+  select(Year, Unstandardised, Mean, SD, Qlower, Median, Qupper) %>%
   kable(digits = 3)
 ```
 
@@ -327,20 +330,20 @@ cpue2 <- cpue1 %>% mutate(Type = "Simulated wrong")
 cpue3 <- cpue1 %>% mutate(Type = "Simulated")
 
 for (ii in 1:nrow(cpue1)) {
-  sdd <- cpue1$Est.Error[ii] # this is wrong
-  r1 <- rlnorm(n = 5000, log(cpue1$Estimate[ii]), sdd)
-  cpue2$Q50[ii] <- median(r1)
+  sdd <- cpue1$SD[ii] # this is wrong
+  r1 <- rlnorm(n = 5000, log(cpue1$Mean[ii]), sdd)
+  cpue2$Median[ii] <- median(r1)
   cpue2$Qlower[ii] <- quantile(r1, probs = 0.025)
   cpue2$Qupper[ii] <- quantile(r1, probs = 0.975)
   
-  sdd <- log(1 + cpue1$Est.Error[ii] / cpue1$Estimate[ii])
-  r1 <- rlnorm(n = 5000, log(cpue1$Q50[ii]), sdd)
-  cpue3$Q50[ii] <- median(r1)
+  sdd <- log(1 + cpue1$SD[ii] / cpue1$Mean[ii])
+  r1 <- rlnorm(n = 5000, log(cpue1$Median[ii]), sdd)
+  cpue3$Median[ii] <- median(r1)
   cpue3$Qlower[ii] <- quantile(r1, probs = 0.025)
   cpue3$Qupper[ii] <- quantile(r1, probs = 0.975)
 }
 
-ggplot(data = rbind(cpue1, cpue2, cpue3), aes(x = Year, y = Q50, colour = Type)) +
+ggplot(data = rbind(cpue1, cpue2, cpue3), aes(x = Year, y = Median, colour = Type)) +
   geom_pointrange(aes(ymin = Qlower, ymax = Qupper), position = position_dodge(width = 0.5)) +
   labs(x = NULL, y = "CPUE") +
   theme_bw() +

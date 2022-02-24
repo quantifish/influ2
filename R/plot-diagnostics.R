@@ -30,7 +30,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
 
   # Extract predicted values and normalise
   idx <- get_index(fit, year = year)
-  idx$Estimate <- idx$Estimate - mean(idx$Estimate)
+  idx$Median <- idx$Median - mean(idx$Median)
 
   # Extract residuals
   ires <- residuals(fit, summary = FALSE) %>% 
@@ -38,14 +38,15 @@ plot_implied_residuals <- function(fit, data = NULL, year = "Year", groups = "Sp
     rename(iteration = .data$Var1, id = .data$Var2, residual = .data$value) %>%
     left_join(data, by = "id") %>% 
     left_join(idx, by = "Year") %>%
-    mutate(implied = .data$Estimate + .data$residual) %>%
+    mutate(implied = .data$Median + .data$residual) %>%
     group_by_at(grp2) %>%
-    summarise(Estimate = mean(.data$implied), 
+    summarise(Mean = mean(.data$implied), 
+              Median = median(.data$implied),
               Qlower = quantile(.data$implied, probs = 0.05, na.rm = TRUE), 
               Qupper = quantile(.data$implied, probs = 0.95, na.rm = TRUE))
 
-  p <- ggplot(data = ires, aes(x = .data$Year, y = .data$Estimate)) +
-    geom_line(data = idx, aes(x = .data$Year, y = .data$Estimate), group = 1, linetype = "dashed") +
+  p <- ggplot(data = ires, aes(x = .data$Year, y = .data$Median)) +
+    geom_line(data = idx, aes(x = .data$Year, y = .data$Median), group = 1, linetype = "dashed") +
     geom_pointrange(aes(min = .data$Qlower, max = .data$Qupper), colour = "purple") +
     geom_line(group = 1, colour = "purple") +
     labs(x = NULL, y = "Residuals") +

@@ -9,7 +9,8 @@ plot_compare(
   labels = NULL,
   year = "year",
   probs = c(0.25, 0.75),
-  show_probs = TRUE
+  show_probs = TRUE,
+  rescale = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plot_compare(
 \item{probs}{the quantiles to plot.}
 
 \item{show_probs}{plot the quantiles or not.}
+
+\item{rescale}{the index of the series to rescale to.}
 }
 \description{
 Compare indices

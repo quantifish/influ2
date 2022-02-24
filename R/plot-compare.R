@@ -5,16 +5,19 @@
 #' @param year the year or time label.
 #' @param probs the quantiles to plot.
 #' @param show_probs plot the quantiles or not.
+#' @param rescale the index of the series to rescale to.
 #' 
 #' @import brms
 #' @import ggplot2
 #' @importFrom stringi stri_trim_right
 #' @export
 #' 
-plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.75), show_probs = TRUE) {
+plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.75), show_probs = TRUE, rescale = NULL) {
   
+  df0 <- list()
   df <- NULL
   
+  # Extract the indices for each model fit
   for (i in 1:length(fits)) {
     # yrs <- sort(unique(fits[[i]]$data[,year]))
     # n <- length(yrs)
@@ -39,9 +42,34 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
     # fout$Qlower <- fout$Qlower / geo_mean(fout$Median)
     # fout$Qupper <- fout$Qupper / geo_mean(fout$Median)
     # fout$Median <- fout$Median / geo_mean(fout$Median)
-    df <- rbind(df, fout)
+    df0[[i]] <- fout
   }
   
+  # If one model fit is shorter or longer (e.g., fewer years) then can rescale to one or the other
+  if (!is.null(rescale)) {
+    for (i in 1:length(fits)) {
+      if (i != rescale) {
+        fout <- df0[[i]]
+        
+        df1 <- df0[[rescale]] %>%
+          filter(Year %in% fout$Year)
+        gm <- geo_mean(df1$Mean)
+        
+        fout$Mean <- fout$Mean / geo_mean(fout$Mean) * gm
+        fout$Qlower <- fout$Qlower / geo_mean(fout$Median) * gm
+        fout$Qupper <- fout$Qupper / geo_mean(fout$Median) * gm
+        fout$Median <- fout$Median / geo_mean(fout$Median) * gm
+        df0[[i]] <- fout
+      }
+    }
+  }
+
+  # Change from list to data.frame
+  for (i in 1:length(fits)) {
+    df <- rbind(df, df0[[i]])
+  }
+  
+  # Generate the plot
   p <- ggplot(data = df)
   
   if (show_probs) {

@@ -1,3 +1,47 @@
+#' Data extent plot
+#' 
+#' Generates a bubble plot for a data set, generally used for plotting database tables.
+#' 
+#' @param data A \code{data.frame} containing at least two columns.
+#' @param xvar The name of the temporal column (e.g., year).
+#' @param yvar The names of the columns in the \code{data.frame} to plot.
+#' @param ... Further arguments passed to nothing.
+#' @return a ggplot object
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom tidyr pivot_longer
+#' @export
+#' 
+plot_data_extent <- function(data, xvar, yvar) {
+  
+  df <- data %>%
+    select(xvar, all_of(yvar)) %>%
+    mutate(across(yvar, ~ ifelse(is.na(.x), 0, 1))) %>%
+    group_by_at(all_of(xvar)) %>%
+    summarise(across(yvar, ~ ifelse(sum(.x) == 0, 0, sum(.x) / n()))) %>%
+    mutate(across(yvar, ~ ifelse(.x == 0, NA, .x))) %>%
+    pivot_longer(cols = yvar)
+  
+  df$name <- factor(df$name, levels = rev(yvar))
+  
+  df1 <- df %>%
+    mutate(value = 1)
+  
+  p <- ggplot(data = df) +
+    geom_point(data = df1, aes(x = .data$name, y = !!sym(xvar), size = .data$value), colour = "red") +
+    geom_point(aes(x = .data$name, y = !!sym(xvar), size = .data$value)) +
+    scale_size(limits = c(1e-6, 1)) +
+    coord_flip() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(size = "Proportion")
+  
+  return(p)
+}
+
+
 #' Bubble plot
 #' 
 #' Generates a bubble plot for a data set.

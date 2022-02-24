@@ -29,7 +29,7 @@ table_criterion <- function(fits, criterion = c("bayes_R2", "loo"), ...) {
   df_loo <- list()
   for (i in 1:n) {
     if (!is.brmsfit(fits[[i]])) stop("fit is not an object of class brmsfit.")
-    fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], ...)
+    fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], overwrite = TRUE)
     df_loo[[i]] <- fits[[i]]$criteria$loo
   }
   lout <- data.frame(loo_compare(df_loo))
@@ -38,23 +38,21 @@ table_criterion <- function(fits, criterion = c("bayes_R2", "loo"), ...) {
   df_r2 <- NULL
   for (i in 1:n) {
     fit <- fits[[i]]
-    df1 <- data.frame(R2 = fit$criteria$bayes_R2) %>%
-      mutate(id = df_names$id[i])
+    df1 <- bayes_R2(fit) %>%
+      data.frame() %>%
+      mutate(id = df_names$id[i]) %>%
+      rename(R2 = Estimate)
     df_r2 <- rbind(df_r2, df1)
   }
   
   df_all <- df_r2 %>% 
     left_join(df_names, by = "id") %>%
-    group_by(.data$id, .data$Model, .data$Distribution, .data$Link) %>% 
-    summarise(R2 = mean(.data$R2)) %>%
     left_join(lout, by = "id") %>%
     arrange(-.data$elpd_diff)
-    # mutate(R2_diff = c(0, diff(R2))) %>%
   df_all$R2_diff <- c(0, diff(df_all$R2))
   df_all <- df_all %>%
-    relocate(.data$R2_diff, .after = .data$R2) %>%
-    ungroup() %>%
-    select(-.data$id)
+    # relocate(.data$R2_diff, .after = .data$R2) %>%
+    select(Model, Distribution, Link, R2, R2_diff, elpd_diff, se_diff, elpd_loo, se_elpd_loo, p_loo, se_p_loo, looic, se_looic)
   
   return(df_all)
 }

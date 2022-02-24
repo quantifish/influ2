@@ -28,7 +28,6 @@ Imports:
 Suggests: 
     knitr,
     tidyverse,
-    tidyr,
     devtools,
     rmarkdown,
     roxygen2,

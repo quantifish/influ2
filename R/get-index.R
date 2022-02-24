@@ -35,15 +35,15 @@ get_unstandarsied <- function(fit, year = "year", rescale = 1) {
   gm <- geo_mean(unstd$cpue)
   
   fout <- unstd %>%
-    mutate(Estimate = .data$cpue, Q50 = .data$cpue) %>%
+    mutate(Mean = .data$cpue, Median = .data$cpue) %>%
     select(-.data$cpue)
   
   # Rescale the series
   if (rescale == "raw") {
     # nothing to do
   } else if (is.numeric(rescale)) {
-    fout$Estimate <- fout$Estimate / gm * rescale
-    fout$Q50 <- fout$Q50 / gm * rescale
+    fout$Mean <- fout$Mean / gm * rescale
+    fout$Median <- fout$Median / gm * rescale
   }
   
   return(fout)
@@ -83,6 +83,7 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   newdata <- fit$data %>% slice(rep(1, n))
   for (j in 1:ncol(newdata)) {
     x <- fit$data[,j]
+    # newdata[,j] <- ifelse(is.numeric(x) & !is.integer(x), mean(x), NA) working on monotonic vars
     newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
   }
   newdata[,year] <- yrs
