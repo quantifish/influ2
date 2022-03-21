@@ -59,18 +59,32 @@ get_coefs_raw <- function(fit, var = "area") {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
-  if (nrow(fit$ranef) > 0) {
-    ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
-      mutate(iteration = 1:n()) %>%
-      melt(id.vars = "iteration") %>%
-      mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
-      mutate(variable = gsub(",Intercept", "", .data$variable))
-  } else {
-    ps <- posterior_samples(fit, pars = var) %>%
-      mutate(iteration = 1:n()) %>%
-      melt(id.vars = "iteration") %>%
-      mutate(variable = gsub("b_", "", .data$variable))
+  ps <- as_draws_df(x = fit, variable = var, regex = TRUE) %>%
+    mutate(iteration = .draw) %>%
+    select(-.iteration, -.chain, -.draw) %>%
+    melt(id.vars = "iteration") %>%
+    # mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
+    mutate(variable = gsub(",Intercept", "", .data$variable)) %>%
+    filter(!str_detect(.data$variable, "sd_"))
+  
+  # Remove interaction term(s) if not asked for
+  if (!str_detect(var, ":")) {
+    ps <- ps %>%
+      filter(!str_detect(.data$variable, ":"))
   }
+  
+  # if (nrow(fit$ranef) > 0) {
+  #   ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
+  #     mutate(iteration = 1:n()) %>%
+  #     melt(id.vars = "iteration") %>%
+  #     mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
+  #     mutate(variable = gsub(",Intercept", "", .data$variable))
+  # } else {
+  #   ps <- posterior_samples(fit, pars = var) %>%
+  #     mutate(iteration = 1:n()) %>%
+  #     melt(id.vars = "iteration") %>%
+  #     mutate(variable = gsub("b_", "", .data$variable))
+  # }
   
   # Get the missing variable and normalise
   # if (nrow(fit$ranef) == 0 & normalise & !is_poly & length(unique(ps$variable)) != 1) {
@@ -133,12 +147,16 @@ get_coefs <- function(fit, var = "area",
     # eff <- ranef(fit, groups = var, probs = c(0.05, 0.95))[[1]][,,1] %>%
     #   data.frame() %>%
     #   mutate(variable = rownames(.))
-    
-    ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
-      mutate(iteration = 1:n()) %>%
+    ps <- as_draws_df(x = fit, variable = paste0("r_", var), regex = TRUE) %>%
+      mutate(iteration = .draw) %>%
+      select(-.iteration, -.chain, -.draw) %>%
       melt(id.vars = "iteration") %>%
       mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
       mutate(variable = gsub(",Intercept", "", .data$variable))
+    if (!str_detect(var, ":")) {
+      ps <- ps %>%
+        filter(!str_detect(.data$variable, ":"))
+    }
   } else {
     # Population-level effects
     # eff <- fixef(fit, probs = c(0.05, 0.95)) %>%
@@ -150,17 +168,21 @@ get_coefs <- function(fit, var = "area",
     # e2 <- data.frame(t(rep(0, ncol(eff) - 1)), as.character(paste0(var, vars[!vars %in% pars])))
     # names(e2) <- names(eff)
     # eff <- rbind(e2, eff)
-    
-    ps <- posterior_samples(fit, pars = var) %>%
-      mutate(iteration = 1:n()) %>%
+    ps <- as_draws_df(x = fit, variable = var, regex = TRUE) %>%
+      mutate(iteration = .draw) %>%
+      select(-.iteration, -.chain, -.draw) %>%
       melt(id.vars = "iteration") %>%
       mutate(variable = gsub("b_", "", .data$variable)) %>%
       mutate(variable = gsub("r_", "", .data$variable)) %>%
       filter(!str_detect(.data$variable, "sd_"))
-      #mutate(variable = paste0(var, gregexpr("[[:digit:]]+", .data$variable)))
-      #mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
-    #unique(ps$variable)
-    #head(ps)
+    if (!str_detect(var, ":")) {
+      ps <- ps %>%
+        filter(!str_detect(.data$variable, ":"))
+    }
+      # mutate(variable = paste0(var, gregexpr("[[:digit:]]+", .data$variable)))
+      # mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
+    # unique(ps$variable)
+    # tail(ps)
   }
   
   # Check to see if this is a polynomial

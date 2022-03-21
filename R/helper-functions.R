@@ -80,6 +80,10 @@ id_var_type <- function(fit, xfocus, hurdle = FALSE) {
     form_var <- form_split[grepl(xfocus, form_split)]
   }
 
+  if (!str_detect(xfocus, ":")) {
+    form_var <- form_var[!str_detect(form_var, ":")]
+  }
+  
   if (!is.numeric(fit$data[,xfocus]) & !any(grepl("\\(1 \\|", form_var))) {
     type <- "fixed_effect"
   } else if (!is.numeric(fit$data[,xfocus]) & any(grepl("\\(1 \\|", form_var))) {
@@ -119,7 +123,7 @@ geo_mean <- function(a) {
 #' @export
 #' 
 inv_logit <- function(a) {
-  exp(a) / (exp(a) + 1)
+  exp(a) / (exp(a) + 1.0)
 }
 
 
@@ -130,5 +134,5 @@ inv_logit <- function(a) {
 #' @export
 #' 
 logit <- function(p) {
-  log(p / (1 - p))
+  log(p / (1.0 - p))
 }

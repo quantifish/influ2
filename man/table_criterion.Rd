@@ -4,12 +4,19 @@
 \alias{table_criterion}
 \title{Get table of various criterion}
 \usage{
-table_criterion(fits, criterion = c("bayes_R2", "loo"), ...)
+table_criterion(
+  fits,
+  criterion = c("loo", "loo_R2", "bayes_R2"),
+  sort = TRUE,
+  ...
+)
 }
 \arguments{
 \item{fits}{a list of model fits in the order that you want to compare them}
 
 \item{criterion}{the criterion to use}
+
+\item{sort}{to sort the table with the best models at the top}
 
 \item{...}{additional parameters passed to \code{add_criterion}}
 }

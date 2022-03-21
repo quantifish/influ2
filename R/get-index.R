@@ -83,10 +83,21 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   newdata <- fit$data %>% slice(rep(1, n))
   for (j in 1:ncol(newdata)) {
     x <- fit$data[,j]
+    if(is.numeric(x)) {
+      if (is.integer(x)) {
+        newdata[,j] <- round(mean(x))
+      }  else {
+        newdata[,j] <- mean(x)
+      }
+    } else {
+      newdata[,j] <- NA
+    }
     # newdata[,j] <- ifelse(is.numeric(x) & !is.integer(x), mean(x), NA) working on monotonic vars
-    newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
+    # newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
   }
   newdata[,year] <- yrs
+  newdata$pots <- 1
+  head(newdata)
   
   # fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA)
   # newdata <- newdata[,1:5]

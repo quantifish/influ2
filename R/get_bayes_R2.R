@@ -4,6 +4,7 @@
 #' 
 #' @param fits a list of model fits in the order that you want to compare them
 #' @param criterion the criterion to use
+#' @param sort to sort the table with the best models at the top
 #' @param ... additional parameters passed to \code{add_criterion}
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}
@@ -12,49 +13,117 @@
 #' @import dplyr
 #' @export
 #' 
-table_criterion <- function(fits, criterion = c("bayes_R2", "loo"), ...) {
+table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2"), sort = TRUE, ...) {
   
   n <- length(fits)
   
+  # Get the model formula, distribution, and link function
   df_names <- NULL
   for (i in 1:n) {
     fit <- fits[[i]]
+    nuts <- nuts_params(fit)
+    divergent <- nuts %>% filter(Parameter %in% "divergent__")
     df <- data.frame(id = i,
                      Model = gsub(".*\\~ ", "", as.character(fit$formula)[1]), 
                      Distribution = as.character(fit$family)[1], 
-                     Link = as.character(fit$family)[2])
+                     Link = as.character(fit$family)[2],
+                     n_divergent = sum(divergent$Value))
     df_names <- rbind(df_names, df)
   }
-  
-  df_loo <- list()
+
+  # Get the criterion if required
   for (i in 1:n) {
     if (!is.brmsfit(fits[[i]])) stop("fit is not an object of class brmsfit.")
-    fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], overwrite = TRUE)
-    df_loo[[i]] <- fits[[i]]$criteria$loo
+    # fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], overwrite = TRUE)
   }
-  lout <- data.frame(loo_compare(df_loo))
-  lout$id <- as.integer(rownames(lout))
+  
+  if ("loo" %in% criterion) {
+    list_loo <- list()
+    for (i in 1:n) {
+      list_loo[[i]] <- fits[[i]]$criteria$loo
+    }
+    df_loo <- data.frame(loo_compare(list_loo))
+    df_loo$id <- loo_compare_order(list_loo)
+    df_loo$model_name <- find_model_names(list_loo)
+  }
+  
+  if ("loo_R2" %in% criterion) {
+    df_br2 <- NULL
+    for (i in 1:n) {
+      fit <- fits[[i]]
+      df1 <- loo_R2(fit) %>%
+        data.frame() %>%
+        mutate(id = df_names$id[i]) %>%
+        rename(loo_R2 = Estimate, se_loo_R2 = Est.Error)
+      df_br2 <- rbind(df_br2, df1)
+    }
+  }
 
-  df_r2 <- NULL
-  for (i in 1:n) {
-    fit <- fits[[i]]
-    df1 <- bayes_R2(fit) %>%
-      data.frame() %>%
-      mutate(id = df_names$id[i]) %>%
-      rename(R2 = Estimate)
-    df_r2 <- rbind(df_r2, df1)
+  if ("bayes_R2" %in% criterion) {
+    df_lr2 <- NULL
+    for (i in 1:n) {
+      fit <- fits[[i]]
+      df1 <- bayes_R2(fit) %>%
+        data.frame() %>%
+        mutate(id = df_names$id[i]) %>%
+        rename(bayes_R2 = Estimate, se_bayes_R2 = Est.Error)
+      df_lr2 <- rbind(df_lr2, df1)
+    }
   }
   
-  df_all <- df_r2 %>% 
-    left_join(df_names, by = "id") %>%
-    left_join(lout, by = "id") %>%
-    arrange(-.data$elpd_diff)
-  df_all$R2_diff <- c(0, diff(df_all$R2))
-  df_all <- df_all %>%
-    # relocate(.data$R2_diff, .after = .data$R2) %>%
-    select(Model, Distribution, Link, R2, R2_diff, elpd_diff, se_diff, elpd_loo, se_elpd_loo, p_loo, se_p_loo, looic, se_looic)
+  # Combine the tables
+  df_all <- df_names
+  if ("loo" %in% criterion) df_all <- df_all %>% left_join(df_loo, by = "id")
+  if ("loo_R2" %in% criterion)  df_all <- df_all %>% left_join(df_lr2, by = "id")
+  if ("bayes_R2" %in% criterion)  df_all <- df_all %>% left_join(df_br2, by = "id")
   
+  # Sort by elpd if wanted
+  if (sort && "loo" %in% criterion) {
+    df_all <- df_all %>% arrange(-.data$elpd_diff)
+  } else {
+    df_all <- df_all %>% arrange(.data$id)
+  }
+  
+  df_all <- df_all %>%
+    relocate(.data$model_name, .after = id) %>%
+    relocate(.data$n_divergent, .after = last_col())
+
   return(df_all)
+}
+
+loo_compare_order <- function(loos) {
+  tmp <- sapply(loos, function(x) {
+    est <- x$estimates
+    setNames(c(est), nm = c(rownames(est), paste0("se_", rownames(est))))
+  })
+  colnames(tmp) <- find_model_names(loos)
+  rnms <- rownames(tmp)
+  ord <- order(tmp[grep("^elpd", rnms), ], decreasing = TRUE)
+  ord
+}
+
+find_model_names <- function(x) {
+  stopifnot(is.list(x))
+  out_names <- character(length(x))
+  
+  names1 <- names(x)
+  names2 <- lapply(x, "attr", "model_name", exact = TRUE)
+  names3 <- lapply(x, "[[", "model_name")
+  names4 <- paste0("model", seq_along(x))
+  
+  for (j in seq_along(x)) {
+    if (isTRUE(nzchar(names1[j]))) {
+      out_names[j] <- names1[j]
+    } else if (length(names2[[j]])) {
+      out_names[j] <- names2[[j]]
+    } else if (length(names3[[j]])) {
+      out_names[j] <- names3[[j]]
+    } else {
+      out_names[j] <- names4[j]
+    }
+  }
+  
+  return(out_names)
 }
 
 
