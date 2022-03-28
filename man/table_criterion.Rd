@@ -6,7 +6,7 @@
 \usage{
 table_criterion(
   fits,
-  criterion = c("loo", "loo_R2", "bayes_R2"),
+  criterion = c("loo", "loo_R2", "bayes_R2", "log_lik"),
   sort = TRUE,
   ...
 )

@@ -11,31 +11,41 @@
 #' 
 #' @import brms
 #' @import dplyr
+#' @importFrom rstan get_elapsed_time get_num_upars
+#' @importFrom lubridate seconds_to_period hour minute second
 #' @export
 #' 
-table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2"), sort = TRUE, ...) {
+table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "log_lik"), sort = TRUE, ...) {
   
   n <- length(fits)
   
-  # Get the model formula, distribution, and link function
+  for (i in 1:n) {
+    if (!is.brmsfit(fits[[i]])) stop("fit is not an object of class brmsfit.")
+  }
+  
+  # Get the formula, distribution, link function, run time, and number of divergent transitions for each model
   df_names <- NULL
   for (i in 1:n) {
     fit <- fits[[i]]
+    
     nuts <- nuts_params(fit)
     divergent <- nuts %>% filter(Parameter %in% "divergent__")
+    td <- seconds_to_period(max(rowSums(get_elapsed_time(fit$fit))))
+
     df <- data.frame(id = i,
                      Model = gsub(".*\\~ ", "", as.character(fit$formula)[1]), 
                      Distribution = as.character(fit$family)[1], 
                      Link = as.character(fit$family)[2],
-                     n_divergent = sum(divergent$Value))
+                     # n_pars = get_num_upars(fit$fit),
+                     n_divergent = sum(divergent$Value),
+                     max_time = sprintf('%02d:%02d:%02d', hour(td), minute(td), round(second(td))))
     df_names <- rbind(df_names, df)
   }
 
   # Get the criterion if required
-  for (i in 1:n) {
-    if (!is.brmsfit(fits[[i]])) stop("fit is not an object of class brmsfit.")
-    # fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], overwrite = TRUE)
-  }
+  # for (i in 1:n) {
+  #   fits[[i]] <- add_criterion(x = fits[[i]], criterion = criterion, model_name = df_names$id[i], overwrite = TRUE)
+  # }
   
   if ("loo" %in% criterion) {
     list_loo <- list()
@@ -44,38 +54,50 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2"), so
     }
     df_loo <- data.frame(loo_compare(list_loo))
     df_loo$id <- loo_compare_order(list_loo)
-    df_loo$model_name <- find_model_names(list_loo)
+    df_loo$model_name <- find_model_names(list_loo)[df_loo$id]
   }
   
   if ("loo_R2" %in% criterion) {
-    df_br2 <- NULL
+    df_loo_R2 <- NULL
     for (i in 1:n) {
       fit <- fits[[i]]
       df1 <- loo_R2(fit) %>%
         data.frame() %>%
         mutate(id = df_names$id[i]) %>%
-        rename(loo_R2 = Estimate, se_loo_R2 = Est.Error)
-      df_br2 <- rbind(df_br2, df1)
+        rename(loo_R2 = Estimate, se_loo_R2 = Est.Error, Q2.5_loo_R2 = Q2.5, Q97.5_loo_R2 = Q97.5)
+      df_loo_R2 <- rbind(df_loo_R2, df1)
     }
   }
 
   if ("bayes_R2" %in% criterion) {
-    df_lr2 <- NULL
+    df_bayes_R2 <- NULL
     for (i in 1:n) {
       fit <- fits[[i]]
       df1 <- bayes_R2(fit) %>%
         data.frame() %>%
         mutate(id = df_names$id[i]) %>%
-        rename(bayes_R2 = Estimate, se_bayes_R2 = Est.Error)
-      df_lr2 <- rbind(df_lr2, df1)
+        rename(bayes_R2 = Estimate, se_bayes_R2 = Est.Error, Q2.5_bayes_R2 = Q2.5, Q97.5_bayes_R2 = Q97.5)
+      df_bayes_R2 <- rbind(df_bayes_R2, df1)
     }
   }
+  
+  # if ("log_lik" %in% criterion) {
+  #   df_ll <- NULL
+  #   for (i in 1:n) {
+  #     fit <- fits[[i]]
+  #     ll <- rowSums(log_lik(fit))
+  #     df1 <- data.frame(id = df_names$id[i]) %>%
+  #       rename(log_lik = mean(ll), se_log_lik = sd(ll))
+  #     df_ll <- rbind(df_ll, df1)
+  #   }
+  # }
   
   # Combine the tables
   df_all <- df_names
   if ("loo" %in% criterion) df_all <- df_all %>% left_join(df_loo, by = "id")
-  if ("loo_R2" %in% criterion)  df_all <- df_all %>% left_join(df_lr2, by = "id")
-  if ("bayes_R2" %in% criterion)  df_all <- df_all %>% left_join(df_br2, by = "id")
+  if ("loo_R2" %in% criterion)  df_all <- df_all %>% left_join(df_loo_R2, by = "id")
+  if ("bayes_R2" %in% criterion)  df_all <- df_all %>% left_join(df_bayes_R2, by = "id")
+  if ("log_lik" %in% criterion)  df_all <- df_all %>% left_join(df_ll, by = "id")
   
   # Sort by elpd if wanted
   if (sort && "loo" %in% criterion) {
@@ -86,10 +108,12 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2"), so
   
   df_all <- df_all %>%
     relocate(.data$model_name, .after = id) %>%
-    relocate(.data$n_divergent, .after = last_col())
+    relocate(.data$n_divergent, .after = last_col()) %>%
+    relocate(.data$max_time, .after = last_col())
 
   return(df_all)
 }
+
 
 loo_compare_order <- function(loos) {
   tmp <- sapply(loos, function(x) {
