@@ -97,7 +97,7 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "lo
   if ("loo" %in% criterion) df_all <- df_all %>% left_join(df_loo, by = "id")
   if ("loo_R2" %in% criterion)  df_all <- df_all %>% left_join(df_loo_R2, by = "id")
   if ("bayes_R2" %in% criterion)  df_all <- df_all %>% left_join(df_bayes_R2, by = "id")
-  if ("log_lik" %in% criterion)  df_all <- df_all %>% left_join(df_ll, by = "id")
+  # if ("log_lik" %in% criterion)  df_all <- df_all %>% left_join(df_ll, by = "id")
   
   # Sort by elpd if wanted
   if (sort && "loo" %in% criterion) {
