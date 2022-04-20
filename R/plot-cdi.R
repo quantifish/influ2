@@ -47,8 +47,10 @@ plot_bayesian_cdi <- function(fit,
                               sum_by = "row", ...) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
   if (is.null(xlab)) xlab <- xfocus
   if (is.null(ylab)) ylab <- yfocus
+  y_coefs <- "Conditional effect"
   
   # Identify the type of variable we are dealing with
   type <- id_var_type(fit = fit, xfocus = xfocus, hurdle = hurdle)
@@ -59,6 +61,13 @@ plot_bayesian_cdi <- function(fit,
   } else {
     coefs <- get_marginal(fit = fit, var = xfocus) # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
     # coefs <- get_coefs_raw(fit = fit, var = xfocus)
+  }
+  
+  # If using the lognormal distribution then transform the coefs
+  if (fit$family$family == "lognormal") {
+    coefs <- coefs %>%
+      mutate(value = exp(value))
+    y_coefs <- "Coefficient"
   }
   
   # Model data
@@ -111,7 +120,9 @@ plot_bayesian_cdi <- function(fit,
   # The bubble plot (bottom-left) and the legend for the bubble plot (top-right)
   p3a <- plot_bubble(df = data, group = c(yfocus, xfocus), sum_by = sum_by, 
                      xlab = xlab, ylab = ylab, zlab = "", fill = colour, sort_order = sort_order)
+  
   p2 <- g2(p3a)
+  
   if (axis.text.x.bl) {
     p3 <- p3a + theme(legend.position = "none", plot.margin = margin(t = p_margin, r = p_margin, unit = "cm"), 
                       axis.text.x = element_text(angle = 45, hjust = 1))
@@ -122,7 +133,7 @@ plot_bayesian_cdi <- function(fit,
   
   # The coefficients (top-left)
   p1 <- ggplot(data = coefs, aes(x = .data$variable, y = .data$value)) +
-    labs(x = NULL, y = "Conditional effect") +
+    labs(x = NULL, y = y_coefs) +
     theme_bw() +
     theme(axis.title.x = element_blank(), 
           axis.text.x = element_blank(), axis.ticks.x = element_blank(),
@@ -140,6 +151,7 @@ plot_bayesian_cdi <- function(fit,
       coord_cartesian(xlim = c(midpoints[1], midpoints[length(midpoints)]))
   } else {
     p1 <- p1 +
+      # geom_point() +
       geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
       geom_hline(yintercept = 0, linetype = "dashed") +
       scale_x_discrete(position = "top")# +

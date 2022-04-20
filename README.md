@@ -6,9 +6,13 @@ Nokome Bentley's R package `influ` was developed for use with frequentist models
 
 ## Installation
 
-The `nzsf` package can be installed from within R using:
+The `influ2` package can be installed from within R using:
 
 ``` r
 library(devtools)
 install_github(repo = "quantifish/influ2", build_vignettes = TRUE)
 ```
+
+## References
+
+Bentley, N., Kendrick, T. H., Starr, P. J., and Breen, P. A. Inﬂuence plots and metrics: tools for better understanding ﬁsheries catch-per-unit-effort standardizations. – ICES Journal of Marine Science, doi:10.1093/icesjms/fsr174.

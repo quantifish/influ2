@@ -44,6 +44,7 @@ library(bayesplot)
 # options(mc.cores = parallel::detectCores())
 
 # Get Nokome's influ package code
+# setwd("/home/darcy/Projects/influ2/vignettes")
 # source("tests/testthat/influ.R")
 source("../tests/testthat/influ.R")
 
@@ -58,6 +59,7 @@ iris2 <- iris %>%
          Duration = Sepal.Length,
          Duration2 = cut(Sepal.Length, 20)) %>%
   select(CPUE, Year, Species, Area, Duration, Duration2)
+
 glimpse(iris2)
 ```
 

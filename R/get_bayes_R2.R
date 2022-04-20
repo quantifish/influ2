@@ -55,6 +55,11 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "lo
     df_loo <- data.frame(loo_compare(list_loo))
     df_loo$id <- loo_compare_order(list_loo)
     df_loo$model_name <- find_model_names(list_loo)[df_loo$id]
+    df_loo <- df_loo %>%
+      relocate(.data$p_loo, .after = .data$se_looic) %>%
+      relocate(.data$se_p_loo, .after = .data$p_loo) %>%
+      mutate(across(se_diff:se_looic, ~ format(round(.x, digits = 0), nsmall = 0))) %>%
+      mutate(across(p_loo:se_p_loo, ~ format(round(.x, digits = 1), nsmall = 1)))
   }
   
   if ("loo_R2" %in% criterion) {
@@ -64,7 +69,9 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "lo
       df1 <- loo_R2(fit) %>%
         data.frame() %>%
         mutate(id = df_names$id[i]) %>%
-        rename(loo_R2 = Estimate, se_loo_R2 = Est.Error, Q2.5_loo_R2 = Q2.5, Q97.5_loo_R2 = Q97.5)
+        rename(loo_R2 = Estimate, se_loo_R2 = Est.Error, Q2.5_loo_R2 = Q2.5, Q97.5_loo_R2 = Q97.5) %>%
+        mutate(across(loo_R2:Q97.5_loo_R2, ~ format(round(.x, digits = 3), nsmall = 3))) %>%
+        select(-Q2.5_loo_R2, -Q97.5_loo_R2)
       df_loo_R2 <- rbind(df_loo_R2, df1)
     }
   }
@@ -76,7 +83,9 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "lo
       df1 <- bayes_R2(fit) %>%
         data.frame() %>%
         mutate(id = df_names$id[i]) %>%
-        rename(bayes_R2 = Estimate, se_bayes_R2 = Est.Error, Q2.5_bayes_R2 = Q2.5, Q97.5_bayes_R2 = Q97.5)
+        rename(bayes_R2 = Estimate, se_bayes_R2 = Est.Error, Q2.5_bayes_R2 = Q2.5, Q97.5_bayes_R2 = Q97.5) %>%
+        mutate(across(bayes_R2:Q97.5_bayes_R2, ~ format(round(.x, digits = 3), nsmall = 3))) %>%
+        select(-Q2.5_bayes_R2, -Q97.5_bayes_R2)
       df_bayes_R2 <- rbind(df_bayes_R2, df1)
     }
   }
@@ -101,13 +110,16 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "lo
   
   # Sort by elpd if wanted
   if (sort && "loo" %in% criterion) {
-    df_all <- df_all %>% arrange(-.data$elpd_diff)
+    df_all <- df_all %>% arrange(-as.numeric(.data$elpd_diff))
   } else {
     df_all <- df_all %>% arrange(.data$id)
   }
   
   df_all <- df_all %>%
+    mutate(elpd_diff = format(round(elpd_diff, digits = 0), nsmall = 0)) %>%
     relocate(.data$model_name, .after = id) %>%
+    relocate(.data$Distribution, .after = .data$model_name) %>%
+    relocate(.data$Link, .after = .data$Distribution) %>%
     relocate(.data$n_divergent, .after = last_col()) %>%
     relocate(.data$max_time, .after = last_col())
 
