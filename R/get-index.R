@@ -1,3 +1,25 @@
+#' Logit
+#' 
+#' @return a \code{data.frame} or a \code{ggplot} object.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
+#' @export
+#' 
+logit <- qlogis
+
+
+#' Logistic
+#' 
+#' @return a \code{data.frame} or a \code{ggplot} object.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
+#' 
+#' @export
+#' 
+logistic <- plogis
+
+
 #' Get the unstandardised indices
 #' 
 #' @param fit An object of class \code{brmsfit}.
@@ -83,7 +105,7 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   newdata <- fit$data %>% slice(rep(1, n))
   for (j in 1:ncol(newdata)) {
     x <- fit$data[,j]
-    if(is.numeric(x)) {
+    if (is.numeric(x)) {
       if (is.integer(x)) {
         newdata[,j] <- round(mean(x))
       }  else {
