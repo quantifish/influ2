@@ -24,7 +24,10 @@ Imports:
     readr,
     gtable,
     nlme,
-    brms
+    brms,
+    rstan,
+    tidyr,
+    lubridate
 Suggests: 
     knitr,
     tidyverse,

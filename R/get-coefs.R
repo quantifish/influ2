@@ -60,8 +60,8 @@ get_coefs_raw <- function(fit, var = "area") {
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   ps <- as_draws_df(x = fit, variable = var, regex = TRUE) %>%
-    mutate(iteration = .draw) %>%
-    select(-.iteration, -.chain, -.draw) %>%
+    mutate(iteration = .data$.draw) %>%
+    select(-.data$.iteration, -.data$.chain, -.data$.draw) %>%
     melt(id.vars = "iteration") %>%
     # mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
     mutate(variable = gsub(",Intercept", "", .data$variable)) %>%
@@ -148,8 +148,8 @@ get_coefs <- function(fit, var = "area",
     #   data.frame() %>%
     #   mutate(variable = rownames(.))
     ps <- as_draws_df(x = fit, variable = paste0("r_", var), regex = TRUE) %>%
-      mutate(iteration = .draw) %>%
-      select(-.iteration, -.chain, -.draw) %>%
+      mutate(iteration = .data$.draw) %>%
+      select(-.data$.iteration, -.data$.chain, -.data$.draw) %>%
       melt(id.vars = "iteration") %>%
       mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
       mutate(variable = gsub(",Intercept", "", .data$variable))
@@ -169,8 +169,8 @@ get_coefs <- function(fit, var = "area",
     # names(e2) <- names(eff)
     # eff <- rbind(e2, eff)
     ps <- as_draws_df(x = fit, variable = var, regex = TRUE) %>%
-      mutate(iteration = .draw) %>%
-      select(-.iteration, -.chain, -.draw) %>%
+      mutate(iteration = .data$.draw) %>%
+      select(-.data$.iteration, -.data$.chain, -.data$.draw) %>%
       melt(id.vars = "iteration") %>%
       mutate(variable = gsub("b_", "", .data$variable)) %>%
       mutate(variable = gsub("r_", "", .data$variable)) %>%
