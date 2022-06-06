@@ -52,7 +52,7 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
         fout <- df0[[i]]
         
         df1 <- df0[[rescale]] %>%
-          filter(Year %in% fout$Year)
+          filter(.data$Year %in% fout$Year)
         gm <- geo_mean(df1$Mean)
         
         fout$Mean <- fout$Mean / geo_mean(fout$Mean) * gm

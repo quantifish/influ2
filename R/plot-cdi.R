@@ -66,7 +66,7 @@ plot_bayesian_cdi <- function(fit,
   # If using the lognormal distribution then transform the coefs
   if (fit$family$family == "lognormal") {
     coefs <- coefs %>%
-      mutate(value = exp(value))
+      mutate(value = exp(.data$value))
     y_coefs <- "Coefficient"
   }
   
