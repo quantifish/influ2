@@ -1,11 +1,11 @@
 #' Compare indices
 #' 
 #' @param fits a list of objects of class \code{brmsfit} in the order that you want to compare them.
-#' @param labels the labels for the fits.
-#' @param year the year or time label.
-#' @param probs the quantiles to plot.
+#' @param labels some optional labels for the fits that will be shown in the legend instead of the model formula.
+#' @param year the year or time label in the fitted model.
+#' @param probs the quantiles to plot. Defaults to 25% and 75% quantiles or 50% credible interval (CI).
 #' @param show_probs plot the quantiles or not.
-#' @param rescale the index of the series to rescale to.
+#' @param rescale the index of the series to rescale to. If set to NULL then no rescaling is done.
 #' 
 #' @import brms
 #' @import ggplot2
