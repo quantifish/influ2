@@ -49,7 +49,7 @@ plot_index <- function(fit,
     theme_bw() +
     theme(legend.position = "top", axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank(), legend.key.width = unit(2, "cm")) +
     guides(color = guide_legend(override.aes = list(fill = NA)))
-  
+
   return(p)
 }
 

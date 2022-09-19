@@ -33,7 +33,9 @@ table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "lo
     td <- seconds_to_period(max(rowSums(get_elapsed_time(fit$fit))))
 
     df <- data.frame(id = i,
-                     Model = gsub(".*\\~ ", "", as.character(fit$formula)[1]), 
+                     # Model = gsub(".*\\~ ", "", as.character(fit$formula)[1]), 
+                     Model = as.character(fit$formula)[1], 
+                     Var = as.character(fit$formula)[2], 
                      Distribution = as.character(fit$family)[1], 
                      Link = as.character(fit$family)[2],
                      # n_pars = get_num_upars(fit$fit),

@@ -16,15 +16,15 @@ plot_compare(
 \arguments{
 \item{fits}{a list of objects of class \code{brmsfit} in the order that you want to compare them.}
 
-\item{labels}{the labels for the fits.}
+\item{labels}{some optional labels for the fits that will be shown in the legend instead of the model formula.}
 
-\item{year}{the year or time label.}
+\item{year}{the year or time label in the fitted model.}
 
-\item{probs}{the quantiles to plot.}
+\item{probs}{the quantiles to plot. Defaults to 25% and 75% quantiles or 50% credible interval (CI).}
 
 \item{show_probs}{plot the quantiles or not.}
 
-\item{rescale}{the index of the series to rescale to.}
+\item{rescale}{the index of the series to rescale to. If set to NULL then no rescaling is done.}
 }
 \description{
 Compare indices
