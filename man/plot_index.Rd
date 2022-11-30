@@ -4,7 +4,14 @@
 \alias{plot_index}
 \title{Plot the standardised and unstandardised indices}
 \usage{
-plot_index(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75))
+plot_index(
+  fit,
+  year = "Year",
+  fill = "purple",
+  probs = c(0.25, 0.75),
+  rescale = 1,
+  show_unstandardised = TRUE
+)
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}
@@ -14,6 +21,8 @@ plot_index(fit, year = "Year", fill = "purple", probs = c(0.25, 0.75))
 \item{fill}{the fill colour for the percentiles.}
 
 \item{probs}{The percentiles to be computed by the \code{quantile} function.}
+
+\item{rescale}{the index of the series to rescale to. If set to NULL then no rescaling is done.}
 }
 \value{
 a \code{ggplot} object.

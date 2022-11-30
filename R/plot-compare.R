@@ -1,18 +1,22 @@
-#' Compare indices
+#' Compare CPUE indices
 #' 
 #' @param fits a list of objects of class \code{brmsfit} in the order that you want to compare them.
 #' @param labels some optional labels for the fits that will be shown in the legend instead of the model formula.
 #' @param year the year or time label in the fitted model.
-#' @param probs the quantiles to plot. Defaults to 25% and 75% quantiles or 50% credible interval (CI).
+#' @param probs the quantiles to plot. Defaults to 25\% and 75\% quantiles or 50\% credible interval (CI).
 #' @param show_probs plot the quantiles or not.
 #' @param rescale the index of the series to rescale to. If set to NULL then no rescaling is done.
+#' @return a \code{ggplot} object.
+#' 
+#' @author Darcy Webber \email{darcy@quantifish.co.nz}
 #' 
 #' @import brms
 #' @import ggplot2
 #' @importFrom stringi stri_trim_right
 #' @export
 #' 
-plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.75), show_probs = TRUE, rescale = NULL) {
+plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.75), 
+                         show_probs = TRUE, rescale = NULL) {
   
   df0 <- list()
   df <- NULL
@@ -29,7 +33,7 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
     # }
     # newdata[,year] <- yrs
     # fout <- data.frame(fitted(object = fits[[i]], newdata = newdata, probs = c(probs[1], 0.5, probs[2])))
-    fout <- get_index(fit = fits[[i]], year = year, probs = probs, rescale = 1)
+    fout <- get_index(fit = fits[[i]], year = year, probs = probs, rescale = rescale)
     
     if (is.null(labels)) {
       str <- as.character(fits[[i]]$formula)[1]

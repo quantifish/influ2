@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-compare.R
 \name{plot_compare}
 \alias{plot_compare}
-\title{Compare indices}
+\title{Compare CPUE indices}
 \usage{
 plot_compare(
   fits,
@@ -20,12 +20,18 @@ plot_compare(
 
 \item{year}{the year or time label in the fitted model.}
 
-\item{probs}{the quantiles to plot. Defaults to 25% and 75% quantiles or 50% credible interval (CI).}
+\item{probs}{the quantiles to plot. Defaults to 25\% and 75\% quantiles or 50\% credible interval (CI).}
 
 \item{show_probs}{plot the quantiles or not.}
 
 \item{rescale}{the index of the series to rescale to. If set to NULL then no rescaling is done.}
 }
+\value{
+a \code{ggplot} object.
+}
 \description{
-Compare indices
+Compare CPUE indices
+}
+\author{
+Darcy Webber \email{darcy@quantifish.co.nz}
 }
