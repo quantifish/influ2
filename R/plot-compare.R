@@ -16,26 +16,14 @@
 #' @importFrom stringi stri_trim_right
 #' @export
 #' 
-plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.75), 
-                         show_probs = TRUE, rescale = "raw", rescale_series = 1) {
+plot_compare <- function(fits, labels = NULL, year = "year", 
+                         probs = c(0.25, 0.75), show_probs = TRUE, 
+                         rescale = "raw", rescale_series = NULL) {
   
+  # Extract the indices for each model fit as a list
   df0 <- list()
-  df <- NULL
-  
-  # Extract the indices for each model fit
   for (i in 1:length(fits)) {
-    # yrs <- sort(unique(fits[[i]]$data[,year]))
-    # n <- length(yrs)
-    # # Create newdata for prediction (using fitted)
-    # newdata <- fits[[i]]$data %>% slice(rep(1, n))
-    # for (j in 1:ncol(newdata)) {
-    #   x <- fits[[i]]$data[,j]
-    #   newdata[,j] <- ifelse(is.numeric(x), mean(x), NA)
-    # }
-    # newdata[,year] <- yrs
-    # fout <- data.frame(fitted(object = fits[[i]], newdata = newdata, probs = c(probs[1], 0.5, probs[2])))
     fout <- get_index(fit = fits[[i]], year = year, probs = probs, rescale = rescale)
-    
     if (is.null(labels)) {
       str <- as.character(fits[[i]]$formula)[1]
       left1 <- stri_trim_right(str = str, pattern = "[\u007E]", negate = FALSE)
@@ -43,19 +31,15 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
     } else {
       fout$model <- labels[i]
     }
-    # fout$year <- yrs
-    # fout$Qlower <- fout$Qlower / geo_mean(fout$Median)
-    # fout$Qupper <- fout$Qupper / geo_mean(fout$Median)
-    # fout$Median <- fout$Median / geo_mean(fout$Median)
     df0[[i]] <- fout
   }
   
-  # If one model fit is shorter or longer (e.g., fewer years) then can rescale to one or the other
-  if (!is.null(rescale)) {
+  # If one model series is shorter or longer (e.g., fewer years) then can rescale to one series or the other
+  if (!is.null(rescale_series)) {
     for (i in 1:length(fits)) {
-      if (i != rescale) {
+      if (i != rescale_series) {
         fout <- df0[[i]]
-        df1 <- df0[[rescale]] %>% filter(.data$Year %in% fout$Year)
+        df1 <- df0[[rescale_series]] %>% filter(.data$Year %in% fout$Year)
         gm <- geo_mean(df1$Mean)
         fout$Mean <- fout$Mean / geo_mean(fout$Mean) * gm
         fout$Qlower <- fout$Qlower / geo_mean(fout$Median) * gm
@@ -67,10 +51,8 @@ plot_compare <- function(fits, labels = NULL, year = "year", probs = c(0.25, 0.7
   }
 
   # Change from list to data.frame
-  for (i in 1:length(fits)) {
-    df <- rbind(df, df0[[i]])
-  }
-  
+  df <- bind_rows(df0)
+
   # Generate the plot
   p <- ggplot(data = df)
   
