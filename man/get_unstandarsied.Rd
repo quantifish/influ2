@@ -11,7 +11,7 @@ get_unstandarsied(fit, year = "year", rescale = 1)
 
 \item{year}{The year or time label (e.g. year, Year, fishing_year, etc).}
 
-\item{rescale}{How to rescale the series.}
+\item{rescale}{How to re-scale the series. Choose from "raw" to retain the raw unstandardised series, or a number to re-scale by.}
 }
 \value{
 a \code{data.frame} or a \code{ggplot} object.

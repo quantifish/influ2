@@ -24,7 +24,7 @@ logistic <- plogis
 #' 
 #' @param fit An object of class \code{brmsfit}.
 #' @param year The year or time label (e.g. year, Year, fishing_year, etc).
-#' @param rescale How to rescale the series.
+#' @param rescale How to re-scale the series. Choose from "raw" to retain the raw unstandardised series, or a number to re-scale by. 
 #' @return a \code{data.frame} or a \code{ggplot} object.
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}
@@ -137,7 +137,7 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   # pred1 <- predict(fit, newdata = newdata, re_formula = NULL, allow_new_levels = TRUE)
   
   # Get the predicted CPUE by year
-  fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA, ...) %>% 
+  fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA) %>% 
     data.frame() %>%
     rename(Qlower = 3, Qupper = 5) %>% # this renames the 3rd and the 5th columns
     mutate(CV = .data$Est.Error / .data$Estimate) %>% # CV = SD / mu
@@ -155,7 +155,6 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   } else if (rescale == "unstandardised") {
     unstd <- get_unstandarsied(fit = fit, year = year, rescale = "raw")
     gm <- geo_mean(unstd$Estimate)
-    
     fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate) * gm
     fout$Qlower <- fout$Qlower / geo_mean(fout$Q50) * gm
     fout$Qupper <- fout$Qupper / geo_mean(fout$Q50) * gm

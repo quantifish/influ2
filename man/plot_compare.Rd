@@ -10,7 +10,8 @@ plot_compare(
   year = "year",
   probs = c(0.25, 0.75),
   show_probs = TRUE,
-  rescale = NULL
+  rescale = "raw",
+  rescale_series = 1
 )
 }
 \arguments{
@@ -18,13 +19,15 @@ plot_compare(
 
 \item{labels}{some optional labels for the fits that will be shown in the legend instead of the model formula.}
 
-\item{year}{the year or time label in the fitted model.}
+\item{year}{the year or time label in the fitted model (e.g., year).}
 
 \item{probs}{the quantiles to plot. Defaults to 25\% and 75\% quantiles or 50\% credible interval (CI).}
 
-\item{show_probs}{plot the quantiles or not.}
+\item{show_probs}{plot the quantiles as ribbons or not.}
 
-\item{rescale}{the index of the series to rescale to. If set to NULL then no rescaling is done.}
+\item{rescale}{How to re-scale the series. Choose from "raw" to retain the raw series, "unstandardised" to re-scale to the geometric mean of the unstandardised series, or a number to re-scale by.}
+
+\item{rescale_series}{the index of the series to rescale to if one series is longer/shorter than the others.}
 }
 \value{
 a \code{ggplot} object.
