@@ -65,8 +65,7 @@ plot_bayesian_cdi <- function(fit,
   
   # If using the lognormal distribution then transform the coefs
   if (fit$family$family == "lognormal") {
-    coefs <- coefs %>%
-      mutate(value = exp(.data$value))
+    coefs <- coefs %>% mutate(value = exp(.data$value))
     y_coefs <- "Coefficient"
   }
   
@@ -153,7 +152,7 @@ plot_bayesian_cdi <- function(fit,
     p1 <- p1 +
       # geom_point() +
       geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
-      geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_hline(yintercept = 1, linetype = "dashed") +
       scale_x_discrete(position = "top")# +
       # scale_x_discrete(position = "top", breaks = midpoints, minor_breaks = NULL, expand = expansion(mult = 0.05)) +
       # coord_cartesian(xlim = c(midpoints[1], midpoints[length(midpoints)]))
