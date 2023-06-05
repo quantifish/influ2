@@ -40,11 +40,13 @@ plot_compare <- function(fits, labels = NULL, year = "year",
       if (i != rescale_series) {
         fout <- df0[[i]]
         df1 <- df0[[rescale_series]] %>% filter(.data$Year %in% fout$Year)
-        gm <- geo_mean(df1$Mean)
-        fout$Mean <- fout$Mean / geo_mean(fout$Mean) * gm
-        fout$Qlower <- fout$Qlower / geo_mean(fout$Median) * gm
-        fout$Qupper <- fout$Qupper / geo_mean(fout$Median) * gm
-        fout$Median <- fout$Median / geo_mean(fout$Median) * gm
+        df2 <- df0[[i]] %>% filter(.data$Year %in% df1$Year)
+        gm1 <- geo_mean(df1$Mean)
+        gm2 <- geo_mean(df2$Mean)
+        fout$Mean <- fout$Mean / geo_mean(fout$Mean) / gm2 * gm1
+        fout$Qlower <- fout$Qlower / geo_mean(fout$Median) / gm2  * gm1
+        fout$Qupper <- fout$Qupper / geo_mean(fout$Median) / gm2  * gm1
+        fout$Median <- fout$Median / geo_mean(fout$Median) / gm2  * gm1
         df0[[i]] <- fout
       }
     }
