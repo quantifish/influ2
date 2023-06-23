@@ -11,7 +11,7 @@ plot_compare(
   probs = c(0.25, 0.75),
   show_probs = TRUE,
   rescale = "raw",
-  rescale_series = 1
+  rescale_series = NULL
 )
 }
 \arguments{
