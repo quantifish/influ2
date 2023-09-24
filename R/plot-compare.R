@@ -27,15 +27,17 @@ plot_compare <- function(fits, labels = NULL, year = "year",
     if (is.null(labels)) {
       str <- as.character(fits[[i]]$formula)[1]
       left1 <- stri_trim_right(str = str, pattern = "[\u007E]", negate = FALSE)
-      fout$model <- substr(str, nchar(left1) + 2, nchar(str))
+      fout$Model <- substr(str, nchar(left1) + 2, nchar(str))
     } else {
-      fout$model <- labels[i]
+      fout$Model <- labels[i]
     }
     df0[[i]] <- fout
   }
   
-  # If one model series is shorter or longer (e.g., fewer years) then can rescale to one series or the other
+  # If one model series is shorter or longer (e.g., fewer years) then the user can 
+  # rescale to one series or the other
   if (!is.null(rescale_series)) {
+    cap <- paste("Rescaled to series", rescale_series)
     for (i in 1:length(fits)) {
       if (i != rescale_series) {
         fout <- df0[[i]]
@@ -43,28 +45,31 @@ plot_compare <- function(fits, labels = NULL, year = "year",
         df2 <- df0[[i]] %>% filter(.data$Year %in% df1$Year)
         gm1 <- geo_mean(df1$Mean)
         gm2 <- geo_mean(df2$Mean)
-        fout$Mean <- fout$Mean / geo_mean(fout$Mean) / gm2 * gm1
-        fout$Qlower <- fout$Qlower / geo_mean(fout$Median) / gm2  * gm1
-        fout$Qupper <- fout$Qupper / geo_mean(fout$Median) / gm2  * gm1
-        fout$Median <- fout$Median / geo_mean(fout$Median) / gm2  * gm1
+        fout$Mean <- fout$Mean / gm2 * gm1
+        fout$Qlower <- fout$Qlower / gm2  * gm1
+        fout$Qupper <- fout$Qupper / gm2  * gm1
+        fout$Median <- fout$Median / gm2  * gm1
         df0[[i]] <- fout
       }
     }
+  } else {
+    cap <- NULL
   }
 
   # Change from list to data.frame
   df <- bind_rows(df0)
+  if (!is.null(labels)) df$Model <- factor(df$Model, levels = labels)
 
   # Generate the plot
   p <- ggplot(data = df)
   
   if (show_probs) {
-    p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = .data$model, fill = .data$model), alpha = 0.3, colour = NA)
+    p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = .data$Model, fill = .data$Model), alpha = 0.3, colour = NA)
   }
   
   p <- p + 
-    geom_line(data = df, aes(x = .data$Year, y = .data$Median, colour = .data$model, group = .data$model)) +
-    labs(x = NULL, y = "Index") +
+    geom_line(data = df, aes(x = .data$Year, y = .data$Median, colour = .data$Model, group = .data$Model)) +
+    labs(x = NULL, y = "Index", caption = cap) +
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1), panel.spacing.y = unit(0, "lines"))

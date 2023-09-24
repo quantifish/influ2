@@ -51,11 +51,9 @@ data(iris)
 glimpse(iris)
 
 iris2 <- iris %>% 
-  mutate(CPUE = Petal.Length, 
-         Year = factor(Sepal.Width * 10 + 1970), 
+  mutate(CPUE = Petal.Length, Year = factor(Sepal.Width * 10 + 1970), 
          Area = factor(round(Petal.Width)), 
-         Duration = Sepal.Length,
-         Duration2 = cut(Sepal.Length, 20)) %>%
+         Duration = Sepal.Length, Duration2 = cut(Sepal.Length, 20)) %>%
   select(CPUE, Year, Species, Area, Duration, Duration2)
 
 glimpse(iris2)
@@ -145,24 +143,24 @@ myInfl$influPlot()
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of influences produced by the original influ package (points) and the new influ2 calculation (lines)."}
-i1 <- myInfl$influences %>%
-  pivot_longer(cols = -level, names_to = "variable")
-i_species <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta)) %>%
-  mutate(variable = "Species")
-i_duration <- get_influ(fit = fit2, group = c("Year", "Duration")) %>%
-  group_by(Year) %>%
-  summarise(delta = mean(delta)) %>%
-  mutate(variable = "Duration")
-
-ggplot(data = rbind(i_species, i_duration)) +
-  geom_point(data = i1, aes(x = level, y = exp(value))) +
-  geom_line(aes(x = Year, y = exp(delta), colour = variable, group = variable)) +
-  facet_wrap(variable ~ ., ncol = 1, scales = "free_y") +
-  labs(x = NULL, y = "Influence") +
-  theme_bw() +
-  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+# i1 <- myInfl$influences %>%
+#   pivot_longer(cols = -level, names_to = "variable")
+# i_species <- get_influ(fit = fit2, group = c("Year", "Species")) %>%
+#   group_by(Year) %>%
+#   summarise(delta = mean(delta)) %>%
+#   mutate(variable = "Species")
+# i_duration <- get_influ(fit = fit2, group = c("Year", "Duration")) %>%
+#   group_by(Year) %>%
+#   summarise(delta = mean(delta)) %>%
+#   mutate(variable = "Duration")
+# 
+# ggplot(data = rbind(i_species, i_duration)) +
+#   geom_point(data = i1, aes(x = level, y = exp(value))) +
+#   geom_line(aes(x = Year, y = exp(delta), colour = variable, group = variable)) +
+#   facet_wrap(variable ~ ., ncol = 1, scales = "free_y") +
+#   labs(x = NULL, y = "Influence") +
+#   theme_bw() +
+#   theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
