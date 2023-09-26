@@ -22,13 +22,27 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-The `influ2` package is based on the original `influ` package which was developed to generate influence statistics and associated plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package.
+The `influ2` package is based on the original `influ` package which was 
+developed to generate influence statistics and associated plots. The `influ` 
+package has functions that use outputs from the `glm` function. The `influ2` 
+package was developed to use outputs from `brms` and relies heavily on the R 
+packages in the `tidyverse` suite of packages. This vignette showcases the 
+`influ2` package.
 
 # Functions for exploring data
 
-In this vignette I use the `iris` data set to generate a fake catch per unit effort (CPUE) data set. This data set has a response variable labelled `CPUE` and has the dependent variables `Year` (from 1990 to 2014), `Species` (3 species), `Area` (3 areas) and `Duration`. No step-wise variable selection or model selection is done in this vignette.
+In this vignette I use a simulated catch per unit effort (CPUE) data set to 
+model the number of lobsters caught per pot. This data set has a response 
+variable labelled `lobsters` and includes the dependent variables `year` (from 
+2000 to 2017), `month`, `depth` (in meters), and `soak` (the soak time of each 
+pot in hours). No step-wise variable selection or model selection is done in 
+this vignette.
 
-The main function for exploring data in `influ2` is `plot_bubble` which presents the number of records by two user defined groups within a data set. The bubble size in `plot_bubble` represents the number of records across the entire data set, and bubbles can either be a single colour or coloured by a third variable in the data set.
+The main function for exploring data in `influ2` is `plot_bubble` which presents 
+the number of records by two user defined groups within a data set. The bubble 
+size in `plot_bubble` represents the number of records across the entire data 
+set, and bubbles can either be a single colour or coloured by a third variable 
+in the data set.
 
 ```{r echo=TRUE, message=FALSE}
 library(knitr)
@@ -39,72 +53,61 @@ library(brms)
 library(influ2)
 library(bayesplot)
 
-# options(mc.cores = parallel::detectCores())
+theme_set(theme_bw())
 
-# Get Nokome's influ package code
-# setwd("/home/darcy/Projects/influ2/vignettes")
-# source("tests/testthat/influ.R")
-source("../tests/testthat/influ.R")
+options(mc.cores = parallel::detectCores())
+```
 
-# Get some data to use
-data(iris)
-glimpse(iris)
+Get some data to use
 
-iris2 <- iris %>% 
-  mutate(CPUE = Petal.Length, Year = factor(Sepal.Width * 10 + 1970), 
-         Area = factor(round(Petal.Width)), 
-         Duration = Sepal.Length, Duration2 = cut(Sepal.Length, 20)) %>%
-  select(CPUE, Year, Species, Area, Duration, Duration2)
+```{r echo=TRUE, message=FALSE}
+setwd("/home/darcy/Projects/influ2/vignettes")
 
-glimpse(iris2)
+data(lobsters_per_pot)
+
+dim(lobsters_per_pot)
+head(lobsters_per_pot)
+table(lobsters_per_pot$year, lobsters_per_pot$month)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and duration."}
-plot_bubble(df = iris2, group = c("Year", "Duration2"), fill = "green")
+plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "green") +
+  labs(x = "Month", y = "Year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year, species, and area."}
-plot_bubble(df = iris2, group = c("Year", "Species"), fill = "Area")
+plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "month") +
+  labs(x = "Month", y = "Year") +
+  theme(legend.position = "none")
 ```
 
 # The origninal influ versus influ2
 
-First I fit three different models of increasing complexity in `brms`. The third model includes the explanatory variables `Year`, `Species` and `Area`. I then fit another four models which include `Year` and different forms of the variable `Duration`. The different forms include a linear predictor, a third-order polynomial, a spline, and a random-effect. A few different distributions are used to mix things up as well including lognormal, Gaussian, Gamma, and Weibull.
+First I fit two different models in `brms`. The 
+third model includes the explanatory variables `Year`, `Species` and `Area`. I 
+then fit another four models which include `Year` and different forms of the 
+variable `Duration`. The different forms include a linear predictor, a 
+third-order polynomial, a spline, and a random-effect.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-# Fit a series of models using brms
-# if (getwd() != "/home/darcy/Projects/influ2/vignettes") {
-if (FALSE) {
-  # A set of lognormal models
-  fit0 <- brm(CPUE ~ Year, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
-  save(fit0, file = "mcmc0.rda")
-  fit1 <- brm(CPUE ~ Year + Duration, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
-  save(fit1, file = "mcmc1.rda")
-  fit2 <- brm(CPUE ~ Year + Duration + Species, data = iris2, family = lognormal(), refresh = 0, iter = 1000)
-  save(fit2, file = "mcmc2.rda")
-  
-  # Gaussian, Gamma, and Weibull
-  fit3 <- brm(CPUE ~ Year + poly(Duration, 3), data = iris2, refresh = 0, iter = 1000)
-  save(fit3, file = "mcmc3.rda")
-  fit4 <- brm(CPUE ~ Year + s(Duration), data = iris2, family = Gamma(link = "log"), refresh = 0, iter = 1000)
-  save(fit4, file = "mcmc4.rda")
-  fit5 <- brm(CPUE ~ Year + (1 | Duration2), data = iris2, family = weibull, refresh = 0, iter = 1000)
-  save(fit5, file = "mcmc5.rda")
-  fit6 <- brm(CPUE ~ Year + Duration2, data = iris2, family = weibull, refresh = 0, iter = 1000)
-  save(fit6, file = "mcmc6.rda")
-} else{
-  load("mcmc0.rda")
-  load("mcmc1.rda")
-  load("mcmc2.rda")
-  load("mcmc3.rda")
-  load("mcmc4.rda")
-  load("mcmc5.rda")
-  load("mcmc6.rda")
-}
+fit1 <- brm(lobsters ~ year + month + poly(soak, 3), 
+            data = lobsters_per_pot, family = negbinomial(), 
+            chains = 2, iter = 1100, refresh = 0, seed = 42, file = "fit1")
+```
 
-# Fit a model using glm and generate influence statistics using the original influ package
-fit_glm <- glm(log(CPUE) ~ Year + Duration + Species, data = iris2)
-myInfl <- Influence$new(fit_glm)
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+fit2 <- brm(lobsters ~ year + (1 | month) + s(depth, k = 2), 
+            data = lobsters_per_pot, family = negbinomial(), 
+            chains = 2, iter = 1100, refresh = 0, seed = 42, file = "fit2")
+```
+
+Fit a model using glm and generate influence statistics using the original influ 
+package
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+fit_glm <- glm(lobsters ~ year + month + poly(soak, 3), 
+               data = lobsters_per_pot, family = negbinomial)
+myInfl <- Influence$new(model = fit_glm)
 myInfl$calc()
 ```
 
@@ -112,8 +115,10 @@ myInfl$calc()
 myInfl$cdiPlot(term = "Species")
 ```
 
+Generate a CDI plot for a factor
+
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
-# Generate a CDI plot for a factor
+get_coefs(fit = fit2, var = "Species")
 plot_bayesian_cdi(fit = fit2, xfocus = "Species", yfocus = "Year", xlab = "Species")
 ```
 
@@ -159,10 +164,8 @@ myInfl$influPlot()
 #   geom_line(aes(x = Year, y = exp(delta), colour = variable, group = variable)) +
 #   facet_wrap(variable ~ ., ncol = 1, scales = "free_y") +
 #   labs(x = NULL, y = "Influence") +
-#   theme_bw() +
 #   theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
 
 # Functions for exploring models
 
@@ -183,17 +186,16 @@ fit0$criteria$waic
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-loo_compare(fit0, fit1, fit2, criterion = "loo") %>%
-  kable(digits = 1)
+loo_compare(fit0, fit1, fit2, criterion = "loo") %>% kable(digits = 1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-loo_compare(fit0, fit1, fit2, criterion = "waic") %>%
-  kable(digits = 1)
+loo_compare(fit0, fit1, fit2, criterion = "waic") %>% kable(digits = 1)
 ```
 
+Bayesian R2 `bayes_R2` for the three model runs
+
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-# bayes_R2 for the three model runs
 get_bayes_R2(fits)
 ```
 
@@ -237,14 +239,12 @@ The `influ2` package is based on the original `influ` package which was develope
 yrep <- posterior_predict(fit4, nsamples = 100)
 
 ppc_dens_overlay(y = iris2$CPUE, yrep = yrep) + 
-  labs(x = "CPUE", y = "Density") +
-  theme_bw()
+  labs(x = "CPUE", y = "Density")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
-ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) +
-  coord_cartesian(xlim = c(0, 10)) +
-  theme_bw()
+ppc_ecdf_overlay(y = iris2$CPUE, yrep = yrep) + 
+  coord_cartesian(xlim = c(0, 10))
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot from LOO."}
@@ -282,16 +282,13 @@ names(resid) <- paste0("resid.", names(resid))
 
 df <- cbind(resid, pred, iris2)
 
-p <- ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
+ggplot(data = df, aes(x = Year, y = .data$resid.Estimate)) +
   geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
   facet_wrap(Area ~ Species) +
     geom_hline(yintercept = 0, linetype = "dashed") +
   # geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
   # labs(x = "Predicted values", y = "Residuals") +
-  theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-p
 ```
 
 # Implied residuals
@@ -299,15 +296,16 @@ p
 Implied coefficients (points) are calculated as the normalised fishing year coefficient (grey line) plus the mean of the standardised residuals in each year for each category of a variable. These values approximate the coefficients obtained when an area x year interaction term is fitted, particularly for those area x year combinations which have a substantial proportion of the records. The error bars indicate one standard error of the standardised residuals. The information at the top of each panel identifies the plotted category, provides the correlation coefficient (rho) between the category year index and the overall model index, and the number of records supporting the category.
 
 ```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Area which is not included in the model."}
-plot_implied_residuals(fit = fit2, data = iris2, year = "Year", groups = "Area") +
+plot_implied_residuals(fit = fit2, data = iris2, 
+                       year = "Year", groups = "Area") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Sepcies which is included in the model."}
-plot_implied_residuals(fit = fit2, data = iris2, year = "Year", groups = "Species") +
+plot_implied_residuals(fit = fit2, data = iris2, 
+                       year = "Year", groups = "Species") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
 
 # Functions for generating outputs for stock assessment
 
@@ -315,7 +313,6 @@ Finally, in order to fit to the data in a stock assessment model then indices ca
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 unstd <- get_unstandarsied(fit = fit2, year = "Year")
-
 cpue0 <- get_index(fit = fit2, year = "Year")
 
 cpue0 %>%
@@ -330,7 +327,6 @@ ggplot(data = cpue0, aes(x = Year)) +
   geom_line(aes(y = Mean, group = 1), colour = "red") +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
   labs(x = NULL, y = "CPUE") +
-  theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
@@ -353,10 +349,12 @@ for (ii in 1:nrow(cpue1)) {
   cpue3$Qupper[ii] <- quantile(r1, probs = 0.975)
 }
 
-ggplot(data = rbind(cpue1, cpue2, cpue3), aes(x = Year, y = Median, colour = Type)) +
-  geom_pointrange(aes(ymin = Qlower, ymax = Qupper), position = position_dodge(width = 0.5)) +
+df <- bind_rows(cpue1, cpue2, cpue3)
+
+ggplot(data = df, aes(x = Year, y = Median, colour = Type)) +
+  geom_pointrange(aes(ymin = Qlower, ymax = Qupper), 
+                  position = position_dodge(width = 0.5)) +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
   labs(x = NULL, y = "CPUE") +
-  theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```

@@ -29,29 +29,30 @@ library(brms)
 library(influ2)
 library(bayesplot)
 
-# options(mc.cores = parallel::detectCores())
+options(mc.cores = parallel::detectCores())
 
 # Simulate some data to use
 set.seed(2020)
 
 # create data according to the hurdle-lognormal distribution
-# probability of a zero
-pi <- 0.3
-# lognormal mean
-mu_log <- 2
+pi <- 0.3 # probability of a zero
+mu_log <- 2 # lognormal mean
 sigma_log <- 0.2
 
 # generate data
 N <- 1000
 
-ydf <- data.frame(year = 1995:2015, value = rnorm(21, 0, 1))
-idy <- sample(1:21, N, replace = TRUE)
+set.seed(seed = 42)
+ydf <- data.frame(year = 1995:2015, value = rnorm(n = 21, mean = 0, sd = 1))
+idy <- sample(x = 1:21, size = N, replace = TRUE)
 yr <- ydf[idy,]
-group <- data.frame(level = sample(c("treat", "placebo"), N, replace = TRUE)) %>%
+levs <- sample(x = c("treat", "placebo"), size = N, replace = TRUE)
+group <- data.frame(level = levs) %>% 
   mutate(value = ifelse(level == "treat", 0.9, 0))
-y <- (1 - rbinom(N, 1, prob = pi)) * rlnorm(N, mu_log + group$value + yr$value, sigma_log)
-
+y <- (1 - rbinom(n = N, size = 1, prob = pi)) * 
+  rlnorm(n = N, meanlog = mu_log + group$value + yr$value, sdlog = sigma_log)
 sim_data <- data.frame(y = y, group = group$level, year = factor(yr$year))
+
 head(sim_data)
 ```
 
@@ -60,7 +61,8 @@ plot_bubble(df = sim_data, group = c("year", "group"), fill = "green")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-m1 <- brm(bf(y ~ year + group, hu ~ 1), data = sim_data, family = "hurdle_lognormal", cores = 1)
+m1 <- brm(bf(y ~ year + group, hu ~ 1), 
+          data = sim_data, family = "hurdle_lognormal", cores = 1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}

@@ -13,10 +13,8 @@ test_that("summary gives the same thing as get_coefs for population-level effect
   # This is get_coefs from influ2
   c1 <- get_coefs(fit = fit, var = "SepalWidth", normalise = FALSE) %>%
     group_by(variable) %>%
-    summarise(Estimate = mean(value), 
-              Est.Error = sd(value), 
-              Q5 = quantile(value, probs = 0.05), 
-              Q95 = quantile(value, probs = 0.95))
+    summarise(Estimate = mean(value), Est.Error = sd(value), 
+              Q5 = quantile(value, probs = 0.05), Q95 = quantile(value, probs = 0.95))
   
   # Here I use the fixef fuction from the nlme package
   c2 <- fixef(fit, probs = c(0.05, 0.95)) %>%
@@ -68,7 +66,7 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
 test_that("this matches Nokome Bentley's influ package", {
   
   library(brms)
-  library(proto)
+  # library(proto)
   
   data(iris)
   iris <- iris %>% mutate(Sepal.Width = factor(Sepal.Width))
@@ -76,7 +74,7 @@ test_that("this matches Nokome Bentley's influ package", {
   # Test glm
   fit1 <- glm(Petal.Length ~ Sepal.Width + Species, data = iris)
   
-  source("influ.R")
+  # source("influ.R")
   # source("tests/testthat/influ.R")
   myInfl <- Influence$new(fit1)
   c1a <- myInfl$coeffs()
