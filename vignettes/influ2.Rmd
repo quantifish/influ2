@@ -60,7 +60,7 @@ options(mc.cores = parallel::detectCores())
 Get some data to use
 
 ```{r echo=TRUE, message=FALSE}
-setwd("/home/darcy/Projects/influ2/vignettes")
+# setwd("/home/darcy/Projects/influ2/vignettes")
 
 data(lobsters_per_pot)
 
