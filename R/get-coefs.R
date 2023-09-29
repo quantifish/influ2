@@ -61,30 +61,30 @@ get_coefs_raw <- function(fit, var = "area") {
   
   ps <- as_draws_df(x = fit, variable = var, regex = TRUE) %>%
     as.data.frame() %>%
-    mutate(iteration = .data$.draw) %>%
-    select(-.data$.iteration, -.data$.chain, -.data$.draw) %>%
+    mutate(iteration = .draw) %>%
+    select(-.iteration, -.chain, -.draw) %>%
     melt(id.vars = "iteration") %>%
-    # mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
-    mutate(variable = gsub(",Intercept", "", .data$variable)) %>%
-    filter(!str_detect(.data$variable, "sd_"))
+    # mutate(variable = gsub(".*\\[|\\]", "", variable)) %>%
+    mutate(variable = gsub(",Intercept", "", variable)) %>%
+    filter(!str_detect(variable, "sd_"))
   
   # Remove interaction term(s) if not asked for
   if (!str_detect(var, ":")) {
     ps <- ps %>%
-      filter(!str_detect(.data$variable, ":"))
+      filter(!str_detect(variable, ":"))
   }
   
   # if (nrow(fit$ranef) > 0) {
   #   ps <- posterior_samples(fit, pars = paste0("r_", var)) %>%
   #     mutate(iteration = 1:n()) %>%
   #     melt(id.vars = "iteration") %>%
-  #     mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
-  #     mutate(variable = gsub(",Intercept", "", .data$variable))
+  #     mutate(variable = gsub(".*\\[|\\]", "", variable)) %>%
+  #     mutate(variable = gsub(",Intercept", "", variable))
   # } else {
   #   ps <- posterior_samples(fit, pars = var) %>%
   #     mutate(iteration = 1:n()) %>%
   #     melt(id.vars = "iteration") %>%
-  #     mutate(variable = gsub("b_", "", .data$variable))
+  #     mutate(variable = gsub("b_", "", variable))
   # }
   
   # Get the missing variable and normalise
@@ -96,11 +96,11 @@ get_coefs_raw <- function(fit, var = "area") {
   #                     value = 0)
   #   ps1 <- rbind(ps0, ps)
   #   mean_coefs <- ps1 %>% 
-  #     group_by(.data$iteration) %>% 
-  #     summarise(mean_coef = mean(.data$value))
+  #     group_by(iteration) %>% 
+  #     summarise(mean_coef = mean(value))
   #   coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
-  #     mutate(value = .data$value - .data$mean_coef) %>%
-  #     select(-.data$mean_coef)
+  #     mutate(value = value - mean_coef) %>%
+  #     select(-mean_coef)
   # } else if (nrow(fit$ranef) == 0 & !normalise & !is_poly & length(unique(ps$variable)) != 1) {
   #   data <- fit$data
   #   data[,var] <- paste0(var, data[,var])
@@ -150,14 +150,14 @@ get_coefs <- function(fit, var = "area",
     #   mutate(variable = rownames(.))
     ps <- as_draws_df(x = fit, variable = paste0("r_", var), regex = TRUE) %>%
       as.data.frame() %>%
-      mutate(iteration = .data$.draw) %>%
-      select(-.data$.iteration, -.data$.chain, -.data$.draw) %>%
+      mutate(iteration = .draw) %>%
+      select(-.iteration, -.chain, -.draw) %>%
       melt(id.vars = "iteration") %>%
-      mutate(variable = gsub(".*\\[|\\]", "", .data$variable)) %>%
-      mutate(variable = gsub(",Intercept", "", .data$variable))
+      mutate(variable = gsub(".*\\[|\\]", "", variable)) %>%
+      mutate(variable = gsub(",Intercept", "", variable))
     if (!str_detect(var, ":")) {
       ps <- ps %>%
-        filter(!str_detect(.data$variable, ":"))
+        filter(!str_detect(variable, ":"))
     }
   } else {
     # Population-level effects
@@ -172,18 +172,18 @@ get_coefs <- function(fit, var = "area",
     # eff <- rbind(e2, eff)
     ps <- as_draws_df(x = fit, variable = var, regex = TRUE) %>%
       as.data.frame() %>%
-      mutate(iteration = .data$.draw) %>%
-      select(-.data$.iteration, -.data$.chain, -.data$.draw) %>%
+      mutate(iteration = .draw) %>%
+      select(-.iteration, -.chain, -.draw) %>%
       melt(id.vars = "iteration") %>%
-      mutate(variable = gsub("b_", "", .data$variable)) %>%
-      mutate(variable = gsub("r_", "", .data$variable)) %>%
-      filter(!str_detect(.data$variable, "sd_"))
+      mutate(variable = gsub("b_", "", variable)) %>%
+      mutate(variable = gsub("r_", "", variable)) %>%
+      filter(!str_detect(variable, "sd_"))
     if (!str_detect(var, ":")) {
       ps <- ps %>%
-        filter(!str_detect(.data$variable, ":"))
+        filter(!str_detect(variable, ":"))
     }
-      # mutate(variable = paste0(var, gregexpr("[[:digit:]]+", .data$variable)))
-      # mutate(variable = paste0(var, parse_number(as.character(.data$variable))))
+      # mutate(variable = paste0(var, gregexpr("[[:digit:]]+", variable)))
+      # mutate(variable = paste0(var, parse_number(as.character(variable))))
     # unique(ps$variable)
     # tail(ps)
   }
@@ -191,7 +191,7 @@ get_coefs <- function(fit, var = "area",
   # Check to see if this is a polynomial
   if (any(grepl("poly", ps$variable))) {
     # ps <- ps %>%
-    #   mutate(variable = gsub("poly", "", .data$variable))
+    #   mutate(variable = gsub("poly", "", variable))
     is_poly <- TRUE
     # order_poly <- unique(sub(".*?(\\d).*", "\\1", ps$variable))
   }
@@ -200,11 +200,11 @@ get_coefs <- function(fit, var = "area",
   if (any(grepl("hu", ps$variable))) {
     if (hurdle) {
       ps <- ps %>%
-        filter(grepl("hu", .data$variable)) %>%
-        mutate(variable = gsub("hu_", "", .data$variable))
+        filter(grepl("hu", variable)) %>%
+        mutate(variable = gsub("hu_", "", variable))
     } else {
       ps <- ps %>%
-        filter(!grepl("hu", .data$variable))
+        filter(!grepl("hu", variable))
     }
   }
   
@@ -219,11 +219,11 @@ get_coefs <- function(fit, var = "area",
                       value = 0)
     ps1 <- rbind(ps0, ps)
     mean_coefs <- ps1 %>% 
-      group_by(.data$iteration) %>% 
-      summarise(mean_coef = mean(.data$value))
+      group_by(iteration) %>% 
+      summarise(mean_coef = mean(value))
     coefs <- left_join(ps1, mean_coefs, by = "iteration") %>%
-      mutate(value = .data$value - .data$mean_coef) %>%
-      select(-.data$mean_coef)
+      mutate(value = value - mean_coef) %>%
+      select(-mean_coef)
   } else if (nrow(fit$ranef) == 0 & !normalise & !is_poly & length(unique(ps$variable)) != 1) {
     data <- fit$data
     data[,var] <- paste0(var, data[,var])
@@ -248,21 +248,21 @@ get_coefs <- function(fit, var = "area",
   # if (transform & !is_poly) {
   #   if (fit$family$family %in% c("lognormal", "hurdle_lognormal")) {
   #     if (fit$family$link == "identity") {
-  #       coefs <- coefs %>% mutate(value = exp(.data$value))
+  #       coefs <- coefs %>% mutate(value = exp(value))
   #     } else {
   #       stop("This link function for the lognormal family has not been coded in influ2 yet - please update the plot-cdi.R function.")
   #     }
   #   } else if (fit$family$family %in% c("gamma", "hurdle_gamma")) {
   #     if (fit$family$link == "inverse") {
-  #       coefs <- coefs %>% mutate(value = 1.0 / .data$value)
+  #       coefs <- coefs %>% mutate(value = 1.0 / value)
   #     } else if (fit$family$link == "identity") {
-  #       coefs <- coefs %>% mutate(value = .data$value)
+  #       coefs <- coefs %>% mutate(value = value)
   #     } else if (fit$family$link == "log") {
-  #       coefs <- coefs %>% mutate(value = exp(.data$value))
+  #       coefs <- coefs %>% mutate(value = exp(value))
   #     }
   #   } else if (fit$family$family %in% c("bernoulli")) {
   #     if (fit$family$link == "logit") {
-  #       coefs <- coefs %>% mutate(value = exp(.data$value) / (1.0 + exp(.data$value)))
+  #       coefs <- coefs %>% mutate(value = exp(value) / (1.0 + exp(value)))
   #     }
   #   } else {
   #     stop("This family has not been coded in influ2 yet - please update the plot-cdi.R function.")

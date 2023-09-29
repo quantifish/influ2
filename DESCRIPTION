@@ -18,6 +18,7 @@ Depends:
     patchwork
 Imports:
     reshape2,
+    proto,
     tidyselect,
     stringr,
     stringi,

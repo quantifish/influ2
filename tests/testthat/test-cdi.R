@@ -1,29 +1,33 @@
+library(brms)
+
+options(mc.cores = parallel::detectCores())
+
+data(lobsters_per_pot)
+
+brm1 <- brm(lobsters ~ year + month, data = lobsters_per_pot, family = poisson)
+glm1 <- glm(lobsters ~ year + month, data = lobsters_per_pot, family = poisson)
+brm2 <- brm(lobsters ~ year + (1 | month), data = lobsters_per_pot, family = negbinomial())
+
+
 context("CDI plot")
 
 test_that("summary gives the same thing as get_coefs for population-level effects", {
   
-  library(brms)
-  
-  data(iris)
-  iris <- iris %>% 
-    mutate(PetalLength = Petal.Length, SepalWidth = factor(round(Sepal.Width)))
-  
-  fit <- brm(PetalLength ~ SepalWidth, data = iris, family = lognormal())
-  
   # This is get_coefs from influ2
-  c1 <- get_coefs(fit = fit, var = "SepalWidth", normalise = FALSE) %>%
+  c1 <- get_coefs(fit = brm1, var = "year", normalise = FALSE) %>%
     group_by(variable) %>%
     summarise(Estimate = mean(value), Est.Error = sd(value), 
               Q5 = quantile(value, probs = 0.05), Q95 = quantile(value, probs = 0.95))
   
   # Here I use the fixef fuction from the nlme package
-  c2 <- fixef(fit, probs = c(0.05, 0.95)) %>%
+  c2 <- fixef(brm1, probs = c(0.05, 0.95)) %>%
     data.frame() %>%
+    filter(!grepl("month", rownames(.))) %>%
     mutate(variable = c1$variable)
   c2[1,1:4] <- 0
 
-  expect_is(fit, "brmsfit")
-  expect_error(ranef(fit))
+  expect_is(brm1, "brmsfit")
+  expect_error(ranef(brm1))
   expect_equal(c1$Estimate, c2$Estimate)
   expect_equal(c1$Est.Error, c2$Est.Error)
   expect_equal(as.numeric(c1$Q5), c2$Q5)
@@ -33,17 +37,8 @@ test_that("summary gives the same thing as get_coefs for population-level effect
 
 test_that("summary gives the same thing as get_coefs for group-level effects", {
 
-  library(brms)
-
-  data(iris)
-  iris <- iris %>%
-    mutate(PetalLength = Petal.Length,
-           SepalWidth = factor(round(Sepal.Width)))
-
-  fit <- brm(PetalLength ~ (1 | SepalWidth), data = iris, family = lognormal())
-
   # This is get_coefs from influ2
-  c1 <- get_coefs(fit = fit, var = "SepalWidth", normalise = FALSE) %>%
+  c1 <- get_coefs(fit = brm2, var = "month", normalise = FALSE) %>%
     group_by(variable) %>%
     summarise(Estimate = mean(value), 
               Est.Error = sd(value), 
@@ -51,11 +46,11 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
               Q95 = quantile(value, probs = 0.95))
 
   # Here I use the ranef fuction from the nlme package
-  c2 <- ranef(fit, groups = "SepalWidth", probs = c(0.05, 0.95))[[1]][,,1] %>%
+  c2 <- ranef(brm2, groups = "month", probs = c(0.05, 0.95))[[1]][,,1] %>%
     data.frame() %>%
     mutate(variable = rownames(.))
   
-  expect_is(fit, "brmsfit")
+  expect_is(brm2, "brmsfit")
   expect_equal(c1$Estimate, c2$Estimate)
   expect_equal(c1$Est.Error, c2$Est.Error)
   expect_equal(as.numeric(c1$Q5), c2$Q5)
@@ -65,22 +60,12 @@ test_that("summary gives the same thing as get_coefs for group-level effects", {
 
 test_that("this matches Nokome Bentley's influ package", {
   
-  library(brms)
-  # library(proto)
-  
-  data(iris)
-  iris <- iris %>% mutate(Sepal.Width = factor(Sepal.Width))
-
   # Test glm
-  fit1 <- glm(Petal.Length ~ Sepal.Width + Species, data = iris)
-  
-  # source("influ.R")
-  # source("tests/testthat/influ.R")
-  myInfl <- Influence$new(fit1)
+  myInfl <- Influence$new(glm1)
   c1a <- myInfl$coeffs()
   c1a <- c1a[2:length(c1a)]
-  c1b <- coef(fit1)
-  c1b <- c1b[grepl("Sepal.Width", names(c1b))]
+  c1b <- coef(glm1)
+  c1b <- c1b[grepl("year", names(c1b))]
   # myInfl$summary
   # myInfl$stanPlot()
   # myInfl$stepPlot()
@@ -89,10 +74,8 @@ test_that("this matches Nokome Bentley's influ package", {
   # myInfl$cdiPlotAll()
   
   # Test brms
-  fit2 <- brm(Petal.Length ~ Sepal.Width + Species, data = iris)
-  
-  c2a <- get_coefs(fit = fit2, var = "Sepal.Width", normalise = FALSE, transform = FALSE) %>%
-    filter(variable != "Sepal.Width2") %>%
+  c2a <- get_coefs(fit = brm1, var = "year", normalise = FALSE, transform = FALSE) %>%
+    filter(variable != "year2000") %>%
     group_by(variable) %>%
     summarise(Estimate = mean(value), 
               Est.Error = sd(value), 
@@ -100,10 +83,10 @@ test_that("this matches Nokome Bentley's influ package", {
               Q50 = quantile(value, probs = 0.5), 
               Q95 = quantile(value, probs = 0.95))
   
-  c2b <- fixef(fit2, probs = c(0.05, 0.95)) %>%
+  c2b <- fixef(object = brm1, probs = c(0.05, 0.95)) %>%
     data.frame() %>%
     mutate(variable = rownames(.)) %>%
-    filter(grepl("Sepal.Width", variable))
+    filter(grepl("year", variable))
   
   # Test Nokomes coeffs are the same as stats::coef function
   plot(c1a, type = "b")
