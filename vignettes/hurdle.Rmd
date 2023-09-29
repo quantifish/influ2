@@ -62,7 +62,8 @@ plot_bubble(df = sim_data, group = c("year", "group"), fill = "green")
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 m1 <- brm(bf(y ~ year + group, hu ~ 1), 
-          data = sim_data, family = "hurdle_lognormal", cores = 1, file = "m1")
+          data = sim_data, family = "hurdle_lognormal", chains = 2, 
+          file = "m1", file_refit = "never")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}

@@ -55,26 +55,24 @@ library(bayesplot)
 theme_set(theme_bw())
 
 options(mc.cores = parallel::detectCores())
+# setwd("/home/darcy/Projects/influ2/vignettes")
 ```
 
 Get some data to use
 
-```{r echo=TRUE, message=FALSE}
-# setwd("/home/darcy/Projects/influ2/vignettes")
-
+```{r sim-data, echo=TRUE, message=FALSE}
 data(lobsters_per_pot)
-
 dim(lobsters_per_pot)
 head(lobsters_per_pot)
 table(lobsters_per_pot$year, lobsters_per_pot$month)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and duration."}
+```{r plot-bubble-1, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and duration."}
 plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "green") +
   labs(x = "Month", y = "Year")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year, species, and area."}
+```{r plot-bubble-2, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year, species, and area."}
 plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "month") +
   labs(x = "Month", y = "Year") +
   theme(legend.position = "none")
@@ -88,26 +86,28 @@ then fit another four models which include `Year` and different forms of the
 variable `Duration`. The different forms include a linear predictor, a 
 third-order polynomial, a spline, and a random-effect.
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r fit-model}
 fit1 <- brm(lobsters ~ year + month + poly(soak, 3), 
             data = lobsters_per_pot, family = poisson, 
-            chains = 2, iter = 1500, refresh = 0, seed = 42, file = "fit1")
+            chains = 2, iter = 1500, refresh = 0, seed = 42, 
+            file = "fit1", file_refit = "never")
 fit2 <- brm(lobsters ~ year + (1 | month) + s(depth, k = 3), 
             data = lobsters_per_pot, family = negbinomial(), 
             control = list(adapt_delta = 0.99),
-            chains = 2, iter = 3000, refresh = 0, seed = 1, file = "fit2")
+            chains = 2, iter = 3000, refresh = 0, seed = 1, 
+            file = "fit2", file_refit = "never")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r add-criterion}
 criterion <- c("loo", "waic", "bayes_R2")
-fit1 <- add_criterion(fit1, criterion = criterion)
-fit2 <- add_criterion(fit2, criterion = criterion)
+fit1 <- add_criterion(fit1, criterion = criterion, file = "fit1")
+fit2 <- add_criterion(fit2, criterion = criterion, file = "fit2")
 ```
 
 Fit a model using glm and generate influence statistics using the original influ 
 package
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r do-glm}
 fit_glm <- glm(lobsters ~ year + month + poly(soak, 3), 
                data = lobsters_per_pot, family = poisson)
 ```
@@ -118,7 +118,7 @@ myInfl$calc()
 myInfl$cdiPlot(term = "month")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
+```{r plot-cdi-fe, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
 cdi_month <- plot_bayesian_cdi(fit = fit1, xfocus = "month", yfocus = "year", 
                                xlab = "Month", ylab = "Year")
 cdi_month
@@ -190,26 +190,26 @@ loo_compare(fit1, fit2, criterion = "waic") %>% kable(digits = 1)
 Bayesian R2 `bayes_R2` for the three model runs
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-get_bayes_R2(fits)
+# get_bayes_R2(fits)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a fixed effect."}
-cdi_month
+# cdi_month
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a random effect."}
+```{r plot-cdi-re, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a random effect."}
 plot_bayesian_cdi(fit = fit2, xfocus = "month", yfocus = "year", 
                   xlab = "Month", ylab = "Year")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a polynomial."}
-plot_bayesian_cdi(fit = fit1, xfocus = "soak", yfocus = "year", 
-                  xlab = "Soak time (hours)", ylab = "Year")
+```{r plot-cdi-poly, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a polynomial."}
+# plot_bayesian_cdi(fit = fit1, xfocus = "soak", yfocus = "year", 
+#                   xlab = "Soak time (hours)", ylab = "Year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a spline."}
-plot_bayesian_cdi(fit = fit2, xfocus = "depth", yfocus = "year", 
-                  xlab = "Depth (m)", ylab = "Year")
+# plot_bayesian_cdi(fit = fit2, xfocus = "depth", yfocus = "year", 
+#                   xlab = "Depth (m)", ylab = "Year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison plot of all model runs."}
@@ -225,17 +225,19 @@ plot_index(fit = fit1, year = "year")
 
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of the empirical distribution of the data (y) to the distributions of simulated/replicated data (yrep) from the posterior predictive distribution."}
+```{r get-yrep}
 yrep <- posterior_predict(fit1, ndraws = 100)
+```
 
-ppc_dens_overlay(y = lobsters_per_pot$lobsters, yrep = yrep) + 
-  labs(x = "CPUE", y = "Density")
+```{r plot-bars, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of the empirical distribution of the data (y) to the distributions of simulated/replicated data (yrep) from the posterior predictive distribution."}
+# ppc_dens_overlay(y = lobsters_per_pot$lobsters, yrep = yrep) + 
+#   labs(x = "CPUE", y = "Density")
 
 ppc_bars(y = lobsters_per_pot$lobsters, yrep = yrep) + 
   labs(x = "CPUE", y = "Density")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
+```{r plot-ecdf, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
 ppc_ecdf_overlay(y = lobsters_per_pot$lobsters, yrep = yrep, discrete = TRUE) + 
   coord_cartesian(xlim = c(0, 10))
 ```
@@ -248,17 +250,17 @@ ppc_ecdf_overlay(y = lobsters_per_pot$lobsters, yrep = yrep, discrete = TRUE) +
 # ppc_loo_pit_qq(y = lobsters_per_pot$lobsters, yrep = yrep, lw = lw)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot."}
+```{r plot-qq, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot."}
 # plot_qq(fit = fit1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother."}
-plot_predicted_residuals(fit = fit1, trend = "loess")
+# plot_predicted_residuals(fit = fit1, trend = "loess")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Residuals and a linear fit by year."}
-plot_predicted_residuals(fit = fit1, trend = "lm") +
-  facet_wrap(year ~ .)
+# plot_predicted_residuals(fit = fit1, trend = "lm") +
+#   facet_wrap(year ~ .)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Residuals and a loess smoother by year."}
@@ -289,15 +291,15 @@ ggplot(data = df, aes(x = year, y = .data$resid.Estimate)) +
 Implied coefficients (points) are calculated as the normalised fishing year coefficient (grey line) plus the mean of the standardised residuals in each year for each category of a variable. These values approximate the coefficients obtained when an area x year interaction term is fitted, particularly for those area x year combinations which have a substantial proportion of the records. The error bars indicate one standard error of the standardised residuals. The information at the top of each panel identifies the plotted category, provides the correlation coefficient (rho) between the category year index and the overall model index, and the number of records supporting the category.
 
 ```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Area which is not included in the model."}
-plot_implied_residuals(fit = fit2, data = lobsters_per_pot, 
-                       year = "year", groups = "month") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# plot_implied_residuals(fit = fit2, data = lobsters_per_pot, 
+#                        year = "year", groups = "month") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Sepcies which is included in the model."}
-plot_implied_residuals(fit = fit2, data = lobsters_per_pot, 
-                       year = "year", groups = "depth") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# plot_implied_residuals(fit = fit2, data = lobsters_per_pot, 
+#                        year = "year", groups = "depth") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 # Functions for generating outputs for stock assessment
