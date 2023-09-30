@@ -29,7 +29,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">influ2</a>
 
@@ -45,14 +45,14 @@
 <li class="nav-item">
   <a class="nav-link" href="../articles/influ2.html">Get started</a>
 </li>
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/hurdle.html">hurdle</a>
   </div>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
 <li class="nav-item">
   <a class="nav-link" href="../news/index.html">Changelog</a>
@@ -136,7 +136,7 @@ Webber</h4>
 <span><span class="co">#&gt; 5  4.161341   treat 2007</span></span>
 <span><span class="co">#&gt; 6 21.371726   treat 1999</span></span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_bubble.html">plot_bubble</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">sim_data</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"group"</span><span class="op">)</span>, fill <span class="op">=</span> <span class="st">"green"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_bubble.html">plot_bubble</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">sim_data</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"group"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="hurdle_files/figure-html/unnamed-chunk-3-1.png" alt="Distribution of data by year and group." width="576"><p class="caption">
 Distribution of data by year and group.
@@ -147,20 +147,12 @@ Distribution of data by year and group.
 <span>          data <span class="op">=</span> <span class="va">sim_data</span>, family <span class="op">=</span> <span class="st">"hurdle_lognormal"</span>, chains <span class="op">=</span> <span class="fl">2</span>, </span>
 <span>          file <span class="op">=</span> <span class="st">"m1"</span>, file_refit <span class="op">=</span> <span class="st">"never"</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># plot_bayesian_cdi(fit = m1, xfocus = "group", yfocus = "year", xlab = "Group")</span></span>
-<span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">m1</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="hurdle_files/figure-html/unnamed-chunk-5-1.png" alt="The new Bayesian CDI plot from the influ2 package." width="576"><p class="caption">
-The new Bayesian CDI plot from the influ2 package.
-</p>
-</div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">m1</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="hurdle_files/figure-html/unnamed-chunk-6-1.png" width="576"></p>
+<p><img src="hurdle_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># plot_influ(m1, year = "year")</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># plot_influ(m1, year = "year")</span></span>
-<span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">m1</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="hurdle_files/figure-html/unnamed-chunk-7-1.png" width="576"></p>
+<code class="sourceCode R"><span><span class="co"># plot_bayesian_cdi(fit = m1, xfocus = "group", yfocus = "year", xlab = "Group")</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

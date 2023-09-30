@@ -6,7 +6,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">influ2</a>
 
@@ -21,14 +21,14 @@
       <ul class="navbar-nav me-auto"><li class="nav-item">
   <a class="nav-link" href="../articles/influ2.html">Get started</a>
 </li>
-<li class="active nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/hurdle.html">hurdle</a>
   </div>
+</li>
+<li class="active nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
 <li class="nav-item">
   <a class="nav-link" href="../news/index.html">Changelog</a>
@@ -53,9 +53,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="influ">influ<a class="anchor" aria-label="anchor" href="#influ"></a></h2>
       
-      
+      <p class="section-desc"></p><p>Functions from the original influ R package.</p>
 
       
     </div><div id="" class="section level2">
@@ -65,54 +65,9 @@
 
       <dl><dt>
           
-          <code><a href="Influence-cash-calc.html">Influence$calc</a></code> 
+          <code><a href="influ-package.html">influ-package</a></code> <code><a href="influ-package.html">influ</a></code> 
         </dt>
-        <dd>Perform necessary calculations</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-cdiPlot.html">Influence$cdiPlot</a></code> 
-        </dt>
-        <dd>A coefficient-distribution-influence (CDI) plot for a model term</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-cdiPlotAll.html">Influence$cdiPlotAll</a></code> 
-        </dt>
-        <dd>Plot a CDI plot for each of the terms in the model</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-effects.html">Influence$effects</a></code> 
-        </dt>
-        <dd>Obtain the effects associated with a particular term in the model</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-influPlot.html">Influence$influPlot</a></code> 
-        </dt>
-        <dd>Influence plot</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-init.html">Influence$init</a></code> 
-        </dt>
-        <dd>Initialise the Influence object</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-new.html">Influence$new</a></code> 
-        </dt>
-        <dd>Create a new Influence object.</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-stanPlot.html">Influence$stanPlot</a></code> 
-        </dt>
-        <dd>Standardization plot</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-stepAndInfluPlot.html">Influence$stepAndInfluPlot</a></code> 
-        </dt>
-        <dd>Step and influence plots</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Influence-cash-stepPlot.html">Influence$stepPlot</a></code> 
-        </dt>
-        <dd>Step plot</dd>
+        <dd>Influence in linear models</dd>
       </dl><dl><dt>
           
           <code><a href="Influence.html">Influence</a></code> 
@@ -120,14 +75,80 @@
         <dd>The influence prototype object.</dd>
       </dl><dl><dt>
           
+          <code><a href="Influence-cash-new.html">Influence$new</a></code> 
+        </dt>
+        <dd>Create a new Influence object.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-init.html">Influence$init</a></code> 
+        </dt>
+        <dd>Initialise the Influence object</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-calc.html">Influence$calc</a></code> 
+        </dt>
+        <dd>Perform necessary calculations</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-effects.html">Influence$effects</a></code> 
+        </dt>
+        <dd>Obtain the effects associated with a particular term in the model</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-stanPlot.html">Influence$stanPlot</a></code> 
+        </dt>
+        <dd>Standardization plot</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-cdiPlot.html">Influence$cdiPlot</a></code> 
+        </dt>
+        <dd>A coefficient-distribution-influence (CDI) plot for a model term</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-influPlot.html">Influence$influPlot</a></code> 
+        </dt>
+        <dd>Influence plot</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-stepPlot.html">Influence$stepPlot</a></code> 
+        </dt>
+        <dd>Step plot</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-cdiPlotAll.html">Influence$cdiPlotAll</a></code> 
+        </dt>
+        <dd>Plot a CDI plot for each of the terms in the model</dd>
+      </dl><dl><dt>
+          
+          <code><a href="Influence-cash-stepAndInfluPlot.html">Influence$stepAndInfluPlot</a></code> 
+        </dt>
+        <dd>Step and influence plots</dd>
+      </dl><dl><dt>
+          
           <code><a href="coeffs.html">coeffs()</a></code> 
         </dt>
         <dd>Obtain the coefficients associated with a particular term in the model</dd>
       </dl><dl><dt>
           
-          <code><a href="geo_mean.html">geo_mean()</a></code> 
+          <code><a href="ses.html">ses()</a></code> 
         </dt>
-        <dd>Geometric mean</dd>
+        <dd>Obtain standard errors for the coefficients associated with a particular term in the model</dd>
+      </dl></div><div class="section level2">
+      <h2 id="influ-">influ2<a class="anchor" aria-label="anchor" href="#influ-"></a></h2>
+      
+      <p class="section-desc"></p><p>Functions from the new influ2 R package.</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="influ2.html">influ2</a></code> 
+        </dt>
+        <dd>Influence plots</dd>
       </dl><dl><dt>
           
           <code><a href="get_bayes_R2.html">get_bayes_R2()</a></code> 
@@ -168,41 +189,6 @@
           <code><a href="get_unstandarsied.html">get_unstandarsied()</a></code> 
         </dt>
         <dd>Get the unstandardised indices</dd>
-      </dl><dl><dt>
-          
-          <code><a href="id_var_type.html">id_var_type()</a></code> 
-        </dt>
-        <dd>Identify the variable type</dd>
-      </dl><dl><dt>
-          
-          <code><a href="influ-package.html">influ-package</a></code> <code><a href="influ-package.html">influ</a></code> 
-        </dt>
-        <dd>Influence in linear models</dd>
-      </dl><dl><dt>
-          
-          <code><a href="influ2.html">influ2</a></code> 
-        </dt>
-        <dd>Influence plots</dd>
-      </dl><dl><dt>
-          
-          <code><a href="inv_logit.html">inv_logit()</a></code> 
-        </dt>
-        <dd>Inverse logit</dd>
-      </dl><dl><dt>
-          
-          <code><a href="lobsters_per_pot.html">lobsters_per_pot</a></code> 
-        </dt>
-        <dd>Simulated catch of lobsters per pot</dd>
-      </dl><dl><dt>
-          
-          <code><a href="logistic.html">logistic()</a></code> 
-        </dt>
-        <dd>Logistic</dd>
-      </dl><dl><dt>
-          
-          <code><a href="logit.html">logit()</a></code> <code><a href="logit.html">logit()</a></code> 
-        </dt>
-        <dd>Logit</dd>
       </dl><dl><dt>
           
           <code><a href="plot_bayesian_cdi.html">plot_bayesian_cdi()</a></code> 
@@ -265,16 +251,53 @@
         <dd>A Bayesian version of the step-plot</dd>
       </dl><dl><dt>
           
-          <code><a href="ses.html">ses()</a></code> 
-        </dt>
-        <dd>Obtain standard errors for the coefficients associated with a particular term in the model</dd>
-      </dl><dl><dt>
-          
           <code><a href="table_criterion.html">table_criterion()</a></code> 
         </dt>
         <dd>Get table of various criterion</dd>
+      </dl><dl><dt>
+          
+          <code><a href="logit.html">logit()</a></code> <code><a href="logit.html">logit()</a></code> 
+        </dt>
+        <dd>Logit</dd>
+      </dl><dl><dt>
+          
+          <code><a href="inv_logit.html">inv_logit()</a></code> 
+        </dt>
+        <dd>Inverse logit</dd>
+      </dl><dl><dt>
+          
+          <code><a href="logistic.html">logistic()</a></code> 
+        </dt>
+        <dd>Logistic</dd>
+      </dl><dl><dt>
+          
+          <code><a href="id_var_type.html">id_var_type()</a></code> 
+        </dt>
+        <dd>Identify the variable type</dd>
+      </dl><dl><dt>
+          
+          <code><a href="geo_mean.html">geo_mean()</a></code> 
+        </dt>
+        <dd>Geometric mean</dd>
+      </dl></div><div class="section level2">
+      <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h2>
+      
+      <p class="section-desc"></p><p>Simulated data sets that are available.</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="lobsters_per_pot.html">lobsters_per_pot</a></code> 
+        </dt>
+        <dd>Simulated catch of lobsters per pot</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

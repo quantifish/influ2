@@ -8,7 +8,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">influ2</a>
 
@@ -23,14 +23,14 @@
       <ul class="navbar-nav me-auto"><li class="nav-item">
   <a class="nav-link" href="../articles/influ2.html">Get started</a>
 </li>
-<li class="active nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/hurdle.html">hurdle</a>
   </div>
+</li>
+<li class="active nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
 <li class="nav-item">
   <a class="nav-link" href="../news/index.html">Changelog</a>
@@ -87,14 +87,16 @@
 
 
 <dt>xfocus</dt>
-<dd><p>The column name of the variable to be plotted on the x axis. This column name must match one of the
-column names in the <code>data.frame</code> that was passed to <code>brm</code> as the <code>data</code> argument.</p></dd>
+<dd><p>The column name of the variable to be plotted on the x axis. 
+This column name must match one of the column names in the 
+<code>data.frame</code> that was passed to <code>brm</code> as the <code>data</code> argument.</p></dd>
 
 
 <dt>yfocus</dt>
-<dd><p>The column name of the variable to be plotted on the y axis. This column name must match one of the
-column names in the <code>data.frame</code> that was passed to <code>brm</code> as the <code>data</code> argument. This is generally the
-temporal variable in a generalised linear model (e.g. year).</p></dd>
+<dd><p>The column name of the variable to be plotted on the y axis. 
+This column name must match one of the column names in the 
+<code>data.frame</code> that was passed to <code>brm</code> as the <code>data</code> argument. 
+This is generally the temporal variable in a generalised linear model (e.g. year).</p></dd>
 
 
 <dt>xlab</dt>
