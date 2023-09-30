@@ -29,24 +29,28 @@ plot_influ <- function(fit, year = "fishing_year", fill = "purple", hurdle = FAL
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   # Extract the models variable names
-  x1 <- gsub(paste0(as.character(fit$formula)[4], " ~ "), "", as.character(fit$formula)[1])
-  x2 <- strsplit(x1, split = " + ", fixed = TRUE)[[1]]
-  x <- x2[x2 != year]
-  x <- gsub("\\(1 \\| ", "", x)
-  x <- gsub("\\)", "", x)
-  
+  # x1 <- gsub(paste0(as.character(fit$formula)[4], " ~ "), "", as.character(fit$formula)[1])
+  # x2 <- strsplit(x1, split = " + ", fixed = TRUE)[[1]]
+  # x <- x2[x2 != year]
+  # x <- gsub("\\(1 \\| ", "", x)
+  # x <- gsub("\\)", "", x)
+  # x <- gsub("poly\\(", "", x)
+  x <- names(fit$data)
+  x <- x[-1]
+  x <- x[x != year]
+  x <- x[!grepl("poly", x)]
+
   df <- NULL
   for (i in 1:length(x)) {
     inf1 <- get_influ2(fit = fit, group = c(year, x[i]), hurdle = hurdle) %>% 
       mutate(variable = x[i])
-    
     df <- rbind(df, inf1)
   }
   
   # Order the factor levels
   df$variable <- factor(df$variable, levels = x)
   
-  p <- ggplot(data = df, aes_string(x = year)) +
+  p <- ggplot(data = df, aes(x = .data[[year]])) +
     geom_hline(yintercept = 1, linetype = "dashed") +
     geom_violin(aes(y = exp(.data$delta)), fill = fill, colour = fill, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
     facet_wrap(variable ~ ., ncol = 1, strip.position = "top") +

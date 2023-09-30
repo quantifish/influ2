@@ -12,8 +12,6 @@ plot_data_extent(data, xvar, yvar)
 \item{xvar}{The name of the temporal column (e.g., year).}
 
 \item{yvar}{The names of the columns in the \code{data.frame} to plot.}
-
-\item{...}{Further arguments passed to nothing.}
 }
 \value{
 a ggplot object

@@ -1,12 +1,10 @@
 library(brms)
 
-options(mc.cores = parallel::detectCores())
-
 data(lobsters_per_pot)
 
-brm1 <- brm(lobsters ~ year + month, data = lobsters_per_pot, family = poisson)
+brm1 <- brm(lobsters ~ year + month, data = lobsters_per_pot, family = poisson, chains = 1, file = "brm1", file_refit = "never")
 glm1 <- glm(lobsters ~ year + month, data = lobsters_per_pot, family = poisson)
-brm2 <- brm(lobsters ~ year + (1 | month), data = lobsters_per_pot, family = negbinomial())
+brm2 <- brm(lobsters ~ year + (1 | month), data = lobsters_per_pot, family = negbinomial(), chains = 1, file = "brm2", file_refit = "never")
 
 
 context("CDI plot")

@@ -4,11 +4,13 @@
 #' (bottom-left panel), and the influence statistic (bottom-right panel).
 #' 
 #' @param fit An object of class \code{brmsfit}.
-#' @param xfocus The column name of the variable to be plotted on the x axis. This column name must match one of the
-#'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument.
-#' @param yfocus The column name of the variable to be plotted on the y axis. This column name must match one of the
-#'   column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
-#'   temporal variable in a generalised linear model (e.g. year).
+#' @param xfocus The column name of the variable to be plotted on the x axis. 
+#'   This column name must match one of the column names in the 
+#'   \code{data.frame} that was passed to \code{brm} as the \code{data} argument.
+#' @param yfocus The column name of the variable to be plotted on the y axis. 
+#'   This column name must match one of the column names in the 
+#'   \code{data.frame} that was passed to \code{brm} as the \code{data} argument. 
+#'   This is generally the temporal variable in a generalised linear model (e.g. year).
 #' @param hurdle If a hurdle model then use the hurdle.
 #' @param sort_coefs Should the coefficients be sorted from highest to lowest.
 #' @param axis.text.x.bl Include the x axis labels on the bottom-left (bl) bubble plot panel.
@@ -152,7 +154,7 @@ plot_bayesian_cdi <- function(fit,
     p1 <- p1 +
       # geom_point() +
       geom_violin(colour = colour, fill = colour, alpha = 0.5, draw_quantiles = 0.5, scale = "width") +
-      geom_hline(yintercept = 1, linetype = "dashed") +
+      geom_hline(yintercept = 0, linetype = "dashed") +
       scale_x_discrete(position = "top")# +
       # scale_x_discrete(position = "top", breaks = midpoints, minor_breaks = NULL, expand = expansion(mult = 0.05)) +
       # coord_cartesian(xlim = c(midpoints[1], midpoints[length(midpoints)]))

@@ -1,4 +1,47 @@
 url: http://www.quantifish.co.nz/influ2/
+
 template:
   bootstrap: 5
+  bootswatch: cerulean
 
+navbar:
+  structure:
+    left:  [intro, articles, tutorials, reference, news]
+    right: [search, github]
+
+reference:
+- title: influ
+  desc: Functions from the original influ R package.
+  contents:
+  - influ
+  - Influence
+  - Influence$new
+  - Influence$init
+  - Influence$calc
+  - Influence$effects
+  - Influence$stanPlot
+  - Influence$cdiPlot
+  - Influence$influPlot
+  - Influence$stepPlot
+  - Influence$cdiPlotAll
+  - Influence$stepAndInfluPlot
+  - coeffs
+  - ses
+
+- title: influ2
+  desc: Functions from the new influ2 R package.
+  contents:
+  - influ2
+  - starts_with("get_")
+  - starts_with("plot_")
+  - starts_with("table_")
+  - logit
+  - inv_logit
+  - logistic
+  - id_var_type
+  - geo_mean
+
+- title: Data
+  desc: Simulated data sets that are available.
+  contents:
+  - lobsters_per_pot

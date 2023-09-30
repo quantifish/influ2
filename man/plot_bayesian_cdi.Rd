@@ -23,12 +23,14 @@ plot_bayesian_cdi(
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}
 
-\item{xfocus}{The column name of the variable to be plotted on the x axis. This column name must match one of the
-column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument.}
+\item{xfocus}{The column name of the variable to be plotted on the x axis. 
+This column name must match one of the column names in the 
+\code{data.frame} that was passed to \code{brm} as the \code{data} argument.}
 
-\item{yfocus}{The column name of the variable to be plotted on the y axis. This column name must match one of the
-column names in the \code{data.frame} that was passed to \code{brm} as the \code{data} argument. This is generally the
-temporal variable in a generalised linear model (e.g. year).}
+\item{yfocus}{The column name of the variable to be plotted on the y axis. 
+This column name must match one of the column names in the 
+\code{data.frame} that was passed to \code{brm} as the \code{data} argument. 
+This is generally the temporal variable in a generalised linear model (e.g. year).}
 
 \item{xlab}{The x axis label.}
 

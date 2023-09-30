@@ -5,7 +5,6 @@
 #' @param data A \code{data.frame} containing at least two columns.
 #' @param xvar The name of the temporal column (e.g., year).
 #' @param yvar The names of the columns in the \code{data.frame} to plot.
-#' @param ... Further arguments passed to nothing.
 #' @return a ggplot object
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}

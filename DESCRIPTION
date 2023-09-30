@@ -34,11 +34,7 @@ Suggests:
     tidyverse,
     devtools,
     rmarkdown,
-    roxygen2,
-    testthat,
-    usethis,
     viridis,
-    proto,
     bayesplot
 LazyData: false
 VignetteBuilder: knitr

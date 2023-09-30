@@ -57,7 +57,7 @@ head(sim_data)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and group."}
-plot_bubble(df = sim_data, group = c("year", "group"), fill = "green")
+plot_bubble(df = sim_data, group = c("year", "group"))
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -66,16 +66,14 @@ m1 <- brm(bf(y ~ year + group, hu ~ 1),
           file = "m1", file_refit = "never")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
-# plot_bayesian_cdi(fit = m1, xfocus = "group", yfocus = "year", xlab = "Group")
-plot_index(m1, year = "year")
-```
-
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 plot_index(m1, year = "year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 # plot_influ(m1, year = "year")
-plot_index(m1, year = "year")
+```
+
+```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
+# plot_bayesian_cdi(fit = m1, xfocus = "group", yfocus = "year", xlab = "Group")
 ```

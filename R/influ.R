@@ -134,14 +134,14 @@ coeffs = function(.,model=.$model,term=.$focus){
 #' @param term The term in the model for which coefficients SEs are extracted
 #' @export
 #' 
-ses = function(.,model=.$model,term=.$focus){
+ses = function(.,model=.$model, term=.$focus) {
   type = class(model)[1]
-  if(type=='glm'|type=='negbin'){
+  if (type == 'glm' | type == 'negbin') {
     #The "cov.scaled" member of a glm object is the estimated covariance matrix of 
     #the estimated coefficients scaled by dispersion"    
     V = summary(model)$cov.scaled
   }
-  else if(type=='survreg'){
+  else if (type == 'survreg') {
     #The member "var" for a survreg object is the "the variance-covariance matrix for the parameters, 
     #including the log(scale) parameter(s)" 
     V = model$var
@@ -179,18 +179,18 @@ Influence$effects = function(.,model=.$model,term=.$focus){
 Influence$calc <- function(.){
   #Get observed values
   observed = .$model$model[,.$response]
-  if(class(observed)[1]=='Surv') observed = as.numeric(observed[,1])
-  logged = substr(.$response,1,4)=='log('
+  if (class(observed)[1] == 'Surv') observed = as.numeric(observed[,1])
+  logged = substr(.$response,1,4) == 'log('
   #Create a data frame that is used to store various values for each level of focal term
   .$indices = data.frame(level=levels(.$model$model[,.$focus]))
   #Add an unstandardised index
-  if(logged | sum(observed<=0)==0){
-    if(logged) log_observed = observed else log_observed = log(observed)
+  if (logged | sum(observed<=0)==0){
+    if (logged) log_observed = observed else log_observed = log(observed)
     # Calculate geometic mean
     .$indices = merge(.$indices,aggregate(list(unstan=log_observed),list(level=.$model$model[,.$focus]),mean))
     # Turn into a relative index
     .$indices$unstan = with(.$indices,exp(unstan-mean(unstan)))
-  }else {
+  } else {
      # There are zeros (or even negative numbers) in the data so we cant calculate a geometric mean.
      # Use arithmetic mean instead
     .$indices = merge(.$indices,aggregate(list(unstan=observed),list(level=.$model$model[,.$focus]),mean))
@@ -209,8 +209,8 @@ Influence$calc <- function(.){
   .$summary = NULL
   
   #TODO calculate influence statistics in this loop too
-  for(termCount in 0:length(.$terms)){
-    if(termCount>0){
+  for (termCount in 0:length(.$terms)) {
+    if (termCount > 0) {
       term = .$terms[termCount]
       #Update both formula and model
       newFormula = formula(.$model)

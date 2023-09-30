@@ -23,6 +23,8 @@ plot_index(
 \item{probs}{The percentiles to be computed by the \code{quantile} function.}
 
 \item{rescale}{the index of the series to rescale to. If set to NULL then no rescaling is done.}
+
+\item{show_unstandardised}{show the unstandardised series or not.}
 }
 \value{
 a \code{ggplot} object.

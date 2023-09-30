@@ -7,6 +7,7 @@
 #' @param fill the fill colour for the percentiles.
 #' @param probs The percentiles to be computed by the \code{quantile} function.
 #' @param rescale the index of the series to rescale to. If set to NULL then no rescaling is done.
+#' @param show_unstandardised show the unstandardised series or not.
 #' @return a \code{ggplot} object.
 #' 
 #' @author Darcy Webber \email{darcy@quantifish.co.nz}

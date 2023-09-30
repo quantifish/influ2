@@ -55,24 +55,22 @@ library(bayesplot)
 theme_set(theme_bw())
 
 options(mc.cores = parallel::detectCores())
-# setwd("/home/darcy/Projects/influ2/vignettes")
 ```
 
-Get some data to use
+The simulated data set
 
 ```{r sim-data, echo=TRUE, message=FALSE}
 data(lobsters_per_pot)
-dim(lobsters_per_pot)
+nrow(lobsters_per_pot)
 head(lobsters_per_pot)
-table(lobsters_per_pot$year, lobsters_per_pot$month)
 ```
 
-```{r plot-bubble-1, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and duration."}
-plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "green") +
+```{r plot-bubble-1, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and month."}
+plot_bubble(df = lobsters_per_pot, group = c("year", "month")) +
   labs(x = "Month", y = "Year")
 ```
 
-```{r plot-bubble-2, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year, species, and area."}
+```{r plot-bubble-2, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and month, also coloured by month."}
 plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "month") +
   labs(x = "Month", y = "Year") +
   theme(legend.position = "none")
@@ -80,11 +78,12 @@ plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "month") +
 
 # The origninal influ versus influ2
 
-First I fit two different models in `brms`. The 
-third model includes the explanatory variables `Year`, `Species` and `Area`. I 
-then fit another four models which include `Year` and different forms of the 
-variable `Duration`. The different forms include a linear predictor, a 
-third-order polynomial, a spline, and a random-effect.
+Two different models are fitted in `brms`. The first model assumes a Poisson 
+distributioin and includes the 
+explanatory variables `year`, `month`, and a 3rd order polynomial for `soak` 
+time. The second model assumes a negative binomial distribution and 
+includes the explanatory variables `year`, `month` as a
+random effect, and a spline for `depth` with 3 degrees of freedom. 
 
 ```{r fit-model}
 fit1 <- brm(lobsters ~ year + month + poly(soak, 3), 
@@ -104,8 +103,7 @@ fit1 <- add_criterion(fit1, criterion = criterion, file = "fit1")
 fit2 <- add_criterion(fit2, criterion = criterion, file = "fit2")
 ```
 
-Fit a model using glm and generate influence statistics using the original influ 
-package
+Fit a model using glm and generate influence statistics using the original `influ` package
 
 ```{r do-glm}
 fit_glm <- glm(lobsters ~ year + month + poly(soak, 3), 
@@ -114,6 +112,7 @@ fit_glm <- glm(lobsters ~ year + month + poly(soak, 3),
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original CDI plot from the influ package."}
 myInfl <- Influence$new(model = fit_glm)
+myInfl$init()
 myInfl$calc()
 myInfl$cdiPlot(term = "month")
 ```
@@ -127,6 +126,9 @@ cdi_month
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original step-plot from the influ package."}
 myInfl$stepPlot()
 ```
+
+The `influ2` package cannot generate steps plots automatically like `influ`. Each step must
+be modelled separately and then a list of models defined as below.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian step-plot from the influ2 package. Note that the new step-plot requires that all models/steps be run in brms before the function can be used."}
 fits <- list(fit1, fit2)
@@ -142,7 +144,7 @@ myInfl$stanPlot()
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-# plot_influ(fit2, year = "year")
+plot_influ(fit = fit1, year = "year")
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -151,22 +153,24 @@ myInfl$influPlot()
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of influences produced by the original influ package (points) and the new influ2 calculation (lines)."}
 i1 <- myInfl$influences %>%
-  pivot_longer(cols = -level, names_to = "variable")
-# i_month <- get_influ(fit = fit1, group = c("year", "month")) %>%
-#   group_by(Year) %>%
-#   summarise(delta = mean(delta)) %>%
-#   mutate(variable = "month")
-# i_duration <- get_influ(fit = fit1, group = c("year", "Duration")) %>%
-#   group_by(Year) %>%
-#   summarise(delta = mean(delta)) %>%
-#   mutate(variable = "Duration")
-# 
-# ggplot(data = rbind(i_species, i_duration)) +
-#   geom_point(data = i1, aes(x = level, y = exp(value))) +
-#   geom_line(aes(x = Year, y = exp(delta), colour = variable, group = variable)) +
-#   facet_wrap(variable ~ ., ncol = 1, scales = "free_y") +
-#   labs(x = NULL, y = "Influence") +
-#   theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+  pivot_longer(cols = -level, names_to = "variable") %>%
+  rename(year = level)
+i_month <- get_influ(fit = fit1, group = c("year", "month")) %>%
+  group_by(year) %>%
+  summarise(value = mean(delta)) %>%
+  mutate(variable = "month")
+i_soak <- get_influ(fit = fit1, group = c("year", "soak")) %>%
+  group_by(year) %>%
+  summarise(value = mean(delta)) %>%
+  mutate(variable = "poly(soak, 3)")
+i2 <- rbind(i_month, i_soak)
+
+ggplot(data = i2, aes(x = year, y = exp(value))) +
+  geom_point(data = i1) +
+  geom_line(aes(colour = variable, group = variable)) +
+  facet_wrap(variable ~ ., ncol = 1) +
+  labs(x = "Year", y = "Influence") +
+  theme(legend.position = "none")
 ```
 
 # Functions for exploring models
