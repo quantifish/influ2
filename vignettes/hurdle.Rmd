@@ -1,6 +1,5 @@
 ---
 title: "hurdle"
-author: "Darcy Webber"
 output: 
   rmarkdown::html_vignette:
     toc: true
