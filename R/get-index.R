@@ -37,7 +37,7 @@ get_unstandarsied <- function(fit, year = "year", rescale = 1) {
 
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
-  if (fit$family$family == "bernoulli" | grepl("hurdle", fit$family$family)) {
+  if (fit$family$family %in% c("bernoulli", "negbinomial") | grepl("hurdle", fit$family$family)) {
     prop <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
       mutate(y = ifelse(.data$y > 0, 1, 0)) %>%
       group_by(.data$Year) %>%
@@ -57,8 +57,8 @@ get_unstandarsied <- function(fit, year = "year", rescale = 1) {
   gm <- geo_mean(unstd$cpue)
   
   fout <- unstd %>%
-    mutate(Mean = .data$cpue, Median = .data$cpue) %>%
-    select(-.data$cpue)
+    mutate(Mean = cpue, Median = cpue) %>%
+    select(-cpue)
   
   # Rescale the series
   if (rescale == "raw") {
