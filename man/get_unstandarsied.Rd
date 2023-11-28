@@ -19,6 +19,3 @@ a \code{data.frame} or a \code{ggplot} object.
 \description{
 Get the unstandardised indices
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

@@ -6,16 +6,16 @@
 #' @param criterion the criterion to use
 #' @param sort to sort the table with the best models at the top
 #' @param ... additional parameters passed to \code{add_criterion}
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @import brms
 #' @import dplyr
 #' @importFrom rstan get_elapsed_time get_num_upars
 #' @importFrom lubridate seconds_to_period hour minute second
+#' @importFrom stats setNames
 #' @export
 #' 
-table_criterion <- function(fits, criterion = c("loo", "loo_R2", "bayes_R2", "log_lik"), sort = TRUE, ...) {
+table_criterion <- function(fits, 
+                            criterion = c("loo", "loo_R2", "bayes_R2", "log_lik"), 
+                            sort = TRUE, ...) {
   
   n <- length(fits)
   

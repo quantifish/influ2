@@ -4,9 +4,6 @@
 #' @param group the variable to obtain
 #' @param hurdle if a hurdle model then use the hurdle
 #' @return a \code{data.frame}.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom stringr str_split str_detect

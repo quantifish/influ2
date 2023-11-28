@@ -1,3 +1,4 @@
+library(influ2)
 library(brms)
 
 data(lobsters_per_pot)
@@ -87,23 +88,23 @@ test_that("this matches Nokome Bentley's influ package", {
     filter(grepl("year", variable))
   
   # Test Nokomes coeffs are the same as stats::coef function
-  plot(c1a, type = "b")
-  lines(c1b, col = 2)
+  # plot(c1a, type = "b")
+  # lines(c1b, col = 2)
   expect_equal(c1a, c1b)
   
   # Check that my get_coefs function is the same as the nlme::fixef function
-  plot(c2a$Estimate, type = "b")
-  lines(c2b$Estimate, col = 2)
+  # plot(c2a$Estimate, type = "b")
+  # lines(c2b$Estimate, col = 2)
   expect_equal(c2a$Estimate, c2b$Estimate)
 
   # Check that Nokomes coeffs are the same as mine. This is maximum likelihood vs Bayesian so tolerance needs to be a little higher.
-  plot(c1a, type = "b")
-  lines(c2a$Estimate, col = 2)
+  # plot(c1a, type = "b")
+  # lines(c2a$Estimate, col = 2)
   expect_equal(as.numeric(c1a), c2a$Estimate, tolerance = 0.07)
 
   # Check that stats::coef is the same as nlme::fixef. This is maximum likelihood vs Bayesian so tolerance needs to be a little higher.
-  plot(c1b, type = "b")
-  lines(c2b$Estimate, col = 2)
+  # plot(c1b, type = "b")
+  # lines(c2b$Estimate, col = 2)
   expect_equal(as.numeric(c1b), c2b$Estimate, tolerance = 0.07)
   
   # Check the influences are the same - I couldn't get this to work as Noko's code is broken

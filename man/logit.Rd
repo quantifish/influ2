@@ -12,7 +12,7 @@ logit(p)
 \item{p}{a vector.}
 }
 \value{
-a \code{data.frame} or a \code{ggplot} object.
+the density.
 }
 \description{
 Logit

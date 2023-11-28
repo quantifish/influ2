@@ -3,9 +3,16 @@
 \docType{data}
 \name{lobsters_per_pot}
 \alias{lobsters_per_pot}
-\title{Simulated catch of lobsters per pot}
+\title{Simulated CPUE data}
 \format{
-A data.frame with four fields:
+a \code{tibble} containing 5 fields including:
+\describe{
+  \item{lobsters}{Age in years.}
+  \item{year}{Standard deviation of length at age.}
+  \item{month}{Standard deviation of length at age.}
+  \item{depth}{Standard deviation of length at age.}
+  \item{soak}{Standard deviation of length at age.}
+ }
 }
 \usage{
 lobsters_per_pot

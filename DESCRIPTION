@@ -13,6 +13,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
     R (>= 3.5.0),
+    brms,
     dplyr,
     ggplot2,
     patchwork
@@ -25,7 +26,6 @@ Imports:
     readr,
     gtable,
     nlme,
-    brms,
     rstan,
     tidyr,
     lubridate

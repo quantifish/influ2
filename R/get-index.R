@@ -1,23 +1,27 @@
 #' Logit
 #' 
-#' @return a \code{data.frame} or a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
+#' @inheritParams stats::qlogis
+#' @return the density.
+#' @importFrom stats qlogis
 #' @export
 #' 
-logit <- qlogis
+logit <- function(p, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
+  qlogis(p = p, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
+}
 
 
 #' Logistic
 #' 
-#' @return a \code{data.frame} or a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
+#' @param q vector of quantiles.
+#' @inheritParams stats::plogis
+#' @param log.p logical; if TRUE, probabilities p are given as log(p).
+#' @return gives the distribution function.
+#' @importFrom stats plogis
 #' @export
 #' 
-logistic <- plogis
+logistic <- function(q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
+  plogis(q = q, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
+}
 
 
 #' Get the unstandardised indices
@@ -26,9 +30,6 @@ logistic <- plogis
 #' @param year The year or time label (e.g. year, Year, fishing_year, etc).
 #' @param rescale How to re-scale the series. Choose from "raw" to retain the raw unstandardised series, or a number to re-scale by. 
 #' @return a \code{data.frame} or a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @import brms
 #' @import dplyr
 #' @export
@@ -57,8 +58,8 @@ get_unstandarsied <- function(fit, year = "year", rescale = 1) {
   gm <- geo_mean(unstd$cpue)
   
   fout <- unstd %>%
-    mutate(Mean = cpue, Median = cpue) %>%
-    select(-cpue)
+    mutate(Mean = .data$cpue, Median = .data$cpue) %>%
+    select(-.data$cpue)
   
   # Rescale the series
   if (rescale == "raw") {

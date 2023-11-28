@@ -53,13 +53,14 @@ Influence = proto()
 #' }
 #'
 #' @name Influence$new
+#' @param . Not sure how this works
 #' @param model The model for which the influence of terms will be determined
 #' @param data The data which was used to fit the model (required for some types of models that do not store the data)
 #' @param response The response term in the model
 #' @param focus The focus term for which influence is to be calculated.
 #' @return A new Influence object
 #' 
-Influence$new <- function(.,model,data=NULL,response=NULL,focus=NULL){
+Influence$new <- function(., model, data = NULL, response = NULL, focus = NULL) {
   instance = .$proto(
     model = model,
     data = data,
@@ -77,15 +78,15 @@ Influence$new <- function(.,model,data=NULL,response=NULL,focus=NULL){
 #' @name Influence$init
 #' @return None
 #' 
-Influence$init <- function(.){
+Influence$init <- function(.) {
 
   # If no data was supplied....
-  if(is.null(.$data)){
+  if (is.null(.$data)) {
     # See if the model has a data variable
     .$data = .$model$data
-    if(is.null(.$data)){
+    if (is.null(.$data)) {
       # See if it is available as a model attribute
-      .$data = attr(.$model,"data")
+      .$data = attr(.$model, "data")
     }
     if(is.null(.$data)){
       stop("You need to provide the data that was fitted to for this type of model e. Influence$new(model,data,...)")
@@ -114,15 +115,17 @@ Influence$init <- function(.){
 #' Extracts the coefficients
 #'
 #' @name coeffs
+#' @param . The model to extract coefficients from
 #' @param model The model to extract coefficients from
 #' @param term The term in the model for which coefficients are extracted
 #' @return A vector of coefficients
+#' @importFrom stats coefficients
 #' @export
-#'                                                                    
-coeffs = function(.,model=.$model,term=.$focus){
-  coeffs = coefficients(model)
-  rows = substr(names(coeffs),1,nchar(term))==term
-  c(0,coeffs[rows])
+#'
+coeffs <- function(., model = .$model, term = .$focus) {
+  coeffs <- coefficients(model)
+  rows <- substr(names(coeffs), 1, nchar(term)) == term
+  c(0, coeffs[rows])
 }
 
 #' Obtain standard errors for the coefficients associated with a particular term in the model
@@ -130,11 +133,12 @@ coeffs = function(.,model=.$model,term=.$focus){
 #' Extract standard errors using the method of Francis
 #'
 #' @name ses
+#' @param . The model to extract standard errors for a coefficient from
 #' @param model The model to extract standard errors for a coefficient from
 #' @param term The term in the model for which coefficients SEs are extracted
 #' @export
 #' 
-ses = function(.,model=.$model, term=.$focus) {
+ses <- function(., model = .$model, term = .$focus) {
   type = class(model)[1]
   if (type == 'glm' | type == 'negbin') {
     #The "cov.scaled" member of a glm object is the estimated covariance matrix of 
@@ -147,10 +151,10 @@ ses = function(.,model=.$model, term=.$focus) {
     V = model$var
   }
   
-  rows = substr(row.names(V),1,nchar(term))==term
+  rows = substr(row.names(V), 1, nchar(term)) == term
   V = V[rows,rows]
-  n = sum(rows)+1
-  Q = matrix(-1/n, nrow=n, ncol=n-1)
+  n = sum(rows) + 1
+  Q = matrix(-1/n, nrow = n, ncol = n - 1)
   Q[-1,] = Q[-1,] + diag(rep(1,n-1))
   V0 = (Q%*%V) %*% t(Q)
   se = sqrt(diag(V0))
@@ -164,9 +168,9 @@ ses = function(.,model=.$model, term=.$focus) {
 #' @param term The term in the model for which effects are extracted
 #' @return A numeric vector of effects for the model term
 #' 
-Influence$effects = function(.,model=.$model,term=.$focus){
+Influence$effects = function(., model = .$model, term = .$focus){
   coeffs = .$coeffs(model,term)
-  exp(coeffs-mean(coeffs))
+  exp(coeffs - mean(coeffs))
 }
 
 #' Perform necessary calculations

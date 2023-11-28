@@ -19,6 +19,3 @@ a \code{data.frame}.
 \description{
 Get the influence metric
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

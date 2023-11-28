@@ -4,6 +4,8 @@
 \alias{Influence$new}
 \title{Create a new Influence object.}
 \arguments{
+\item{.}{Not sure how this works}
+
 \item{model}{The model for which the influence of terms will be determined}
 
 \item{data}{The data which was used to fit the model (required for some types of models that do not store the data)}

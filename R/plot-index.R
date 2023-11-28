@@ -40,7 +40,7 @@ plot_index <- function(fit,
   df$model <- factor(df$model, levels = c("Unstandardised", "Standardised"))
   
   if (!show_unstandardised) {
-    df <- df %>% filter(model != "Unstandardised")
+    df <- df %>% filter(.data$model != "Unstandardised")
     scale_col <- fill
     scale_lin <- "solid"
   } else {

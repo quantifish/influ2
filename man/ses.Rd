@@ -7,6 +7,8 @@
 ses(., model = .$model, term = .$focus)
 }
 \arguments{
+\item{.}{The model to extract standard errors for a coefficient from}
+
 \item{model}{The model to extract standard errors for a coefficient from}
 
 \item{term}{The term in the model for which coefficients SEs are extracted}

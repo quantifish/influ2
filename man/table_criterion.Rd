@@ -23,6 +23,3 @@ table_criterion(
 \description{
 Calculates various criterion for a list of brms models using the \code{add_criterion} function.
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}
