@@ -16,7 +16,7 @@
 #' @importFrom stringi stri_trim_right
 #' @export
 #' 
-plot_compare <- function(fits, labels = NULL, year = "year", 
+plot_compare <- function(fits, labels = NULL, year = NULL, 
                          probs = c(0.25, 0.75), show_probs = TRUE, 
                          rescale = "raw", rescale_series = NULL) {
   
@@ -27,7 +27,7 @@ plot_compare <- function(fits, labels = NULL, year = "year",
     if (is.null(labels)) {
       str <- as.character(fits[[i]]$formula)[1]
       left1 <- stri_trim_right(str = str, pattern = "[\u007E]", negate = FALSE)
-      fout$Model <- substr(str, nchar(left1) + 2, nchar(str))
+      fout$Model <- substr(x = str, nchar(left1) + 2, nchar(str))
     } else {
       fout$Model <- labels[i]
     }

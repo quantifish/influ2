@@ -7,11 +7,7 @@
 #' @param fill the colour to use in the plot.
 #' @param hurdle if a hurdle model then use the hurdle
 #' @return a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @seealso \code{\link{get_influ}}
-#' 
 #' @examples
 #' \dontrun{
 #' data(epilepsy)
@@ -20,13 +16,17 @@
 #' summary(fit1)
 #' plot_influ(fit = fit1, year = "Age")
 #' }
-#' 
+#' @importFrom brms is.brmsfit
 #' @import ggplot2
 #' @export
 #' 
-plot_influ <- function(fit, year = "fishing_year", fill = "purple", hurdle = FALSE) {
+plot_influ <- function(fit, year = NULL, fill = "purple", hurdle = FALSE) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  if (is.null(year)) {
+    year <- get_first_term(fit = fit)
+  }
   
   # Extract the models variable names
   # x1 <- gsub(paste0(as.character(fit$formula)[4], " ~ "), "", as.character(fit$formula)[1])

@@ -7,7 +7,7 @@
 plot_compare(
   fits,
   labels = NULL,
-  year = "year",
+  year = NULL,
   probs = c(0.25, 0.75),
   show_probs = TRUE,
   rescale = "raw",

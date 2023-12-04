@@ -15,6 +15,3 @@ The geometric mean of the vector.
 \description{
 Geometric mean
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

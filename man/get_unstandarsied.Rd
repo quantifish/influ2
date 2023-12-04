@@ -4,7 +4,7 @@
 \alias{get_unstandarsied}
 \title{Get the unstandardised indices}
 \usage{
-get_unstandarsied(fit, year = "year", rescale = 1)
+get_unstandarsied(fit, year = NULL, rescale = 1)
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}

@@ -4,7 +4,7 @@
 \alias{plot_influ}
 \title{Plot the influence metric for all variables in a model}
 \usage{
-plot_influ(fit, year = "fishing_year", fill = "purple", hurdle = FALSE)
+plot_influ(fit, year = NULL, fill = "purple", hurdle = FALSE)
 }
 \arguments{
 \item{fit}{An object of class \code{brmsfit}.}
@@ -29,11 +29,7 @@ fit1 <- brm(count ~ Age + (1|patient), data = epilepsy, family = poisson(), iter
 summary(fit1)
 plot_influ(fit = fit1, year = "Age")
 }
-
 }
 \seealso{
 \code{\link{get_influ}}
-}
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
 }

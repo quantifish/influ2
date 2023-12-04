@@ -12,6 +12,3 @@ inv_logit(a)
 \description{
 Inverse logit
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

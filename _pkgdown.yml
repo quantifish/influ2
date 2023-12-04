@@ -10,6 +10,28 @@ navbar:
     right: [search, github]
 
 reference:
+- title: influ2 functions
+  desc: Functions from the new influ2 R package.
+  contents:
+  - influ2
+  - starts_with("get_")
+  - logit
+  - inv_logit
+  - logistic
+  - id_var_type
+  - geo_mean
+
+- title: influ2 plots
+  desc: Plots and tables from the new influ2 R package.
+  contents:
+  - starts_with("plot_")
+  - starts_with("table_")
+
+- title: Data
+  desc: Simulated data sets that are available.
+  contents:
+  - lobsters_per_pot
+
 - title: influ
   desc: Functions from the original influ R package.
   contents:
@@ -27,21 +49,4 @@ reference:
   - Influence$stepAndInfluPlot
   - coeffs
   - ses
-
-- title: influ2
-  desc: Functions from the new influ2 R package.
-  contents:
-  - influ2
-  - starts_with("get_")
-  - starts_with("plot_")
-  - starts_with("table_")
-  - logit
-  - inv_logit
-  - logistic
-  - id_var_type
-  - geo_mean
-
-- title: Data
-  desc: Simulated data sets that are available.
-  contents:
-  - lobsters_per_pot
+  

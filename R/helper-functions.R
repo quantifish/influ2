@@ -57,15 +57,54 @@ glm_step_plot <- function(data, mod_list, ibest = 5) {
 }
 
 
+#' Get first model term
+#' 
+#' @param fit An object of class \code{brmsfit}.
+#' @return the first model term
+#' @importFrom brms is.brmsfit
+#' @export
+#' 
+get_first_term <- function(fit) {
+  if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  f1 <- as.character(fit$formula)[1]
+  f2 <- gsub("~", "+", f1)
+  f3 <- str_split(f2, " \\+ ")[[1]]
+  return(f3[2])
+}
+
+
+#' Logit
+#' 
+#' @inheritParams stats::qlogis
+#' @return the density.
+#' @importFrom stats qlogis
+#' @export
+#' 
+logit <- function(p, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
+  qlogis(p = p, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
+}
+
+
+#' Logistic
+#' 
+#' @param q vector of quantiles.
+#' @inheritParams stats::plogis
+#' @param log.p logical; if TRUE, probabilities p are given as log(p).
+#' @return gives the distribution function.
+#' @importFrom stats plogis
+#' @export
+#' 
+logistic <- function(q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
+  plogis(q = q, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
+}
+
+
 #' Identify the variable type
 #' 
 #' @param fit An object of class \code{brmsfit}.
 #' @param xfocus the x
 #' @param hurdle if hurdle or not
 #' @return The geometric mean of the vector.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @export
 #' 
 id_var_type <- function(fit, xfocus, hurdle = FALSE) {
@@ -106,9 +145,6 @@ id_var_type <- function(fit, xfocus, hurdle = FALSE) {
 #' 
 #' @param a a vector.
 #' @return The geometric mean of the vector.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @export
 #' 
 geo_mean <- function(a) {
@@ -119,7 +155,6 @@ geo_mean <- function(a) {
 #' Inverse logit
 #' 
 #' @param a a vector.
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
 #' @export
 #' 
 inv_logit <- function(a) {
@@ -130,7 +165,6 @@ inv_logit <- function(a) {
 #' logit
 #' 
 #' @param p a vector.
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
 #' @export
 #' 
 logit <- function(p) {

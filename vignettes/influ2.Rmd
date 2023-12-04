@@ -56,7 +56,7 @@ theme_set(theme_bw())
 options(mc.cores = 2)
 ```
 
-The simulated data set
+The simulated data set:
 
 ```{r sim-data, echo=TRUE, message=FALSE}
 data(lobsters_per_pot)
@@ -131,11 +131,11 @@ be modelled separately and then a list of models defined as below.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian step-plot from the influ2 package. Note that the new step-plot requires that all models/steps be run in brms before the function can be used."}
 fits <- list(fit1, fit2)
-plot_step(fits = fits, year = "year")
+plot_step(fits = fits)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-plot_index(fit2, year = "year")
+plot_index(fit = fit2)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -143,7 +143,7 @@ myInfl$stanPlot()
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-plot_influ(fit = fit1, year = "year")
+plot_influ(fit = fit1)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
@@ -217,11 +217,11 @@ plot_bayesian_cdi(fit = fit2, xfocus = "month", yfocus = "year",
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison plot of all model runs."}
 fits <- list(fit1, fit2)
-plot_compare(fits = fits, year = "year")
+plot_compare(fits = fits)
 ```
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Unstandardised versus standardised series."}
-plot_index(fit = fit1, year = "year")
+plot_index(fit = fit1)
 ```
 
 # Diagnostics
@@ -312,8 +312,8 @@ can be produced using the `get_index` function. The `Estimate` and `Est.Error`
 columns are what should be used in stock assessment.
 
 ```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-unstd <- get_unstandarsied(fit = fit2, year = "year")
-cpue0 <- get_index(fit = fit2, year = "year")
+unstd <- get_unstandarsied(fit = fit2)
+cpue0 <- get_index(fit = fit2)
 
 cpue0 %>%
   mutate(Unstandardised = unstd$Median) %>%
@@ -349,9 +349,8 @@ for (ii in 1:nrow(cpue1)) {
   cpue3$Qupper[ii] <- quantile(r1, probs = 0.975)
 }
 
-df <- bind_rows(cpue1, cpue2, cpue3)
-
-ggplot(data = df, aes(x = Year, y = Median, colour = Type)) +
+ggplot(data = bind_rows(cpue1, cpue2, cpue3), 
+       aes(x = Year, y = Median, colour = Type)) +
   geom_pointrange(aes(ymin = Qlower, ymax = Qupper), 
                   position = position_dodge(width = 0.5)) +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +

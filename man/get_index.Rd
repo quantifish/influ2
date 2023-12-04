@@ -6,7 +6,7 @@
 \usage{
 get_index(
   fit,
-  year = "year",
+  year = NULL,
   probs = c(0.025, 0.975),
   rescale = 1,
   do_plot = FALSE,
@@ -31,7 +31,4 @@ a \code{data.frame} or a \code{ggplot} object.
 }
 \description{
 Get the standardised indices each year with associated uncertainty and return either as a table or a ggplot.
-}
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
 }

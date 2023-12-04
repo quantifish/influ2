@@ -1,42 +1,20 @@
-#' Logit
-#' 
-#' @inheritParams stats::qlogis
-#' @return the density.
-#' @importFrom stats qlogis
-#' @export
-#' 
-logit <- function(p, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
-  qlogis(p = p, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
-}
-
-
-#' Logistic
-#' 
-#' @param q vector of quantiles.
-#' @inheritParams stats::plogis
-#' @param log.p logical; if TRUE, probabilities p are given as log(p).
-#' @return gives the distribution function.
-#' @importFrom stats plogis
-#' @export
-#' 
-logistic <- function(q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
-  plogis(q = q, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
-}
-
-
 #' Get the unstandardised indices
 #' 
 #' @param fit An object of class \code{brmsfit}.
 #' @param year The year or time label (e.g. year, Year, fishing_year, etc).
 #' @param rescale How to re-scale the series. Choose from "raw" to retain the raw unstandardised series, or a number to re-scale by. 
 #' @return a \code{data.frame} or a \code{ggplot} object.
-#' @import brms
+#' @importFrom brms is.brmsfit
 #' @import dplyr
 #' @export
 #' 
-get_unstandarsied <- function(fit, year = "year", rescale = 1) {
+get_unstandarsied <- function(fit, year = NULL, rescale = 1) {
 
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  if (is.null(year)) {
+    year <- get_first_term(fit = fit)
+  }
   
   if (fit$family$family %in% c("bernoulli", "negbinomial") | grepl("hurdle", fit$family$family)) {
     prop <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
@@ -84,19 +62,20 @@ get_unstandarsied <- function(fit, year = "year", rescale = 1) {
 #' @param do_plot Return a \code{ggplot} object instead of a \code{data.frame}.
 #' @param ... Additional parameters passed to \code{fitted}.
 #' @return a \code{data.frame} or a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @importFrom stats fitted
-#' @import brms
+#' @importFrom brms is.brmsfit
 #' @import ggplot2
 #' @import patchwork
 #' @import dplyr
 #' @export
 #' 
-get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, do_plot = FALSE, ...) {
+get_index <- function(fit, year = NULL, probs = c(0.025, 0.975), rescale = 1, do_plot = FALSE, ...) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
+  
+  if (is.null(year)) {
+    year <- get_first_term(fit = fit)
+  }
   
   # std <- get_coefs(fit = fit, var = year)
   yrs <- sort(unique(fit$data[,year]))
@@ -120,22 +99,6 @@ get_index <- function(fit, year = "year", probs = c(0.025, 0.975), rescale = 1, 
   }
   newdata[,year] <- yrs
   newdata$pots <- 1
-
-  # fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA)
-  # newdata <- newdata[,1:5]
-  # newdata <- expand.grid(cpue = 1, period = unique(celr5$period), area2 = NA, vessel = NA, month = NA, "period:area2" = NA)
-  # names(newdata) <- names(fit5$data)
-  # head(fit$data)
-  # head(newdata)
-  # fout1 <- fitted(object = fit, newdata = newdata)
-  # fout1 <- fitted(object = fit4, newdata = newdata, probs = c(probs[1], 0.5, probs[2]))
-  # fout1 <- conditional_effects(x = fit, effects = "period")[[1]]
-  # conditions <- data.frame(area2 = c("916", "917", "933"))
-  # fout1 <- conditional_effects(x = fit, effects = "period", conditions = conditions)[[1]]
-  # fout1 <- posterior_epred(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]))
-  # fout1 <- posterior_predict(object = fit, newdata = newdata)
-  # fout1 <- fitted(object = fit)
-  # pred1 <- predict(fit, newdata = newdata, re_formula = NULL, allow_new_levels = TRUE)
   
   # Get the predicted CPUE by year
   fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA) %>% 

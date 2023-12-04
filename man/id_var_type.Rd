@@ -19,6 +19,3 @@ The geometric mean of the vector.
 \description{
 Identify the variable type
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

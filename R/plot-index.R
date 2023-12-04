@@ -9,9 +9,6 @@
 #' @param rescale the index of the series to rescale to. If set to NULL then no rescaling is done.
 #' @param show_unstandardised show the unstandardised series or not.
 #' @return a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @importFrom stats fitted
 #' @import brms
 #' @import ggplot2
@@ -19,14 +16,18 @@
 #' @export
 #' 
 plot_index <- function(fit, 
-                       year = "Year", 
+                       year = NULL, 
                        fill = "purple", 
                        probs = c(0.25, 0.75),
                        rescale = 1,
                        show_unstandardised = TRUE) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
-
+  
+  if (is.null(year)) {
+    year <- get_first_term(fit = fit)
+  }
+  
   # Get the standardised series
   fout <- get_index(fit = fit, year = year, probs = probs, rescale = rescale) %>%
     mutate(model = "Standardised")

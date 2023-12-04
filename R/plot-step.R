@@ -7,15 +7,12 @@
 #' @param fill the colour of the credible interval ribbon
 #' @param probs the quantiles to plot
 #' @param show_probs plot the quantiles or not
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @import brms
 #' @import ggplot2
 #' @import dplyr
 #' @export
 #' 
-plot_step <- function(fits, year = "year", fill = "purple",
+plot_step <- function(fits, year = NULL, fill = "purple",
                       probs = c(0.25, 0.75), show_probs = TRUE) {
   
   m <- length(fits)

@@ -6,7 +6,7 @@
 \usage{
 plot_index(
   fit,
-  year = "Year",
+  year = NULL,
   fill = "purple",
   probs = c(0.25, 0.75),
   rescale = 1,
@@ -31,7 +31,4 @@ a \code{ggplot} object.
 }
 \description{
 In this plot the unstandardised indices is the geometric mean of the data.
-}
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
 }

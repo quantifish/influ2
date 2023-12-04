@@ -6,7 +6,7 @@
 \usage{
 plot_step(
   fits,
-  year = "year",
+  year = NULL,
   fill = "purple",
   probs = c(0.25, 0.75),
   show_probs = TRUE
@@ -25,7 +25,4 @@ plot_step(
 }
 \description{
 This requires that all steps be run using brms and then provided as a list of model fits.
-}
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
 }
