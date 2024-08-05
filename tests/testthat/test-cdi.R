@@ -76,11 +76,8 @@ test_that("this matches Nokome Bentley's influ package", {
   c2a <- get_coefs(fit = brm1, var = "year", normalise = FALSE, transform = FALSE) %>%
     filter(variable != "year2000") %>%
     group_by(variable) %>%
-    summarise(Estimate = mean(value), 
-              Est.Error = sd(value), 
-              Q5 = quantile(value, probs = 0.05), 
-              Q50 = quantile(value, probs = 0.5), 
-              Q95 = quantile(value, probs = 0.95))
+    summarise(Estimate = mean(value), Est.Error = sd(value), 
+              Q5 = quantile(value, probs = 0.05), Q50 = quantile(value, probs = 0.5), Q95 = quantile(value, probs = 0.95))
   
   c2b <- fixef(object = brm1, probs = c(0.05, 0.95)) %>%
     data.frame() %>%

@@ -63,6 +63,3 @@ The CDI plot presents the coefficients for the variable of interest (top-left pa
 \seealso{
 \code{\link{get_coefs}}, \code{\link{get_influ}}, \code{\link{plot_bubble}}
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

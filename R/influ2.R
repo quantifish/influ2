@@ -22,7 +22,6 @@
 #' understanding fisheries catch-per-unit-effort standardizations. \emph{ICES Journal of Marine Science}. 
 #' \code{doi:10.1093/icesjms/fsr174}
 #' 
-#' @docType package
 #' @name influ2
 #' 
 NULL

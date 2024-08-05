@@ -17,6 +17,3 @@ A \code{data.frame}.
 \description{
 Get model coefficients new version
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
-}

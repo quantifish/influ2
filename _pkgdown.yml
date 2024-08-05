@@ -15,11 +15,9 @@ reference:
   contents:
   - influ2
   - starts_with("get_")
-  - logit
-  - inv_logit
-  - logistic
   - id_var_type
   - geo_mean
+  - influ_app
 
 - title: influ2 plots
   desc: Plots and tables from the new influ2 R package.

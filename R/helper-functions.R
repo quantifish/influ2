@@ -73,32 +73,6 @@ get_first_term <- function(fit) {
 }
 
 
-#' Logit
-#' 
-#' @inheritParams stats::qlogis
-#' @return the density.
-#' @importFrom stats qlogis
-#' @export
-#' 
-logit <- function(p, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
-  qlogis(p = p, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
-}
-
-
-#' Logistic
-#' 
-#' @param q vector of quantiles.
-#' @inheritParams stats::plogis
-#' @param log.p logical; if TRUE, probabilities p are given as log(p).
-#' @return gives the distribution function.
-#' @importFrom stats plogis
-#' @export
-#' 
-logistic <- function(q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) {
-  plogis(q = q, location = location, scale = scale, lower.tail = lower.tail, log.p = log.p)
-}
-
-
 #' Identify the variable type
 #' 
 #' @param fit An object of class \code{brmsfit}.
@@ -149,24 +123,4 @@ id_var_type <- function(fit, xfocus, hurdle = FALSE) {
 #' 
 geo_mean <- function(a) {
   prod(a)^(1.0 / length(a))
-}
-
-
-#' Inverse logit
-#' 
-#' @param a a vector.
-#' @export
-#' 
-inv_logit <- function(a) {
-  exp(a) / (exp(a) + 1.0)
-}
-
-
-#' logit
-#' 
-#' @param p a vector.
-#' @export
-#' 
-logit <- function(p) {
-  log(p / (1.0 - p))
 }

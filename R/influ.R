@@ -27,7 +27,6 @@
 #' This document provides minimal documentation and the best way to learn how to use this package is through the vignette:
 #'  "An example of how to use the 'influ' package"
 #'
-#' @docType package
 #' @name influ-package
 #' @aliases influ
 #' @title Influence in linear models 

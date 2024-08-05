@@ -23,11 +23,7 @@
 #'   the same for all and raw, but the legend will change from numbers of records to a proportion.
 #' @param ... Further arguments passed to nothing.
 #' @return a \code{ggplot} object.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @seealso \code{\link{get_coefs}}, \code{\link{get_influ}}, \code{\link{plot_bubble}}
-#' 
 #' @importFrom gtable is.gtable gtable_filter
 #' @importFrom stats poly
 #' @importFrom tidyselect all_of
@@ -49,7 +45,6 @@ plot_bayesian_cdi <- function(fit,
                               sum_by = "row", ...) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
-  
   if (is.null(xlab)) xlab <- xfocus
   if (is.null(ylab)) ylab <- yfocus
   y_coefs <- "Conditional effect"
@@ -58,10 +53,15 @@ plot_bayesian_cdi <- function(fit,
   type <- id_var_type(fit = fit, xfocus = xfocus, hurdle = hurdle)
   
   # Posterior samples of coefficients
+  # if (type %in% c("random_effect")) {
   if (type %in% c("fixed_effect", "random_effect")) {
     coefs <- get_coefs(fit = fit, var = xfocus, hurdle = hurdle)
   } else {
-    coefs <- get_marginal(fit = fit, var = xfocus) # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
+    # this would plot the marginal/conditional effect, but if it is a hurdle model it ignores the hurdle bit
+    coefs <- get_marginal(fit = fit, var = xfocus)# %>%
+      # mutate(value = log(value))
+    # library(marginaleffects)
+    # pred <- predictions(model = fit)
     # coefs <- get_coefs_raw(fit = fit, var = xfocus)
   }
   
@@ -73,9 +73,7 @@ plot_bayesian_cdi <- function(fit,
   
   # Model data
   if (is.numeric(coefs$variable)) {
-    data <- fit$data %>%
-      select(all_of(c(yfocus, xfocus)))
-    
+    data <- fit$data %>% select(all_of(c(yfocus, xfocus)))
     length.out <- 15
     dmin <- min(data[,xfocus])
     dmax <- max(data[,xfocus])

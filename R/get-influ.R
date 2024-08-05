@@ -18,8 +18,7 @@ get_influ2 <- function(fit,
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
   
   # Model data
-  data <- fit$data %>%
-    mutate(id = 1:n())
+  data <- fit$data %>% mutate(id = 1:n())
   y <- names(data)[1]
   
   # Identify the type of variable we are dealing with
@@ -59,10 +58,8 @@ get_influ2 <- function(fit,
     sdata <- standata(fit)
     X <- sdata$Xs
     Z <- sdata$Zs_1_1
-    s_coefs <- coefs %>%
-      filter(!str_detect(.data$variable, "bs_|sds_"))
-    coefs <- coefs %>%
-      filter(str_detect(.data$variable, "bs_"))
+    s_coefs <- coefs %>% filter(!str_detect(.data$variable, "bs_|sds_"))
+    coefs <- coefs %>% filter(str_detect(.data$variable, "bs_"))
   }
 
   # Do the matrix multiplication
@@ -82,7 +79,7 @@ get_influ2 <- function(fit,
   }
   
   influ_var <- melt(Xbeta) %>%
-    rename(iteration = .data$Var1, id = .data$Var2) %>%
+    rename(iteration = Var1, id = Var2) %>%
     left_join(data, by = "id")
   influ_rho <- influ_var %>%
     group_by(.data$iteration) %>%
@@ -153,7 +150,7 @@ get_influ <- function(fit, group = c("fishing_year", "area"), hurdle = FALSE) {
   }
   
   influ_var <- melt(Xbeta) %>%
-    rename(iteration = .data$Var1, id = .data$Var2) %>%
+    rename(iteration = Var1, id = .data$Var2) %>%
     left_join(data, by = "id")
   influ_rho <- influ_var %>%
     group_by(.data$iteration) %>%

@@ -3,9 +3,6 @@
 #' @param fit An object of class \code{brmsfit}.
 #' @param var The variable to obtain.
 #' @return A \code{data.frame}.
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom nlme fixef ranef
@@ -124,7 +121,6 @@ get_coefs_raw <- function(fit, var = "area") {
 #' @param hurdle If a hurdle model then use the hurdle.
 #' @param transform if the coefficients should be transformed using the link function.
 #' @return A \code{data.frame}.
-#' 
 #' @importFrom reshape2 melt
 #' @importFrom readr parse_number
 #' @importFrom nlme fixef ranef
@@ -132,15 +128,14 @@ get_coefs_raw <- function(fit, var = "area") {
 #' @import dplyr
 #' @export
 #' 
-get_coefs <- function(fit, var = "area", 
+get_coefs <- function(fit, 
+                      var = "area", 
                       normalise = TRUE, 
                       hurdle = FALSE, 
                       transform = FALSE) {
   
   if (!is.brmsfit(fit)) stop("fit is not an object of class brmsfit.")
-  
   type <- id_var_type(fit = fit, xfocus = var, hurdle = hurdle)
-  
   is_poly <- FALSE
   
   if (any(grepl("\\(1 \\|", var))) {
@@ -156,8 +151,7 @@ get_coefs <- function(fit, var = "area",
       mutate(variable = gsub(".*\\[|\\]", "", variable)) %>%
       mutate(variable = gsub(",Intercept", "", variable))
     if (!str_detect(var, ":")) {
-      ps <- ps %>%
-        filter(!str_detect(variable, ":"))
+      ps <- ps %>% filter(!str_detect(variable, ":"))
     }
   } else {
     # Population-level effects
@@ -182,11 +176,8 @@ get_coefs <- function(fit, var = "area",
       ps <- ps %>%
         filter(!str_detect(variable, ":"))
     }
-      # mutate(variable = paste0(var, gregexpr("[[:digit:]]+", variable)))
-      # mutate(variable = paste0(var, parse_number(as.character(variable))))
-    # unique(ps$variable)
-    # tail(ps)
   }
+  # unique(ps$variable)
   
   # Check to see if this is a polynomial
   if (any(grepl("poly", ps$variable))) {
@@ -203,8 +194,7 @@ get_coefs <- function(fit, var = "area",
         filter(grepl("hu", variable)) %>%
         mutate(variable = gsub("hu_", "", variable))
     } else {
-      ps <- ps %>%
-        filter(!grepl("hu", variable))
+      ps <- ps %>% filter(!grepl("hu", variable))
     }
   }
   
@@ -232,7 +222,12 @@ get_coefs <- function(fit, var = "area",
                       value = 0)
     coefs <- rbind(ps0, ps)
   } else {
-    coefs <- ps
+    data <- fit$data
+    data[,var] <- paste0(var, data[,var])
+    ps0 <- data.frame(iteration = 1:max(ps$iteration),
+                      variable = unique(data[,var])[!unique(data[,var]) %in% unique(ps$variable)],
+                      value = 0)
+    coefs <- rbind(ps0, ps)
   }
 
   # Arrange by vessel coefficient if vessel chosen

@@ -70,7 +70,8 @@ plot_bubble(df = lobsters_per_pot, group = c("year", "month")) +
 ```
 
 ```{r plot-bubble-2, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and month, also coloured by month."}
-plot_bubble(df = lobsters_per_pot, group = c("year", "month"), fill = "month") +
+plot_bubble(df = lobsters_per_pot, group = c("year", "month"), 
+            fill = "month") +
   labs(x = "Month", y = "Year") +
   theme(legend.position = "none")
 ```
@@ -89,6 +90,7 @@ fit1 <- brm(lobsters ~ year + month + poly(soak, 3),
             data = lobsters_per_pot, family = poisson, 
             chains = 2, iter = 1500, refresh = 0, seed = 42, 
             file = "fit1", file_refit = "never")
+
 fit2 <- brm(lobsters ~ year + (1 | month) + s(depth, k = 3), 
             data = lobsters_per_pot, family = negbinomial(), 
             control = list(adapt_delta = 0.99),
@@ -98,8 +100,8 @@ fit2 <- brm(lobsters ~ year + (1 | month) + s(depth, k = 3),
 
 ```{r add-criterion}
 criterion <- c("loo", "waic", "bayes_R2")
-fit1 <- add_criterion(fit1, criterion = criterion, file = "fit1")
-fit2 <- add_criterion(fit2, criterion = criterion, file = "fit2")
+fit1 <- add_criterion(x = fit1, criterion = criterion, file = "fit1")
+fit2 <- add_criterion(x = fit2, criterion = criterion, file = "fit2")
 ```
 
 Fit a model using glm and generate influence statistics using the original `influ` package
@@ -109,7 +111,7 @@ fit_glm <- glm(lobsters ~ year + month + poly(soak, 3),
                data = lobsters_per_pot, family = poisson)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original CDI plot from the influ package."}
+```{r influ1-setup, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original CDI plot from the influ package."}
 myInfl <- Influence$new(model = fit_glm)
 myInfl$init()
 myInfl$calc()
@@ -122,7 +124,7 @@ cdi_month <- plot_bayesian_cdi(fit = fit1, xfocus = "month", yfocus = "year",
 cdi_month
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original step-plot from the influ package."}
+```{r influ1-step, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original step-plot from the influ package."}
 myInfl$stepPlot()
 ```
 
@@ -138,7 +140,7 @@ plot_step(fits = fits)
 plot_index(fit = fit2)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
+```{r influ1-plot, echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
 myInfl$stanPlot()
 ```
 
@@ -158,18 +160,18 @@ i_month <- get_influ(fit = fit1, group = c("year", "month")) %>%
   group_by(year) %>%
   summarise(value = mean(delta)) %>%
   mutate(variable = "month")
-i_soak <- get_influ(fit = fit1, group = c("year", "soak")) %>%
-  group_by(year) %>%
-  summarise(value = mean(delta)) %>%
-  mutate(variable = "poly(soak, 3)")
-i2 <- rbind(i_month, i_soak)
-
-ggplot(data = i2, aes(x = year, y = exp(value))) +
-  geom_point(data = i1) +
-  geom_line(aes(colour = variable, group = variable)) +
-  facet_wrap(variable ~ ., ncol = 1) +
-  labs(x = "Year", y = "Influence") +
-  theme(legend.position = "none")
+# i_soak <- get_influ(fit = fit1, group = c("year", "soak")) %>%
+#   group_by(year) %>%
+#   summarise(value = mean(delta)) %>%
+#   mutate(variable = "poly(soak, 3)")
+# i2 <- bind_rows(i_month, i_soak)
+# 
+# ggplot(data = i2, aes(x = year, y = exp(value))) +
+#   geom_point(data = i1) +
+#   geom_line(aes(colour = variable, group = variable)) +
+#   facet_wrap(variable ~ ., ncol = 1) +
+#   labs(x = "Year", y = "Influence") +
+#   theme(legend.position = "none")
 ```
 
 # Functions for exploring models
@@ -229,7 +231,7 @@ plot_index(fit = fit1)
 The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
 
 ```{r get-yrep}
-yrep <- posterior_predict(fit1, ndraws = 100)
+yrep <- posterior_predict(object = fit1, ndraws = 100)
 ```
 
 ```{r plot-bars, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of the empirical distribution of the data (y) to the distributions of simulated/replicated data (yrep) from the posterior predictive distribution."}
@@ -278,7 +280,7 @@ names(pred) <- paste0("pred.", names(pred))
 resid <- residuals(fit) %>% data.frame()
 names(resid) <- paste0("resid.", names(resid))
 
-df <- cbind(resid, pred, lobsters_per_pot)
+df <- bind_cols(resid, pred, lobsters_per_pot)
 
 ggplot(data = df, aes(x = year, y = .data$resid.Estimate)) +
   geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
