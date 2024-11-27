@@ -41,8 +41,8 @@ plot_compare <- function(fits, labels = NULL, year = NULL,
     for (i in 1:length(fits)) {
       if (i != rescale_series) {
         fout <- df0[[i]]
-        df1 <- df0[[rescale_series]] %>% filter(.data$Year %in% fout$Year)
-        df2 <- df0[[i]] %>% filter(.data$Year %in% df1$Year)
+        df1 <- df0[[rescale_series]] %>% filter(Year %in% fout$Year)
+        df2 <- df0[[i]] %>% filter(Year %in% df1$Year)
         gm1 <- geo_mean(df1$Mean)
         gm2 <- geo_mean(df2$Mean)
         fout$Mean <- fout$Mean / gm2 * gm1
@@ -64,11 +64,11 @@ plot_compare <- function(fits, labels = NULL, year = NULL,
   p <- ggplot(data = df)
   
   if (show_probs) {
-    p <- p + geom_ribbon(data = df, aes(x = .data$Year, ymin = .data$Qlower, ymax = .data$Qupper, group = .data$Model, fill = .data$Model), alpha = 0.3, colour = NA)
+    p <- p + geom_ribbon(data = df, aes(x = Year, ymin = Qlower, ymax = Qupper, group = Model, fill = Model), alpha = 0.3, colour = NA)
   }
   
   p <- p + 
-    geom_line(data = df, aes(x = .data$Year, y = .data$Median, colour = .data$Model, group = .data$Model)) +
+    geom_line(data = df, aes(x = Year, y = Median, colour = Model, group = Model)) +
     labs(x = NULL, y = "Index", caption = cap) +
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
     theme_bw() +

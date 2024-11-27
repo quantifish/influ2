@@ -18,26 +18,26 @@ get_unstandarsied <- function(fit, year = NULL, rescale = 1) {
   
   if (fit$family$family %in% c("bernoulli", "negbinomial") | grepl("hurdle", fit$family$family)) {
     prop <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
-      mutate(y = ifelse(.data$y > 0, 1, 0)) %>%
-      group_by(.data$Year) %>%
-      summarise(p = sum(.data$y) / n())
+      mutate(y = ifelse(y > 0, 1, 0)) %>%
+      group_by(Year) %>%
+      summarise(p = sum(y) / n())
     unstd <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
-      filter(.data$y > 0) %>%
-      group_by(.data$Year) %>%
-      summarise(cpue = exp(mean(log(.data$y)))) %>%
+      filter(y > 0) %>%
+      group_by(Year) %>%
+      summarise(cpue = exp(mean(log(y)))) %>%
       left_join(prop, by = "Year") %>%
-      mutate(cpue = .data$cpue * .data$p)
+      mutate(cpue = cpue * p)
   } else {
     unstd <- data.frame(y = fit$data[,1], Year = fit$data[,year]) %>%
-      group_by(.data$Year) %>%
-      summarise(cpue = exp(mean(log(.data$y))))
+      group_by(Year) %>%
+      summarise(cpue = exp(mean(log(y))))
   }
   
   gm <- geo_mean(unstd$cpue)
   
   fout <- unstd %>%
-    mutate(Mean = .data$cpue, Median = .data$cpue) %>%
-    select(-.data$cpue)
+    mutate(Mean = cpue, Median = cpue) %>%
+    select(-cpue)
   
   # Rescale the series
   if (rescale == "raw") {
@@ -104,7 +104,7 @@ get_index <- function(fit, year = NULL, probs = c(0.025, 0.975), rescale = 1, do
   fout1 <- fitted(object = fit, newdata = newdata, probs = c(probs[1], 0.5, probs[2]), re_formula = NA) %>% 
     data.frame() %>%
     rename(Qlower = 3, Qupper = 5) %>% # this renames the 3rd and the 5th columns
-    mutate(CV = .data$Est.Error / .data$Estimate) %>% # CV = SD / mu
+    mutate(CV = Est.Error / Estimate) %>% # CV = SD / mu
     mutate(Year = yrs) %>%
     mutate(Model = as.character(fit$formula)[1], Distribution = as.character(fit$family)[1], Link = as.character(fit$family)[2])
   
@@ -118,7 +118,7 @@ get_index <- function(fit, year = NULL, probs = c(0.025, 0.975), rescale = 1, do
     # nothing to do
   } else if (rescale == "unstandardised") {
     unstd <- get_unstandarsied(fit = fit, year = year, rescale = "raw")
-    gm <- geo_mean(unstd$Estimate)
+    gm <- geo_mean(unstd$Mean)
     fout$Estimate <- fout$Estimate / geo_mean(fout$Estimate) * gm
     fout$Qlower <- fout$Qlower / geo_mean(fout$Q50) * gm
     fout$Qupper <- fout$Qupper / geo_mean(fout$Q50) * gm
@@ -132,28 +132,28 @@ get_index <- function(fit, year = NULL, probs = c(0.025, 0.975), rescale = 1, do
   fout$Est.Error <- fout$CV * fout$Estimate # SD = CV * mu
   
   if (do_plot) {
-    p1 <- ggplot(data = fout1, aes(x = .data$Year)) +
-      geom_errorbar(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
-      geom_point(aes(y = .data$Q50)) +
-      geom_errorbar(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.75) +
-      geom_point(aes(y = .data$Estimate), colour = "red", alpha = 0.75) +
+    p1 <- ggplot(data = fout1, aes(x = Year)) +
+      geom_errorbar(aes(y = Q50, ymin = Qlower, ymax = Qupper)) +
+      geom_point(aes(y = Q50)) +
+      geom_errorbar(aes(y = Estimate, ymin = Estimate - Est.Error, ymax = Estimate + Est.Error), colour = "red", alpha = 0.75) +
+      geom_point(aes(y = Estimate), colour = "red", alpha = 0.75) +
       theme_bw()
     
-    p2 <- ggplot(fout, aes(x = .data$Year)) +
-      geom_errorbar(aes(y = .data$Q50, ymin = .data$Qlower, ymax = .data$Qupper)) +
-      geom_point(aes(y = .data$Q50)) +
-      geom_errorbar(aes(y = .data$Estimate, ymin = .data$Estimate - .data$Est.Error, ymax = .data$Estimate + .data$Est.Error), colour = "red", alpha = 0.75) +
-      geom_point(aes(y = .data$Estimate), colour = "red", alpha = 0.75) +
+    p2 <- ggplot(fout, aes(x = Year)) +
+      geom_errorbar(aes(y = Q50, ymin = Qlower, ymax = Qupper)) +
+      geom_point(aes(y = Q50)) +
+      geom_errorbar(aes(y = Estimate, ymin = Estimate - Est.Error, ymax = Estimate + Est.Error), colour = "red", alpha = 0.75) +
+      geom_point(aes(y = Estimate), colour = "red", alpha = 0.75) +
       theme_bw()
     return(p1 + p2)
   } else {
     # Rename and reorder columns
     fout <- fout %>%
-      rename(Mean = .data$Estimate, SD = .data$Est.Error, Median = .data$Q50) %>%
-      mutate(Qlow = .data$Qlower, Qup = .data$Qupper) %>%
-      rename_with(~paste0("Q", probs[1] * 100), .data$Qlow) %>%
-      rename_with(~paste0("Q", probs[2] * 100), .data$Qup) %>%
-      relocate(.data$Year, .data$Mean, .data$SD, .data$CV)
+      rename(Mean = Estimate, SD = Est.Error, Median = Q50) %>%
+      mutate(Qlow = Qlower, Qup = Qupper) %>%
+      rename_with(~paste0("Q", probs[1] * 100), Qlow) %>%
+      rename_with(~paste0("Q", probs[2] * 100), Qup) %>%
+      relocate(Year, Mean, SD, CV)
     
     return(fout)
   }
