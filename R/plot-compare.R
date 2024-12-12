@@ -46,9 +46,9 @@ plot_compare <- function(fits, labels = NULL, year = NULL,
         gm1 <- geo_mean(df1$Mean)
         gm2 <- geo_mean(df2$Mean)
         fout$Mean <- fout$Mean / gm2 * gm1
-        fout$Qlower <- fout$Qlower / gm2  * gm1
-        fout$Qupper <- fout$Qupper / gm2  * gm1
-        fout$Median <- fout$Median / gm2  * gm1
+        fout$Qlower <- fout$Qlower / gm2 * gm1
+        fout$Qupper <- fout$Qupper / gm2 * gm1
+        fout$Median <- fout$Median / gm2 * gm1
         df0[[i]] <- fout
       }
     }
