@@ -23,6 +23,7 @@ Imports:
     tidyselect,
     stringr,
     stringi,
+    shiny,
     readr,
     gtable,
     nlme,
