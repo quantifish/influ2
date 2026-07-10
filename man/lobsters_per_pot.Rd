@@ -15,7 +15,7 @@ a \code{tibble} containing 5 fields including:
  }
 }
 \usage{
-lobsters_per_pot
+data(lobsters_per_pot)
 }
 \description{
 Simulated catch of lobsters per pot.
