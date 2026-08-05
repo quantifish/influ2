@@ -35,36 +35,50 @@ import(ggplot2)
 import(patchwork)
 import(proto)
 import(shiny)
-importFrom(brms,add_criterion)
-importFrom(brms,is.brmsfit)
-importFrom(brms,posterior_samples)
-importFrom(gtable,gtable_filter)
-importFrom(gtable,is.gtable)
-importFrom(lubridate,hour)
-importFrom(lubridate,minute)
-importFrom(lubridate,second)
-importFrom(lubridate,seconds_to_period)
-importFrom(nlme,fixef)
-importFrom(nlme,ranef)
+importFrom(brms,
+  add_criterion,
+  is.brmsfit,
+  posterior_samples
+)
+importFrom(gtable,
+  gtable_filter,
+  is.gtable
+)
+importFrom(lubridate,
+  hour,
+  minute,
+  second,
+  seconds_to_period
+)
+importFrom(nlme,
+  fixef,
+  ranef
+)
 importFrom(readr,parse_number)
 importFrom(reshape2,melt)
-importFrom(rstan,get_elapsed_time)
-importFrom(rstan,get_num_upars)
-importFrom(stats,as.formula)
-importFrom(stats,coefficients)
-importFrom(stats,fitted)
-importFrom(stats,median)
-importFrom(stats,model.matrix)
-importFrom(stats,poly)
-importFrom(stats,ppoints)
-importFrom(stats,qgamma)
-importFrom(stats,qnorm)
-importFrom(stats,qqplot)
-importFrom(stats,quantile)
-importFrom(stats,residuals)
-importFrom(stats,setNames)
+importFrom(rstan,
+  get_elapsed_time,
+  get_num_upars
+)
+importFrom(stats,
+  as.formula,
+  coefficients,
+  fitted,
+  median,
+  model.matrix,
+  poly,
+  ppoints,
+  qgamma,
+  qnorm,
+  qqplot,
+  quantile,
+  residuals,
+  setNames
+)
 importFrom(stringi,stri_trim_right)
-importFrom(stringr,str_detect)
-importFrom(stringr,str_split)
+importFrom(stringr,
+  str_detect,
+  str_split
+)
 importFrom(tidyr,pivot_longer)
 importFrom(tidyselect,all_of)
