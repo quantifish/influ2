@@ -7,12 +7,15 @@
 rescale_index(fit1, fit2, rescale_series = 1)
 }
 \arguments{
-\item{idx1}{An object of class \code{brmsfit}.}
+\item{fit1, fit2}{Data frames containing an index in a `Mean` column and a
+common time variable in a `Year` column. Interval columns named
+`Qlower`, `Qupper`, and `Median`, when present, are rescaled with the mean.}
 
-\item{idx2}{The variable to obtain.}
+\item{rescale_series}{Which input, `1` or `2`, supplies the reference
+geometric mean.}
 }
 \value{
-A \code{data.frame}.
+A list containing the two index data frames on a common scale.
 }
 \description{
 Rescale two indices to have the same geometric mean

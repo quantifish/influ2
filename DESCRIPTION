@@ -1,25 +1,31 @@
 Package: influ2
-Title: Influence plots
-Version: 1.0.0
+Title: Model-Neutral Influence Diagnostics for Fisheries CPUE Models
+Version: 1.1.0.9000
 Authors@R: 
     person(given = "Darcy",
            family = "Webber",
            role = c("aut", "cre"),
            email = "darcy.webber@quantifish.co.nz")
-Description: The infu2 package has been developed for use with brms. It works with population-level or group-level effects, linear effects, polynomials, and splines. It contains functions for extracting coefficients, calculating influence statistics for terms, generating CDI plots, step plots, and other diagnostic plots.
+Description: Calculates and visualises how changes in the distribution of
+    explanatory variables affect standardised catch-per-unit-effort indices.
+    A model-neutral S3 diagnostic provides consistent summaries and plots for
+    frequentist, Bayesian, mixed-effect, spatial, and spatiotemporal models.
+    Posterior and joint-simulation calculations are reduced directly to
+    compact diagnostic estimands to avoid retaining observation-by-draw
+    arrays.
 URL: https://github.com/quantifish/influ2, http://www.quantifish.co.nz/influ2/
 BugReports: https://github.com/quantifish/influ2/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
-    R (>= 3.5.0),
+    R (>= 4.1.0)
+Imports:
     brms,
     dplyr,
     ggplot2,
-    patchwork
-Imports:
+    patchwork,
+    posterior,
     reshape2,
-    proto,
     tidyselect,
     stringr,
     stringi,
@@ -31,7 +37,13 @@ Imports:
     tidyr,
     lubridate
 Suggests: 
+    glmmTMB,
     knitr,
+    mgcv,
+    proto,
+    sdmTMB,
+    testthat (>= 3.0.0),
+    tinyVAST,
     tidyverse,
     devtools,
     rmarkdown,
@@ -40,3 +52,4 @@ Suggests:
 LazyData: false
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0
+Config/testthat/edition: 3
