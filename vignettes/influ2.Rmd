@@ -153,9 +153,66 @@ graphic.
 
 ## Legacy Bentley agreement
 
-The original `proto` implementation is frozen under `tools/legacy` and is no
-longer loaded into the package namespace. Routine tests compare the new engine
-against a compact fixture generated from that implementation.
+The original `proto` implementation by Nokome Bentley is frozen under
+`inst/legacy` and is not loaded into the package namespace. This section runs
+that implementation explicitly, using the same fitted GLM and data as the new
+engine. The comparison therefore covers both the calculated values and the
+plots a user actually sees.
+
+```{r bentley-setup, include=FALSE}
+legacy_available <- requireNamespace("proto", quietly = TRUE)
+if (legacy_available) {
+  legacy_environment <- new.env(parent = globalenv())
+  legacy_environment$proto <- proto::proto
+  sys.source(
+    system.file("legacy", "influ-proto.R", package = "influ2"),
+    envir = legacy_environment
+  )
+  legacy_diagnostic <- legacy_environment$Influence$new(
+    model = fit,
+    data = dat,
+    response = "catch",
+    focus = "year"
+  )
+  legacy_diagnostic$calc()
+}
+```
+
+### Influence plots
+
+The left-hand figure is drawn by the original `proto` method. The right-hand
+figure is drawn from the new model-neutral `influ_diag`. Both show the area and
+vessel effects as ratios centred on one.
+
+```{r bentley-influence-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=6.5, fig.height=5.5, fig.cap='Influence plots from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley influence plot for area and vessel by year.', 'New influ2 influence plot for area and vessel by year.')}
+legacy_diagnostic$influPlot()
+
+plot(
+  diagnostic,
+  type = "influence",
+  term = c("area", "vessel"),
+  scale = "ratio"
+) +
+  ggplot2::facet_grid(term ~ scale, scales = "free_y") +
+  ggplot2::labs(title = "New influ2")
+```
+
+### CDI plots
+
+The same comparison can be made for the complete
+coefficient-distribution-influence display. These two plots use `area` as the
+model term and `year` as the focus.
+
+```{r bentley-cdi-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=8, fig.height=5.5, fig.cap='CDI plots from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley coefficient-distribution-influence plot for area.', 'New influ2 coefficient-distribution-influence plot for area.')}
+legacy_diagnostic$cdiPlot(term = "area")
+plot(diagnostic, type = "cdi", term = "area")
+```
+
+### Direct agreement
+
+Routine tests also compare the new engine against a compact result frozen from
+the legacy implementation. The table retains the exact differences, while the
+overlay below shows the legacy results as points and the new results as lines.
 
 ```{r bentley-parity}
 reference <- read.csv(system.file(
@@ -177,6 +234,30 @@ comparison$absolute_difference <- abs(
 )
 comparison
 stopifnot(max(comparison$absolute_difference) < 1e-8)
+```
+
+```{r bentley-parity-plot, fig.width=7, fig.height=5, fig.cap='Direct overlay of legacy Bentley influence values and new influ2 results.', fig.alt='Legacy influence points overlaid by new influ2 lines for area and vessel.'}
+ggplot2::ggplot(comparison, ggplot2::aes(x = level, group = term)) +
+  ggplot2::geom_hline(yintercept = 1, linetype = 3, colour = "grey55") +
+  ggplot2::geom_point(
+    ggplot2::aes(y = natural_influence, shape = "Legacy proto"),
+    size = 3
+  ) +
+  ggplot2::geom_line(
+    ggplot2::aes(y = exp(link_influence_new), colour = "New influ2"),
+    linewidth = 0.9
+  ) +
+  ggplot2::facet_wrap(~term, ncol = 1, scales = "free_y") +
+  ggplot2::scale_colour_manual(values = c("New influ2" = "#0072B2")) +
+  ggplot2::scale_shape_manual(values = c("Legacy proto" = 21)) +
+  ggplot2::labs(
+    x = "Year",
+    y = "Influence ratio",
+    colour = NULL,
+    shape = NULL
+  ) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(legend.position = "bottom")
 ```
 
 The fixture can be deliberately regenerated with

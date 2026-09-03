@@ -5,7 +5,7 @@ if (!requireNamespace("proto", quietly = TRUE)) {
   stop("Package 'proto' is required to regenerate the legacy fixture.")
 }
 
-source("tools/legacy/influ-proto.R", local = TRUE)
+source("inst/legacy/influ-proto.R", local = TRUE)
 
 data <- utils::read.csv(
   "inst/extdata/bentley-poisson-data.csv",
