@@ -7,6 +7,8 @@
 #'
 #' @return A data frame containing canonical family names, aliases, and the
 #'   default influence scale.
+#' @examples
+#' influ_families()
 #' @export
 influ_families <- function() {
   data.frame(

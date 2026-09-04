@@ -69,7 +69,9 @@ unconditional-mean contrasts.
 
 ```{r brms-hurdle, eval=has_brms}
 library(influ2)
-fit <- readRDS("m1.rds")
+fit <- readRDS(system.file(
+  "extdata", "brms-fixtures", "m1.rds", package = "influ2"
+))
 hurdle_diagnostic <- influ(fit, focus = "year", ndraws = 250)
 unique(hurdle_diagnostic$influence$component)
 summary(hurdle_diagnostic)

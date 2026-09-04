@@ -45,7 +45,9 @@ test_that("mgcv Tweedie models use ratio-scale influence", {
 test_that("brms posterior projections do not retain observation-level arrays", {
   skip_if_not_installed("brms")
   skip_if_not_installed("posterior")
-  fit <- readRDS(test_path("brm1.rds"))
+  fit <- readRDS(system.file(
+    "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
+  ))
 
   summary_only <- influ(fit, focus = "year")
   expect_s3_class(summary_only, "influ_diag_brms")
@@ -68,7 +70,9 @@ test_that("brms posterior projections do not retain observation-level arrays", {
 test_that("brms group-level terms retain joint uncertainty compactly", {
   skip_if_not_installed("brms")
   skip_if_not_installed("posterior")
-  fit <- readRDS(test_path("brm2.rds"))
+  fit <- readRDS(system.file(
+    "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
+  ))
 
   diagnostic <- influ(
     fit,
@@ -101,7 +105,9 @@ test_that("brms group-level terms retain joint uncertainty compactly", {
 test_that("brms smooth bases are projected without observation-by-draw arrays", {
   skip_if_not_installed("brms")
   skip_if_not_installed("posterior")
-  fit_path <- test_path("../../vignettes/fit2.rds")
+  fit_path <- system.file(
+    "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
+  )
   skip_if_not(file.exists(fit_path), "development BRMS smooth fixture unavailable")
   fit <- readRDS(fit_path)
 
@@ -131,7 +137,9 @@ test_that("brms smooth bases are projected without observation-by-draw arrays", 
 test_that("brms hurdle components are combined draw by draw", {
   skip_if_not_installed("brms")
   skip_if_not_installed("posterior")
-  fit_path <- test_path("../../vignettes/m1.rds")
+  fit_path <- system.file(
+    "extdata", "brms-fixtures", "m1.rds", package = "influ2"
+  )
   skip_if_not(file.exists(fit_path), "development BRMS hurdle fixture unavailable")
   fit <- readRDS(fit_path)
 
@@ -189,8 +197,14 @@ test_that("glmmTMB separates conditional, zero, and random components", {
     diagnostic$influence$component))
   expect_identical(
     diagnostic$uncertainty$method,
-    "analytic covariance; joint coefficient simulation; none"
+    "analytic covariance; joint coefficient simulation"
   )
+  random_rows <- subset(
+    diagnostic$influence,
+    component == "random_effects"
+  )
+  expect_true(all(is.finite(random_rows$std_error)))
+  expect_true(all(random_rows$method == "analytic covariance"))
 })
 
 test_that("glmmTMB recognises an intercept-only zero-inflation component", {
@@ -272,6 +286,10 @@ test_that("original data are recovered for transformed mixed-model terms", {
 
   expect_true(all(c("depth", "month") %in% names(recovered)))
   expect_true("random_effects" %in% diagnostic$influence$component)
+  expect_true(all(is.finite(subset(
+    diagnostic$influence,
+    component == "random_effects"
+  )$std_error)))
 })
 
 test_that("sdmTMB exposes fixed and spatiotemporal influence components", {

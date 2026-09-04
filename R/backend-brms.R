@@ -1,3 +1,19 @@
+.brms_available_variables <- function(model) {
+  if (!is.null(model$influ2_draws)) {
+    return(colnames(model$influ2_draws))
+  }
+  posterior::variables(model)
+}
+
+.brms_as_draws_matrix <- function(model, variables = NULL) {
+  if (!is.null(model$influ2_draws)) {
+    draws <- posterior::as_draws_matrix(model$influ2_draws)
+    if (!is.null(variables)) draws <- draws[, variables, drop = FALSE]
+    return(draws)
+  }
+  posterior::as_draws_matrix(model, variable = variables)
+}
+
 .brms_reference_standata <- function(model, newdata) {
   newdata <- as.data.frame(newdata)
   responses <- model$formula$resp %||% character()
@@ -54,7 +70,7 @@
 .brms_population_draws <- function(model, X, dpar = NULL, ndraws = NULL,
                                    keep_draws = TRUE) {
   variables <- .brms_parameter_names(X, dpar)
-  available <- posterior::variables(model)
+  available <- .brms_available_variables(model)
   missing <- setdiff(variables, available)
   if (length(missing)) {
     stop(
@@ -64,7 +80,7 @@
     )
   }
 
-  draws <- posterior::as_draws_matrix(model, variable = variables)
+  draws <- .brms_as_draws_matrix(model, variables)
   if (!is.null(ndraws) && nrow(draws) > ndraws) {
     keep <- unique(round(seq(1, nrow(draws), length.out = ndraws)))
     draws <- draws[keep, , drop = FALSE]
@@ -76,7 +92,7 @@
 }
 
 .brms_draw_matrix <- function(model, variables, ndraws = NULL) {
-  available <- posterior::variables(model)
+  available <- .brms_available_variables(model)
   missing <- setdiff(variables, available)
   if (length(missing)) {
     stop(
@@ -85,7 +101,7 @@
       call. = FALSE
     )
   }
-  draws <- posterior::as_draws_matrix(model, variable = variables)
+  draws <- .brms_as_draws_matrix(model, variables)
   if (!is.null(ndraws) && nrow(draws) > ndraws) {
     keep <- unique(round(seq(1, nrow(draws), length.out = ndraws)))
     draws <- draws[keep, , drop = FALSE]
@@ -163,7 +179,7 @@
     parameters <- paste0(
       "r_", group, "[", group_levels, ",", coefficient, "]"
     )
-    if (!all(parameters %in% posterior::variables(model))) {
+    if (!all(parameters %in% .brms_available_variables(model))) {
       stop(
         "Could not align posterior group-level parameters for '", group, "'.",
         call. = FALSE
@@ -312,7 +328,7 @@
   } else {
     .resolve_influ_weights(reference_data, reference_weights)
   }
-  available <- posterior::variables(model)
+  available <- .brms_available_variables(model)
   out <- vector("list", length(smooth_columns))
 
   for (i in seq_along(smooth_columns)) {

@@ -94,7 +94,7 @@ plot(
   term = c("month", "poly(depth, 3)", "poly(soak, 3)"),
   scale = "ratio"
 ) +
-  facet_grid(term ~ scale, scales = "free_y") +
+  facet_grid(term ~ scale) +
   labs(title = "New influ2")
 ```
 

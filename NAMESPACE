@@ -12,87 +12,21 @@ S3method(plot,influ_diag)
 S3method(print,influ_diag)
 S3method(print,summary.influ_diag)
 S3method(summary,influ_diag)
-export(geo_mean)
 export(get_bayes_R2)
-export(get_coefs)
-export(get_coefs_raw)
-export(get_first_term)
-export(get_index)
-export(get_influ)
-export(get_influ2)
-export(get_marginal)
-export(get_unstandarsied)
-export(id_var_type)
 export(influ)
-export(influ_app)
 export(influ_composition)
 export(influ_draws)
 export(influ_effects)
 export(influ_families)
 export(influ_indices)
 export(influ_metrics)
-export(plot_bayesian_cdi)
-export(plot_bayesian_cdi2)
 export(plot_bubble)
 export(plot_compare)
 export(plot_data_extent)
-export(plot_hurdle)
 export(plot_implied_residuals)
-export(plot_index)
-export(plot_influ)
 export(plot_predicted_residuals)
 export(plot_qq)
 export(plot_step)
-export(rescale_index)
 export(table_criterion)
-import(brms)
-import(dplyr)
-import(ggplot2)
-import(patchwork)
-import(shiny)
-importFrom(brms,
-  add_criterion,
-  is.brmsfit,
-  posterior_samples
-)
-importFrom(gtable,
-  gtable_filter,
-  is.gtable
-)
-importFrom(lubridate,
-  hour,
-  minute,
-  second,
-  seconds_to_period
-)
-importFrom(nlme,
-  fixef,
-  ranef
-)
-importFrom(readr,parse_number)
-importFrom(reshape2,melt)
-importFrom(rstan,
-  get_elapsed_time,
-  get_num_upars
-)
-importFrom(stats,
-  as.formula,
-  fitted,
-  median,
-  model.matrix,
-  poly,
-  ppoints,
-  qgamma,
-  qnorm,
-  qqplot,
-  quantile,
-  residuals,
-  setNames
-)
-importFrom(stringi,stri_trim_right)
-importFrom(stringr,
-  str_detect,
-  str_split
-)
-importFrom(tidyr,pivot_longer)
-importFrom(tidyselect,all_of)
+importFrom(ggplot2,autoplot)
+importFrom(utils,globalVariables)

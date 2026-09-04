@@ -1,4 +1,4 @@
-url: http://www.quantifish.co.nz/influ2/
+url: https://www.quantifish.co.nz/influ2/
 
 template:
   bootstrap: 5
@@ -36,19 +36,26 @@ reference:
   - influ_indices
   - influ_composition
   - influ_draws
+  - influ_metrics
   - influ_families
   - plot.influ_diag
+  - plot_bubble
 
-- title: Earlier influ2 helpers
-  desc: Functions retained while workflows migrate to the model-neutral API.
+- title: Additional diagnostics and comparisons
+  desc: Compare indices, inspect data coverage, and diagnose fitted models.
   contents:
-  - starts_with("get_")
-  - starts_with("plot_")
-  - starts_with("table_")
-  - geo_mean
-  - id_var_type
-  - influ_app
-  - rescale_index
+  - plot_compare
+  - plot_step
+  - plot_data_extent
+  - plot_implied_residuals
+  - plot_predicted_residuals
+  - plot_qq
+
+- title: Bayesian model comparison
+  desc: Optional summaries for fitted BRMS models.
+  contents:
+  - get_bayes_R2
+  - table_criterion
 
 - title: Data
   desc: Simulated data supplied with the package.

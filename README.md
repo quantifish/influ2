@@ -1,5 +1,8 @@
 # influ2
 
+[![R-CMD-check](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml)
+
 `influ2` calculates and visualises how explanatory variables, random effects,
 and spatial fields influence standardised fisheries CPUE indices.
 
@@ -51,5 +54,6 @@ zero-inflated components are kept explicit.
 pak::pak("quantifish/influ2")
 ```
 
-See `vignette("influ2")` for the framework, memory strategy, references, and
+See `vignette("influ2")` for the framework, memory strategy, and model
+examples. The separate `vignette("bentley-validation")` documents and plots
 the frozen agreement check against the original Bentley implementation.

@@ -72,6 +72,9 @@
 
 .weighted_col_mean <- function(x, w) {
   if (!nrow(x)) return(rep(NA_real_, ncol(x)))
+  if (inherits(x, "Matrix")) {
+    return(as.numeric(Matrix::colSums(x * w) / sum(w)))
+  }
   colSums(x * w) / sum(w)
 }
 
@@ -107,7 +110,9 @@
     stop("`reference_data` and its model matrix must be supplied together.", call. = FALSE)
   }
   reference_data <- as.data.frame(reference_data)
-  reference_X <- as.matrix(reference_X)
+  if (!is.matrix(reference_X) && !inherits(reference_X, "Matrix")) {
+    reference_X <- as.matrix(reference_X)
+  }
   if (nrow(reference_X) != nrow(reference_data) || ncol(reference_X) != ncol(X)) {
     stop("The reference model matrix does not conform to `reference_data` or the fitted model matrix.", call. = FALSE)
   }
@@ -506,7 +511,7 @@
   weights <- .resolve_influ_weights(data, weights)
   focus_info <- .focus_info(data, focus)
 
-  X <- as.matrix(X)
+  if (!is.matrix(X) && !inherits(X, "Matrix")) X <- as.matrix(X)
   beta <- as.numeric(beta)
   if (nrow(X) != nrow(data) || ncol(X) != length(beta)) {
     stop("The model matrix, coefficient vector, and model data do not conform.", call. = FALSE)

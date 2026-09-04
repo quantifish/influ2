@@ -185,61 +185,76 @@
   )
 }
 
+.glmmTMB_reference_random_matrix <- function(model, reference_data) {
+  structure <- stats::predict(model, newdata = reference_data, debug = TRUE)
+  rows <- structure$data.tmb$whichPredict
+  if (is.null(rows) || !length(rows) || is.null(structure$condList$Z)) {
+    stop("Could not construct the glmmTMB random-effect reference matrix.", call. = FALSE)
+  }
+  structure$condList$Z[rows, , drop = FALSE]
+}
+
+.glmmTMB_random_covariance <- function(model, n_random) {
+  latent <- stats::predict(model, type = "latent", cov.fit = TRUE)
+  if (length(latent$fit) < n_random ||
+      any(dim(latent$cov.fit) < c(n_random, n_random))) {
+    stop("glmmTMB returned an incomplete latent random-effect covariance.", call. = FALSE)
+  }
+  latent$cov.fit[seq_len(n_random), seq_len(n_random), drop = FALSE]
+}
+
 .glmmTMB_random_diag <- function(model, data, focus, family_spec, weights,
+                                 uncertainty, retain, probs, ndraws, seed,
                                  reference_data = NULL,
                                  reference_weights = NULL) {
-  conditional <- tryCatch(
-    as.numeric(stats::predict(model, newdata = data, type = "link")),
-    error = function(e) NULL
-  )
-  fixed <- tryCatch(
-    as.numeric(stats::predict(model, newdata = data, type = "link", re.form = NA)),
-    error = function(e) NULL
-  )
-  if (is.null(conditional) || is.null(fixed)) return(NULL)
-  contribution <- conditional - fixed
-  if (!any(abs(contribution) > sqrt(.Machine$double.eps))) return(NULL)
+  Z <- glmmTMB::getME(model, "Z")
+  b <- as.numeric(glmmTMB::getME(model, "b"))
+  if (!length(b) || !ncol(Z)) return(NULL)
+  if (ncol(Z) != length(b)) {
+    stop("The glmmTMB random-effect design and mode vector do not conform.", call. = FALSE)
+  }
+  colnames(Z) <- paste0("random_", seq_along(b))
 
-  reference_contribution <- NULL
-  if (!is.null(reference_data)) {
-    reference_conditional <- tryCatch(
-      as.numeric(stats::predict(model, newdata = reference_data, type = "link")),
-      error = function(e) NULL
-    )
-    reference_fixed <- tryCatch(
-      as.numeric(stats::predict(
-        model, newdata = reference_data, type = "link", re.form = NA
-      )),
-      error = function(e) NULL
-    )
-    if (is.null(reference_conditional) || is.null(reference_fixed)) return(NULL)
-    reference_contribution <- reference_conditional - reference_fixed
+  reference_Z <- if (is.null(reference_data)) NULL else {
+    out <- .glmmTMB_reference_random_matrix(model, reference_data)
+    if (ncol(out) != length(b)) {
+      stop("The glmmTMB random-effect reference matrix does not conform.", call. = FALSE)
+    }
+    colnames(out) <- colnames(Z)
+    out
   }
 
-  random_spec <- family_spec
+  V <- if (uncertainty == "none") NULL else {
+    .glmmTMB_random_covariance(model, length(b))
+  }
+  random_uncertainty <- if (uncertainty == "auto") "analytic" else uncertainty
+
   .influ_linear_engine(
     backend = "glmmTMB",
     model = model,
     data = data,
     response = NULL,
     focus = focus,
-    family_spec = random_spec,
-    X = matrix(contribution, ncol = 1L, dimnames = list(NULL, "random_effects")),
-    beta = 1,
-    vcov = NULL,
-    term_columns = list(random_effects = 1L),
-    uncertainty = "none",
-    retain = "summary",
-    probs = c(0.025, 0.975),
+    family_spec = family_spec,
+    X = Z,
+    beta = b,
+    vcov = V,
+    term_columns = list(random_effects = seq_along(b)),
+    uncertainty = random_uncertainty,
+    retain = retain,
+    probs = probs,
     weights = weights,
     reference_data = reference_data,
-    reference_X = if (is.null(reference_contribution)) NULL else {
-      matrix(reference_contribution, ncol = 1L, dimnames = list(NULL, "random_effects"))
-    },
+    reference_X = reference_Z,
     reference_weights = reference_weights,
     component = "random_effects",
+    ndraws = ndraws,
+    seed = seed,
     keep_model = FALSE,
-    notes = "Random-effect influence currently uses conditional modes; uncertainty is not yet propagated."
+    notes = paste(
+      "Random-effect influence uses conditional modes and their joint",
+      "conditional latent covariance from glmmTMB."
+    )
   )
 }
 
@@ -247,9 +262,8 @@
 #'
 #' The conditional model is handled with joint fixed-effect covariance.
 #' Zero-inflation or hurdle occurrence terms are returned as a separate
-#' component. Random-effect modes are included as a compact aggregate term;
-#' propagation of their conditional uncertainty is planned for the spatial
-#' engine.
+#' component. Random-effect modes are included as a compact aggregate term,
+#' with uncertainty propagated from their joint conditional latent covariance.
 #'
 #' @inheritParams influ.glm
 #' @param model A fitted object from [glmmTMB::glmmTMB()].
@@ -303,7 +317,8 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
   }
 
   components$random <- .glmmTMB_random_diag(
-    model, data, focus, overall_spec, weights,
+    model, data, focus, overall_spec, weights, uncertainty, component_retain,
+    probs, ndraws, seed,
     reference_data, reference_weights
   )
 
@@ -316,7 +331,7 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     keep_model = keep_model,
     notes = c(
       "Hurdle and zero-inflation fixed components include joint unconditional-mean influence.",
-      "Random-effect influence uses conditional modes without propagated uncertainty."
+      "Random-effect influence includes joint conditional latent uncertainty."
     )
   )
 

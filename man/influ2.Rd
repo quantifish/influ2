@@ -2,30 +2,22 @@
 % Please edit documentation in R/influ2.R
 \name{influ2}
 \alias{influ2}
-\title{Influence plots}
+\title{Model-neutral influence diagnostics}
 \description{
 \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
 
-Standardisation of catch per unit effort using generalised linear models (GLMs) is a common procedure that attempts to remove the
-confounding effects of variables other than abundance. The influ2 package can be used to generate plots and metrics to assist 
-understanding the standardisation effects of explanatory variables included in GLMs.
+Standardising catch per unit effort attempts to distinguish changes in
+abundance from changes in fishing practice and sampling composition.
+`influ2` calculates how fitted explanatory terms, random effects, and
+spatial fields move a standardised index through time. All supported model
+backends return the same compact [influ_diag] object and use the same plots.
 
-The influ2 package provides two categories of important functions:
-\code{get} and \code{plot}.
+Start with [influ()], then inspect the result with [summary.influ_diag()] or
+[plot.influ_diag()].
 }
-\section{Get functions}{
-
-The get functions obtain information from \code{brmsfit} objects and do some processing of that data before returning it as 
-a \code{data.frame}.
-}
-
-\section{Plot functions}{
-
-The plot functions include a get function and an appropriate \code{ggplot2} geom to plot the output.
-}
-
 \references{
-Bentley, N., Kendrick, T. H., Starr, P. J., and Breen, P. A. (2011). Influence plots and metrics: tools for better 
-understanding fisheries catch-per-unit-effort standardizations. \emph{ICES Journal of Marine Science}. 
-\code{doi:10.1093/icesjms/fsr174}
+Bentley, N., Kendrick, T. H., Starr, P. J., and Breen, P. A. (2012).
+Influence plots and metrics: tools for better understanding fisheries
+catch-per-unit-effort standardizations. \emph{ICES Journal of Marine
+Science}, 69(1), 84--88. \doi{10.1093/icesjms/fsr174}.
 }

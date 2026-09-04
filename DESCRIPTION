@@ -1,58 +1,57 @@
 Package: influ2
 Title: Model-Neutral Influence Diagnostics for Fisheries CPUE Models
-Version: 1.1.0.9000
-Authors@R: 
-    person(given = "Darcy",
-           family = "Webber",
-           role = c("aut", "cre"),
-           email = "darcy.webber@quantifish.co.nz")
+Version: 1.1.0
+Authors@R: c(
+    person(given = "Darcy", family = "Webber",
+           role = c("aut", "cre", "cph"),
+           email = "darcy.webber@quantifish.co.nz"),
+    person(given = "Nokome", family = "Bentley",
+           role = c("ctb", "cph"),
+           comment = "Original influence methodology and legacy validation implementation"),
+    person(given = "Trophia Ltd", role = "cph",
+           comment = "Legacy validation implementation")
+    )
 Description: Calculates and visualises how changes in the distribution of
     explanatory variables affect standardised catch-per-unit-effort indices.
     A model-neutral S3 diagnostic provides consistent summaries and plots for
     frequentist, Bayesian, mixed-effect, spatial, and spatiotemporal models.
     Posterior and joint-simulation calculations are reduced directly to
     compact diagnostic estimands to avoid retaining observation-by-draw
-    arrays.
-URL: https://github.com/quantifish/influ2, http://www.quantifish.co.nz/influ2/
+    arrays. The influence definitions follow Bentley et al. (2012)
+    <doi:10.1093/icesjms/fsr174>.
+URL: https://github.com/quantifish/influ2,
+    https://www.quantifish.co.nz/influ2/
 BugReports: https://github.com/quantifish/influ2/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
+Language: en-GB
 Depends:
     R (>= 4.1.0)
 Imports:
-    brms,
-    dplyr,
     ggplot2,
-    patchwork,
-    posterior,
-    reshape2,
-    tidyselect,
-    stringr,
-    stringi,
-    shiny,
-    readr,
     gtable,
-    nlme,
-    rstan,
-    tidyr,
-    lubridate,
-    Matrix,
-    TMB
-Suggests: 
+    patchwork,
+    stats,
+    utils
+Suggests:
+    brms,
     fmesher,
     glmmTMB,
     knitr,
+    Matrix,
     mgcv,
+    posterior,
     proto,
+    rmarkdown,
     sdmTMB,
     testthat (>= 3.0.0),
     tinyVAST,
-    tidyverse,
-    devtools,
-    rmarkdown,
-    viridis,
-    bayesplot
+    tidyr,
+    TMB,
+    vdiffr
+Additional_repositories: https://vast-lib.r-universe.dev
 LazyData: false
 VignetteBuilder: knitr
+Config/Needs/website: pkgdown
 Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3

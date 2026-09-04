@@ -60,7 +60,6 @@ An [influ_diag] object.
 \description{
 The conditional model is handled with joint fixed-effect covariance.
 Zero-inflation or hurdle occurrence terms are returned as a separate
-component. Random-effect modes are included as a compact aggregate term;
-propagation of their conditional uncertainty is planned for the spatial
-engine.
+component. Random-effect modes are included as a compact aggregate term,
+with uncertainty propagated from their joint conditional latent covariance.
 }

@@ -19,3 +19,14 @@ An object inheriting from `influ_diag`.
 dispatches on the fitted model class and returns the same compact
 [influ_diag] structure for every backend.
 }
+\examples{
+data(lobsters_per_pot)
+model <- glm(
+  lobsters ~ year + month + poly(depth, 2) + poly(soak, 2),
+  family = poisson(link = "log"),
+  data = lobsters_per_pot
+)
+diagnostic <- influ(model, focus = "year")
+diagnostic
+head(influ_effects(diagnostic))
+}

@@ -249,8 +249,8 @@ plot(glmmTMB_diagnostic, type = "components")
 ```
 
 Fixed effects use the joint maximum-likelihood covariance. The month random
-effect uses its fitted conditional modes and is labelled separately, so its
-current uncertainty treatment cannot be mistaken for fixed-effect uncertainty.
+effect uses its fitted conditional modes, with uncertainty propagated from
+their joint conditional latent covariance and labelled separately.
 For hurdle and zero-inflated fits, `influ()` also calculates population-level
 unconditional-mean influence using the joint covariance of both components.
 
@@ -278,7 +278,9 @@ The vignette uses the fitted model shipped with its source, rather than running
 MCMC whenever the documentation is built.
 
 ```{r lobster-brms, eval=has_brms}
-lobster_brms <- readRDS("fit2.rds")
+lobster_brms <- readRDS(system.file(
+  "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
+))
 brms_diagnostic <- influ(
   lobster_brms,
   focus = "year",

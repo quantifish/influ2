@@ -1,142 +1,102 @@
-#' Data extent plot
-#' 
-#' Generates a bubble plot for a data set, generally used for plotting database tables.
-#' 
-#' @param data A \code{data.frame} containing at least two columns.
-#' @param xvar The name of the temporal column (e.g., year).
-#' @param yvar The names of the columns in the \code{data.frame} to plot.
-#' @return a ggplot object
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
-#' @import ggplot2
-#' @import dplyr
-#' @importFrom tidyr pivot_longer
+#' Bubble plot of sampling composition
+#'
+#' Summarises the number or proportion of records in each combination of two
+#' grouping variables and displays the result as a bubble plot.
+#'
+#' @param df A data frame.
+#' @param group Character vector naming the vertical and horizontal grouping
+#'   variables, in that order.
+#' @param sort_order Optional ordering for the horizontal grouping variable.
+#' @param sum_by One of `"raw"`, `"all"`, `"row"`, or `"column"`.
+#' @param fill A fixed colour, or the name of a column in `df` used to colour
+#'   bubbles.
+#' @param alpha Bubble transparency.
+#' @param xlab,ylab,zlab Axis and size-legend labels.
+#' @param ... Reserved for future plotting options.
+#'
+#' @return A [ggplot2::ggplot()] object.
+#' @examples
+#' data(lobsters_per_pot)
+#' plot_bubble(
+#'   lobsters_per_pot,
+#'   group = c("year", "month"),
+#'   fill = "purple4"
+#' )
 #' @export
-#' 
-plot_data_extent <- function(data, xvar, yvar) {
-  
-  df <- data %>%
-    select(xvar, all_of(yvar)) %>%
-    mutate(across(yvar, ~ ifelse(is.na(.x), 0, 1))) %>%
-    group_by_at(all_of(xvar)) %>%
-    summarise(across(yvar, ~ ifelse(sum(.x) == 0, 0, sum(.x) / n()))) %>%
-    mutate(across(yvar, ~ ifelse(.x == 0, NA, .x))) %>%
-    pivot_longer(cols = yvar)
-  
-  df$name <- factor(df$name, levels = rev(yvar))
-  
-  df1 <- df %>%
-    mutate(value = 1)
-  
-  p <- ggplot(data = df) +
-    geom_point(data = df1, aes(x = .data$name, y = !!sym(xvar), size = .data$value), colour = "red") +
-    geom_point(aes(x = .data$name, y = !!sym(xvar), size = .data$value)) +
-    scale_size(limits = c(1e-6, 1)) +
-    coord_flip() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(size = "Proportion")
-  
-  return(p)
-}
-
-
-#' Bubble plot
-#' 
-#' Generates a bubble plot for a data set.
-#' 
-#' @param df A \code{data.frame} containing at least two columns.
-#' @param group The names of the columns in the \code{data.frame} to plot.
-#' @param sort_order A character vector containing the order of varables.
-#' @param sum_by Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.
-#' @param fill the colour to use in the plot, can either be a colour or a factor to colour by.
-#' @param alpha the alpha level of the bubbles.
-#' @param xlab the x axis label.
-#' @param ylab the y axis label.
-#' @param zlab the z axis label.
-#' @param ... Further arguments passed to nothing.
-#' @return a ggplot object
-#' 
-#' @author Darcy Webber \email{darcy@quantifish.co.nz}
-#' 
-#' @import ggplot2
-#' @import dplyr
-#' @export
-#' 
-plot_bubble <- function(df, 
-                        group = c("fishing_year", "vessel"), 
-                        sort_order = NULL,
-                        sum_by = "raw", 
-                        fill = "purple", alpha = 0.5, 
-                        ylab = NA, xlab = NA, zlab = "N", ...) {
-  
-  if (!is.data.frame(df)) stop("df is not an object of data.frame.")
-
-  df <- df %>%
-    mutate_at(vars(matches(group[2])), factor)
-
-  if (fill %in% names(df)) {
-    group <- c(group, fill)
+plot_bubble <- function(df, group = c("fishing_year", "vessel"),
+                        sort_order = NULL, sum_by = "raw", fill = "purple",
+                        alpha = 0.5, ylab = NULL, xlab = NULL, zlab = "N", ...) {
+  if (!is.data.frame(df)) {
+    stop("`df` must be a data frame.", call. = FALSE)
   }
-  
-  if (sum_by %in% c("row", "rows", "y")) {
-    df0 <- df %>%
-      group_by_at(all_of(group)) %>%
-      summarise(n = n())
-    df1 <- df0 %>%
-      group_by_at(all_of(group[1])) %>%
-      summarise(nsum = sum(.data$n)) %>%
-      right_join(df0, by = group[1]) %>%
-      mutate(size = .data$n / .data$nsum) %>%
-      mutate(size = ifelse(.data$size == 0, NA, .data$size))
-  } else if (sum_by %in% c("col", "cols", "column", "columns", "x")) {
-    df0 <- df %>%
-      group_by(.dots = group) %>%
-      summarise(n = n())
-    df1 <- df0 %>%
-      group_by_at(all_of(group[2])) %>%
-      summarise(nsum = sum(.data$n)) %>%
-      right_join(df0, by = group[2]) %>%
-      mutate(size = .data$n / .data$nsum) %>%
-      mutate(size = ifelse(.data$size == 0, NA, .data$size)) %>%
-      ungroup()
-  } else if (sum_by %in% c("raw", "all")) {
-    df1 <- df %>%
-      group_by_at(all_of(group)) %>%
-      summarise(size = n()) %>%
-      mutate(size = ifelse(.data$size == 0, NA, .data$size)) %>%
-      ungroup()
+  if (length(group) != 2L || !all(group %in% names(df))) {
+    stop("`group` must name exactly two columns in `df`.", call. = FALSE)
   }
+
+  aliases <- c(rows = "row", y = "row", col = "column", cols = "column",
+               columns = "column", x = "column")
+  if (sum_by %in% names(aliases)) sum_by <- unname(aliases[sum_by])
+  sum_by <- match.arg(sum_by, c("raw", "all", "row", "column"))
+
+  colour_by <- length(fill) == 1L && fill %in% names(df)
+  grouping <- if (colour_by) unique(c(group, fill)) else group
+  values <- df[grouping]
+  values[[group[2]]] <- as.factor(values[[group[2]]])
+  counts <- stats::aggregate(
+    rep.int(1, nrow(values)),
+    by = values,
+    FUN = sum
+  )
+  names(counts)[ncol(counts)] <- "size"
 
   if (sum_by == "all") {
-    df1$size <- df1$size / sum(df1$size)
+    counts$size <- counts$size / sum(counts$size)
+  } else if (sum_by %in% c("row", "column")) {
+    margin <- group[if (sum_by == "row") 1L else 2L]
+    totals <- stats::ave(counts$size, counts[[margin]], FUN = sum)
+    counts$size <- counts$size / totals
   }
-  
-  df1 <- df1 %>% 
-    mutate(variable = data.frame(df1)[,group[2]])
 
   if (!is.null(sort_order)) {
-    df1$variable <- factor(df1$variable, levels = sort_order)
+    counts[[group[2]]] <- factor(counts[[group[2]]], levels = sort_order)
   }
-  
-  if (fill %in% names(df)) {
-    p <- ggplot(data = df1, aes_string(x = group[2], y = group[1], fill = fill, colour = fill)) +
-      geom_point(aes(size = .data$size), alpha = alpha, shape = 16) +
-      geom_point(aes(size = .data$size), shape = 1)
-  } else {
-    p <- ggplot(data = df1, aes_string(x = group[2], y = group[1])) +
-      geom_point(aes(size = .data$size), alpha = alpha, shape = 16, colour = fill) +
-      geom_point(aes(size = .data$size), shape = 1, colour = fill)
-  }
-  
-  if (is.na(xlab)) xlab <- group[2]
-  if (is.na(ylab)) ylab <- group[1]
-  
-  p <- p + 
-    labs(x = xlab, y = ylab, size = zlab) +
-    scale_size(range = c(0, 10)) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-  return(p)
+  if (colour_by) {
+    mapping <- ggplot2::aes(
+      x = .data[[group[2]]],
+      y = .data[[group[1]]],
+      size = .data$size,
+      colour = .data[[fill]],
+      fill = .data[[fill]]
+    )
+  } else {
+    mapping <- ggplot2::aes(
+      x = .data[[group[2]]],
+      y = .data[[group[1]]],
+      size = .data$size
+    )
+  }
+
+  plot <- ggplot2::ggplot(counts, mapping)
+  if (colour_by) {
+    plot <- plot +
+      ggplot2::geom_point(alpha = alpha, shape = 16) +
+      ggplot2::geom_point(shape = 1)
+  } else {
+    plot <- plot +
+      ggplot2::geom_point(alpha = alpha, shape = 16, colour = fill) +
+      ggplot2::geom_point(shape = 1, colour = fill)
+  }
+
+  plot +
+    ggplot2::labs(
+      x = xlab %||% group[2],
+      y = ylab %||% group[1],
+      size = zlab
+    ) +
+    ggplot2::scale_size(range = c(0, 10)) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
+    )
 }

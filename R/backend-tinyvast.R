@@ -313,7 +313,7 @@
     .resolve_influ_weights(reference_data, reference_weights)
   }
   terms <- c("spatial_field", "spatiotemporal_field")
-  prediction_data <- utils::getFromNamespace("add_predictions", "tinyVAST")(
+  prediction_data <- tinyVAST::add_predictions(
     model, model$data, remove_origdata = FALSE
   )
   prediction_obj <- TMB::MakeADFun(
@@ -327,7 +327,7 @@
   )
   reference_prediction_obj <- NULL
   if (!is.null(reference_data)) {
-    reference_prediction_data <- utils::getFromNamespace("add_predictions", "tinyVAST")(
+    reference_prediction_data <- tinyVAST::add_predictions(
       model, reference_data, remove_origdata = FALSE
     )
     reference_prediction_obj <- TMB::MakeADFun(

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-bubble.R
 \name{plot_bubble}
 \alias{plot_bubble}
-\title{Bubble plot}
+\title{Bubble plot of sampling composition}
 \usage{
 plot_bubble(
   df,
@@ -11,39 +11,43 @@ plot_bubble(
   sum_by = "raw",
   fill = "purple",
   alpha = 0.5,
-  ylab = NA,
-  xlab = NA,
+  ylab = NULL,
+  xlab = NULL,
   zlab = "N",
   ...
 )
 }
 \arguments{
-\item{df}{A \code{data.frame} containing at least two columns.}
+\item{df}{A data frame.}
 
-\item{group}{The names of the columns in the \code{data.frame} to plot.}
+\item{group}{Character vector naming the vertical and horizontal grouping
+variables, in that order.}
 
-\item{sort_order}{A character vector containing the order of varables.}
+\item{sort_order}{Optional ordering for the horizontal grouping variable.}
 
-\item{sum_by}{Sum to 1 by row, sum to 1 by column, sum to 1 across all data, or raw. The size of the bubbles will be the same for all and raw, but the legend will change from numbers of records to a proportion.}
+\item{sum_by}{One of `"raw"`, `"all"`, `"row"`, or `"column"`.}
 
-\item{fill}{the colour to use in the plot, can either be a colour or a factor to colour by.}
+\item{fill}{A fixed colour, or the name of a column in `df` used to colour
+bubbles.}
 
-\item{alpha}{the alpha level of the bubbles.}
+\item{alpha}{Bubble transparency.}
 
-\item{ylab}{the y axis label.}
+\item{xlab, ylab, zlab}{Axis and size-legend labels.}
 
-\item{xlab}{the x axis label.}
-
-\item{zlab}{the z axis label.}
-
-\item{...}{Further arguments passed to nothing.}
+\item{...}{Reserved for future plotting options.}
 }
 \value{
-a ggplot object
+A [ggplot2::ggplot()] object.
 }
 \description{
-Generates a bubble plot for a data set.
+Summarises the number or proportion of records in each combination of two
+grouping variables and displays the result as a bubble plot.
 }
-\author{
-Darcy Webber \email{darcy@quantifish.co.nz}
+\examples{
+data(lobsters_per_pot)
+plot_bubble(
+  lobsters_per_pot,
+  group = c("year", "month"),
+  fill = "purple4"
+)
 }

@@ -16,3 +16,6 @@ can be represented by an [influ_diag] object. Model backends do not
 necessarily implement every family and component immediately; unsupported
 combinations fail before any calculations are attempted.
 }
+\examples{
+influ_families()
+}

@@ -8,6 +8,16 @@
 #' @param ... Arguments passed to a model-specific method.
 #'
 #' @return An object inheriting from `influ_diag`.
+#' @examples
+#' data(lobsters_per_pot)
+#' model <- glm(
+#'   lobsters ~ year + month + poly(depth, 2) + poly(soak, 2),
+#'   family = poisson(link = "log"),
+#'   data = lobsters_per_pot
+#' )
+#' diagnostic <- influ(model, focus = "year")
+#' diagnostic
+#' head(influ_effects(diagnostic))
 #' @export
 influ <- function(model, ...) {
   UseMethod("influ")

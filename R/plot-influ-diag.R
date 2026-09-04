@@ -233,6 +233,7 @@ plot.influ_diag <- function(x, type = c("influence", "index", "cdi", "components
 }
 
 #' @rdname plot.influ_diag
+#' @importFrom ggplot2 autoplot
 #' @export
 autoplot.influ_diag <- function(object, ...) {
   plot(object, ...)
