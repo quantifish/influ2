@@ -1,4 +1,4 @@
 # License
 
     YEAR: 2019-2026
-    COPYRIGHT HOLDER: Darcy N. Webber
+    COPYRIGHT HOLDER: Darcy N. Webber, Nokome Bentley, and Trophia Ltd
