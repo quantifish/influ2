@@ -9,6 +9,8 @@
   focus,
   data = NULL,
   weights = NULL,
+  reference_data = NULL,
+  reference_weights = NULL,
   uncertainty = "auto",
   retain = "summary",
   probs = c(0.025, 0.975),
@@ -28,6 +30,12 @@
 
 \item{weights}{Optional numeric observation weights or the name of a weight
 column in `data`.}
+
+\item{reference_data}{Optional prediction grid defining the common
+standardisation distribution. By default the observed data are used.}
+
+\item{reference_weights}{Optional numeric weights, or a column name, for
+`reference_data`.}
 
 \item{uncertainty}{One of `"auto"`, `"none"`, `"analytic"`, or
 `"simulation"`.}
@@ -53,6 +61,8 @@ An [influ_diag] object.
 Fixed GAM terms use their marginal TMB covariance. Smooth, spatial,
 spatiotemporal, and spatially varying contributions are obtained through
 tinyVAST's component projection interface and reduced immediately to
-compact focus-level diagnostics. Delta fixed effects are combined with their
-joint covariance to obtain unconditional-mean influence.
+compact focus-level diagnostics. Spatial and spatiotemporal uncertainty uses
+sparse joint-precision simulation. Delta fixed effects and latent fields are
+combined draw by draw to obtain unconditional-mean influence. Multivariate
+mixed-family responses are returned as response-labelled components.
 }

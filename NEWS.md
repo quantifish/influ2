@@ -1,8 +1,8 @@
 # influ2 1.1.0.9000
 
 * Added the model-neutral `influ()` S3 API and compact `influ_diag` result.
-* Added initial adapters for GLMs, `mgcv` GAMs, `brms`, `glmmTMB`, `sdmTMB`,
-  and TinyVAST.
+* Added adapters for GLMs, `mgcv` GAMs, `brms`, `glmmTMB`, `sdmTMB`, and
+  `tinyVAST`.
 * Separated uncertainty calculation from draw retention, including a
   posterior-mean preview mode and derived-draw or disk retention.
 * Added common print, summary, plot, and autoplot methods.
@@ -13,3 +13,8 @@
   added a frozen Bentley parity fixture and tests.
 * Replaced the introductory and hurdle vignettes with model-neutral design and
   reference documentation.
+* Added sparse joint-precision uncertainty for spatial and spatiotemporal
+  fields, including draw-by-draw delta-field combinations.
+* Added explicit prediction-grid and reference-weight standardisation,
+  multivariate mixed-family `tinyVAST` responses, CDI coefficient intervals,
+  and model-neutral Bentley overall and trend metrics.

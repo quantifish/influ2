@@ -76,6 +76,30 @@
   )
 }
 
+.glm_reference_matrix <- function(model, reference_data) {
+  Terms <- stats::delete.response(stats::terms(model))
+  frame <- stats::model.frame(
+    Terms,
+    reference_data,
+    xlev = model$xlevels,
+    na.action = stats::na.pass
+  )
+  stats::model.matrix(Terms, frame, contrasts.arg = model$contrasts)
+}
+
+.align_reference_matrix <- function(reference_X, fitted_X) {
+  if (is.null(reference_X)) return(NULL)
+  missing <- setdiff(colnames(fitted_X), colnames(reference_X))
+  if (length(missing)) {
+    stop(
+      "The reference grid is missing model-matrix columns: ",
+      paste(missing, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  reference_X[, colnames(fitted_X), drop = FALSE]
+}
+
 #' Influence diagnostics for generalised linear models
 #'
 #' @param model A fitted object from [stats::glm()].
@@ -83,6 +107,10 @@
 #' @param data Optional model data. The model frame is used by default.
 #' @param weights Optional numeric observation weights or the name of a weight
 #'   column in `data`.
+#' @param reference_data Optional prediction grid defining the common
+#'   standardisation distribution. By default the observed data are used.
+#' @param reference_weights Optional numeric weights, or a column name, for
+#'   `reference_data`.
 #' @param uncertainty One of `"auto"`, `"none"`, `"analytic"`, or
 #'   `"simulation"`.
 #' @param retain One of `"summary"`, `"derived_draws"`, or `"disk"`.
@@ -96,6 +124,7 @@
 #' @return An [influ_diag] object.
 #' @export
 influ.glm <- function(model, focus, data = NULL, weights = NULL,
+                      reference_data = NULL, reference_weights = NULL,
                       uncertainty = "auto", retain = "summary",
                       probs = c(0.025, 0.975), ndraws = 1000L, seed = NULL,
                       draws_path = NULL, keep_model = FALSE, ...) {
@@ -103,6 +132,12 @@ influ.glm <- function(model, focus, data = NULL, weights = NULL,
   X <- stats::model.matrix(model)
   term_columns <- .glm_term_columns(model, X)
   prepared <- .prepare_frequentist_matrix(model, X, term_columns)
+  reference_X <- if (is.null(reference_data)) NULL else {
+    .align_reference_matrix(
+      .glm_reference_matrix(model, as.data.frame(reference_data)),
+      prepared$X
+    )
+  }
   response <- names(stats::model.frame(model))[1]
   family_spec <- .frequentist_family_spec(model, "glm", response)
 
@@ -121,6 +156,9 @@ influ.glm <- function(model, focus, data = NULL, weights = NULL,
     retain = retain,
     probs = probs,
     weights = weights,
+    reference_data = reference_data,
+    reference_X = reference_X,
+    reference_weights = reference_weights,
     ndraws = ndraws,
     seed = seed,
     draws_path = draws_path,
@@ -136,6 +174,7 @@ influ.glm <- function(model, focus, data = NULL, weights = NULL,
 #' @return An [influ_diag] object.
 #' @export
 influ.gam <- function(model, focus, data = NULL, weights = NULL,
+                      reference_data = NULL, reference_weights = NULL,
                       uncertainty = "auto", retain = "summary",
                       probs = c(0.025, 0.975), ndraws = 1000L, seed = NULL,
                       draws_path = NULL, keep_model = FALSE, ...) {
@@ -143,6 +182,12 @@ influ.gam <- function(model, focus, data = NULL, weights = NULL,
   X <- stats::predict(model, newdata = data, type = "lpmatrix")
   term_columns <- .gam_term_columns(model, X)
   prepared <- .prepare_frequentist_matrix(model, X, term_columns)
+  reference_X <- if (is.null(reference_data)) NULL else {
+    .align_reference_matrix(
+      stats::predict(model, newdata = reference_data, type = "lpmatrix"),
+      prepared$X
+    )
+  }
   response <- names(stats::model.frame(model))[1]
   family_spec <- .frequentist_family_spec(model, "gam", response)
 
@@ -161,6 +206,9 @@ influ.gam <- function(model, focus, data = NULL, weights = NULL,
     retain = retain,
     probs = probs,
     weights = weights,
+    reference_data = reference_data,
+    reference_X = reference_X,
+    reference_weights = reference_weights,
     ndraws = ndraws,
     seed = seed,
     draws_path = draws_path,

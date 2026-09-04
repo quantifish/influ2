@@ -35,7 +35,9 @@ Imports:
     nlme,
     rstan,
     tidyr,
-    lubridate
+    lubridate,
+    Matrix,
+    TMB
 Suggests: 
     fmesher,
     glmmTMB,

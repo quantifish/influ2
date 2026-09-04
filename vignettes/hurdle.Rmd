@@ -137,7 +137,9 @@ linear predictors. `influ2` therefore combines:
 
 - BRMS population-level components draw by draw from the joint posterior; and
 - `glmmTMB` fixed components draw by draw from their joint maximum-likelihood
-  covariance.
+  covariance; and
+- `sdmTMB` and `tinyVAST` latent fields draw by draw from their sparse joint
+  precision matrices.
 
 Only derived focus-by-term draws are retained when requested. The much larger
 observation-by-draw arrays are never stored.
@@ -148,7 +150,7 @@ future scale-component adapter.
 
 ## Spatial delta models
 
-`sdmTMB` and TinyVAST delta models expose occurrence and positive fixed effects
+`sdmTMB` and `tinyVAST` delta models expose occurrence and positive fixed effects
 and latent fields as named components. Their fixed effects are combined into an
 unconditional mean with joint covariance simulation. For example:
 
@@ -165,10 +167,10 @@ diagnostic <- influ(fit, focus = "year")
 plot(diagnostic, type = "components")
 ```
 
-Extending the combined delta mean to include latent spatial and spatiotemporal
-fields requires draws from the sparse joint precision matrix. That field-level
-uncertainty is explicitly labelled as pending rather than being assembled from
-independent marginal intervals. The motivation for this spatial extension
-follows @Hsu2022.
+The combined delta mean also includes latent spatial and spatiotemporal fields.
+Both components are evaluated from the same sparse joint-precision draw before
+the unconditional mean is calculated, preserving posterior dependence rather
+than assembling independent marginal intervals. The motivation for this
+spatial extension follows @Hsu2022.
 
 ## References

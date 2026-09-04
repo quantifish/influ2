@@ -151,6 +151,55 @@ The same object contains nominal and standardised indices.
 plot(glm_diagnostic, type = "index")
 ```
 
+The model-neutral overall and trend metrics reproduce Bentley's definitions.
+The overall metric is the mean absolute link-scale influence transformed back
+to a proportional scale. The trend metric is the fitted change per ordered
+focus level, also transformed to a proportional scale.
+
+```{r lobster-glm-metrics}
+subset(
+  influ_metrics(glm_diagnostic),
+  term != "year",
+  select = c(term, metric, estimate)
+)
+```
+
+### A common prediction-grid reference
+
+Observed-data standardisation is the default. For comparisons among fleets,
+areas, or models, an explicit prediction grid prevents differences in their
+observed samples from silently changing the reference distribution. This grid
+crosses every year and month at common depth and soak values.
+
+```{r lobster-reference-grid}
+lobster_reference <- expand.grid(
+  year = levels(lobsters_per_pot$year),
+  month = levels(lobsters_per_pot$month),
+  depth = median(lobsters_per_pot$depth),
+  soak = median(lobsters_per_pot$soak)
+)
+lobster_reference$year <- factor(
+  lobster_reference$year,
+  levels = levels(lobsters_per_pot$year)
+)
+lobster_reference$month <- factor(
+  lobster_reference$month,
+  levels = levels(lobsters_per_pot$month)
+)
+
+glm_grid_diagnostic <- influ(
+  lobster_glm,
+  focus = "year",
+  reference_data = lobster_reference
+)
+glm_grid_diagnostic$metadata[c("reference", "n_reference")]
+```
+
+Reference weights can be supplied with `reference_weights`. They may be a
+numeric vector or the name of a column in `reference_data`. This makes the
+standardisation estimand explicit, reproducible, and independent of accidental
+sample imbalance.
+
 ## GAM
 
 The `mgcv` backend works with parametric terms and smooths [@Wood2017]. Here,
@@ -284,7 +333,12 @@ spatial_model <- sdmTMB::sdmTMB(
   silent = TRUE
 )
 
-sdmTMB_diagnostic <- influ(spatial_model, focus = "year")
+sdmTMB_diagnostic <- influ(
+  spatial_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 1
+)
 summary(sdmTMB_diagnostic)
 ```
 
@@ -326,7 +380,12 @@ tiny_model <- tinyVAST::tinyVAST(
   space_columns = c("x", "ycoord")
 )
 
-tinyVAST_diagnostic <- influ(tiny_model, focus = "year")
+tinyVAST_diagnostic <- influ(
+  tiny_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 1
+)
 summary(tinyVAST_diagnostic)
 ```
 
@@ -334,10 +393,12 @@ summary(tinyVAST_diagnostic)
 plot(tinyVAST_diagnostic, type = "components")
 ```
 
-The current spatial adapters propagate fixed-effect covariance. Fitted latent
-fields are reduced immediately to focus-level influence from their conditional
-modes. Sparse joint-precision uncertainty for those fields is kept explicit as
-a development boundary rather than represented by misleading marginal bands.
+The spatial adapters propagate fixed-effect covariance and simulate spatial
+and spatiotemporal fields from each model's sparse joint precision matrix. Each
+draw is reduced immediately to focus-level influence, so the returned object
+does not contain an observations-by-draws field array. Delta fields use the
+same joint draw for occurrence and positive components before the
+unconditional mean is calculated.
 
 ## One interface and compact uncertainty
 
@@ -354,6 +415,7 @@ summaries, data composition, and index comparisons:
 head(influ_effects(glm_diagnostic))
 head(influ_composition(glm_diagnostic))
 influ_indices(glm_diagnostic)
+influ_metrics(glm_diagnostic)
 ```
 
 Calculation and retention are separate choices:
@@ -380,8 +442,9 @@ d4 <- influ(fitted_model, focus = "year", uncertainty = "none")
 For GLMs and GAMs, linear diagnostic contrasts use fitted joint covariance
 analytically. Joint coefficient simulation is used when derived draws are
 requested. The BRMS backend reduces joint posterior draws during calculation,
-and `glmmTMB` jointly simulates fixed components for hurdle and zero-inflated
-means. This separation draws on the posterior-processing approach used in
+`glmmTMB` jointly simulates fixed components for hurdle and zero-inflated
+means, and the spatial backends reduce sparse joint-precision draws to the same
+compact schema. This separation draws on the posterior-processing approach used in
 CPUETools [@CPUETools], while the S3 design and GAM implementation were also
 informed by `gamInflu` [@Dunn2025].
 

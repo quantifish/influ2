@@ -105,45 +105,105 @@
     stop("No CDI information is available for term '", term, "'.", call. = FALSE)
   }
 
-  composition$x <- .plot_level(composition$level)
-  composition$term_level <- factor(
-    composition$term_level,
-    levels = unique(composition$term_level[order(composition$effect)])
-  )
-  effects$x <- .plot_level(effects$level)
+  term_levels <- unique(as.character(coefficients$level))
+  if (!length(term_levels)) term_levels <- unique(as.character(composition$term_level))
+  focus_levels <- unique(as.character(effects$level))
+  coefficients$level <- factor(coefficients$level, levels = term_levels)
+  composition$term_level <- factor(composition$term_level, levels = term_levels)
+  composition$focus_level <- factor(composition$level, levels = focus_levels)
+  effects$focus_level <- factor(effects$level, levels = focus_levels)
 
   coefficient_plot <- ggplot2::ggplot(
     coefficients,
-    ggplot2::aes(x = .data$level, y = .data$estimate, colour = .data$component)
-  ) +
-    ggplot2::geom_point() +
-    ggplot2::coord_flip() +
-    ggplot2::labs(x = term, y = "Term contribution", colour = "Component") +
-    ggplot2::theme_bw()
-
-  distribution_plot <- ggplot2::ggplot(
-    composition,
     ggplot2::aes(
-      x = .data$x,
-      y = .data$term_level,
-      size = .data$proportion,
-      colour = .data$effect
+      x = .data$level,
+      y = .data$estimate,
+      group = .data$component
     )
   ) +
-    ggplot2::geom_point(alpha = 0.8) +
+    ggplot2::geom_hline(yintercept = 0, linetype = 3, colour = "grey45") +
+    ggplot2::geom_errorbar(
+      ggplot2::aes(ymin = .data$lower, ymax = .data$upper),
+      width = 0.18,
+      colour = "purple4",
+      na.rm = TRUE
+    ) +
+    ggplot2::geom_point(colour = "purple4", size = 1.8) +
+    ggplot2::labs(x = NULL, y = "Term contribution") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.ticks.x = ggplot2::element_blank(),
+      legend.position = "none",
+      plot.margin = ggplot2::margin(b = 1, r = 1, unit = "mm")
+    )
+
+  distribution_with_legend <- ggplot2::ggplot(
+    composition,
+    ggplot2::aes(
+      x = .data$term_level,
+      y = .data$focus_level,
+      size = .data$proportion
+    )
+  ) +
+    ggplot2::geom_point(colour = "purple4", fill = "purple", alpha = 0.65) +
+    ggplot2::scale_size_area(max_size = 10) +
     ggplot2::labs(
-      x = x$focus,
-      y = term,
-      size = "Proportion",
-      colour = "Contribution"
+      x = term,
+      y = x$focus,
+      size = "Proportion"
     ) +
     ggplot2::theme_bw()
+  legend <- gtable::gtable_filter(
+    ggplot2::ggplotGrob(distribution_with_legend),
+    "guide-box",
+    fixed = TRUE
+  )
+  legend_plot <- patchwork::wrap_elements(full = legend)
+  distribution_plot <- distribution_with_legend +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      plot.margin = ggplot2::margin(t = 1, r = 1, unit = "mm")
+    )
 
-  influence_plot <- .plot_influ_effects(
-    x, term = term, component = component
-  ) + ggplot2::theme(legend.position = "bottom")
+  baseline <- ifelse(effects$scale == "ratio", 1, 0)
+  influence_plot <- ggplot2::ggplot(
+    effects,
+    ggplot2::aes(
+      x = .data$focus_level,
+      y = .data$estimate,
+      group = interaction(.data$component, .data$scale)
+    )
+  ) +
+    ggplot2::geom_hline(
+      yintercept = unique(baseline),
+      linetype = 3,
+      colour = "grey45"
+    ) +
+    ggplot2::geom_errorbar(
+      ggplot2::aes(ymin = .data$lower, ymax = .data$upper),
+      width = 0.18,
+      colour = "purple4",
+      na.rm = TRUE
+    ) +
+    ggplot2::geom_line(colour = "purple4", na.rm = TRUE) +
+    ggplot2::geom_point(colour = "purple4", na.rm = TRUE) +
+    ggplot2::coord_flip() +
+    ggplot2::labs(x = NULL, y = "Influence") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      legend.position = "none",
+      plot.margin = ggplot2::margin(t = 1, l = 1, unit = "mm")
+    )
 
-  (coefficient_plot / distribution_plot) | influence_plot
+  coefficient_plot + legend_plot + distribution_plot + influence_plot +
+    patchwork::plot_layout(
+      nrow = 2,
+      ncol = 2,
+      heights = c(1, 2),
+      widths = c(2, 1)
+    )
 }
 
 #' Plot a model-neutral influence diagnostic

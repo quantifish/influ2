@@ -9,6 +9,8 @@
   focus,
   data = NULL,
   weights = NULL,
+  reference_data = NULL,
+  reference_weights = NULL,
   uncertainty = "auto",
   retain = "summary",
   probs = c(0.025, 0.975),
@@ -28,6 +30,12 @@
 
 \item{weights}{Optional numeric observation weights or the name of a weight
 column in `data`.}
+
+\item{reference_data}{Optional prediction grid defining the common
+standardisation distribution. By default the observed data are used.}
+
+\item{reference_weights}{Optional numeric weights, or a column name, for
+`reference_data`.}
 
 \item{uncertainty}{One of `"auto"`, `"none"`, `"analytic"`, or
 `"simulation"`.}

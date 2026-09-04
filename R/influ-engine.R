@@ -75,8 +75,13 @@
   colSums(x * w) / sum(w)
 }
 
-.term_contrast <- function(x, focus_info, weights) {
-  overall <- .weighted_col_mean(x, weights)
+.term_contrast <- function(x, focus_info, weights, reference = NULL,
+                           reference_weights = NULL) {
+  if (is.null(reference)) {
+    overall <- .weighted_col_mean(x, weights)
+  } else {
+    overall <- .weighted_col_mean(reference, reference_weights)
+  }
   out <- matrix(NA_real_, nrow = length(focus_info$levels), ncol = ncol(x))
   rownames(out) <- focus_info$levels
   colnames(out) <- colnames(x)
@@ -85,6 +90,34 @@
     out[i, ] <- .weighted_col_mean(x[keep, , drop = FALSE], weights[keep]) - overall
   }
   out
+}
+
+.resolve_reference <- function(data, X, reference_data = NULL,
+                               reference_X = NULL, reference_weights = NULL) {
+  if (is.null(reference_data) && is.null(reference_X)) {
+    return(list(
+      data = data,
+      X = X,
+      weights = rep(1, nrow(data)),
+      label = "observed",
+      explicit = FALSE
+    ))
+  }
+  if (is.null(reference_data) || is.null(reference_X)) {
+    stop("`reference_data` and its model matrix must be supplied together.", call. = FALSE)
+  }
+  reference_data <- as.data.frame(reference_data)
+  reference_X <- as.matrix(reference_X)
+  if (nrow(reference_X) != nrow(reference_data) || ncol(reference_X) != ncol(X)) {
+    stop("The reference model matrix does not conform to `reference_data` or the fitted model matrix.", call. = FALSE)
+  }
+  list(
+    data = reference_data,
+    X = reference_X,
+    weights = .resolve_influ_weights(reference_data, reference_weights),
+    label = "prediction_grid",
+    explicit = TRUE
+  )
 }
 
 .normal_quantile <- function(level) {
@@ -103,6 +136,24 @@
   z <- matrix(stats::rnorm(n * length(mean)), nrow = n)
   root <- sweep(t(eig$vectors), 1L, sqrt(values), "*")
   sweep(z %*% root, 2L, mean, "+")
+}
+
+.compact_contrast <- function(contribution, data, focus, weights,
+                              reference_contribution = NULL,
+                              reference_weights = NULL) {
+  focus_info <- .focus_info(data, focus)
+  contribution <- matrix(contribution, ncol = 1L)
+  if (is.null(reference_contribution)) {
+    reference_contribution <- contribution
+    reference_weights <- weights
+  }
+  as.numeric(.term_contrast(
+    contribution,
+    focus_info,
+    weights,
+    matrix(reference_contribution, ncol = 1L),
+    reference_weights
+  ))
 }
 
 .summarise_vector <- function(x, probs) {
@@ -226,8 +277,7 @@
   if (length(vars)) vars[1] else NULL
 }
 
-.term_composition <- function(data, focus, focus_info, term, contribution,
-                              weights, bins = 20L) {
+.term_level_values <- function(data, term, contribution, bins = 20L) {
   source <- .term_source_variable(term, data)
   value <- if (is.null(source)) contribution else data[[source]]
 
@@ -237,7 +287,12 @@
       value <- cut(value, breaks = breaks, include.lowest = TRUE, ordered_result = TRUE)
     }
   }
-  value <- as.character(value)
+  as.character(value)
+}
+
+.term_composition <- function(data, focus, focus_info, term, contribution,
+                              weights, bins = 20L) {
+  value <- .term_level_values(data, term, contribution, bins)
 
   key <- interaction(focus_info$value, value, drop = TRUE, lex.order = TRUE)
   rows <- split(seq_along(key), key)
@@ -259,7 +314,7 @@
   out
 }
 
-.coefficient_summary <- function(composition) {
+.coefficient_summary <- function(composition, method = "none") {
   if (!nrow(composition)) return(data.frame())
   key <- interaction(composition$term, composition$term_level, drop = TRUE)
   rows <- split(seq_len(nrow(composition)), key)
@@ -268,11 +323,95 @@
       term = composition$term[i[1]],
       level = composition$term_level[i[1]],
       estimate = stats::weighted.mean(composition$effect[i], composition$weight[i]),
+      std_error = NA_real_,
+      lower = NA_real_,
+      upper = NA_real_,
+      method = method,
       stringsAsFactors = FALSE
     )
   }))
   rownames(out) <- NULL
   out
+}
+
+.coefficient_term_summary <- function(data, term, X, beta, weights,
+                                      beta_draws = NULL, vcov = NULL,
+                                      method = "none", probs = c(0.025, 0.975),
+                                      bins = 20L) {
+  contribution <- as.numeric(X %*% beta)
+  value <- .term_level_values(data, term, contribution, bins)
+  rows <- split(seq_along(value), factor(value, levels = unique(value)))
+  out <- do.call(rbind, lapply(names(rows), function(level) {
+    i <- rows[[level]]
+    design <- .weighted_col_mean(X[i, , drop = FALSE], weights[i])
+    estimate <- sum(design * beta)
+    if (!is.null(beta_draws)) {
+      stats <- .summarise_vector(as.numeric(beta_draws %*% design), probs)
+    } else if (!is.null(vcov)) {
+      se <- sqrt(max(0, as.numeric(t(design) %*% vcov %*% design)))
+      z <- stats::qnorm(1 - probs[1])
+      stats <- c(
+        estimate = estimate,
+        std_error = se,
+        lower = estimate - z * se,
+        upper = estimate + z * se
+      )
+    } else {
+      stats <- c(estimate = estimate, std_error = NA, lower = NA, upper = NA)
+    }
+    data.frame(
+      term = term,
+      level = level,
+      estimate = unname(stats["estimate"]),
+      std_error = unname(stats["std_error"]),
+      lower = unname(stats["lower"]),
+      upper = unname(stats["upper"]),
+      method = method,
+      stringsAsFactors = FALSE
+    )
+  }))
+  rownames(out) <- NULL
+  out
+}
+
+.metric_values <- function(link) {
+  position <- seq_along(link)
+  slope <- if (length(link) > 1L) {
+    stats::cov(position, link) / stats::var(position)
+  } else {
+    NA_real_
+  }
+  c(
+    overall = exp(mean(abs(link))) - 1,
+    trend = if (is.finite(slope)) exp(slope) - 1 else NA_real_
+  )
+}
+
+.term_metrics <- function(term, component, link_estimate, link_draws = NULL,
+                          method = "none", probs = c(0.025, 0.975)) {
+  point <- .metric_values(link_estimate)
+  do.call(rbind, lapply(names(point), function(metric) {
+    if (!is.null(link_draws)) {
+      values <- apply(link_draws, 1L, function(z) .metric_values(z)[metric])
+      stats <- .summarise_vector(values, probs)
+    } else {
+      stats <- c(
+        estimate = point[[metric]], std_error = NA_real_,
+        lower = NA_real_, upper = NA_real_
+      )
+    }
+    data.frame(
+      term = term,
+      component = component,
+      metric = metric,
+      estimate = unname(stats["estimate"]),
+      std_error = unname(stats["std_error"]),
+      lower = unname(stats["lower"]),
+      upper = unname(stats["upper"]),
+      method = method,
+      stringsAsFactors = FALSE
+    )
+  }))
 }
 
 .nominal_indices <- function(data, response, focus, focus_info, weights) {
@@ -347,6 +486,8 @@
                                  family_spec, X, beta, vcov, term_columns,
                                  uncertainty = "auto", retain = "summary",
                                  probs = c(0.025, 0.975), weights = NULL,
+                                 reference_data = NULL, reference_X = NULL,
+                                 reference_weights = NULL,
                                  component = "conditional", beta_draws = NULL,
                                  ndraws = 1000L, seed = NULL,
                                  draws_path = NULL, keep_model = FALSE,
@@ -404,15 +545,26 @@
     }
   }
 
-  eta_reference <- sum(.weighted_col_mean(X, weights) * beta)
+  reference <- .resolve_reference(
+    data, X, reference_data, reference_X, reference_weights
+  )
+
+  reference_design <- if (reference$explicit) {
+    .weighted_col_mean(reference$X, reference$weights)
+  } else {
+    .weighted_col_mean(X, weights)
+  }
+  eta_reference <- sum(reference_design * beta)
   eta_reference_draws <- if (!is.null(beta_draws)) {
-    as.numeric(beta_draws %*% .weighted_col_mean(X, weights))
+    as.numeric(beta_draws %*% reference_design)
   } else {
     NULL
   }
 
   effect_list <- list()
   composition_list <- list()
+  coefficient_list <- list()
+  metric_list <- list()
   retained_list <- list()
   method <- switch(
     uncertainty,
@@ -427,7 +579,11 @@
     columns <- columns[columns >= 1L & columns <= ncol(X)]
     if (!length(columns)) next
 
-    B_term <- .term_contrast(X[, columns, drop = FALSE], focus_info, weights)
+    B_term <- .term_contrast(
+      X[, columns, drop = FALSE], focus_info, weights,
+      reference = if (reference$explicit) reference$X[, columns, drop = FALSE] else NULL,
+      reference_weights = if (reference$explicit) reference$weights else NULL
+    )
     B <- matrix(0, nrow = nrow(B_term), ncol = ncol(X))
     B[, columns] <- B_term
 
@@ -448,6 +604,16 @@
       confidence_level = confidence_level
     )
     effect_list[[term]] <- component_result$rows
+    metric_list[[term]] <- .term_metrics(
+      term = term,
+      component = component,
+      link_estimate = component_result$rows$estimate[
+        component_result$rows$scale == "link"
+      ],
+      link_draws = component_result$link_draws,
+      method = method,
+      probs = probs
+    )
 
     if (!is.null(component_result$link_draws)) {
       draw_names <- paste(component, term, focus_info$levels, "link", sep = "|")
@@ -462,6 +628,17 @@
     composition_list[[term]] <- .term_composition(
       data, focus, focus_info, term, contribution, weights
     )
+    coefficient_list[[term]] <- .coefficient_term_summary(
+      data = data,
+      term = term,
+      X = X[, columns, drop = FALSE],
+      beta = beta[columns],
+      weights = weights,
+      beta_draws = if (is.null(beta_draws)) NULL else beta_draws[, columns, drop = FALSE],
+      vcov = if (is.null(vcov)) NULL else vcov[columns, columns, drop = FALSE],
+      method = method,
+      probs = probs
+    )
   }
 
   if (!length(effect_list)) {
@@ -473,8 +650,11 @@
   composition <- do.call(rbind, composition_list)
   rownames(composition) <- NULL
   composition$component <- component
-  coefficients <- .coefficient_summary(composition)
+  coefficients <- do.call(rbind, coefficient_list)
+  rownames(coefficients) <- NULL
   if (nrow(coefficients)) coefficients$component <- component
+  metrics <- do.call(rbind, metric_list)
+  rownames(metrics) <- NULL
 
   derived_draws <- if (length(retained_list)) do.call(cbind, retained_list) else NULL
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
@@ -494,6 +674,7 @@
     coefficients = coefficients,
     composition = composition,
     indices = indices,
+    metrics = metrics,
     uncertainty = list(
       method = method,
       probs = probs,
@@ -510,7 +691,8 @@
       response = response,
       n_observations = nrow(data),
       terms = names(term_columns),
-      reference = "observed",
+      reference = reference$label,
+      n_reference = nrow(reference$data),
       notes = notes
     ),
     draws = stored$draws,
@@ -529,6 +711,7 @@
                                       component = "conditional",
                                       eta_reference = 0,
                                       eta_reference_draws = NULL,
+                                      reference = "observed",
                                       draws_path = NULL,
                                       keep_model = FALSE,
                                       notes = character()) {
@@ -569,6 +752,7 @@
   effects <- list()
   compositions <- list()
   retained_draws <- list()
+  metric_rows <- list()
 
   for (term in names(term_contrasts)) {
     B <- as.matrix(term_contrasts[[term]])
@@ -592,6 +776,14 @@
       confidence_level = confidence_level
     )
     effects[[term]] <- result$rows
+    metric_rows[[term]] <- .term_metrics(
+      term = term,
+      component = component,
+      link_estimate = result$rows$estimate[result$rows$scale == "link"],
+      link_draws = result$link_draws,
+      method = method,
+      probs = probs
+    )
     compositions[[term]] <- .term_composition(
       data = data,
       focus = focus,
@@ -623,6 +815,8 @@
   if (nrow(coefficients)) coefficients$component <- component
   derived_draws <- if (length(retained_draws)) do.call(cbind, retained_draws) else NULL
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
+  metrics <- do.call(rbind, metric_rows)
+  rownames(metrics) <- NULL
 
   new_influ_diag(
     backend = backend,
@@ -631,6 +825,7 @@
     influence = influence,
     coefficients = coefficients,
     composition = composition,
+    metrics = metrics,
     uncertainty = list(
       method = method,
       probs = probs,
@@ -646,7 +841,7 @@
       response = NULL,
       n_observations = nrow(data),
       terms = names(term_contrasts),
-      reference = "observed",
+      reference = reference,
       notes = notes
     ),
     draws = stored$draws,
@@ -669,6 +864,114 @@
     ))
   }
   t(apply(draws, 2L, .summarise_vector, probs = probs))
+}
+
+.diag_from_term_draws <- function(backend, model, data, focus, family_spec,
+                                  term_draws, point_contributions,
+                                  eta_reference_draws, weights = NULL,
+                                  component = "conditional",
+                                  retain = "summary",
+                                  probs = c(0.025, 0.975),
+                                  draws_path = NULL,
+                                  keep_model = FALSE,
+                                  method = "joint precision simulation",
+                                  response = NULL,
+                                  reference = "observed",
+                                  notes = character()) {
+  if (!length(term_draws) || !identical(names(term_draws), names(point_contributions))) {
+    stop("Term draws and point contributions must be matching named lists.", call. = FALSE)
+  }
+  data <- as.data.frame(data)
+  weights <- .resolve_influ_weights(data, weights)
+  focus_info <- .focus_info(data, focus)
+  n_draws <- nrow(term_draws[[1]])
+  if (length(eta_reference_draws) != n_draws) {
+    stop("Reference-predictor draws do not conform to the term draws.", call. = FALSE)
+  }
+
+  effects <- list()
+  compositions <- list()
+  coefficients <- list()
+  metrics <- list()
+  retained <- list()
+  identity <- diag(length(focus_info$levels))
+  for (term in names(term_draws)) {
+    draws <- as.matrix(term_draws[[term]])
+    if (!all(dim(draws) == c(n_draws, length(focus_info$levels)))) {
+      stop("A compact term-draw matrix has incompatible dimensions.", call. = FALSE)
+    }
+    result <- .component_influence(
+      B = identity,
+      beta = colMeans(draws),
+      vcov = NULL,
+      beta_draws = draws,
+      eta_reference = mean(eta_reference_draws),
+      eta_reference_draws = eta_reference_draws,
+      family_spec = family_spec,
+      focus = focus,
+      levels = focus_info$levels,
+      term = term,
+      component = component,
+      method = method,
+      probs = probs,
+      confidence_level = probs[2] - probs[1]
+    )
+    effects[[term]] <- result$rows
+    compositions[[term]] <- .term_composition(
+      data, focus, focus_info, term, point_contributions[[term]], weights
+    )
+    coefficients[[term]] <- .coefficient_summary(compositions[[term]], method)
+    metrics[[term]] <- .term_metrics(
+      term, component,
+      result$rows$estimate[result$rows$scale == "link"],
+      result$link_draws,
+      method, probs
+    )
+    colnames(result$link_draws) <- paste(
+      component, term, focus_info$levels, "link", sep = "|"
+    )
+    colnames(result$natural_draws) <- paste(
+      component, term, focus_info$levels, family_spec$natural_scale, sep = "|"
+    )
+    retained[[paste0(term, "_link")]] <- result$link_draws
+    retained[[paste0(term, "_natural")]] <- result$natural_draws
+  }
+
+  influence <- do.call(rbind, effects)
+  composition <- do.call(rbind, compositions)
+  coefficients <- do.call(rbind, coefficients)
+  metric_table <- do.call(rbind, metrics)
+  rownames(influence) <- rownames(composition) <- rownames(coefficients) <- rownames(metric_table) <- NULL
+  composition$component <- component
+  coefficients$component <- component
+  derived_draws <- do.call(cbind, retained)
+  stored <- .save_derived_draws(derived_draws, retain, draws_path)
+
+  new_influ_diag(
+    backend = backend,
+    family = family_spec,
+    focus = focus,
+    influence = influence,
+    coefficients = coefficients,
+    composition = composition,
+    metrics = metric_table,
+    uncertainty = list(method = method, probs = probs, ndraws = n_draws),
+    retained = list(
+      mode = retain,
+      path = stored$path,
+      n_derived_draws = n_draws,
+      n_derived_estimands = ncol(derived_draws)
+    ),
+    metadata = list(
+      response = response,
+      n_observations = nrow(data),
+      terms = names(term_draws),
+      reference = reference,
+      notes = notes
+    ),
+    draws = stored$draws,
+    model = if (isTRUE(keep_model)) model else NULL
+  )
 }
 
 .two_part_combined_diag <- function(backend, model, data, response, focus,
@@ -706,6 +1009,7 @@
   baseline <- p0 * mu0
   rows <- list()
   retained_draws <- list()
+  metric_rows <- list()
 
   for (term in terms) {
     main_delta <- main_projection$term_deltas[[term]]
@@ -748,6 +1052,12 @@
         ratio_stats[, "lower"], ratio_stats[, "upper"], method
       )
     )
+    metric_rows[[term]] <- .term_metrics(
+      term, "unconditional_mean",
+      link_stats[, "estimate"],
+      if (method == "none") NULL else link_draws,
+      method, probs
+    )
 
     colnames(link_draws) <- paste(
       "unconditional_mean", term, focus_info$levels, "link", sep = "|"
@@ -763,6 +1073,8 @@
   rownames(influence) <- NULL
   derived_draws <- do.call(cbind, retained_draws)
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
+  metrics <- do.call(rbind, metric_rows)
+  rownames(metrics) <- NULL
   nominal <- .nominal_indices(
     data, response, focus, focus_info,
     .resolve_influ_weights(data, weights)
@@ -779,6 +1091,7 @@
     focus = focus,
     influence = influence,
     indices = indices,
+    metrics = metrics,
     uncertainty = list(
       method = method,
       probs = probs,
@@ -794,7 +1107,7 @@
       response = response,
       n_observations = nrow(data),
       terms = terms,
-      reference = "observed",
+      reference = main_projection$reference %||% "observed",
       notes = notes
     ),
     draws = stored$draws,
@@ -839,6 +1152,7 @@
     coefficients = bind_table("coefficients"),
     composition = bind_table("composition"),
     indices = bind_table("indices"),
+    metrics = bind_table("metrics"),
     uncertainty = list(
       method = paste(methods, collapse = "; "),
       probs = diags[[1]]$uncertainty$probs,
@@ -854,7 +1168,7 @@
       response = diags[[1]]$metadata$response,
       n_observations = diags[[1]]$metadata$n_observations,
       terms = unique(unlist(lapply(diags, function(x) x$metadata$terms))),
-      reference = "observed",
+      reference = paste(unique(vapply(diags, function(x) x$metadata$reference %||% "observed", character(1))), collapse = "; "),
       notes = unique(c(notes, unlist(lapply(diags, function(x) x$metadata$notes))))
     ),
     draws = draws,

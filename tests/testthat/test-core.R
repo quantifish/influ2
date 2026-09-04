@@ -79,6 +79,23 @@ test_that("GLM diagnostics agree with Bentley proto on the lobster example", {
     comparison$link_influence_legacy,
     tolerance = 1e-10
   )
+
+  legacy_metrics <- subset(
+    legacy_diagnostic$summary,
+    term %in% c("month", "stats::poly(depth, 3)", "stats::poly(soak, 3)"),
+    select = c(term, overall, trend)
+  )
+  current_metrics <- influ_metrics(influ(model, focus = "year"))
+  current_metrics <- stats::reshape(
+    current_metrics[c("term", "metric", "estimate")],
+    direction = "wide",
+    idvar = "term",
+    timevar = "metric"
+  )
+  names(current_metrics) <- sub("^estimate\\.", "", names(current_metrics))
+  metric_comparison <- merge(legacy_metrics, current_metrics, by = "term")
+  expect_equal(metric_comparison$overall.x, metric_comparison$overall.y, tolerance = 1e-10)
+  expect_equal(metric_comparison$trend.x, metric_comparison$trend.y, tolerance = 1e-10)
 })
 
 test_that("influ_diag has a stable compact schema", {
@@ -97,6 +114,7 @@ test_that("influ_diag has a stable compact schema", {
   expect_true(all(c("nominal", "standardised") %in% diagnostic$indices$series))
   expect_null(diagnostic$model)
   expect_null(influ_draws(diagnostic))
+  expect_true(all(c("overall", "trend") %in% influ_metrics(diagnostic)$metric))
   expect_lt(as.numeric(object.size(diagnostic)), as.numeric(object.size(fixture$model)))
 })
 
@@ -118,6 +136,7 @@ test_that("uncertainty calculation and retention are separate", {
   expect_equal(nrow(influ_draws(simulated)), 100)
   expect_gt(ncol(influ_draws(simulated)), 0)
   expect_identical(simulated$retained$mode, "derived_draws")
+  expect_true(all(is.finite(influ_metrics(simulated)$std_error)))
 
   path <- tempfile(fileext = ".rds")
   on.exit(unlink(path), add = TRUE)
@@ -133,6 +152,37 @@ test_that("uncertainty calculation and retention are separate", {
   expect_null(influ_draws(disk))
   expect_true(file.exists(disk$retained$path))
   expect_equal(nrow(readRDS(disk$retained$path)), 20)
+})
+
+test_that("an explicit prediction grid controls the reference distribution", {
+  fixture <- bentley_fixture()
+  observed <- influ(fixture$model, focus = "year")
+  reference <- fixture$data[rep(1L, 4L), , drop = FALSE]
+  reference$year <- factor(
+    levels(fixture$data$year)[1],
+    levels = levels(fixture$data$year)
+  )
+  reference$area <- factor(
+    levels(fixture$data$area)[1],
+    levels = levels(fixture$data$area)
+  )
+  reference$vessel <- factor(
+    levels(fixture$data$vessel)[1],
+    levels = levels(fixture$data$vessel)
+  )
+  grid <- influ(
+    fixture$model,
+    focus = "year",
+    reference_data = reference,
+    reference_weights = c(1, 1, 1, 8)
+  )
+
+  expect_identical(grid$metadata$reference, "prediction_grid")
+  expect_equal(grid$metadata$n_reference, 4L)
+  expect_false(isTRUE(all.equal(
+    subset(observed$influence, term == "area" & scale == "link")$estimate,
+    subset(grid$influence, term == "area" & scale == "link")$estimate
+  )))
 })
 
 test_that("supported families deliberately exclude quasi and extended families", {

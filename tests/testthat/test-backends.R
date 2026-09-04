@@ -81,6 +81,12 @@ test_that("brms group-level terms retain joint uncertainty compactly", {
   expect_true(any(grepl("group_level$", diagnostic$influence$component)))
   expect_equal(nrow(diagnostic$draws), 40)
   expect_lt(ncol(diagnostic$draws), nrow(fit$data))
+  month_coefficients <- subset(
+    diagnostic$coefficients,
+    term == "month" & component == "conditional:group_level"
+  )
+  expect_true(all(is.finite(month_coefficients$lower)))
+  expect_true(all(is.finite(month_coefficients$upper)))
   expect_s3_class(
     plot(
       diagnostic,
@@ -104,6 +110,22 @@ test_that("brms smooth bases are projected without observation-by-draw arrays", 
   expect_true(any(grepl("^s\\(depth", diagnostic$influence$term)))
   expect_true(any(grepl("smooth$", diagnostic$influence$component)))
   expect_null(diagnostic$draws)
+
+  reference <- expand.grid(
+    year = levels(fit$data$year),
+    month = levels(fit$data$month),
+    depth = stats::median(fit$data$depth)
+  )
+  reference$year <- factor(reference$year, levels = levels(fit$data$year))
+  reference$month <- factor(reference$month, levels = levels(fit$data$month))
+  grid_diagnostic <- influ(
+    fit,
+    focus = "year",
+    reference_data = reference,
+    ndraws = 10
+  )
+  expect_identical(grid_diagnostic$metadata$reference, "prediction_grid")
+  expect_true(all(is.finite(grid_diagnostic$influence$estimate)))
 })
 
 test_that("brms hurdle components are combined draw by draw", {
@@ -158,7 +180,7 @@ test_that("glmmTMB separates conditional, zero, and random components", {
     family = glmmTMB::nbinom2(),
     data = data
   )
-  diagnostic <- influ(model, focus = "year")
+  diagnostic <- influ(model, focus = "year", ndraws = 30, seed = 1)
 
   expect_s3_class(diagnostic, "influ_diag_glmmtmb")
   expect_true(all(c(
@@ -266,11 +288,15 @@ test_that("sdmTMB exposes fixed and spatiotemporal influence components", {
     spatiotemporal = "iid",
     silent = TRUE
   )
-  diagnostic <- influ(model, focus = "year")
+  diagnostic <- influ(model, focus = "year", ndraws = 30, seed = 1)
 
   expect_s3_class(diagnostic, "influ_diag_sdmtmb")
   expect_true(any(diagnostic$influence$term == "spatial_field"))
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
+  expect_true(all(is.finite(subset(
+    diagnostic$influence,
+    grepl("field$", term)
+  )$std_error)))
   expect_true(all(is.finite(diagnostic$influence$estimate)))
   expect_s3_class(
     plot(
@@ -308,6 +334,11 @@ test_that("sdmTMB delta fixed effects have a joint unconditional mean", {
   expect_true(all(c("occurrence", "positive", "unconditional_mean") %in%
     diagnostic$influence$component))
   expect_equal(nrow(diagnostic$draws), 50)
+  expect_true(all(c("spatial_field", "spatiotemporal_field") %in%
+    subset(
+      diagnostic$influence,
+      component == "unconditional_mean" & method == "joint precision simulation"
+    )$term))
 })
 
 test_that("tinyVAST fixed terms use the common influence schema", {
@@ -327,7 +358,7 @@ test_that("tinyVAST fixed terms use the common influence schema", {
     family = list(poisson = stats::poisson()),
     spatial_domain = NULL
   )
-  diagnostic <- influ(model, focus = "year")
+  diagnostic <- influ(model, focus = "year", ndraws = 30, seed = 1)
 
   expect_s3_class(diagnostic, "influ_diag_tinyvast")
   expect_setequal(unique(diagnostic$influence$term), c("year", "x"))
@@ -360,14 +391,15 @@ test_that("tinyVAST exposes fitted spatial and spatiotemporal components", {
     spacetime_term = "catch <-> catch, 0, spatiotemporal_sd",
     space_columns = c("x", "ycoord")
   )
-  diagnostic <- influ(model, focus = "year")
+  diagnostic <- influ(model, focus = "year", ndraws = 30, seed = 1)
 
   expect_true(any(diagnostic$influence$term == "spatial_field"))
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
-  expect_true(any(grepl(
-    "spatiotemporal_field$",
-    diagnostic$influence$component
-  )))
+  expect_true(any(grepl("latent_fields$", diagnostic$influence$component)))
+  expect_true(all(is.finite(subset(
+    diagnostic$influence,
+    grepl("field$", term)
+  )$std_error)))
   expect_true(all(is.finite(diagnostic$influence$estimate)))
   expect_s3_class(
     plot(
@@ -376,6 +408,44 @@ test_that("tinyVAST exposes fitted spatial and spatiotemporal components", {
       term = c("spatial_field", "spatiotemporal_field")
     ),
     "ggplot"
+  )
+})
+
+test_that("tinyVAST mixed-family responses use labelled components", {
+  skip_if_not_installed("tinyVAST")
+  set.seed(24)
+  data <- expand.grid(
+    year = factor(1:3),
+    replicate = seq_len(25),
+    var = c("count", "biomass")
+  )
+  data$time <- as.integer(data$year)
+  data$dist <- ifelse(data$var == "count", "poisson", "normal")
+  data$x <- stats::rnorm(nrow(data))
+  data$response <- ifelse(
+    data$var == "count",
+    stats::rpois(nrow(data), exp(0.2 + 0.1 * as.integer(data$year))),
+    stats::rnorm(nrow(data), 0.2 * as.integer(data$year), 1)
+  )
+  model <- tinyVAST::tinyVAST(
+    response ~ year + x,
+    data = data,
+    family = list(
+      poisson = stats::poisson(),
+      normal = stats::gaussian()
+    ),
+    spatial_domain = NULL
+  )
+  diagnostic <- influ(model, focus = "year")
+
+  expect_identical(diagnostic$family$structure, "multivariate")
+  expect_setequal(
+    unique(diagnostic$influence$component),
+    c("count:conditional", "biomass:conditional")
+  )
+  expect_setequal(
+    names(diagnostic$metadata$family_by_response),
+    c("count", "biomass")
   )
 })
 

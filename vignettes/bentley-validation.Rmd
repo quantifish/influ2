@@ -147,6 +147,36 @@ max(comparison$absolute_difference)
 stopifnot(max(comparison$absolute_difference) < 1e-8)
 ```
 
+The same validation covers the two scalar metrics from the original
+implementation. `overall` summarises mean absolute influence, while `trend`
+summarises the ordered change through the focus levels.
+
+```{r bentley-metrics}
+legacy_metrics <- subset(
+  legacy_diagnostic$summary,
+  term != "intercept" & term != "year",
+  select = c(term, overall, trend)
+)
+new_metrics <- reshape(
+  influ_metrics(new_diagnostic)[c("term", "metric", "estimate")],
+  direction = "wide",
+  idvar = "term",
+  timevar = "metric"
+)
+names(new_metrics) <- sub("^estimate\\.", "", names(new_metrics))
+metric_comparison <- merge(
+  legacy_metrics,
+  new_metrics,
+  by = "term",
+  suffixes = c("_legacy", "_new")
+)
+metric_comparison
+stopifnot(
+  max(abs(metric_comparison$overall_legacy - metric_comparison$overall_new)) < 1e-8,
+  max(abs(metric_comparison$trend_legacy - metric_comparison$trend_new)) < 1e-8
+)
+```
+
 The final overlay makes exact agreement visually apparent: legacy results are
 points, and new results are lines.
 

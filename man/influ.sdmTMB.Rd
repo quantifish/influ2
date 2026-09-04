@@ -9,6 +9,8 @@
   focus,
   data = NULL,
   weights = NULL,
+  reference_data = NULL,
+  reference_weights = NULL,
   uncertainty = "auto",
   retain = "summary",
   probs = c(0.025, 0.975),
@@ -28,6 +30,12 @@
 
 \item{weights}{Optional numeric observation weights or the name of a weight
 column in `data`.}
+
+\item{reference_data}{Optional prediction grid defining the common
+standardisation distribution. By default the observed data are used.}
+
+\item{reference_weights}{Optional numeric weights, or a column name, for
+`reference_data`.}
 
 \item{uncertainty}{One of `"auto"`, `"none"`, `"analytic"`, or
 `"simulation"`.}
@@ -52,8 +60,8 @@ An [influ_diag] object.
 \description{
 Fixed effects use the marginal covariance from TMB. Spatial,
 spatiotemporal, IID, smooth, and time-varying contributions are projected
-from the fitted fields without constructing dense draw arrays. Field
-uncertainty is deliberately marked as pending until sparse joint-precision
-simulation is available. Delta fixed effects are combined with their joint
-covariance to obtain unconditional-mean influence.
+from the fitted fields without retaining dense draw arrays. Field uncertainty
+uses sparse joint-precision simulation and is reduced directly to compact
+focus-level estimands. Delta fixed effects and latent fields are combined
+draw by draw to obtain unconditional-mean influence.
 }

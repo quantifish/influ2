@@ -36,6 +36,7 @@ influ.default <- function(model, ...) {
 #' @param coefficients Compact coefficient or field summaries.
 #' @param composition Compact data-composition summaries.
 #' @param indices Nominal and standardised index summaries.
+#' @param metrics Compact overall and trend influence metrics.
 #' @param uncertainty Description of the uncertainty calculation.
 #' @param retained Description of retained posterior or sampling information.
 #' @param metadata Additional model and calculation metadata.
@@ -47,7 +48,7 @@ influ.default <- function(model, ...) {
 #' @keywords internal
 new_influ_diag <- function(backend, family, focus, influence,
                            coefficients = NULL, composition = NULL,
-                           indices = NULL, uncertainty = list(),
+                           indices = NULL, metrics = NULL, uncertainty = list(),
                            retained = list(), metadata = list(), draws = NULL,
                            model = NULL) {
   stopifnot(
@@ -65,6 +66,7 @@ new_influ_diag <- function(backend, family, focus, influence,
     coefficients = coefficients %||% data.frame(),
     composition = composition %||% data.frame(),
     indices = indices %||% data.frame(),
+    metrics = metrics %||% data.frame(),
     uncertainty = uncertainty,
     retained = retained,
     metadata = metadata,
@@ -131,6 +133,13 @@ influ_composition <- function(x) {
 influ_draws <- function(x) {
   .assert_influ_diag(x)
   x$draws
+}
+
+#' @rdname influ_extractors
+#' @export
+influ_metrics <- function(x) {
+  .assert_influ_diag(x)
+  x$metrics
 }
 
 .assert_influ_diag <- function(x) {
@@ -202,6 +211,7 @@ summary.influ_diag <- function(object, ...) {
       focus = object$focus,
       uncertainty = object$uncertainty,
       retained = object$retained,
+      metrics = object$metrics,
       term_summary = term_summary
     ),
     class = "summary.influ_diag"

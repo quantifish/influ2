@@ -15,7 +15,9 @@
 
 .glmmTMB_component_diag <- function(model, data, focus, component,
                                     family_spec, weights, uncertainty, retain,
-                                    probs, ndraws, seed, draws_path) {
+                                    probs, ndraws, seed, draws_path,
+                                    reference_data = NULL,
+                                    reference_weights = NULL) {
   X <- stats::model.matrix(model, component = component)
   beta <- glmmTMB::fixef(model)[[component]]
   V <- stats::vcov(model)[[component]]
@@ -34,6 +36,12 @@
   prepared <- .prepare_frequentist_matrix(
     model, X, term_columns, beta = beta, V = V
   )
+  reference_X <- if (is.null(reference_data)) NULL else {
+    .align_reference_matrix(
+      stats::model.matrix(model, newdata = reference_data, component = component),
+      prepared$X
+    )
+  }
   component_name <- switch(
     component,
     cond = if (family_spec$structure == "hurdle") "positive" else "conditional",
@@ -56,6 +64,9 @@
     retain = retain,
     probs = probs,
     weights = weights,
+    reference_data = reference_data,
+    reference_X = reference_X,
+    reference_weights = reference_weights,
     component = component_name,
     ndraws = ndraws,
     seed = seed,
@@ -65,7 +76,9 @@
 }
 
 .glmmTMB_component_projection <- function(model, data, focus, component,
-                                          draws, family_spec, weights) {
+                                          draws, family_spec, weights,
+                                          reference_data = NULL,
+                                          reference_weights = NULL) {
   X <- stats::model.matrix(model, component = component)
   frm <- stats::formula(model, component = component)
   assign <- attr(X, "assign")
@@ -75,9 +88,20 @@
   term_columns <- term_columns[lengths(term_columns) > 0L]
   weights <- .resolve_influ_weights(data, weights)
   focus_info <- .focus_info(data, focus)
-  reference_design <- .weighted_col_mean(X, weights)
+  reference_X <- if (is.null(reference_data)) X else stats::model.matrix(
+    model, newdata = reference_data, component = component
+  )
+  reference_weights <- if (is.null(reference_data)) {
+    weights
+  } else {
+    .resolve_influ_weights(reference_data, reference_weights)
+  }
+  reference_design <- .weighted_col_mean(reference_X, reference_weights)
   term_deltas <- lapply(term_columns, function(columns) {
-    B_term <- .term_contrast(X[, columns, drop = FALSE], focus_info, weights)
+    B_term <- .term_contrast(
+      X[, columns, drop = FALSE], focus_info, weights,
+      reference_X[, columns, drop = FALSE], reference_weights
+    )
     B <- matrix(0, nrow = nrow(B_term), ncol = ncol(X))
     B[, columns] <- B_term
     draws %*% t(B)
@@ -86,13 +110,16 @@
     family_spec = family_spec,
     eta_reference = as.numeric(draws %*% reference_design),
     term_deltas = term_deltas,
+    reference = if (is.null(reference_data)) "observed" else "prediction_grid",
     method = if (nrow(draws) == 1L) "none" else "joint coefficient simulation"
   )
 }
 
 .glmmTMB_two_part_diag <- function(model, data, focus, overall_spec,
                                    probability_spec, weights, uncertainty,
-                                   retain, probs, ndraws, seed) {
+                                   retain, probs, ndraws, seed,
+                                   reference_data = NULL,
+                                   reference_weights = NULL) {
   X_cond <- stats::model.matrix(model, component = "cond")
   X_zi <- stats::model.matrix(model, component = "zi")
   beta_cond <- glmmTMB::fixef(model)$cond
@@ -128,10 +155,12 @@
   zi_draws <- joint_draws[, zi_names, drop = FALSE]
   colnames(zi_draws) <- colnames(X_zi)
   main_projection <- .glmmTMB_component_projection(
-    model, data, focus, "cond", cond_draws, overall_spec, weights
+    model, data, focus, "cond", cond_draws, overall_spec, weights,
+    reference_data, reference_weights
   )
   probability_projection <- .glmmTMB_component_projection(
-    model, data, focus, "zi", zi_draws, probability_spec, weights
+    model, data, focus, "zi", zi_draws, probability_spec, weights,
+    reference_data, reference_weights
   )
   response <- names(stats::model.frame(model))[1]
 
@@ -156,7 +185,9 @@
   )
 }
 
-.glmmTMB_random_diag <- function(model, data, focus, family_spec, weights) {
+.glmmTMB_random_diag <- function(model, data, focus, family_spec, weights,
+                                 reference_data = NULL,
+                                 reference_weights = NULL) {
   conditional <- tryCatch(
     as.numeric(stats::predict(model, newdata = data, type = "link")),
     error = function(e) NULL
@@ -168,6 +199,22 @@
   if (is.null(conditional) || is.null(fixed)) return(NULL)
   contribution <- conditional - fixed
   if (!any(abs(contribution) > sqrt(.Machine$double.eps))) return(NULL)
+
+  reference_contribution <- NULL
+  if (!is.null(reference_data)) {
+    reference_conditional <- tryCatch(
+      as.numeric(stats::predict(model, newdata = reference_data, type = "link")),
+      error = function(e) NULL
+    )
+    reference_fixed <- tryCatch(
+      as.numeric(stats::predict(
+        model, newdata = reference_data, type = "link", re.form = NA
+      )),
+      error = function(e) NULL
+    )
+    if (is.null(reference_conditional) || is.null(reference_fixed)) return(NULL)
+    reference_contribution <- reference_conditional - reference_fixed
+  }
 
   random_spec <- family_spec
   .influ_linear_engine(
@@ -185,6 +232,11 @@
     retain = "summary",
     probs = c(0.025, 0.975),
     weights = weights,
+    reference_data = reference_data,
+    reference_X = if (is.null(reference_contribution)) NULL else {
+      matrix(reference_contribution, ncol = 1L, dimnames = list(NULL, "random_effects"))
+    },
+    reference_weights = reference_weights,
     component = "random_effects",
     keep_model = FALSE,
     notes = "Random-effect influence currently uses conditional modes; uncertainty is not yet propagated."
@@ -205,6 +257,7 @@
 #' @return An [influ_diag] object.
 #' @export
 influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
+                          reference_data = NULL, reference_weights = NULL,
                           uncertainty = "auto", retain = "summary",
                           probs = c(0.025, 0.975), ndraws = 1000L,
                           seed = NULL, draws_path = NULL,
@@ -226,7 +279,8 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
   components <- list(
     conditional = .glmmTMB_component_diag(
       model, data, focus, "cond", overall_spec, weights, uncertainty,
-      component_retain, probs, ndraws, seed, NULL
+      component_retain, probs, ndraws, seed, NULL,
+      reference_data, reference_weights
     )
   )
 
@@ -238,16 +292,19 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     )
     components$probability <- .glmmTMB_component_diag(
       model, data, focus, "zi", probability_spec, weights, uncertainty,
-      component_retain, probs, ndraws, seed, NULL
+      component_retain, probs, ndraws, seed, NULL,
+      reference_data, reference_weights
     )
     components$unconditional_mean <- .glmmTMB_two_part_diag(
       model, data, focus, overall_spec, probability_spec, weights,
-      uncertainty, component_retain, probs, ndraws, seed
+      uncertainty, component_retain, probs, ndraws, seed,
+      reference_data, reference_weights
     )
   }
 
   components$random <- .glmmTMB_random_diag(
-    model, data, focus, overall_spec, weights
+    model, data, focus, overall_spec, weights,
+    reference_data, reference_weights
   )
 
   out <- .combine_influ_diags(

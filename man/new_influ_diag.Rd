@@ -12,6 +12,7 @@ new_influ_diag(
   coefficients = NULL,
   composition = NULL,
   indices = NULL,
+  metrics = NULL,
   uncertainty = list(),
   retained = list(),
   metadata = list(),
@@ -33,6 +34,8 @@ new_influ_diag(
 \item{composition}{Compact data-composition summaries.}
 
 \item{indices}{Nominal and standardised index summaries.}
+
+\item{metrics}{Compact overall and trend influence metrics.}
 
 \item{uncertainty}{Description of the uncertainty calculation.}
 

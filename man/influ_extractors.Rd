@@ -6,6 +6,7 @@
 \alias{influ_indices}
 \alias{influ_composition}
 \alias{influ_draws}
+\alias{influ_metrics}
 \title{Extract a table from an influence diagnostic}
 \usage{
 influ_effects(x)
@@ -15,6 +16,8 @@ influ_indices(x)
 influ_composition(x)
 
 influ_draws(x)
+
+influ_metrics(x)
 }
 \arguments{
 \item{x}{An [influ_diag] object.}

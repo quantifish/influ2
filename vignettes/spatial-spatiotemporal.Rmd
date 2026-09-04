@@ -94,7 +94,12 @@ pcod_model <- sdmTMB::sdmTMB(
   silent = TRUE
 )
 
-pcod_diagnostic <- influ(pcod_model, focus = "year")
+pcod_diagnostic <- influ(
+  pcod_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 11
+)
 summary(pcod_diagnostic)
 ```
 
@@ -264,7 +269,12 @@ tiny_model <- tinyVAST::tinyVAST(
   space_columns = c("x", "ycoord")
 )
 
-tiny_diagnostic <- influ(tiny_model, focus = "time")
+tiny_diagnostic <- influ(
+  tiny_model,
+  focus = "time",
+  ndraws = 100,
+  seed = 12
+)
 summary(tiny_diagnostic)
 ```
 
@@ -324,14 +334,58 @@ ggplot(tiny_surfaces, aes(x, ycoord, fill = link_contribution)) +
   theme_bw()
 ```
 
-## Current interpretation boundary
+## Multivariate tinyVAST responses
+
+`tinyVAST` can fit multiple responses, including responses with different
+families. `influ2` keeps the common schema and prefixes each component with its
+response name. This small non-spatial example isolates that interface; the
+same response labels are used when spatial and spatiotemporal terms are added.
+
+```{r tinyvast-multivariate, eval=has_tinyVAST}
+multivariate_data <- rbind(
+  transform(
+    tiny_data,
+    response = count,
+    var = "count",
+    dist = "poisson"
+  ),
+  transform(
+    tiny_data,
+    response = as.numeric(count > 0),
+    var = "encounter",
+    dist = "binomial"
+  )
+)
+
+multivariate_model <- tinyVAST::tinyVAST(
+  response ~ factor(time),
+  data = multivariate_data,
+  family = list(
+    poisson = poisson(),
+    binomial = binomial()
+  ),
+  spatial_domain = NULL
+)
+multivariate_diagnostic <- influ(
+  multivariate_model,
+  focus = "time"
+)
+unique(multivariate_diagnostic$influence[c("term", "component")])
+```
+
+## Joint field uncertainty
 
 The fixed-effect bands use each model's joint maximum-likelihood covariance.
-The latent spatial and spatiotemporal results currently use fitted conditional
-modes. They are therefore useful for component attribution and exploratory
-diagnosis, but they do not yet carry uncertainty from the sparse joint
-precision matrix. Uncertainty-aware field influence, and the combination of
-field uncertainty across delta-model components, remain explicit development
-targets rather than being approximated with independent marginal bands.
+Spatial and spatiotemporal intervals use sparse joint-precision simulation.
+The implementation processes parameter draws in small batches and retains
+only focus-by-term diagnostic draws, never an observations-by-draws latent
+field array. For delta models, occurrence and positive fields are taken from
+the same joint draw before unconditional-mean influence is calculated. This
+preserves cross-component dependence while keeping memory use bounded.
+
+`uncertainty = "none"` remains available as a fast fitted-mode preview. An
+explicit `reference_data` grid, optionally with `reference_weights`, can be
+used to hold the spatial and covariate standardisation distribution fixed
+across model comparisons.
 
 ## References
