@@ -1,361 +1,474 @@
 ---
-title: "influ2"
-output: 
+title: "Influence diagnostics"
+output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 3
+bibliography: references.bib
+link-citations: true
 vignette: >
-  %\VignetteIndexEntry{influ2}
+  %\VignetteIndexEntry{Influence diagnostics}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: console
 ---
 
-```{r, include = FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE
 )
+has_mgcv <- requireNamespace("mgcv", quietly = TRUE)
+has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)
+has_brms <- requireNamespace("brms", quietly = TRUE) &&
+  requireNamespace("posterior", quietly = TRUE)
+has_sdmTMB <- requireNamespace("sdmTMB", quietly = TRUE)
+has_tinyVAST <- requireNamespace("tinyVAST", quietly = TRUE) &&
+  requireNamespace("fmesher", quietly = TRUE)
+suppressPackageStartupMessages(library(ggplot2))
 ```
 
-# Introduction
+## Why influence diagnostics?
 
-The `influ2` package is based on the original `influ` package which was 
-developed to generate influence statistics and associated plots. The `influ` 
-package has functions that use outputs from the `glm` function. The `influ2` 
-package was developed to use outputs from `brms` and relies heavily on the R 
-packages in the `tidyverse` suite of packages. This vignette showcases the 
-`influ2` package.
+CPUE standardisation attempts to distinguish changes in abundance from changes
+in fishing practice, location, season, vessel composition, and other
+explanatory variables. A fitted model may estimate these relationships well
+without making it obvious why the standardised index differs from the nominal
+series.
 
-# Functions for exploring data
+The coefficient-distribution-influence (CDI) framework combines the fitted
+effect of a term with changes in the sampled distribution of that term through
+the focus variable, which is usually year [@Bentley2012]. Spatial and
+spatiotemporal versions can similarly show whether changes in sampled location
+move observations among areas of different predicted abundance [@Hsu2022].
 
-In this vignette I use a simulated catch per unit effort (CPUE) data set to 
-model the number of lobsters caught per pot. This data set has a response 
-variable labelled `lobsters` and includes the dependent variables `year` (from 
-2000 to 2017), `month`, `depth` (in meters), and `soak` (the soak time of each 
-pot in hours). No step-wise variable selection or model selection is done in 
-this vignette.
+`influ2` represents these results with one model-neutral S3 class. Each backend
+extracts model components and joint uncertainty, while the calculation,
+storage, summary, and plotting layers remain shared.
 
-The main function for exploring data in `influ2` is `plot_bubble` which presents 
-the number of records by two user defined groups within a data set. The bubble 
-size in `plot_bubble` represents the number of records across the entire data 
-set, and bubbles can either be a single colour or coloured by a third variable 
-in the data set.
+## A realistic lobster CPUE example
 
-```{r echo=TRUE, message=FALSE}
-library(knitr)
-library(tidyverse)
-library(reshape2)
-library(brms)
+The main examples use the simulated `lobsters_per_pot` data supplied with the
+package. These are 15,642 pot records from 2000 to 2017. The response is the
+number of lobsters caught per pot, and the explanatory variables are month,
+depth in metres, and soak time in hours. Annual sample sizes, seasonal
+coverage, depths, and soak times all vary, giving the diagnostic something
+meaningful to detect.
+
+```{r lobster-data}
 library(influ2)
-library(bayesplot)
-
-theme_set(theme_bw())
-
-options(mc.cores = 2)
-```
-
-The simulated data set:
-
-```{r sim-data, echo=TRUE, message=FALSE}
 data(lobsters_per_pot)
-nrow(lobsters_per_pot)
+
+dim(lobsters_per_pot)
 head(lobsters_per_pot)
 ```
 
-```{r plot-bubble-1, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and month."}
-plot_bubble(df = lobsters_per_pot, group = c("year", "month")) +
+The changing distribution of records by year and month is visible before a
+model is fitted. Larger bubbles represent more pot records. With no `fill`
+argument, `plot_bubble()` uses its default purple palette.
+
+```{r lobster-sampling-purple, fig.height=6, fig.cap="Sampling effort by year and month, using the default purple bubble style."}
+plot_bubble(
+  df = lobsters_per_pot,
+  group = c("year", "month")
+) +
   labs(x = "Month", y = "Year")
 ```
 
-```{r plot-bubble-2, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Distribution of data by year and month, also coloured by month."}
-plot_bubble(df = lobsters_per_pot, group = c("year", "month"), 
-            fill = "month") +
+Mapping month to colour gives a second view of the same sampling pattern.
+
+```{r lobster-sampling-colour, fig.height=6, fig.cap="Sampling effort by year and month, with a rainbow palette distinguishing months."}
+plot_bubble(
+  df = lobsters_per_pot,
+  group = c("year", "month"),
+  fill = "month"
+) +
   labs(x = "Month", y = "Year") +
   theme(legend.position = "none")
 ```
 
-# The origninal influ versus influ2
+Depth and soak-time coverage also change through time.
 
-Two different models are fitted in `brms`. The first model assumes a Poisson 
-distributioin and includes the 
-explanatory variables `year`, `month`, and a 3rd order polynomial for `soak` 
-time. The second model assumes a negative binomial distribution and 
-includes the explanatory variables `year`, `month` as a
-random effect, and a spline for `depth` with 3 degrees of freedom. 
+```{r lobster-covariates, fig.cap="Observed depth and soak-time distributions by year."}
+covariates <- tidyr::pivot_longer(
+  lobsters_per_pot,
+  cols = c("depth", "soak"),
+  names_to = "covariate",
+  values_to = "value"
+)
 
-```{r fit-model}
-fit1 <- brm(lobsters ~ year + month + poly(soak, 3), 
-            data = lobsters_per_pot, family = poisson, 
-            chains = 2, iter = 1500, refresh = 0, seed = 42, 
-            file = "fit1", file_refit = "never")
-
-fit2 <- brm(lobsters ~ year + (1 | month) + s(depth, k = 3), 
-            data = lobsters_per_pot, family = negbinomial(), 
-            control = list(adapt_delta = 0.99),
-            chains = 2, iter = 3000, refresh = 0, seed = 1, 
-            file = "fit2", file_refit = "never")
-```
-
-```{r add-criterion}
-criterion <- c("loo", "waic", "bayes_R2")
-fit1 <- add_criterion(x = fit1, criterion = criterion, file = "fit1")
-fit2 <- add_criterion(x = fit2, criterion = criterion, file = "fit2")
-```
-
-Fit a model using glm and generate influence statistics using the original `influ` package
-
-```{r do-glm}
-fit_glm <- glm(lobsters ~ year + month + poly(soak, 3), 
-               data = lobsters_per_pot, family = poisson)
-```
-
-```{r influ1-setup, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original CDI plot from the influ package."}
-myInfl <- Influence$new(model = fit_glm)
-myInfl$init()
-myInfl$calc()
-myInfl$cdiPlot(term = "month")
-```
-
-```{r plot-cdi-fe, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian CDI plot from the influ2 package."}
-cdi_month <- plot_bayesian_cdi(fit = fit1, xfocus = "month", yfocus = "year", 
-                               xlab = "Month", ylab = "Year")
-cdi_month
-```
-
-```{r influ1-step, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The original step-plot from the influ package."}
-myInfl$stepPlot()
-```
-
-The `influ2` package cannot generate steps plots automatically like `influ`. Each step must
-be modelled separately and then a list of models defined as below.
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "The new Bayesian step-plot from the influ2 package. Note that the new step-plot requires that all models/steps be run in brms before the function can be used."}
-fits <- list(fit1, fit2)
-plot_step(fits = fits)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-plot_index(fit = fit2)
-```
-
-```{r influ1-plot, echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-myInfl$stanPlot()
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-plot_influ(fit = fit1)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-myInfl$influPlot()
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of influences produced by the original influ package (points) and the new influ2 calculation (lines)."}
-i1 <- myInfl$influences %>%
-  pivot_longer(cols = -level, names_to = "variable") %>%
-  rename(year = level)
-i_month <- get_influ(fit = fit1, group = c("year", "month")) %>%
-  group_by(year) %>%
-  summarise(value = mean(delta)) %>%
-  mutate(variable = "month")
-# i_soak <- get_influ(fit = fit1, group = c("year", "soak")) %>%
-#   group_by(year) %>%
-#   summarise(value = mean(delta)) %>%
-#   mutate(variable = "poly(soak, 3)")
-# i2 <- bind_rows(i_month, i_soak)
-# 
-# ggplot(data = i2, aes(x = year, y = exp(value))) +
-#   geom_point(data = i1) +
-#   geom_line(aes(colour = variable, group = variable)) +
-#   facet_wrap(variable ~ ., ncol = 1) +
-#   labs(x = "Year", y = "Influence") +
-#   theme(legend.position = "none")
-```
-
-# Functions for exploring models
-
-Here I evaluate model fit using loo and waic. Other options include kfold, 
-loo_subsample, bayes_R2, loo_R2, and marglik.
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-fit1$criteria$loo
-fit1$criteria$waic
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-loo_compare(fit1, fit2, criterion = "loo") %>% kable(digits = 1)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-loo_compare(fit1, fit2, criterion = "waic") %>% kable(digits = 1)
-```
-
-Bayesian R2 `bayes_R2` for the three model runs
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-# get_bayes_R2(fits)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a fixed effect."}
-# cdi_month
-```
-
-```{r plot-cdi-re, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a random effect."}
-plot_bayesian_cdi(fit = fit2, xfocus = "month", yfocus = "year", 
-                  xlab = "Month", ylab = "Year")
-```
-
-```{r plot-cdi-poly, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a polynomial."}
-# plot_bayesian_cdi(fit = fit1, xfocus = "soak", yfocus = "year", 
-#                   xlab = "Soak time (hours)", ylab = "Year")
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "CDI plot for a spline."}
-# plot_bayesian_cdi(fit = fit2, xfocus = "depth", yfocus = "year", 
-#                   xlab = "Depth (m)", ylab = "Year")
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison plot of all model runs."}
-fits <- list(fit1, fit2)
-plot_compare(fits = fits)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Unstandardised versus standardised series."}
-plot_index(fit = fit1)
-```
-
-# Diagnostics
-
-The `influ2` package is based on the original `influ` package which was developed to generate influence plots. The `influ` package has functions that use outputs from the `glm` function. The `influ2` package was developed to use outputs from `brms` and relies heavily on the R packages `ggplot2` and `dplyr`. This vignette showcases the `influ2` package with a focus on model diagnostics including posterior predictive distributions, residuals, and quantile-quantile plots.
-
-```{r get-yrep}
-yrep <- posterior_predict(object = fit1, ndraws = 100)
-```
-
-```{r plot-bars, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Comparison of the empirical distribution of the data (y) to the distributions of simulated/replicated data (yrep) from the posterior predictive distribution."}
-# ppc_dens_overlay(y = lobsters_per_pot$lobsters, yrep = yrep) + 
-#   labs(x = "CPUE", y = "Density")
-
-ppc_bars(y = lobsters_per_pot$lobsters, yrep = yrep) + 
-  labs(x = "CPUE", y = "Density")
-```
-
-```{r plot-ecdf, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Posterior predictive check."}
-ppc_ecdf_overlay(y = lobsters_per_pot$lobsters, yrep = yrep, discrete = TRUE) + 
-  coord_cartesian(xlim = c(0, 10))
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot from LOO."}
-# loo <- loo(fit1, save_psis = TRUE)
-# psis <- loo$psis_object
-# lw <- weights(psis)
-# yrep <- posterior_predict(fit1)
-# ppc_loo_pit_qq(y = lobsters_per_pot$lobsters, yrep = yrep, lw = lw)
-```
-
-```{r plot-qq, echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Quantile-quantile plot."}
-# plot_qq(fit = fit1)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Residuals and a loess smoother."}
-# plot_predicted_residuals(fit = fit1, trend = "loess")
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Residuals and a linear fit by year."}
-# plot_predicted_residuals(fit = fit1, trend = "lm") +
-#   facet_wrap(year ~ .)
-```
-
-```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Residuals and a loess smoother by year."}
-# A new style of residual plot
-fit <- fit1
-
-# Extract predicted values
-pred <- fitted(fit) %>% data.frame()
-names(pred) <- paste0("pred.", names(pred))
-
-# Extract residuals
-resid <- residuals(fit) %>% data.frame()
-names(resid) <- paste0("resid.", names(resid))
-
-df <- bind_cols(resid, pred, lobsters_per_pot)
-
-ggplot(data = df, aes(x = year, y = .data$resid.Estimate)) +
-  geom_pointrange(aes(ymin = .data$resid.Q2.5, ymax = .data$resid.Q97.5), alpha = 0.75) +
-  facet_wrap(month ~ .) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  # geom_errorbarh(aes(xmax = .data$pred.Q2.5, xmin = .data$pred.Q97.5, height = 0), alpha = 0.75) +
-  # labs(x = "Predicted values", y = "Residuals") +
+ggplot(
+  covariates,
+  aes(x = year, y = value, group = year)
+) +
+  geom_boxplot(outlier.alpha = 0.08, linewidth = 0.25) +
+  facet_wrap(~covariate, scales = "free_y", ncol = 1) +
+  scale_y_continuous(
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(x = "Year", y = NULL) +
+  theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-# Implied residuals
+## GLM
 
-Implied coefficients (points) are calculated as the normalised fishing year coefficient (grey line) plus the mean of the standardised residuals in each year for each category of a variable. These values approximate the coefficients obtained when an area x year interaction term is fitted, particularly for those area x year combinations which have a substantial proportion of the records. The error bars indicate one standard error of the standardised residuals. The information at the top of each panel identifies the plotted category, provides the correlation coefficient (rho) between the category year index and the overall model index, and the number of records supporting the category.
+A Poisson GLM provides a transparent starting point. This is an example model,
+not a recommendation that Poisson variation is adequate for these data.
 
-```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Area which is not included in the model."}
-# plot_implied_residuals(fit = fit2, data = lobsters_per_pot, 
-#                        year = "year", groups = "month") +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```{r lobster-glm}
+lobster_glm <- glm(
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  family = poisson(link = "log"),
+  data = lobsters_per_pot
+)
+
+glm_diagnostic <- influ(lobster_glm, focus = "year")
+glm_diagnostic
+summary(glm_diagnostic)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, fig.cap = "Implied residuals by year for the categorical variable Sepcies which is included in the model."}
-# plot_implied_residuals(fit = fit2, data = lobsters_per_pot, 
-#                        year = "year", groups = "depth") +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+The influence plot shows how changes in sampled month, depth, and soak time
+move the annual standardised series. The year term is retained in the object,
+but omitted from this plot because its within-year composition is the focus,
+not a sampling-distribution effect.
+
+```{r lobster-glm-influence, fig.cap="GLM influence ratios for the changing lobster covariate distributions."}
+plot(
+  glm_diagnostic,
+  type = "influence",
+  term = c("month", "poly(depth, 3)", "poly(soak, 3)")
+)
 ```
 
-# Functions for generating outputs for stock assessment
+The same object contains nominal and standardised indices.
 
-Finally, in order to fit to the data in a stock assessment model then indices 
-can be produced using the `get_index` function. The `Estimate` and `Est.Error` 
-columns are what should be used in stock assessment.
-
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-unstd <- get_unstandarsied(fit = fit2)
-cpue0 <- get_index(fit = fit2)
-
-cpue0 %>%
-  mutate(Unstandardised = unstd$Median) %>%
-  select(Year, Unstandardised, Mean, SD, Qlower, Median, Qupper) %>%
-  kable(digits = 3)
+```{r lobster-glm-index, fig.cap="Nominal and Poisson-GLM-standardised lobster indices."}
+plot(glm_diagnostic, type = "index")
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE}
-ggplot(data = cpue0, aes(x = Year)) +
-  geom_pointrange(aes(y = Median, ymin = Qlower, ymax = Qupper)) +
-  geom_line(aes(y = Mean, group = 1), colour = "red") +
-  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
-  labs(x = NULL, y = "CPUE") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+The model-neutral overall and trend metrics reproduce Bentley's definitions.
+The overall metric is the mean absolute link-scale influence transformed back
+to a proportional scale. The trend metric is the fitted change per ordered
+focus level, also transformed to a proportional scale.
+
+```{r lobster-glm-metrics}
+subset(
+  influ_metrics(glm_diagnostic),
+  term != "year",
+  select = c(term, metric, estimate)
+)
 ```
 
-```{r echo=TRUE, fig.height=6, fig.width=6, message=FALSE, fig.cap = "Simulating from a lognormal distribution and comparing with table values. Simulating with the wrong SD underestimates the uncertainty at low values."}
-cpue1 <- cpue0 %>% mutate(Type = "Estimate")
-cpue2 <- cpue1 %>% mutate(Type = "Simulated wrong")
-cpue3 <- cpue1 %>% mutate(Type = "Simulated")
+### A common prediction-grid reference
 
-for (ii in 1:nrow(cpue1)) {
-  sdd <- cpue1$SD[ii] # this is wrong
-  r1 <- rlnorm(n = 5000, log(cpue1$Mean[ii]), sdd)
-  cpue2$Median[ii] <- median(r1)
-  cpue2$Qlower[ii] <- quantile(r1, probs = 0.025)
-  cpue2$Qupper[ii] <- quantile(r1, probs = 0.975)
-  
-  sdd <- log(1 + cpue1$SD[ii] / cpue1$Mean[ii])
-  r1 <- rlnorm(n = 5000, log(cpue1$Median[ii]), sdd)
-  cpue3$Median[ii] <- median(r1)
-  cpue3$Qlower[ii] <- quantile(r1, probs = 0.025)
-  cpue3$Qupper[ii] <- quantile(r1, probs = 0.975)
-}
+Observed-data standardisation is the default. For comparisons among fleets,
+areas, or models, an explicit prediction grid prevents differences in their
+observed samples from silently changing the reference distribution. This grid
+crosses every year and month at common depth and soak values.
 
-ggplot(data = bind_rows(cpue1, cpue2, cpue3), 
-       aes(x = Year, y = Median, colour = Type)) +
-  geom_pointrange(aes(ymin = Qlower, ymax = Qupper), 
-                  position = position_dodge(width = 0.5)) +
-  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.05))) +
-  labs(x = NULL, y = "CPUE") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```{r lobster-reference-grid}
+lobster_reference <- expand.grid(
+  year = levels(lobsters_per_pot$year),
+  month = levels(lobsters_per_pot$month),
+  depth = median(lobsters_per_pot$depth),
+  soak = median(lobsters_per_pot$soak)
+)
+lobster_reference$year <- factor(
+  lobster_reference$year,
+  levels = levels(lobsters_per_pot$year)
+)
+lobster_reference$month <- factor(
+  lobster_reference$month,
+  levels = levels(lobsters_per_pot$month)
+)
+
+glm_grid_diagnostic <- influ(
+  lobster_glm,
+  focus = "year",
+  reference_data = lobster_reference
+)
+glm_grid_diagnostic$metadata[c("reference", "n_reference")]
 ```
+
+Reference weights can be supplied with `reference_weights`. They may be a
+numeric vector or the name of a column in `reference_data`. This makes the
+standardisation estimand explicit, reproducible, and independent of accidental
+sample imbalance.
+
+## GAM
+
+The `mgcv` backend works with parametric terms and smooths [@Wood2017]. Here,
+negative-binomial variation is combined with smooth depth and soak effects.
+
+```{r lobster-gam, eval=has_mgcv}
+lobster_gam <- mgcv::gam(
+  lobsters ~ year + month + s(depth, k = 5) + s(soak, k = 5),
+  family = mgcv::nb(),
+  method = "REML",
+  data = lobsters_per_pot
+)
+
+gam_diagnostic <- influ(lobster_gam, focus = "year")
+summary(gam_diagnostic)
+```
+
+```{r lobster-gam-influence, eval=has_mgcv, fig.cap="GAM influence ratios for month, depth, and soak time."}
+plot(
+  gam_diagnostic,
+  type = "influence",
+  term = c("month", "s(depth)", "s(soak)")
+)
+```
+
+This is the same `influ_diag` interface as the GLM. No plotting code needs to
+know that two of the terms are smooths.
+
+## glmmTMB
+
+`glmmTMB` adds mixed effects, negative-binomial models, hurdle models, and
+zero-inflation [@Brooks2017]. The example treats month as a random intercept.
+
+```{r lobster-glmmtmb, eval=has_glmmTMB}
+lobster_glmmTMB <- glmmTMB::glmmTMB(
+  lobsters ~ year + poly(depth, 2) + poly(soak, 2) + (1 | month),
+  family = glmmTMB::nbinom2(),
+  data = lobsters_per_pot
+)
+
+glmmTMB_diagnostic <- influ(lobster_glmmTMB, focus = "year")
+summary(glmmTMB_diagnostic)
+```
+
+```{r lobster-glmmtmb-influence, eval=has_glmmTMB, fig.cap="glmmTMB fixed- and random-effect influence ratios."}
+plot(glmmTMB_diagnostic, type = "components")
+```
+
+Fixed effects use the joint maximum-likelihood covariance. The month random
+effect uses its fitted conditional modes, with uncertainty propagated from
+their joint conditional latent covariance and labelled separately.
+For hurdle and zero-inflated fits, `influ()` also calculates population-level
+unconditional-mean influence using the joint covariance of both components.
+
+## brms
+
+The Bayesian backend uses genuine joint posterior draws, but projects each draw
+directly to the much smaller focus-by-term diagnostic. It never constructs an
+observation-by-draw-by-term array [@Buerkner2017]. A model for the same lobster
+data can be fitted as follows:
+
+```{r lobster-brms-fit, eval=FALSE}
+lobster_brms <- brms::brm(
+  lobsters ~ year + (1 | month) + s(depth, k = 3),
+  family = brms::negbinomial(),
+  data = lobsters_per_pot,
+  chains = 2,
+  iter = 2000,
+  seed = 1,
+  file = "fit2",
+  file_refit = "on_change"
+)
+```
+
+The vignette uses the fitted model shipped with its source, rather than running
+MCMC whenever the documentation is built.
+
+```{r lobster-brms, eval=has_brms}
+lobster_brms <- readRDS(system.file(
+  "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
+))
+brms_diagnostic <- influ(
+  lobster_brms,
+  focus = "year",
+  ndraws = 250,
+  retain = "summary"
+)
+summary(brms_diagnostic)
+```
+
+```{r lobster-brms-influence, eval=has_brms, fig.cap="BRMS population-level, month group-level, and depth-smooth influence ratios."}
+plot(brms_diagnostic, type = "components")
+```
+
+Population-level, group-level, and smooth contributions all preserve posterior
+dependence during calculation. The default object retains interval summaries;
+`retain = "derived_draws"` retains only the compact diagnostic draws.
+
+The same posterior diagnostic can be displayed as a complete Bayesian CDI
+plot. Here, the coefficient panel, observed monthly composition, and resulting
+yearly influence are kept together, while the influence intervals retain the
+joint posterior dependence.
+
+```{r lobster-brms-cdi, eval=has_brms, fig.width=10, fig.height=6, fig.cap="Bayesian coefficient-distribution-influence display for the monthly group-level effect."}
+plot(
+  brms_diagnostic,
+  type = "cdi",
+  term = "month",
+  component = "conditional:group_level"
+)
+```
+
+## sdmTMB
+
+The lobster data deliberately have no coordinates. Inventing coordinates from
+depth or soak time would create a misleading spatial example, so this example
+uses the Pacific cod data and mesh supplied by `sdmTMB` [@Anderson2025]. Fixed,
+spatial, and spatiotemporal contributions are returned in the same schema as
+the lobster examples.
+
+```{r sdmtmb-example, eval=has_sdmTMB}
+data("pcod_2011", package = "sdmTMB")
+data("pcod_mesh_2011", package = "sdmTMB")
+
+spatial_model <- sdmTMB::sdmTMB(
+  present ~ as.factor(year) + depth_scaled,
+  data = pcod_2011,
+  mesh = pcod_mesh_2011,
+  family = binomial(),
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "iid",
+  silent = TRUE
+)
+
+sdmTMB_diagnostic <- influ(
+  spatial_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 1
+)
+summary(sdmTMB_diagnostic)
+```
+
+```{r sdmtmb-influence, eval=has_sdmTMB, fig.cap="sdmTMB fixed, spatial, and spatiotemporal influence components."}
+plot(sdmTMB_diagnostic, type = "components")
+```
+
+## tinyVAST
+
+The `tinyVAST` example uses a small reproducible spatial count data set. The
+purpose is to exercise the spatial and spatiotemporal component interface, not
+to represent a complete survey analysis [@Thorson2025].
+
+```{r tinyvast-example, eval=has_tinyVAST}
+set.seed(2)
+n <- 120
+spatial_counts <- data.frame(
+  x = runif(n),
+  ycoord = runif(n),
+  time = rep(1:4, each = n / 4)
+)
+spatial_counts$year <- factor(spatial_counts$time)
+spatial_counts$var <- "catch"
+spatial_counts$dist <- "poisson"
+eta <- 0.3 + 0.08 * spatial_counts$time +
+  0.3 * sin(2 * pi * spatial_counts$x)
+spatial_counts$catch <- rpois(n, exp(eta))
+
+spatial_mesh <- fmesher::fm_mesh_2d(
+  spatial_counts[c("x", "ycoord")],
+  n = 25
+)
+tiny_model <- tinyVAST::tinyVAST(
+  catch ~ year,
+  data = spatial_counts,
+  family = list(poisson = poisson()),
+  spatial_domain = spatial_mesh,
+  spacetime_term = "",
+  space_columns = c("x", "ycoord")
+)
+
+tinyVAST_diagnostic <- influ(
+  tiny_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 1
+)
+summary(tinyVAST_diagnostic)
+```
+
+```{r tinyvast-influence, eval=has_tinyVAST, fig.cap="tinyVAST fixed and spatiotemporal influence components."}
+plot(tinyVAST_diagnostic, type = "components")
+```
+
+The spatial adapters propagate fixed-effect covariance and simulate spatial
+and spatiotemporal fields from each model's sparse joint precision matrix. Each
+draw is reduced immediately to focus-level influence, so the returned object
+does not contain an observations-by-draws field array. Delta fields use the
+same joint draw for occurrence and positive components before the
+unconditional mean is calculated.
+
+## One interface and compact uncertainty
+
+All fitted-model methods return an `influ_diag`:
+
+```{r methods}
+methods("influ")
+```
+
+The result contains compact tables for influence, coefficient or field
+summaries, data composition, and index comparisons:
+
+```{r extraction}
+head(influ_effects(glm_diagnostic))
+head(influ_composition(glm_diagnostic))
+influ_indices(glm_diagnostic)
+influ_metrics(glm_diagnostic)
+```
+
+Calculation and retention are separate choices:
+
+```r
+# Calculate uncertainty, retaining summaries only.
+d1 <- influ(fitted_model, focus = "year", retain = "summary")
+
+# Retain exact draws only for the derived diagnostics.
+d2 <- influ(fitted_model, focus = "year", retain = "derived_draws")
+
+# Write compact diagnostic draws to disk.
+d3 <- influ(
+  fitted_model,
+  focus = "year",
+  retain = "disk",
+  draws_path = "influence-draws.rds"
+)
+
+# Fast preview from coefficient estimates or posterior means.
+d4 <- influ(fitted_model, focus = "year", uncertainty = "none")
+```
+
+For GLMs and GAMs, linear diagnostic contrasts use fitted joint covariance
+analytically. Joint coefficient simulation is used when derived draws are
+requested. The BRMS backend reduces joint posterior draws during calculation,
+`glmmTMB` jointly simulates fixed components for hurdle and zero-inflated
+means, and the spatial backends reduce sparse joint-precision draws to the same
+compact schema. This separation draws on the posterior-processing approach used in
+CPUETools [@CPUETools], while the S3 design and GAM implementation were also
+informed by `gamInflu` [@Dunn2025].
+
+## Families and response structures
+
+The initial family set is:
+
+```{r families}
+influ_families()
+```
+
+It covers Gaussian, binomial, Poisson, negative binomial, lognormal, Gamma, and
+Tweedie responses. Hurdle/delta combinations cover Gamma, lognormal, Poisson,
+and negative-binomial positive components. Zero-inflated combinations cover
+Poisson and negative-binomial counts. Quasi families and more specialised
+positive distributions are deliberately outside the initial scope.
+
+The separate [hurdle and zero-inflation vignette](hurdle.html) explains named
+components and unconditional means. The
+[Bentley validation vignette](bentley-validation.html) runs the frozen original
+`proto` implementation, compares values, and displays old and new plots side by
+side. The [spatial and spatiotemporal vignette](spatial-spatiotemporal.html)
+maps persistent and time-varying fields alongside their influence components.
+
+## References

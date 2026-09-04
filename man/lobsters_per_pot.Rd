@@ -7,17 +7,18 @@
 \format{
 a \code{tibble} containing 5 fields including:
 \describe{
-  \item{lobsters}{Age in years.}
-  \item{year}{Standard deviation of length at age.}
-  \item{month}{Standard deviation of length at age.}
-  \item{depth}{Standard deviation of length at age.}
-  \item{soak}{Standard deviation of length at age.}
+  \item{lobsters}{Number of lobsters caught in one pot.}
+  \item{year}{Factor identifying fishing year, from 2000 to 2017.}
+  \item{month}{Two-digit factor identifying calendar month.}
+  \item{depth}{Fishing depth in metres.}
+  \item{soak}{Pot soak time in hours.}
  }
 }
 \usage{
 data(lobsters_per_pot)
 }
 \description{
-Simulated catch of lobsters per pot.
+Simulated catch of lobsters per pot from 2000 to 2017, with changing
+seasonal, depth, and soak-time coverage.
 }
 \keyword{datasets}

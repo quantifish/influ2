@@ -1,4 +1,4 @@
-url: http://www.quantifish.co.nz/influ2/
+url: https://www.quantifish.co.nz/influ2/
 
 template:
   bootstrap: 5
@@ -9,42 +9,59 @@ navbar:
     left:  [intro, articles, tutorials, reference, news]
     right: [search, github]
 
-reference:
-- title: influ2 functions
-  desc: Functions from the new influ2 R package.
+articles:
+- title: Get started
+  navbar: ~
   contents:
   - influ2
-  - starts_with("get_")
-  - id_var_type
-  - geo_mean
-  - influ_app
-
-- title: influ2 plots
-  desc: Plots and tables from the new influ2 R package.
+- title: Validation and response structures
+  navbar: ~
   contents:
-  - starts_with("plot_")
-  - starts_with("table_")
+  - bentley-validation
+  - hurdle
+  - spatial-spatiotemporal
+
+reference:
+- title: Model-neutral diagnostics
+  desc: Calculate, inspect, and plot influence diagnostics.
+  contents:
+  - influ
+  - influ.brmsfit
+  - influ.gam
+  - influ.glm
+  - influ.glmmTMB
+  - influ.sdmTMB
+  - influ.tinyVAST
+  - influ_effects
+  - influ_indices
+  - influ_composition
+  - influ_draws
+  - influ_metrics
+  - influ_families
+  - plot.influ_diag
+  - plot_bubble
+
+- title: Additional diagnostics and comparisons
+  desc: Compare indices, inspect data coverage, and diagnose fitted models.
+  contents:
+  - plot_compare
+  - plot_step
+  - plot_data_extent
+  - plot_implied_residuals
+  - plot_predicted_residuals
+  - plot_qq
+
+- title: Bayesian model comparison
+  desc: Optional summaries for fitted BRMS models.
+  contents:
+  - get_bayes_R2
+  - table_criterion
 
 - title: Data
-  desc: Simulated data sets that are available.
+  desc: Simulated data supplied with the package.
   contents:
   - lobsters_per_pot
 
-- title: influ
-  desc: Functions from the original influ R package.
+- title: Package
   contents:
-  - influ
-  - Influence
-  - Influence$new
-  - Influence$init
-  - Influence$calc
-  - Influence$effects
-  - Influence$stanPlot
-  - Influence$cdiPlot
-  - Influence$influPlot
-  - Influence$stepPlot
-  - Influence$cdiPlotAll
-  - Influence$stepAndInfluPlot
-  - coeffs
-  - ses
-  
+  - influ2
