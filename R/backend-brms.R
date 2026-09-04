@@ -49,6 +49,234 @@
   list(beta = beta, draws = draws)
 }
 
+.brms_draw_matrix <- function(model, variables, ndraws = NULL) {
+  available <- posterior::variables(model)
+  missing <- setdiff(variables, available)
+  if (length(missing)) {
+    stop(
+      "The following brms parameters could not be found: ",
+      paste(missing, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  draws <- posterior::as_draws_matrix(model, variable = variables)
+  if (!is.null(ndraws) && nrow(draws) > ndraws) {
+    keep <- unique(round(seq(1, nrow(draws), length.out = ndraws)))
+    draws <- draws[keep, , drop = FALSE]
+  }
+  draws
+}
+
+.brms_group_contrast <- function(J, Z, focus_info, weights, n_groups) {
+  group_sum <- function(values, groups) {
+    totals <- numeric(n_groups)
+    observed <- rowsum(values, groups, reorder = FALSE)
+    totals[as.integer(rownames(observed))] <- observed[, 1]
+    totals
+  }
+
+  overall <- group_sum(weights * Z, J) / sum(weights)
+  contrast <- matrix(
+    0,
+    nrow = length(focus_info$levels),
+    ncol = n_groups,
+    dimnames = list(focus_info$levels, NULL)
+  )
+  for (i in seq_along(focus_info$levels)) {
+    keep <- focus_info$value == focus_info$levels[i]
+    contrast[i, ] <- group_sum(weights[keep] * Z[keep], J[keep]) /
+      sum(weights[keep]) - overall
+  }
+  list(contrast = contrast, overall = overall)
+}
+
+.brms_group_diag <- function(model, data, focus, group_rows, component,
+                             family_spec, weights, uncertainty, retain,
+                             probs, ndraws) {
+  standata <- brms::standata(model)
+  focus_info <- .focus_info(data, focus)
+  weights <- .resolve_influ_weights(data, weights)
+  group <- group_rows$group[1]
+  group_levels <- attr(model$ranef, "levels")[[group]]
+  if (is.null(group_levels)) {
+    stop("Could not recover levels for brms group '", group, "'.", call. = FALSE)
+  }
+
+  parameter_names <- character()
+  contrasts <- list()
+  overall_design <- list()
+  observation_design <- list()
+  slices <- list()
+  offset <- 0L
+
+  for (i in seq_len(nrow(group_rows))) {
+    gn <- group_rows$gn[i]
+    cn <- group_rows$cn[i]
+    coefficient <- group_rows$coef[i]
+    J <- standata[[paste0("J_", gn)]]
+    Z <- standata[[paste0("Z_", gn, "_", cn)]]
+    if (is.null(J) || is.null(Z)) next
+
+    parameters <- paste0(
+      "r_", group, "[", group_levels, ",", coefficient, "]"
+    )
+    if (!all(parameters %in% posterior::variables(model))) {
+      stop(
+        "Could not align posterior group-level parameters for '", group, "'.",
+        call. = FALSE
+      )
+    }
+    part <- .brms_group_contrast(
+      J = as.integer(J),
+      Z = as.numeric(Z),
+      focus_info = focus_info,
+      weights = weights,
+      n_groups = length(group_levels)
+    )
+    parameter_names <- c(parameter_names, parameters)
+    contrasts[[i]] <- part$contrast
+    overall_design[[i]] <- part$overall
+    observation_design[[i]] <- list(J = as.integer(J), Z = as.numeric(Z))
+    slices[[i]] <- offset + seq_along(parameters)
+    offset <- offset + length(parameters)
+  }
+  if (!length(parameter_names)) return(NULL)
+
+  draws <- .brms_draw_matrix(model, parameter_names, ndraws)
+  beta <- colMeans(draws)
+  contribution <- numeric(nrow(data))
+  for (i in seq_along(slices)) {
+    design <- observation_design[[i]]
+    contribution <- contribution +
+      design$Z * beta[slices[[i]]][design$J]
+  }
+  B <- do.call(cbind, contrasts)
+  overall <- unlist(overall_design, use.names = FALSE)
+  eta_reference <- sum(overall * beta)
+  eta_reference_draws <- as.numeric(draws %*% overall)
+  term <- group
+
+  .influ_precomputed_engine(
+    backend = "brms",
+    model = model,
+    data = data,
+    focus = focus,
+    family_spec = family_spec,
+    term_contrasts = stats::setNames(list(B), term),
+    term_contributions = stats::setNames(list(contribution), term),
+    beta = beta,
+    beta_draws = if (uncertainty == "none") NULL else draws,
+    uncertainty = if (uncertainty == "none") "none" else "posterior",
+    retain = retain,
+    probs = probs,
+    weights = weights,
+    component = paste(component, "group_level", sep = ":"),
+    eta_reference = eta_reference,
+    eta_reference_draws = if (uncertainty == "none") NULL else eta_reference_draws,
+    notes = paste0(
+      "Group-level term '", group,
+      "' is projected directly from joint posterior draws without an observation-by-draw array."
+    )
+  )
+}
+
+.brms_group_diags <- function(model, data, focus, component, family_spec,
+                              weights, uncertainty, retain, probs, ndraws) {
+  if (!nrow(model$ranef)) return(list())
+  rows <- model$ranef
+  rows <- rows[rows$dpar %in% c("", "mu"), , drop = FALSE]
+  if (!nrow(rows)) return(list())
+  groups <- split(rows, rows$gn)
+  lapply(groups, function(group_rows) {
+    .brms_group_diag(
+      model, data, focus, group_rows, component, family_spec, weights,
+      uncertainty, retain, probs, ndraws
+    )
+  })
+}
+
+.brms_smooth_diags <- function(model, data, focus, component, family_spec,
+                               weights, uncertainty, retain, probs, ndraws) {
+  standata <- brms::standata(model)
+  Xs <- standata$Xs
+  smooth_columns <- attr(Xs, "smcols")
+  smooth_labels <- names(attr(Xs, "bylevels"))
+  if (is.null(Xs) || !length(smooth_columns)) return(list())
+  if (is.null(smooth_labels) || length(smooth_labels) != length(smooth_columns)) {
+    smooth_labels <- paste0("smooth_", seq_along(smooth_columns))
+  }
+
+  focus_info <- .focus_info(data, focus)
+  weights <- .resolve_influ_weights(data, weights)
+  available <- posterior::variables(model)
+  out <- vector("list", length(smooth_columns))
+
+  for (i in seq_along(smooth_columns)) {
+    columns <- smooth_columns[[i]]
+    design_parts <- list(Xs[, columns, drop = FALSE])
+    parameter_parts <- list(paste0("bs_", colnames(Xs)[columns]))
+    z_names <- grep(
+      paste0("^Zs_", i, "_[0-9]+$"),
+      names(standata),
+      value = TRUE
+    )
+    z_names <- z_names[order(as.integer(sub("^.*_", "", z_names)))]
+    for (z_name in z_names) {
+      Z <- as.matrix(standata[[z_name]])
+      penalty <- as.integer(sub("^.*_", "", z_name))
+      label <- attr(Z, "s.label") %||% smooth_labels[i]
+      safe_label <- gsub("[^[:alnum:]_]", "", label)
+      parameters <- paste0(
+        "s_", safe_label, "_", penalty, "[", seq_len(ncol(Z)), "]"
+      )
+      if (!all(parameters %in% available)) {
+        stop(
+          "Could not align posterior smooth parameters for '",
+          smooth_labels[i], "'.",
+          call. = FALSE
+        )
+      }
+      design_parts[[length(design_parts) + 1L]] <- Z
+      parameter_parts[[length(parameter_parts) + 1L]] <- parameters
+    }
+
+    design <- do.call(cbind, design_parts)
+    parameters <- unlist(parameter_parts, use.names = FALSE)
+    draws <- .brms_draw_matrix(model, parameters, ndraws)
+    beta <- colMeans(draws)
+    B <- .term_contrast(design, focus_info, weights)
+    contribution <- as.numeric(design %*% beta)
+    overall <- .weighted_col_mean(design, weights)
+    eta_reference <- sum(overall * beta)
+    eta_reference_draws <- as.numeric(draws %*% overall)
+    term <- smooth_labels[i]
+
+    out[[i]] <- .influ_precomputed_engine(
+      backend = "brms",
+      model = model,
+      data = data,
+      focus = focus,
+      family_spec = family_spec,
+      term_contrasts = stats::setNames(list(B), term),
+      term_contributions = stats::setNames(list(contribution), term),
+      beta = beta,
+      beta_draws = if (uncertainty == "none") NULL else draws,
+      uncertainty = if (uncertainty == "none") "none" else "posterior",
+      retain = retain,
+      probs = probs,
+      weights = weights,
+      component = paste(component, "smooth", sep = ":"),
+      eta_reference = eta_reference,
+      eta_reference_draws = if (uncertainty == "none") NULL else eta_reference_draws,
+      notes = paste0(
+        "Smooth term '", term,
+        "' is projected directly from joint posterior basis coefficients."
+      )
+    )
+  }
+  Filter(Negate(is.null), out)
+}
+
 .brms_component_diag <- function(model, data, focus, dpar, component,
                                  family_spec, weights, uncertainty, retain,
                                  probs, ndraws, draws_path) {
@@ -79,6 +307,48 @@
     beta_draws = posterior$draws,
     draws_path = draws_path,
     keep_model = FALSE
+  )
+}
+
+.brms_population_projection <- function(model, data, focus, dpar,
+                                        family_spec, weights, uncertainty,
+                                        ndraws) {
+  matrix_info <- .brms_population_matrix(model, dpar)
+  if (is.null(matrix_info)) return(NULL)
+  posterior <- .brms_population_draws(
+    model,
+    matrix_info$X,
+    dpar,
+    ndraws = ndraws,
+    keep_draws = TRUE
+  )
+  draws <- posterior$draws
+  if (uncertainty == "none") {
+    draws <- matrix(
+      posterior$beta,
+      nrow = 1L,
+      dimnames = list(NULL, names(posterior$beta))
+    )
+  }
+  weights <- .resolve_influ_weights(data, weights)
+  focus_info <- .focus_info(data, focus)
+  reference_design <- .weighted_col_mean(matrix_info$X, weights)
+  term_deltas <- lapply(matrix_info$term_columns, function(columns) {
+    B_term <- .term_contrast(
+      matrix_info$X[, columns, drop = FALSE],
+      focus_info,
+      weights
+    )
+    B <- matrix(0, nrow = nrow(B_term), ncol = ncol(matrix_info$X))
+    B[, columns] <- B_term
+    draws %*% t(B)
+  })
+
+  list(
+    family_spec = family_spec,
+    eta_reference = as.numeric(draws %*% reference_design),
+    term_deltas = term_deltas,
+    method = if (uncertainty == "none") "none" else "posterior draws"
   )
 }
 
@@ -135,11 +405,29 @@ influ.brmsfit <- function(model, focus, data = NULL, weights = NULL,
     )
   )
 
+  group_components <- .brms_group_diags(
+    model, data, focus, main_component, overall_spec, weights,
+    uncertainty, component_retain, probs, ndraws
+  )
+  if (length(group_components)) {
+    names(group_components) <- paste0("group_", seq_along(group_components))
+    components <- c(components, group_components)
+  }
+  smooth_components <- .brms_smooth_diags(
+    model, data, focus, main_component, overall_spec, weights,
+    uncertainty, component_retain, probs, ndraws
+  )
+  if (length(smooth_components)) {
+    names(smooth_components) <- paste0("smooth_", seq_along(smooth_components))
+    components <- c(components, smooth_components)
+  }
+
   probability_dpar <- intersect(c("hu", "zi"), model$family$dpars)
   if (length(probability_dpar)) {
     dpar <- probability_dpar[1]
+    probability_link <- model$family[[paste0("link_", dpar)]] %||% "logit"
     probability_spec <- .new_family_spec(
-      "binomial", "logit", backend = "brms",
+      "binomial", probability_link, backend = "brms",
       response_structure = response_structure,
       complement = dpar == "hu"
     )
@@ -149,15 +437,31 @@ influ.brmsfit <- function(model, focus, data = NULL, weights = NULL,
       probability_spec, weights, uncertainty, component_retain, probs,
       ndraws, NULL
     )
-  }
 
-  omitted <- character()
-  if (nrow(model$ranef) > 0L) {
-    omitted <- c(omitted, "group-level effects")
-  }
-  standata_names <- names(brms::standata(model))
-  if (any(grepl("^(Xs|Zs)", standata_names))) {
-    omitted <- c(omitted, "smooth terms")
+    main_projection <- .brms_population_projection(
+      model, data, focus, NULL, overall_spec, weights, uncertainty, ndraws
+    )
+    probability_projection <- .brms_population_projection(
+      model, data, focus, dpar, probability_spec, weights, uncertainty, ndraws
+    )
+    components$unconditional_mean <- .two_part_combined_diag(
+      backend = "brms",
+      model = model,
+      data = data,
+      response = names(data)[1],
+      focus = focus,
+      family_spec = overall_spec,
+      main_projection = main_projection,
+      probability_projection = probability_projection,
+      probability_is_zero = TRUE,
+      weights = weights,
+      retain = component_retain,
+      probs = probs,
+      notes = paste0(
+        "The unconditional mean combines population-level ", dpar,
+        " and response components draw by draw."
+      )
+    )
   }
 
   out <- .combine_influ_diags(
@@ -169,8 +473,8 @@ influ.brmsfit <- function(model, focus, data = NULL, weights = NULL,
     keep_model = keep_model,
     notes = c(
       "Population-level terms use compact posterior projections; no observation-by-draw arrays are retained.",
-      if (length(omitted)) paste("Pending brms adapters:", paste(omitted, collapse = ", ")),
-      if (response_structure != "single") "Component influence is available; combined unconditional-mean influence is pending."
+      "Group-level and smooth terms use compact joint posterior projections when present.",
+      if (response_structure != "single") "Population-level hurdle or zero-inflated components are combined draw by draw for unconditional-mean influence."
     )
   )
 

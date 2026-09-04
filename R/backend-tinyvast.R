@@ -80,6 +80,99 @@
   )
 }
 
+.tinyVAST_fixed_projection <- function(model, data, focus, component_index,
+                                       draws, family_spec, weights) {
+  setup <- if (component_index == 1L) {
+    model$internal$gam_setup
+  } else {
+    model$internal$delta_gam_setup
+  }
+  X <- if (component_index == 1L) {
+    model$tmb_inputs$tmb_data$X_ij
+  } else {
+    model$tmb_inputs$tmb_data$X2_ij
+  }
+  labels <- attr(setup$pterms, "term.labels")
+  term_columns <- lapply(seq_along(labels), function(i) which(setup$assign == i))
+  names(term_columns) <- labels
+  term_columns <- term_columns[lengths(term_columns) > 0L]
+  weights <- .resolve_influ_weights(data, weights)
+  focus_info <- .focus_info(data, focus)
+  reference_design <- .weighted_col_mean(X, weights)
+  term_deltas <- lapply(term_columns, function(columns) {
+    B_term <- .term_contrast(X[, columns, drop = FALSE], focus_info, weights)
+    B <- matrix(0, nrow = nrow(B_term), ncol = ncol(X))
+    B[, columns] <- B_term
+    draws %*% t(B)
+  })
+  list(
+    family_spec = family_spec,
+    eta_reference = as.numeric(draws %*% reference_design),
+    term_deltas = term_deltas,
+    method = if (nrow(draws) == 1L) "none" else "joint coefficient simulation"
+  )
+}
+
+.tinyVAST_delta_mean_diag <- function(model, data, focus, specs, weights,
+                                      uncertainty, retain, probs, ndraws,
+                                      seed) {
+  parameter_names <- names(model$sdrep$par.fixed)
+  occurrence_index <- which(parameter_names == "alpha_j")
+  positive_index <- which(parameter_names == "alpha2_j")
+  occurrence_beta <- model$internal$parlist$alpha_j
+  positive_beta <- model$internal$parlist$alpha2_j
+  if (length(occurrence_index) != length(occurrence_beta) ||
+      length(positive_index) != length(positive_beta)) {
+    stop(
+      "Could not align the joint tinyVAST fixed-effect covariance for the delta model.",
+      call. = FALSE
+    )
+  }
+
+  beta <- c(occurrence_beta, positive_beta)
+  if (uncertainty == "none") {
+    joint_draws <- matrix(beta, nrow = 1L)
+  } else {
+    fixed_index <- c(occurrence_index, positive_index)
+    joint_draws <- .draw_mvn(
+      ndraws,
+      beta,
+      model$sdrep$cov.fixed[fixed_index, fixed_index, drop = FALSE],
+      seed = seed
+    )
+  }
+  n_occurrence <- length(occurrence_beta)
+  occurrence_draws <- joint_draws[, seq_len(n_occurrence), drop = FALSE]
+  positive_draws <- joint_draws[, n_occurrence + seq_along(positive_beta), drop = FALSE]
+
+  occurrence_projection <- .tinyVAST_fixed_projection(
+    model, data, focus, 1L, occurrence_draws, specs$occurrence, weights
+  )
+  positive_projection <- .tinyVAST_fixed_projection(
+    model, data, focus, 2L, positive_draws, specs$positive, weights
+  )
+
+  .two_part_combined_diag(
+    backend = "tinyVAST",
+    model = model,
+    data = data,
+    response = all.vars(model$formula)[1],
+    focus = focus,
+    family_spec = specs$overall,
+    main_projection = positive_projection,
+    probability_projection = occurrence_projection,
+    probability_is_zero = FALSE,
+    weights = weights,
+    retain = retain,
+    probs = probs,
+    notes = paste0(
+      "The unconditional delta mean combines occurrence and positive fixed ",
+      if (uncertainty == "none") "effects at their estimates." else
+        "effects using their joint covariance."
+    )
+  )
+}
+
 .tinyVAST_field_diag <- function(model, data, focus, component_index,
                                  component, family_spec, weights) {
   suffix <- as.character(component_index)
@@ -135,7 +228,8 @@
 #' Fixed GAM terms use their marginal TMB covariance. Smooth, spatial,
 #' spatiotemporal, and spatially varying contributions are obtained through
 #' tinyVAST's component projection interface and reduced immediately to
-#' compact focus-level diagnostics.
+#' compact focus-level diagnostics. Delta fixed effects are combined with their
+#' joint covariance to obtain unconditional-mean influence.
 #'
 #' @inheritParams influ.glm
 #' @param model A fitted `tinyVAST` object.
@@ -175,6 +269,13 @@ influ.tinyVAST <- function(model, focus, data = NULL, weights = NULL,
     )
   }
 
+  if (is_delta) {
+    components$unconditional_mean <- .tinyVAST_delta_mean_diag(
+      model, data, focus, specs, weights, fixed_uncertainty,
+      component_retain, probs, ndraws, seed
+    )
+  }
+
   out <- .combine_influ_diags(
     components,
     backend = "tinyVAST",
@@ -184,7 +285,8 @@ influ.tinyVAST <- function(model, focus, data = NULL, weights = NULL,
     keep_model = keep_model,
     notes = c(
       "Latent component modes are reduced through tinyVAST's projection interface.",
-      "Sparse joint-precision uncertainty, multivariate mixed-family models, and combined delta-mean influence are pending."
+      if (is_delta) "Delta fixed effects include joint unconditional-mean influence.",
+      "Sparse joint-precision uncertainty, unconditional-mean influence for latent fields, and multivariate mixed-family models are pending."
     )
   )
 

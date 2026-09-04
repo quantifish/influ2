@@ -9,42 +9,50 @@ navbar:
     left:  [intro, articles, tutorials, reference, news]
     right: [search, github]
 
-reference:
-- title: influ2 functions
-  desc: Functions from the new influ2 R package.
+articles:
+- title: Get started
+  navbar: ~
   contents:
   - influ2
-  - starts_with("get_")
-  - id_var_type
-  - geo_mean
-  - influ_app
-
-- title: influ2 plots
-  desc: Plots and tables from the new influ2 R package.
+- title: Validation and response structures
   contents:
+  - bentley-validation
+  - hurdle
+
+reference:
+- title: Model-neutral diagnostics
+  desc: Calculate, inspect, and plot influence diagnostics.
+  contents:
+  - influ
+  - influ.brmsfit
+  - influ.gam
+  - influ.glm
+  - influ.glmmTMB
+  - influ.sdmTMB
+  - influ.tinyVAST
+  - influ_effects
+  - influ_indices
+  - influ_composition
+  - influ_draws
+  - influ_families
+  - plot.influ_diag
+
+- title: Earlier influ2 helpers
+  desc: Functions retained while workflows migrate to the model-neutral API.
+  contents:
+  - starts_with("get_")
   - starts_with("plot_")
   - starts_with("table_")
+  - geo_mean
+  - id_var_type
+  - influ_app
+  - rescale_index
 
 - title: Data
-  desc: Simulated data sets that are available.
+  desc: Simulated data supplied with the package.
   contents:
   - lobsters_per_pot
 
-- title: influ
-  desc: Functions from the original influ R package.
+- title: Package
   contents:
-  - influ
-  - Influence
-  - Influence$new
-  - Influence$init
-  - Influence$calc
-  - Influence$effects
-  - Influence$stanPlot
-  - Influence$cdiPlot
-  - Influence$influPlot
-  - Influence$stepPlot
-  - Influence$cdiPlotAll
-  - Influence$stepAndInfluPlot
-  - coeffs
-  - ses
-  
+  - influ2

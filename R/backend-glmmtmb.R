@@ -64,6 +64,98 @@
   )
 }
 
+.glmmTMB_component_projection <- function(model, data, focus, component,
+                                          draws, family_spec, weights) {
+  X <- stats::model.matrix(model, component = component)
+  frm <- stats::formula(model, component = component)
+  assign <- attr(X, "assign")
+  labels <- attr(stats::terms(frm), "term.labels")
+  term_columns <- lapply(seq_along(labels), function(i) which(assign == i))
+  names(term_columns) <- labels
+  term_columns <- term_columns[lengths(term_columns) > 0L]
+  weights <- .resolve_influ_weights(data, weights)
+  focus_info <- .focus_info(data, focus)
+  reference_design <- .weighted_col_mean(X, weights)
+  term_deltas <- lapply(term_columns, function(columns) {
+    B_term <- .term_contrast(X[, columns, drop = FALSE], focus_info, weights)
+    B <- matrix(0, nrow = nrow(B_term), ncol = ncol(X))
+    B[, columns] <- B_term
+    draws %*% t(B)
+  })
+  list(
+    family_spec = family_spec,
+    eta_reference = as.numeric(draws %*% reference_design),
+    term_deltas = term_deltas,
+    method = if (nrow(draws) == 1L) "none" else "joint coefficient simulation"
+  )
+}
+
+.glmmTMB_two_part_diag <- function(model, data, focus, overall_spec,
+                                   probability_spec, weights, uncertainty,
+                                   retain, probs, ndraws, seed) {
+  X_cond <- stats::model.matrix(model, component = "cond")
+  X_zi <- stats::model.matrix(model, component = "zi")
+  beta_cond <- glmmTMB::fixef(model)$cond
+  beta_zi <- glmmTMB::fixef(model)$zi
+  cond_names <- colnames(X_cond)
+  zi_names <- paste0("zi~", colnames(X_zi))
+  full_names <- c(cond_names, zi_names)
+  beta <- c(beta_cond[cond_names], beta_zi[colnames(X_zi)])
+  names(beta) <- full_names
+
+  if (uncertainty == "none") {
+    joint_draws <- matrix(beta, nrow = 1L, dimnames = list(NULL, full_names))
+  } else {
+    V <- stats::vcov(model, full = TRUE)
+    missing <- setdiff(full_names, rownames(V))
+    if (length(missing)) {
+      stop(
+        "Could not align the joint glmmTMB covariance for: ",
+        paste(missing, collapse = ", "), ".",
+        call. = FALSE
+      )
+    }
+    joint_draws <- .draw_mvn(
+      ndraws,
+      beta,
+      V[full_names, full_names, drop = FALSE],
+      seed = seed
+    )
+    colnames(joint_draws) <- full_names
+  }
+
+  cond_draws <- joint_draws[, cond_names, drop = FALSE]
+  zi_draws <- joint_draws[, zi_names, drop = FALSE]
+  colnames(zi_draws) <- colnames(X_zi)
+  main_projection <- .glmmTMB_component_projection(
+    model, data, focus, "cond", cond_draws, overall_spec, weights
+  )
+  probability_projection <- .glmmTMB_component_projection(
+    model, data, focus, "zi", zi_draws, probability_spec, weights
+  )
+  response <- names(stats::model.frame(model))[1]
+
+  .two_part_combined_diag(
+    backend = "glmmTMB",
+    model = model,
+    data = data,
+    response = response,
+    focus = focus,
+    family_spec = overall_spec,
+    main_projection = main_projection,
+    probability_projection = probability_projection,
+    probability_is_zero = TRUE,
+    weights = weights,
+    retain = retain,
+    probs = probs,
+    notes = paste0(
+      "Fixed conditional and zero-probability components are combined ",
+      if (uncertainty == "none") "at their estimates." else
+        "with joint coefficient simulation."
+    )
+  )
+}
+
 .glmmTMB_random_diag <- function(model, data, focus, family_spec, weights) {
   conditional <- tryCatch(
     as.numeric(stats::predict(model, newdata = data, type = "link")),
@@ -148,6 +240,10 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
       model, data, focus, "zi", probability_spec, weights, uncertainty,
       component_retain, probs, ndraws, seed, NULL
     )
+    components$unconditional_mean <- .glmmTMB_two_part_diag(
+      model, data, focus, overall_spec, probability_spec, weights,
+      uncertainty, component_retain, probs, ndraws, seed
+    )
   }
 
   components$random <- .glmmTMB_random_diag(
@@ -162,7 +258,7 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     model = model,
     keep_model = keep_model,
     notes = c(
-      "Hurdle and zero-inflation components are reported separately; combined unconditional-mean influence is not yet calculated.",
+      "Hurdle and zero-inflation fixed components include joint unconditional-mean influence.",
       "Random-effect influence uses conditional modes without propagated uncertainty."
     )
   )

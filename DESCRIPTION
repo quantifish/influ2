@@ -37,6 +37,7 @@ Imports:
     tidyr,
     lubridate
 Suggests: 
+    fmesher,
     glmmTMB,
     knitr,
     mgcv,

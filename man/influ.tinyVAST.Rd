@@ -53,5 +53,6 @@ An [influ_diag] object.
 Fixed GAM terms use their marginal TMB covariance. Smooth, spatial,
 spatiotemporal, and spatially varying contributions are obtained through
 tinyVAST's component projection interface and reduced immediately to
-compact focus-level diagnostics.
+compact focus-level diagnostics. Delta fixed effects are combined with their
+joint covariance to obtain unconditional-mean influence.
 }

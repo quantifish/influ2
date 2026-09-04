@@ -54,5 +54,6 @@ Fixed effects use the marginal covariance from TMB. Spatial,
 spatiotemporal, IID, smooth, and time-varying contributions are projected
 from the fitted fields without constructing dense draw arrays. Field
 uncertainty is deliberately marked as pending until sparse joint-precision
-simulation is available.
+simulation is available. Delta fixed effects are combined with their joint
+covariance to obtain unconditional-mean influence.
 }

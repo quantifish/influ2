@@ -1,5 +1,5 @@
 ---
-title: "Model-neutral influence diagnostics with influ2"
+title: "Influence diagnostics across fisheries CPUE models"
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -7,13 +7,27 @@ output:
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Model-neutral influence diagnostics with influ2}
+  %\VignetteIndexEntry{Influence diagnostics across fisheries CPUE models}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4.5)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE
+)
+has_mgcv <- requireNamespace("mgcv", quietly = TRUE)
+has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)
+has_brms <- requireNamespace("brms", quietly = TRUE) &&
+  requireNamespace("posterior", quietly = TRUE)
+has_sdmTMB <- requireNamespace("sdmTMB", quietly = TRUE)
+has_tinyVAST <- requireNamespace("tinyVAST", quietly = TRUE) &&
+  requireNamespace("fmesher", quietly = TRUE)
 ```
 
 ## Why influence diagnostics?
@@ -30,37 +44,278 @@ the focus variable, which is usually year [@Bentley2012]. Spatial and
 spatiotemporal versions can similarly show whether changes in sampled location
 move observations among areas of different predicted abundance [@Hsu2022].
 
-`influ2` represents these results with one model-neutral S3 class. The model
-backend is responsible for extracting model components and joint uncertainty;
-the calculation, storage, summary, and plotting layers are shared.
+`influ2` represents these results with one model-neutral S3 class. Each backend
+extracts model components and joint uncertainty, while the calculation,
+storage, summary, and plotting layers remain shared.
 
-## A common interface
+## A realistic lobster CPUE example
 
-The public entry point is `influ()`:
+The main examples use the simulated `lobsters_per_pot` data supplied with the
+package. These are 15,642 pot records from 2000 to 2017. The response is the
+number of lobsters caught per pot, and the explanatory variables are month,
+depth in metres, and soak time in hours. Annual sample sizes, seasonal
+coverage, depths, and soak times all vary, giving the diagnostic something
+meaningful to detect.
 
-```{r basic-example}
+```{r lobster-data}
 library(influ2)
+data(lobsters_per_pot)
 
-fixture_file <- system.file(
-  "extdata", "bentley-poisson-data.csv", package = "influ2"
-)
-dat <- read.csv(
-  fixture_file,
-  colClasses = c(year = "factor", area = "factor", vessel = "factor")
-)
-
-fit <- glm(
-  catch ~ year + area + vessel,
-  family = poisson(link = "log"),
-  data = dat
-)
-
-diagnostic <- influ(fit, focus = "year")
-diagnostic
-summary(diagnostic)
+dim(lobsters_per_pot)
+head(lobsters_per_pot)
 ```
 
-The implemented methods share this contract:
+The changing distribution of records by year and month is visible before a
+model is fitted. Larger bubbles represent more pot records.
+
+```{r lobster-sampling, fig.height=6, fig.cap="Sampling effort by year and month in the simulated lobster CPUE data."}
+plot_bubble(
+  df = lobsters_per_pot,
+  group = c("year", "month"),
+  fill = "month"
+) +
+  ggplot2::labs(x = "Month", y = "Year") +
+  ggplot2::theme(legend.position = "none")
+```
+
+Depth and soak-time coverage also change through time.
+
+```{r lobster-covariates, fig.cap="Observed depth and soak-time distributions by year."}
+covariates <- tidyr::pivot_longer(
+  lobsters_per_pot,
+  cols = c("depth", "soak"),
+  names_to = "covariate",
+  values_to = "value"
+)
+
+ggplot2::ggplot(
+  covariates,
+  ggplot2::aes(x = year, y = value, group = year)
+) +
+  ggplot2::geom_boxplot(outlier.alpha = 0.08, linewidth = 0.25) +
+  ggplot2::facet_wrap(~covariate, scales = "free_y", ncol = 1) +
+  ggplot2::labs(x = "Year", y = NULL) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+```
+
+## GLM
+
+A Poisson GLM provides a transparent starting point. This is an example model,
+not a recommendation that Poisson variation is adequate for these data.
+
+```{r lobster-glm}
+lobster_glm <- glm(
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  family = poisson(link = "log"),
+  data = lobsters_per_pot
+)
+
+glm_diagnostic <- influ(lobster_glm, focus = "year")
+glm_diagnostic
+summary(glm_diagnostic)
+```
+
+The influence plot shows how changes in sampled month, depth, and soak time
+move the annual standardised series. The year term is retained in the object,
+but omitted from this plot because its within-year composition is the focus,
+not a sampling-distribution effect.
+
+```{r lobster-glm-influence, fig.cap="GLM influence ratios for the changing lobster covariate distributions."}
+plot(
+  glm_diagnostic,
+  type = "influence",
+  term = c("month", "poly(depth, 3)", "poly(soak, 3)")
+)
+```
+
+The same object contains nominal and standardised indices.
+
+```{r lobster-glm-index, fig.cap="Nominal and Poisson-GLM-standardised lobster indices."}
+plot(glm_diagnostic, type = "index")
+```
+
+## GAM
+
+The `mgcv` backend works with parametric terms and smooths [@Wood2017]. Here,
+negative-binomial variation is combined with smooth depth and soak effects.
+
+```{r lobster-gam, eval=has_mgcv}
+lobster_gam <- mgcv::gam(
+  lobsters ~ year + month + s(depth, k = 5) + s(soak, k = 5),
+  family = mgcv::nb(),
+  method = "REML",
+  data = lobsters_per_pot
+)
+
+gam_diagnostic <- influ(lobster_gam, focus = "year")
+summary(gam_diagnostic)
+```
+
+```{r lobster-gam-influence, eval=has_mgcv, fig.cap="GAM influence ratios for month, depth, and soak time."}
+plot(
+  gam_diagnostic,
+  type = "influence",
+  term = c("month", "s(depth)", "s(soak)")
+)
+```
+
+This is the same `influ_diag` interface as the GLM. No plotting code needs to
+know that two of the terms are smooths.
+
+## glmmTMB
+
+`glmmTMB` adds mixed effects, negative-binomial models, hurdle models, and
+zero-inflation [@Brooks2017]. The example treats month as a random intercept.
+
+```{r lobster-glmmtmb, eval=has_glmmTMB}
+lobster_glmmTMB <- glmmTMB::glmmTMB(
+  lobsters ~ year + poly(depth, 2) + poly(soak, 2) + (1 | month),
+  family = glmmTMB::nbinom2(),
+  data = lobsters_per_pot
+)
+
+glmmTMB_diagnostic <- influ(lobster_glmmTMB, focus = "year")
+summary(glmmTMB_diagnostic)
+```
+
+```{r lobster-glmmtmb-influence, eval=has_glmmTMB, fig.cap="glmmTMB fixed- and random-effect influence ratios."}
+plot(glmmTMB_diagnostic, type = "components")
+```
+
+Fixed effects use the joint maximum-likelihood covariance. The month random
+effect uses its fitted conditional modes and is labelled separately, so its
+current uncertainty treatment cannot be mistaken for fixed-effect uncertainty.
+For hurdle and zero-inflated fits, `influ()` also calculates population-level
+unconditional-mean influence using the joint covariance of both components.
+
+## brms
+
+The Bayesian backend uses genuine joint posterior draws, but projects each draw
+directly to the much smaller focus-by-term diagnostic. It never constructs an
+observation-by-draw-by-term array [@Buerkner2017]. A model for the same lobster
+data can be fitted as follows:
+
+```{r lobster-brms-fit, eval=FALSE}
+lobster_brms <- brms::brm(
+  lobsters ~ year + (1 | month) + s(depth, k = 3),
+  family = brms::negbinomial(),
+  data = lobsters_per_pot,
+  chains = 2,
+  iter = 2000,
+  seed = 1,
+  file = "fit2",
+  file_refit = "on_change"
+)
+```
+
+The vignette uses the fitted model shipped with its source, rather than running
+MCMC whenever the documentation is built.
+
+```{r lobster-brms, eval=has_brms}
+lobster_brms <- readRDS("fit2.rds")
+brms_diagnostic <- influ(
+  lobster_brms,
+  focus = "year",
+  ndraws = 250,
+  retain = "summary"
+)
+summary(brms_diagnostic)
+```
+
+```{r lobster-brms-influence, eval=has_brms, fig.cap="BRMS population-level, month group-level, and depth-smooth influence ratios."}
+plot(brms_diagnostic, type = "components")
+```
+
+Population-level, group-level, and smooth contributions all preserve posterior
+dependence during calculation. The default object retains interval summaries;
+`retain = "derived_draws"` retains only the compact diagnostic draws.
+
+## Spatial and spatiotemporal models
+
+The lobster data deliberately have no coordinates. Inventing coordinates from
+depth or soak time would create a misleading spatial example, so the spatial
+backends use small data sets that genuinely contain locations.
+
+### sdmTMB
+
+This example uses the Pacific cod data and mesh supplied by `sdmTMB`
+[@Anderson2025]. Fixed, spatial, and spatiotemporal contributions are returned
+in the same schema as the lobster examples.
+
+```{r sdmtmb-example, eval=has_sdmTMB}
+data("pcod_2011", package = "sdmTMB")
+data("pcod_mesh_2011", package = "sdmTMB")
+
+spatial_model <- sdmTMB::sdmTMB(
+  present ~ as.factor(year) + depth_scaled,
+  data = pcod_2011,
+  mesh = pcod_mesh_2011,
+  family = binomial(),
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "iid",
+  silent = TRUE
+)
+
+sdmTMB_diagnostic <- influ(spatial_model, focus = "year")
+summary(sdmTMB_diagnostic)
+```
+
+```{r sdmtmb-influence, eval=has_sdmTMB, fig.cap="sdmTMB fixed, spatial, and spatiotemporal influence components."}
+plot(sdmTMB_diagnostic, type = "components")
+```
+
+### TinyVAST
+
+The TinyVAST example uses a small reproducible spatial count data set. The
+purpose is to exercise the spatial and spatiotemporal component interface, not
+to represent a complete survey analysis [@Thorson2025].
+
+```{r tinyvast-example, eval=has_tinyVAST}
+set.seed(2)
+n <- 120
+spatial_counts <- data.frame(
+  x = runif(n),
+  ycoord = runif(n),
+  time = rep(1:4, each = n / 4)
+)
+spatial_counts$year <- factor(spatial_counts$time)
+spatial_counts$var <- "catch"
+spatial_counts$dist <- "poisson"
+eta <- 0.3 + 0.08 * spatial_counts$time +
+  0.3 * sin(2 * pi * spatial_counts$x)
+spatial_counts$catch <- rpois(n, exp(eta))
+
+spatial_mesh <- fmesher::fm_mesh_2d(
+  spatial_counts[c("x", "ycoord")],
+  n = 25
+)
+tiny_model <- tinyVAST::tinyVAST(
+  catch ~ year,
+  data = spatial_counts,
+  family = list(poisson = poisson()),
+  spatial_domain = spatial_mesh,
+  spacetime_term = "",
+  space_columns = c("x", "ycoord")
+)
+
+tinyVAST_diagnostic <- influ(tiny_model, focus = "year")
+summary(tinyVAST_diagnostic)
+```
+
+```{r tinyvast-influence, eval=has_tinyVAST, fig.cap="TinyVAST fixed and spatiotemporal influence components."}
+plot(tinyVAST_diagnostic, type = "components")
+```
+
+The current spatial adapters propagate fixed-effect covariance. Fitted latent
+fields are reduced immediately to focus-level influence from their conditional
+modes. Sparse joint-precision uncertainty for those fields is kept explicit as
+a development boundary rather than represented by misleading marginal bands.
+
+## One interface and compact uncertainty
+
+All fitted-model methods return an `influ_diag`:
 
 ```{r methods}
 methods("influ")
@@ -70,214 +325,58 @@ The result contains compact tables for influence, coefficient or field
 summaries, data composition, and index comparisons:
 
 ```{r extraction}
-head(influ_effects(diagnostic))
-head(influ_composition(diagnostic))
-influ_indices(diagnostic)
+head(influ_effects(glm_diagnostic))
+head(influ_composition(glm_diagnostic))
+influ_indices(glm_diagnostic)
 ```
 
-## Scales and components
+Calculation and retention are separate choices:
 
-Every term has an additive `link`-scale influence. A second representation is
-provided on a natural interpretation scale:
+```r
+# Calculate uncertainty, retaining summaries only.
+d1 <- influ(fitted_model, focus = "year", retain = "summary")
 
-- a ratio centred on one for log-linked models and lognormal location models;
-- a difference centred on zero for identity, logit, probit, and
-  complementary log-log models.
+# Retain exact draws only for the derived diagnostics.
+d2 <- influ(fitted_model, focus = "year", retain = "derived_draws")
 
-Hurdle and zero-inflated models retain named components. Occurrence,
-positive/count, spatial, and spatiotemporal effects therefore remain visible
-instead of being silently collapsed. Combined unconditional-mean influence is
-a separate estimand because it must preserve dependence between model
-components.
+# Write compact diagnostic draws to disk.
+d3 <- influ(
+  fitted_model,
+  focus = "year",
+  retain = "disk",
+  draws_path = "influence-draws.rds"
+)
 
-The initial family set is returned by:
+# Fast preview from coefficient estimates or posterior means.
+d4 <- influ(fitted_model, focus = "year", uncertainty = "none")
+```
+
+For GLMs and GAMs, linear diagnostic contrasts use fitted joint covariance
+analytically. Joint coefficient simulation is used when derived draws are
+requested. The BRMS backend reduces joint posterior draws during calculation,
+and `glmmTMB` jointly simulates fixed components for hurdle and zero-inflated
+means. This separation draws on the posterior-processing approach used in
+CPUETools [@CPUETools], while the S3 design and GAM implementation were also
+informed by `gamInflu` [@Dunn2025].
+
+## Families and response structures
+
+The initial family set is:
 
 ```{r families}
 influ_families()
 ```
 
-Hurdle/delta combinations initially cover Gamma, lognormal, Poisson, and
-negative binomial positive components. Zero-inflated combinations initially
-cover Poisson and negative binomial count components. Quasi families and more
-specialised positive distributions are outside the first implementation.
+It covers Gaussian, binomial, Poisson, negative binomial, lognormal, Gamma, and
+Tweedie responses. Hurdle/delta combinations cover Gamma, lognormal, Poisson,
+and negative-binomial positive components. Zero-inflated combinations cover
+Poisson and negative-binomial counts. Quasi families and more specialised
+positive distributions are deliberately outside the initial scope.
 
-## Low-memory uncertainty
-
-Calculation and retention are separate choices. For a Bayesian fit, `influ2`
-projects joint posterior coefficient draws directly into the much smaller
-focus-by-term diagnostic contrasts. It does not first create an
-observation-by-draw-by-term array.
-
-```r
-# Default: calculate with joint posterior draws, retain summaries only.
-d1 <- influ(brms_fit, focus = "year", retain = "summary")
-
-# Keep exact draws only for the derived diagnostics.
-d2 <- influ(brms_fit, focus = "year", retain = "derived_draws")
-
-# Fast preview: reduce posterior coefficients to their means first.
-d3 <- influ(brms_fit, focus = "year", uncertainty = "none")
-```
-
-For GLMs and GAMs, linear diagnostic contrasts use the fitted joint covariance
-analytically. Joint coefficient simulation is available when derived draws are
-needed. `sdmTMB` and TinyVAST fixed effects use their TMB marginal covariance;
-their fitted spatial and spatiotemporal modes are already reduced without
-dense arrays. Sparse joint-precision simulation for full field uncertainty is
-the next spatial uncertainty layer.
-
-This division draws on the posterior-processing approach used in CPUETools
-[@CPUETools] while retaining the full joint draw during each diagnostic
-calculation. The S3 object and GAM implementation were also informed by
-`gamInflu` [@Dunn2025].
-
-## Standard plots
-
-The same plot method works regardless of the original model backend:
-
-```{r influence-plot}
-plot(diagnostic, type = "influence")
-```
-
-```{r index-plot}
-plot(diagnostic, type = "index")
-```
-
-```{r cdi-plot, fig.width=9, fig.height=5}
-plot(diagnostic, type = "cdi", term = "area")
-```
-
-`autoplot()` delegates to the same implementation. Plot data can always be
-obtained first through the extractor functions when a project needs a custom
-graphic.
-
-## Legacy Bentley agreement
-
-The original `proto` implementation by Nokome Bentley is frozen under
-`inst/legacy` and is not loaded into the package namespace. This section runs
-that implementation explicitly, using the same fitted GLM and data as the new
-engine. The comparison therefore covers both the calculated values and the
-plots a user actually sees.
-
-```{r bentley-setup, include=FALSE}
-legacy_available <- requireNamespace("proto", quietly = TRUE)
-if (legacy_available) {
-  legacy_environment <- new.env(parent = globalenv())
-  legacy_environment$proto <- proto::proto
-  sys.source(
-    system.file("legacy", "influ-proto.R", package = "influ2"),
-    envir = legacy_environment
-  )
-  legacy_diagnostic <- legacy_environment$Influence$new(
-    model = fit,
-    data = dat,
-    response = "catch",
-    focus = "year"
-  )
-  legacy_diagnostic$calc()
-}
-```
-
-### Influence plots
-
-The left-hand figure is drawn by the original `proto` method. The right-hand
-figure is drawn from the new model-neutral `influ_diag`. Both show the area and
-vessel effects as ratios centred on one.
-
-```{r bentley-influence-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=6.5, fig.height=5.5, fig.cap='Influence plots from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley influence plot for area and vessel by year.', 'New influ2 influence plot for area and vessel by year.')}
-legacy_diagnostic$influPlot()
-
-plot(
-  diagnostic,
-  type = "influence",
-  term = c("area", "vessel"),
-  scale = "ratio"
-) +
-  ggplot2::facet_grid(term ~ scale, scales = "free_y") +
-  ggplot2::labs(title = "New influ2")
-```
-
-### CDI plots
-
-The same comparison can be made for the complete
-coefficient-distribution-influence display. These two plots use `area` as the
-model term and `year` as the focus.
-
-```{r bentley-cdi-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=8, fig.height=5.5, fig.cap='CDI plots from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley coefficient-distribution-influence plot for area.', 'New influ2 coefficient-distribution-influence plot for area.')}
-legacy_diagnostic$cdiPlot(term = "area")
-plot(diagnostic, type = "cdi", term = "area")
-```
-
-### Direct agreement
-
-Routine tests also compare the new engine against a compact result frozen from
-the legacy implementation. The table retains the exact differences, while the
-overlay below shows the legacy results as points and the new results as lines.
-
-```{r bentley-parity}
-reference <- read.csv(system.file(
-  "extdata", "bentley-poisson-reference.csv", package = "influ2"
-))
-current <- subset(
-  influ_effects(diagnostic),
-  term %in% c("area", "vessel") & scale == "link",
-  select = c(focus, level, term, estimate)
-)
-names(current)[names(current) == "estimate"] <- "link_influence"
-
-comparison <- merge(reference, current,
-  by = c("focus", "level", "term"),
-  suffixes = c("_legacy", "_new")
-)
-comparison$absolute_difference <- abs(
-  comparison$link_influence_legacy - comparison$link_influence_new
-)
-comparison
-stopifnot(max(comparison$absolute_difference) < 1e-8)
-```
-
-```{r bentley-parity-plot, fig.width=7, fig.height=5, fig.cap='Direct overlay of legacy Bentley influence values and new influ2 results.', fig.alt='Legacy influence points overlaid by new influ2 lines for area and vessel.'}
-ggplot2::ggplot(comparison, ggplot2::aes(x = level, group = term)) +
-  ggplot2::geom_hline(yintercept = 1, linetype = 3, colour = "grey55") +
-  ggplot2::geom_point(
-    ggplot2::aes(y = natural_influence, shape = "Legacy proto"),
-    size = 3
-  ) +
-  ggplot2::geom_line(
-    ggplot2::aes(y = exp(link_influence_new), colour = "New influ2"),
-    linewidth = 0.9
-  ) +
-  ggplot2::facet_wrap(~term, ncol = 1, scales = "free_y") +
-  ggplot2::scale_colour_manual(values = c("New influ2" = "#0072B2")) +
-  ggplot2::scale_shape_manual(values = c("Legacy proto" = 21)) +
-  ggplot2::labs(
-    x = "Year",
-    y = "Influence ratio",
-    colour = NULL,
-    shape = NULL
-  ) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(legend.position = "bottom")
-```
-
-The fixture can be deliberately regenerated with
-`tools/legacy/regenerate-bentley-fixture.R`. It is not regenerated during
-normal tests, so a change in the new implementation cannot silently move both
-sides of the comparison.
-
-## Model backends
-
-The package architecture targets GLMs, `mgcv` GAMs [@Wood2017], Bayesian
-multilevel models fitted with `brms` [@Buerkner2017], mixed models fitted with
-`glmmTMB` [@Brooks2017], spatial and spatiotemporal models fitted with `sdmTMB`
-[@Anderson2025], and multivariate spatial models fitted with TinyVAST
-[@Thorson2025]. The backends may expose different model components, but all of
-them return an `influ_diag`.
-
-Current staged limitations are recorded in each diagnostic object's
-`metadata$notes`. In particular, BRMS group-level and smooth-term projections,
-sparse field uncertainty, mixed-family multivariate TinyVAST models, and exact
-combined unconditional-mean influence remain active development areas rather
-than being returned with misleading precision.
+The separate [hurdle and zero-inflation vignette](hurdle.html) explains named
+components and unconditional means. The
+[Bentley validation vignette](bentley-validation.html) runs the frozen original
+`proto` implementation, compares values, and displays old and new plots side by
+side.
 
 ## References

@@ -1,8 +1,31 @@
 .resolve_influ_data <- function(model, data = NULL) {
   if (!is.null(data)) return(as.data.frame(data))
 
-  out <- tryCatch(stats::model.frame(model), error = function(e) NULL)
-  if (!is.null(out)) return(as.data.frame(out))
+  model_frame <- tryCatch(stats::model.frame(model), error = function(e) NULL)
+  call_data <- tryCatch(model$call$data, error = function(e) NULL)
+  if (!is.null(call_data)) {
+    formula_environment <- tryCatch(
+      environment(stats::formula(model)),
+      error = function(e) parent.frame()
+    )
+    original <- tryCatch(
+      eval(call_data, envir = formula_environment, enclos = parent.frame()),
+      error = function(e) NULL
+    )
+    if (is.data.frame(original)) {
+      original <- as.data.frame(original)
+      if (is.null(model_frame) || nrow(original) == nrow(model_frame)) {
+        return(original)
+      }
+      used_rows <- row.names(model_frame)
+      if (length(used_rows) == nrow(model_frame) &&
+          all(used_rows %in% row.names(original))) {
+        return(original[used_rows, , drop = FALSE])
+      }
+    }
+  }
+
+  if (!is.null(model_frame)) return(as.data.frame(model_frame))
 
   if (!is.null(model$data)) return(as.data.frame(model$data))
   if (!is.null(model$frame)) return(as.data.frame(model$frame))
@@ -495,6 +518,290 @@
   )
 }
 
+.influ_precomputed_engine <- function(backend, model, data, focus,
+                                      family_spec, term_contrasts,
+                                      term_contributions, beta,
+                                      beta_draws = NULL, vcov = NULL,
+                                      uncertainty = "posterior",
+                                      retain = "summary",
+                                      probs = c(0.025, 0.975),
+                                      weights = NULL,
+                                      component = "conditional",
+                                      eta_reference = 0,
+                                      eta_reference_draws = NULL,
+                                      draws_path = NULL,
+                                      keep_model = FALSE,
+                                      notes = character()) {
+  retain <- match.arg(retain, c("summary", "derived_draws", "disk"))
+  uncertainty <- match.arg(
+    uncertainty,
+    c("none", "analytic", "posterior", "simulation")
+  )
+  if (length(probs) != 2L || any(probs <= 0 | probs >= 1) || probs[1] >= probs[2]) {
+    stop("`probs` must contain two increasing probabilities between zero and one.", call. = FALSE)
+  }
+  if (!length(term_contrasts) || !identical(names(term_contrasts), names(term_contributions))) {
+    stop("Precomputed contrasts and contributions must be matching named lists.", call. = FALSE)
+  }
+
+  data <- as.data.frame(data)
+  weights <- .resolve_influ_weights(data, weights)
+  focus_info <- .focus_info(data, focus)
+  beta <- as.numeric(beta)
+  if (!is.null(beta_draws)) beta_draws <- as.matrix(beta_draws)
+  if (uncertainty == "none") {
+    beta_draws <- NULL
+    vcov <- NULL
+    eta_reference_draws <- NULL
+  }
+  if (uncertainty == "posterior" && is.null(beta_draws)) {
+    stop("Posterior uncertainty requires coefficient draws.", call. = FALSE)
+  }
+
+  method <- switch(
+    uncertainty,
+    none = "none",
+    analytic = "analytic covariance",
+    posterior = "posterior draws",
+    simulation = "joint coefficient simulation"
+  )
+  confidence_level <- probs[2] - probs[1]
+  effects <- list()
+  compositions <- list()
+  retained_draws <- list()
+
+  for (term in names(term_contrasts)) {
+    B <- as.matrix(term_contrasts[[term]])
+    if (nrow(B) != length(focus_info$levels) || ncol(B) != length(beta)) {
+      stop("A precomputed term contrast does not conform to its coefficients.", call. = FALSE)
+    }
+    result <- .component_influence(
+      B = B,
+      beta = beta,
+      vcov = vcov,
+      beta_draws = beta_draws,
+      eta_reference = eta_reference,
+      eta_reference_draws = eta_reference_draws,
+      family_spec = family_spec,
+      focus = focus,
+      levels = focus_info$levels,
+      term = term,
+      component = component,
+      method = method,
+      probs = probs,
+      confidence_level = confidence_level
+    )
+    effects[[term]] <- result$rows
+    compositions[[term]] <- .term_composition(
+      data = data,
+      focus = focus,
+      focus_info = focus_info,
+      term = term,
+      contribution = term_contributions[[term]],
+      weights = weights
+    )
+
+    if (!is.null(result$link_draws)) {
+      colnames(result$link_draws) <- paste(
+        component, term, focus_info$levels, "link", sep = "|"
+      )
+      colnames(result$natural_draws) <- paste(
+        component, term, focus_info$levels, family_spec$natural_scale,
+        sep = "|"
+      )
+      retained_draws[[paste0(term, "_link")]] <- result$link_draws
+      retained_draws[[paste0(term, "_natural")]] <- result$natural_draws
+    }
+  }
+
+  influence <- do.call(rbind, effects)
+  rownames(influence) <- NULL
+  composition <- do.call(rbind, compositions)
+  rownames(composition) <- NULL
+  composition$component <- component
+  coefficients <- .coefficient_summary(composition)
+  if (nrow(coefficients)) coefficients$component <- component
+  derived_draws <- if (length(retained_draws)) do.call(cbind, retained_draws) else NULL
+  stored <- .save_derived_draws(derived_draws, retain, draws_path)
+
+  new_influ_diag(
+    backend = backend,
+    family = family_spec,
+    focus = focus,
+    influence = influence,
+    coefficients = coefficients,
+    composition = composition,
+    uncertainty = list(
+      method = method,
+      probs = probs,
+      ndraws = if (is.null(beta_draws)) 0L else nrow(beta_draws)
+    ),
+    retained = list(
+      mode = retain,
+      path = stored$path,
+      n_derived_draws = if (is.null(derived_draws)) 0L else nrow(derived_draws),
+      n_derived_estimands = if (is.null(derived_draws)) 0L else ncol(derived_draws)
+    ),
+    metadata = list(
+      response = NULL,
+      n_observations = nrow(data),
+      terms = names(term_contrasts),
+      reference = "observed",
+      notes = notes
+    ),
+    draws = stored$draws,
+    model = if (isTRUE(keep_model)) model else NULL
+  )
+}
+
+.response_mean_from_eta <- function(eta, family_spec) {
+  if (identical(family_spec$family, "lognormal")) return(exp(eta))
+  .link_inverse(eta, family_spec$link)
+}
+
+.summarise_draw_matrix <- function(draws, method, probs) {
+  if (method == "none") {
+    return(cbind(
+      estimate = as.numeric(draws[1, ]),
+      std_error = NA_real_,
+      lower = NA_real_,
+      upper = NA_real_
+    ))
+  }
+  t(apply(draws, 2L, .summarise_vector, probs = probs))
+}
+
+.two_part_combined_diag <- function(backend, model, data, response, focus,
+                                    family_spec, main_projection,
+                                    probability_projection,
+                                    probability_is_zero = TRUE,
+                                    weights = NULL,
+                                    retain = "summary",
+                                    probs = c(0.025, 0.975),
+                                    draws_path = NULL,
+                                    keep_model = FALSE,
+                                    notes = character()) {
+  retain <- match.arg(retain, c("summary", "derived_draws", "disk"))
+  n_draws <- length(main_projection$eta_reference)
+  if (length(probability_projection$eta_reference) != n_draws) {
+    stop("The two model components do not contain matching joint draws.", call. = FALSE)
+  }
+  focus_info <- .focus_info(data, focus)
+  terms <- union(
+    names(main_projection$term_deltas),
+    names(probability_projection$term_deltas)
+  )
+  if (!length(terms)) return(NULL)
+  method <- main_projection$method
+
+  p0 <- .link_inverse(
+    probability_projection$eta_reference,
+    probability_projection$family_spec$link
+  )
+  if (probability_is_zero) p0 <- 1 - p0
+  mu0 <- .response_mean_from_eta(
+    main_projection$eta_reference,
+    main_projection$family_spec
+  )
+  baseline <- p0 * mu0
+  rows <- list()
+  retained_draws <- list()
+
+  for (term in terms) {
+    main_delta <- main_projection$term_deltas[[term]]
+    probability_delta <- probability_projection$term_deltas[[term]]
+    if (is.null(main_delta)) {
+      main_delta <- matrix(0, nrow = n_draws, ncol = length(focus_info$levels))
+    }
+    if (is.null(probability_delta)) {
+      probability_delta <- matrix(0, nrow = n_draws, ncol = length(focus_info$levels))
+    }
+
+    mu1 <- .response_mean_from_eta(
+      sweep(main_delta, 1L, main_projection$eta_reference, "+"),
+      main_projection$family_spec
+    )
+    p1 <- .link_inverse(
+      sweep(
+        probability_delta,
+        1L,
+        probability_projection$eta_reference,
+        "+"
+      ),
+      probability_projection$family_spec$link
+    )
+    if (probability_is_zero) p1 <- 1 - p1
+    ratio_draws <- sweep(p1 * mu1, 1L, baseline, "/")
+    link_draws <- log(ratio_draws)
+    ratio_stats <- .summarise_draw_matrix(ratio_draws, method, probs)
+    link_stats <- .summarise_draw_matrix(link_draws, method, probs)
+
+    rows[[term]] <- rbind(
+      .effect_rows(
+        focus, focus_info$levels, term, "unconditional_mean", "link",
+        link_stats[, "estimate"], link_stats[, "std_error"],
+        link_stats[, "lower"], link_stats[, "upper"], method
+      ),
+      .effect_rows(
+        focus, focus_info$levels, term, "unconditional_mean", "ratio",
+        ratio_stats[, "estimate"], ratio_stats[, "std_error"],
+        ratio_stats[, "lower"], ratio_stats[, "upper"], method
+      )
+    )
+
+    colnames(link_draws) <- paste(
+      "unconditional_mean", term, focus_info$levels, "link", sep = "|"
+    )
+    colnames(ratio_draws) <- paste(
+      "unconditional_mean", term, focus_info$levels, "ratio", sep = "|"
+    )
+    retained_draws[[paste0(term, "_link")]] <- link_draws
+    retained_draws[[paste0(term, "_ratio")]] <- ratio_draws
+  }
+
+  influence <- do.call(rbind, rows)
+  rownames(influence) <- NULL
+  derived_draws <- do.call(cbind, retained_draws)
+  stored <- .save_derived_draws(derived_draws, retain, draws_path)
+  nominal <- .nominal_indices(
+    data, response, focus, focus_info,
+    .resolve_influ_weights(data, weights)
+  )
+  indices <- rbind(
+    nominal,
+    .standardised_indices(influence, focus, intersect(focus, terms))
+  )
+  if (nrow(indices)) indices$component <- "unconditional_mean"
+
+  new_influ_diag(
+    backend = backend,
+    family = family_spec,
+    focus = focus,
+    influence = influence,
+    indices = indices,
+    uncertainty = list(
+      method = method,
+      probs = probs,
+      ndraws = if (method == "none") 0L else n_draws
+    ),
+    retained = list(
+      mode = retain,
+      path = stored$path,
+      n_derived_draws = if (method == "none") 0L else n_draws,
+      n_derived_estimands = ncol(derived_draws)
+    ),
+    metadata = list(
+      response = response,
+      n_observations = nrow(data),
+      terms = terms,
+      reference = "observed",
+      notes = notes
+    ),
+    draws = stored$draws,
+    model = if (isTRUE(keep_model)) model else NULL
+  )
+}
+
 .combine_influ_diags <- function(diags, backend, family_spec, focus,
                                  model = NULL, keep_model = FALSE,
                                  notes = character()) {
@@ -516,6 +823,13 @@
 
   methods <- unique(vapply(diags, function(x) x$uncertainty$method, character(1)))
   modes <- unique(vapply(diags, function(x) x$retained$mode, character(1)))
+  combined_mode <- if ("disk" %in% modes) {
+    "disk"
+  } else if ("derived_draws" %in% modes) {
+    "derived_draws"
+  } else {
+    "summary"
+  }
 
   new_influ_diag(
     backend = backend,
@@ -531,7 +845,7 @@
       ndraws = max(vapply(diags, function(x) x$uncertainty$ndraws, numeric(1)))
     ),
     retained = list(
-      mode = paste(modes, collapse = "; "),
+      mode = combined_mode,
       path = NULL,
       n_derived_draws = if (is.null(draws)) 0L else nrow(draws),
       n_derived_estimands = if (is.null(draws)) 0L else ncol(draws)

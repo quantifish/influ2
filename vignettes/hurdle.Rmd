@@ -12,7 +12,17 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE
+)
+has_brms <- requireNamespace("brms", quietly = TRUE) &&
+  requireNamespace("posterior", quietly = TRUE)
+has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)
 ```
 
 ## Why retain components?
@@ -31,27 +41,116 @@ with a count distribution:
 E(Y) = \{1 - \Pr(\text{extra zero})\}\mu_{\text{count}}.
 \]
 
-An influence diagnostic should show both the component-specific effects and
-the combined change in expected response. Treating one component as though it
-were the complete CPUE index can obscure the reason that the index changed.
+An influence diagnostic should show both component-specific effects and the
+combined change in expected response. Treating one component as though it were
+the complete CPUE index can obscure why an index changed.
 
-## Fitting and calculating
+## BRMS hurdle-lognormal example
 
-The `influ()` method reads the component formulas from the fitted model. For
-example, a `brms` hurdle-lognormal model may be fitted and analysed as follows:
+A hurdle-lognormal model can be fitted with separate formulae for positive
+catch and the probability of a zero:
 
-```{r brms-hurdle, eval=FALSE}
+```{r brms-hurdle-fit, eval=FALSE}
 fit <- brms::brm(
-  brms::bf(cpue ~ year + vessel + depth, hu ~ year + vessel),
-  data = cpue_data,
-  family = brms::hurdle_lognormal()
+  brms::bf(y ~ year + group, hu ~ 1),
+  data = simulated_cpue,
+  family = brms::hurdle_lognormal(),
+  chains = 2,
+  iter = 2000,
+  seed = 42,
+  file = "m1",
+  file_refit = "on_change"
 )
-
-diagnostic <- influ(fit, focus = "year")
-plot(diagnostic, type = "components")
 ```
 
-`sdmTMB` delta models expose occurrence and positive spatial fields separately:
+The vignette uses the prefitted object supplied with its source. Joint
+posterior draws are reduced directly to compact component and
+unconditional-mean contrasts.
+
+```{r brms-hurdle, eval=has_brms}
+library(influ2)
+fit <- readRDS("m1.rds")
+hurdle_diagnostic <- influ(fit, focus = "year", ndraws = 250)
+unique(hurdle_diagnostic$influence$component)
+summary(hurdle_diagnostic)
+```
+
+```{r brms-hurdle-components, eval=has_brms, fig.cap="Positive, occurrence, and unconditional-mean influence from a BRMS hurdle-lognormal model."}
+plot(hurdle_diagnostic, type = "components")
+```
+
+Because this example has `hu ~ 1`, the probability of occurrence has no
+year-varying model term. Consequently, its unconditional year influence is the
+same as its positive-component year influence. A varying hurdle formula would
+allow both components to contribute.
+
+## glmmTMB hurdle example
+
+For `glmmTMB`, the truncated conditional family and zero formula form a hurdle
+model. The package simulates the conditional and zero-formula coefficients
+jointly from the fitted covariance before combining them.
+
+```{r glmmtmb-hurdle, eval=has_glmmTMB}
+set.seed(31)
+n <- 480
+cpue <- data.frame(
+  year = factor(rep(1:4, each = n / 4)),
+  depth = rnorm(n)
+)
+positive_mean <- exp(0.5 + 0.1 * as.numeric(cpue$year) + 0.2 * cpue$depth)
+zero_probability <- plogis(-0.8 + 0.15 * as.numeric(cpue$year))
+cpue$catch <- ifelse(
+  rbinom(n, 1, zero_probability),
+  0,
+  1 + rnbinom(n, mu = positive_mean, size = 2)
+)
+
+hurdle_fit <- glmmTMB::glmmTMB(
+  catch ~ year + depth,
+  ziformula = ~year,
+  family = glmmTMB::truncated_nbinom2(),
+  data = cpue
+)
+glmmTMB_hurdle <- influ(
+  hurdle_fit,
+  focus = "year",
+  ndraws = 500,
+  seed = 1
+)
+unique(glmmTMB_hurdle$influence$component)
+```
+
+```{r glmmtmb-hurdle-components, eval=has_glmmTMB, fig.cap="Positive, occurrence, and unconditional-mean influence from a glmmTMB hurdle model."}
+plot(glmmTMB_hurdle, type = "components")
+```
+
+Zero-inflated Poisson and negative-binomial models follow the same pathway,
+with `zero_probability` and `count` labels replacing `occurrence` and
+`positive`.
+
+## Dependence and memory
+
+Component combination must be performed draw by draw, or with a joint
+covariance or precision calculation. Multiplying independently calculated
+marginal intervals is invalid because it loses dependence between the two
+linear predictors. `influ2` therefore combines:
+
+- BRMS population-level components draw by draw from the joint posterior; and
+- `glmmTMB` fixed components draw by draw from their joint maximum-likelihood
+  covariance.
+
+Only derived focus-by-term draws are retained when requested. The much larger
+observation-by-draw arrays are never stored.
+
+For lognormal models, a constant residual-scale adjustment cancels from an
+influence ratio. Distributional models in which the scale itself varies need a
+future scale-component adapter.
+
+## Spatial delta models
+
+`sdmTMB` and TinyVAST delta models expose occurrence and positive fixed effects
+and latent fields as named components. Their fixed effects are combined into an
+unconditional mean with joint covariance simulation. For example:
 
 ```{r sdmtmb-delta, eval=FALSE}
 fit <- sdmTMB::sdmTMB(
@@ -66,26 +165,10 @@ diagnostic <- influ(fit, focus = "year")
 plot(diagnostic, type = "components")
 ```
 
-The component labels are stable across backends: `occurrence`, `positive`,
-`count`, and `zero_probability`, with spatial or spatiotemporal qualifiers when
-appropriate.
-
-## Uncertainty
-
-Component combination must be performed draw by draw, or with a joint
-covariance/precision calculation. Multiplying independently calculated
-marginal intervals is not valid because it loses dependence between the two
-linear predictors. Consequently, `influ2` reports component influence now and
-will add the combined unconditional-mean result only through a joint
-calculation.
-
-This is particularly important for lognormal models, where conversion from the
-log-location parameter to the response mean may additionally depend on the
-scale parameter. The family adapter, rather than the plotting code, owns that
-parameterisation.
-
-The spatial extension follows the motivation of @Hsu2022, while retaining
-prediction-grid weighting and full-resolution field calculations as distinct
-future estimands.
+Extending the combined delta mean to include latent spatial and spatiotemporal
+fields requires draws from the sparse joint precision matrix. That field-level
+uncertainty is explicitly labelled as pending rather than being assembled from
+independent marginal intervals. The motivation for this spatial extension
+follows @Hsu2022.
 
 ## References
