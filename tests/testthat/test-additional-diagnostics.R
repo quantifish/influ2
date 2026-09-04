@@ -23,6 +23,22 @@ test_that("model-neutral comparison and step plots share the index schema", {
   expect_setequal(unique(steps$data$Step), c("Current", "Previous"))
 })
 
+test_that("comparison labels distinguish identical formulas and different families", {
+  fixture <- bentley_fixture()
+  poisson <- fixture$model
+  gaussian <- stats::glm(
+    catch ~ year + area + vessel,
+    family = stats::gaussian(),
+    data = fixture$data
+  )
+
+  comparison <- plot_compare(list(poisson, gaussian))
+
+  expect_length(unique(comparison$data$Model), 2)
+  expect_match(unique(comparison$data$Model)[1], "poisson\\(log\\)")
+  expect_match(unique(comparison$data$Model)[2], "gaussian\\(identity\\)")
+})
+
 test_that("data extent reports the observed proportion by focus level", {
   data <- data.frame(
     year = rep(1:2, each = 3),

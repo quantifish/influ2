@@ -32,9 +32,11 @@
         "influ_diag", "glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST"
       )))) fits[[i]] else fits
       frm <- tryCatch(stats::formula(model), error = function(e) NULL)
-      if (is.null(frm)) paste0(diagnostics[[i]]$backend, " ", i) else {
+      formula_label <- if (is.null(frm)) paste0(diagnostics[[i]]$backend, " ", i) else {
         paste(deparse(frm), collapse = " ")
       }
+      family <- diagnostics[[i]]$family
+      paste0(formula_label, " [", family$family, "(", family$link, ")]")
     }, character(1))
   }
   if (length(labels) != length(diagnostics)) {
