@@ -171,16 +171,19 @@ test_that("brms hurdle components are combined draw by draw", {
 test_that("glmmTMB separates conditional, zero, and random components", {
   skip_if_not_installed("glmmTMB")
   set.seed(1)
-  data <- data.frame(
-    year = factor(rep(1:4, each = 40)),
-    vessel = factor(rep(1:20, each = 8)),
-    x = stats::rnorm(160)
+  data <- expand.grid(
+    replicate = seq_len(5),
+    vessel = factor(seq_len(20)),
+    year = factor(seq_len(4))
   )
-  eta <- 0.2 + as.numeric(data$year) * 0.1 + data$x * 0.2
+  data$x <- stats::rnorm(nrow(data))
+  vessel_effect <- stats::rnorm(20, sd = 0.35)
+  eta <- 0.2 + as.numeric(data$year) * 0.1 + data$x * 0.2 +
+    vessel_effect[data$vessel]
   data$catch <- ifelse(
-    stats::rbinom(160, 1, 0.2) == 1,
+    stats::rbinom(nrow(data), 1, 0.2) == 1,
     0,
-    stats::rpois(160, exp(eta))
+    stats::rnbinom(nrow(data), mu = exp(eta), size = 2)
   )
   model <- glmmTMB::glmmTMB(
     catch ~ year + x + (1 | vessel),

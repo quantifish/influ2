@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.git$
 ^data-raw$
 .travis.yml
 ^README\.Rmd$
