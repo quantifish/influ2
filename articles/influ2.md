@@ -1,0 +1,817 @@
+# Influence diagnostics
+
+## Why influence diagnostics?
+
+CPUE standardisation attempts to distinguish changes in abundance from
+changes in fishing practice, location, season, vessel composition, and
+other explanatory variables. A fitted model may estimate these
+relationships well without making it obvious why the standardised index
+differs from the nominal series.
+
+The coefficient-distribution-influence (CDI) framework combines the
+fitted effect of a term with changes in the sampled distribution of that
+term through the focus variable, which is usually year ([Bentley et al.
+2012](#ref-Bentley2012)). Spatial and spatiotemporal versions can
+similarly show whether changes in sampled location move observations
+among areas of different predicted abundance ([Hsu et al.
+2022](#ref-Hsu2022)).
+
+`influ2` represents these results with one model-neutral S3 class. Each
+backend extracts model components and joint uncertainty, while the
+calculation, storage, summary, and plotting layers remain shared.
+
+## A realistic lobster CPUE example
+
+The main examples use the simulated `lobsters_per_pot` data supplied
+with the package. These are 15,642 pot records from 2000 to 2017. The
+response is the number of lobsters caught per pot, and the explanatory
+variables are month, depth in metres, and soak time in hours. Annual
+sample sizes, seasonal coverage, depths, and soak times all vary, giving
+the diagnostic something meaningful to detect.
+
+``` r
+
+library(influ2)
+data(lobsters_per_pot)
+
+dim(lobsters_per_pot)
+#> [1] 15642     5
+head(lobsters_per_pot)
+#> # A tibble: 6 × 5
+#>   lobsters year  month depth  soak
+#>      <dbl> <fct> <fct> <dbl> <dbl>
+#> 1        0 2000  01     21.7  27.6
+#> 2        0 2000  01     17.2  48.0
+#> 3        2 2000  01     10.8  34.6
+#> 4        0 2000  01     19.5  48.5
+#> 5        2 2000  01     11.0  24.5
+#> 6        1 2000  01     38.7  24.5
+```
+
+The changing distribution of records by year and month is visible before
+a model is fitted. Larger bubbles represent more pot records. With no
+`fill` argument,
+[`plot_bubble()`](https://www.quantifish.co.nz/influ2/reference/plot_bubble.md)
+uses its default purple palette.
+
+``` r
+
+plot_bubble(
+  df = lobsters_per_pot,
+  group = c("year", "month")
+) +
+  labs(x = "Month", y = "Year")
+```
+
+![Sampling effort by year and month, using the default purple bubble
+style.](influ2_files/figure-html/lobster-sampling-purple-1.png)
+
+Sampling effort by year and month, using the default purple bubble
+style.
+
+Mapping month to colour gives a second view of the same sampling
+pattern.
+
+``` r
+
+plot_bubble(
+  df = lobsters_per_pot,
+  group = c("year", "month"),
+  fill = "month"
+) +
+  labs(x = "Month", y = "Year") +
+  theme(legend.position = "none")
+```
+
+![Sampling effort by year and month, with a rainbow palette
+distinguishing
+months.](influ2_files/figure-html/lobster-sampling-colour-1.png)
+
+Sampling effort by year and month, with a rainbow palette distinguishing
+months.
+
+Depth and soak-time coverage also change through time.
+
+``` r
+
+covariates <- tidyr::pivot_longer(
+  lobsters_per_pot,
+  cols = c("depth", "soak"),
+  names_to = "covariate",
+  values_to = "value"
+)
+
+ggplot(
+  covariates,
+  aes(x = year, y = value, group = year)
+) +
+  geom_boxplot(outlier.alpha = 0.08, linewidth = 0.25) +
+  facet_wrap(~covariate, scales = "free_y", ncol = 1) +
+  scale_y_continuous(
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(x = "Year", y = NULL) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+![Observed depth and soak-time distributions by
+year.](influ2_files/figure-html/lobster-covariates-1.png)
+
+Observed depth and soak-time distributions by year.
+
+## GLM
+
+A Poisson GLM provides a transparent starting point. This is an example
+model, not a recommendation that Poisson variation is adequate for these
+data.
+
+``` r
+
+lobster_glm <- glm(
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  family = poisson(link = "log"),
+  data = lobsters_per_pot
+)
+
+glm_diagnostic <- influ(lobster_glm, focus = "year")
+glm_diagnostic
+#> <influ_diag>
+#>   Backend:     glm
+#>   Response:    single poisson (log)
+#>   Focus:       year
+#>   Terms:       4
+#>   Focus levels:18
+#>   Uncertainty: analytic covariance
+#>   Retained:    summary
+summary(glm_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: glm
+#>   Family:  single poisson (log)
+#>   Focus:   year
+#> 
+#>            term   component maximum_absolute_link_influence level_at_maximum
+#>            year conditional                      0.59295576             2011
+#>   poly(soak, 3) conditional                      0.20630992             2009
+#>           month conditional                      0.05459421             2000
+#>  poly(depth, 3) conditional                      0.01460278             2016
+```
+
+The influence plot shows how changes in sampled month, depth, and soak
+time move the annual standardised series. The year term is retained in
+the object, but omitted from this plot because its within-year
+composition is the focus, not a sampling-distribution effect.
+
+``` r
+
+plot(
+  glm_diagnostic,
+  type = "influence",
+  term = c("month", "poly(depth, 3)", "poly(soak, 3)")
+)
+```
+
+![GLM influence ratios for the changing lobster covariate
+distributions.](influ2_files/figure-html/lobster-glm-influence-1.png)
+
+GLM influence ratios for the changing lobster covariate distributions.
+
+The same object contains nominal and standardised indices.
+
+``` r
+
+plot(glm_diagnostic, type = "index")
+```
+
+![Nominal and Poisson-GLM-standardised lobster
+indices.](influ2_files/figure-html/lobster-glm-index-1.png)
+
+Nominal and Poisson-GLM-standardised lobster indices.
+
+The model-neutral overall and trend metrics reproduce Bentley’s
+definitions. The overall metric is the mean absolute link-scale
+influence transformed back to a proportional scale. The trend metric is
+the fitted change per ordered focus level, also transformed to a
+proportional scale.
+
+``` r
+
+subset(
+  influ_metrics(glm_diagnostic),
+  term != "year",
+  select = c(term, metric, estimate)
+)
+#>             term  metric      estimate
+#> 3          month overall  2.244757e-02
+#> 4          month   trend  4.102224e-05
+#> 5 poly(depth, 3) overall  5.227671e-03
+#> 6 poly(depth, 3)   trend  5.112907e-04
+#> 7  poly(soak, 3) overall  2.419570e-02
+#> 8  poly(soak, 3)   trend -3.937291e-04
+```
+
+### A common prediction-grid reference
+
+Observed-data standardisation is the default. For comparisons among
+fleets, areas, or models, an explicit prediction grid prevents
+differences in their observed samples from silently changing the
+reference distribution. This grid crosses every year and month at common
+depth and soak values.
+
+``` r
+
+lobster_reference <- expand.grid(
+  year = levels(lobsters_per_pot$year),
+  month = levels(lobsters_per_pot$month),
+  depth = median(lobsters_per_pot$depth),
+  soak = median(lobsters_per_pot$soak)
+)
+lobster_reference$year <- factor(
+  lobster_reference$year,
+  levels = levels(lobsters_per_pot$year)
+)
+lobster_reference$month <- factor(
+  lobster_reference$month,
+  levels = levels(lobsters_per_pot$month)
+)
+
+glm_grid_diagnostic <- influ(
+  lobster_glm,
+  focus = "year",
+  reference_data = lobster_reference
+)
+glm_grid_diagnostic$metadata[c("reference", "n_reference")]
+#> $reference
+#> [1] "prediction_grid"
+#> 
+#> $n_reference
+#> [1] 216
+```
+
+Reference weights can be supplied with `reference_weights`. They may be
+a numeric vector or the name of a column in `reference_data`. This makes
+the standardisation estimand explicit, reproducible, and independent of
+accidental sample imbalance.
+
+## GAM
+
+The `mgcv` backend works with parametric terms and smooths ([Wood
+2017](#ref-Wood2017)). Here, negative-binomial variation is combined
+with smooth depth and soak effects.
+
+``` r
+
+lobster_gam <- mgcv::gam(
+  lobsters ~ year + month + s(depth, k = 5) + s(soak, k = 5),
+  family = mgcv::nb(),
+  method = "REML",
+  data = lobsters_per_pot
+)
+
+gam_diagnostic <- influ(lobster_gam, focus = "year")
+summary(gam_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: gam
+#>   Family:  single negative_binomial (log)
+#>   Focus:   year
+#> 
+#>      term   component maximum_absolute_link_influence level_at_maximum
+#>      year conditional                      0.59083656             2011
+#>   s(soak) conditional                      0.09986393             2009
+#>     month conditional                      0.05836384             2000
+#>  s(depth) conditional                      0.01692613             2016
+```
+
+``` r
+
+plot(
+  gam_diagnostic,
+  type = "influence",
+  term = c("month", "s(depth)", "s(soak)")
+)
+```
+
+![GAM influence ratios for month, depth, and soak
+time.](influ2_files/figure-html/lobster-gam-influence-1.png)
+
+GAM influence ratios for month, depth, and soak time.
+
+This is the same `influ_diag` interface as the GLM. No plotting code
+needs to know that two of the terms are smooths.
+
+## glmmTMB
+
+`glmmTMB` adds mixed effects, negative-binomial models, hurdle models,
+and zero-inflation ([Brooks et al. 2017](#ref-Brooks2017)). The example
+treats month as a random intercept.
+
+``` r
+
+lobster_glmmTMB <- glmmTMB::glmmTMB(
+  lobsters ~ year + poly(depth, 2) + poly(soak, 2) + (1 | month),
+  family = glmmTMB::nbinom2(),
+  data = lobsters_per_pot
+)
+
+glmmTMB_diagnostic <- influ(lobster_glmmTMB, focus = "year")
+summary(glmmTMB_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: glmmTMB
+#>   Family:  single negative_binomial (log)
+#>   Focus:   year
+#> 
+#>            term      component maximum_absolute_link_influence level_at_maximum
+#>            year    conditional                      0.58195453             2011
+#>   poly(soak, 2)    conditional                      0.08728537             2009
+#>  random_effects random_effects                      0.05218496             2000
+#>  poly(depth, 2)    conditional                      0.01219869             2017
+```
+
+``` r
+
+plot(glmmTMB_diagnostic, type = "components")
+```
+
+![glmmTMB fixed- and random-effect influence
+ratios.](influ2_files/figure-html/lobster-glmmtmb-influence-1.png)
+
+glmmTMB fixed- and random-effect influence ratios.
+
+Fixed effects use the joint maximum-likelihood covariance. The month
+random effect uses its fitted conditional modes, with uncertainty
+propagated from their joint conditional latent covariance and labelled
+separately. For hurdle and zero-inflated fits,
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) also
+calculates population-level unconditional-mean influence using the joint
+covariance of both components.
+
+## brms
+
+The Bayesian backend uses genuine joint posterior draws, but projects
+each draw directly to the much smaller focus-by-term diagnostic. It
+never constructs an observation-by-draw-by-term array ([Bürkner
+2017](#ref-Buerkner2017)). A model for the same lobster data can be
+fitted as follows:
+
+``` r
+
+lobster_brms <- brms::brm(
+  lobsters ~ year + (1 | month) + s(depth, k = 3),
+  family = brms::negbinomial(),
+  data = lobsters_per_pot,
+  chains = 2,
+  iter = 2000,
+  seed = 1,
+  file = "fit2",
+  file_refit = "on_change"
+)
+```
+
+The vignette uses the fitted model shipped with its source, rather than
+running MCMC whenever the documentation is built.
+
+``` r
+
+lobster_brms <- readRDS(system.file(
+  "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
+))
+brms_diagnostic <- influ(
+  lobster_brms,
+  focus = "year",
+  ndraws = 250,
+  retain = "summary"
+)
+summary(brms_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: brms
+#>   Family:  single negative_binomial (log)
+#>   Focus:   year
+#> 
+#>             term               component maximum_absolute_link_influence
+#>             year             conditional                     0.582641140
+#>            month conditional:group_level                     0.052375913
+#>  s(depth, k = 3)      conditional:smooth                     0.009501302
+#>  level_at_maximum
+#>              2016
+#>              2000
+#>              2017
+```
+
+``` r
+
+plot(brms_diagnostic, type = "components")
+```
+
+![BRMS population-level, month group-level, and depth-smooth influence
+ratios.](influ2_files/figure-html/lobster-brms-influence-1.png)
+
+BRMS population-level, month group-level, and depth-smooth influence
+ratios.
+
+Population-level, group-level, and smooth contributions all preserve
+posterior dependence during calculation. The default object retains
+interval summaries; `retain = "derived_draws"` retains only the compact
+diagnostic draws.
+
+The same posterior diagnostic can be displayed as a complete Bayesian
+CDI plot. Here, the coefficient panel, observed monthly composition, and
+resulting yearly influence are kept together, while the influence
+intervals retain the joint posterior dependence.
+
+``` r
+
+plot(
+  brms_diagnostic,
+  type = "cdi",
+  term = "month",
+  component = "conditional:group_level"
+)
+```
+
+![Bayesian coefficient-distribution-influence display for the monthly
+group-level effect.](influ2_files/figure-html/lobster-brms-cdi-1.png)
+
+Bayesian coefficient-distribution-influence display for the monthly
+group-level effect.
+
+## sdmTMB
+
+The lobster data deliberately have no coordinates. Inventing coordinates
+from depth or soak time would create a misleading spatial example, so
+this example uses the Pacific cod data and mesh supplied by `sdmTMB`
+([Anderson et al. 2025](#ref-Anderson2025)). Fixed, spatial, and
+spatiotemporal contributions are returned in the same schema as the
+lobster examples.
+
+``` r
+
+data("pcod_2011", package = "sdmTMB")
+data("pcod_mesh_2011", package = "sdmTMB")
+
+spatial_model <- sdmTMB::sdmTMB(
+  present ~ as.factor(year) + depth_scaled,
+  data = pcod_2011,
+  mesh = pcod_mesh_2011,
+  family = binomial(),
+  time = "year",
+  spatial = "on",
+  spatiotemporal = "iid",
+  silent = TRUE
+)
+
+sdmTMB_diagnostic <- influ(
+  spatial_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 1
+)
+summary(sdmTMB_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: sdmTMB
+#>   Family:  single binomial (logit)
+#>   Focus:   year
+#> 
+#>                  term                 component maximum_absolute_link_influence
+#>       as.factor(year)               conditional                      0.60757313
+#>         spatial_field conditional:latent_fields                      0.10520110
+#>          depth_scaled               conditional                      0.05400688
+#>  spatiotemporal_field conditional:latent_fields                      0.03150923
+#>  level_at_maximum
+#>              2013
+#>              2015
+#>              2015
+#>              2013
+```
+
+``` r
+
+plot(sdmTMB_diagnostic, type = "components")
+```
+
+![sdmTMB fixed, spatial, and spatiotemporal influence
+components.](influ2_files/figure-html/sdmtmb-influence-1.png)
+
+sdmTMB fixed, spatial, and spatiotemporal influence components.
+
+## tinyVAST
+
+The `tinyVAST` example uses a small reproducible spatial count data set.
+The purpose is to exercise the spatial and spatiotemporal component
+interface, not to represent a complete survey analysis ([Thorson et al.
+2025](#ref-Thorson2025)).
+
+``` r
+
+set.seed(2)
+n <- 120
+spatial_counts <- data.frame(
+  x = runif(n),
+  ycoord = runif(n),
+  time = rep(1:4, each = n / 4)
+)
+spatial_counts$year <- factor(spatial_counts$time)
+spatial_counts$var <- "catch"
+spatial_counts$dist <- "poisson"
+eta <- 0.3 + 0.08 * spatial_counts$time +
+  0.3 * sin(2 * pi * spatial_counts$x)
+spatial_counts$catch <- rpois(n, exp(eta))
+
+spatial_mesh <- fmesher::fm_mesh_2d(
+  spatial_counts[c("x", "ycoord")],
+  n = 25
+)
+tiny_model <- tinyVAST::tinyVAST(
+  catch ~ year,
+  data = spatial_counts,
+  family = list(poisson = poisson()),
+  spatial_domain = spatial_mesh,
+  spacetime_term = "",
+  space_columns = c("x", "ycoord")
+)
+
+tinyVAST_diagnostic <- influ(
+  tiny_model,
+  focus = "year",
+  ndraws = 100,
+  seed = 1
+)
+summary(tinyVAST_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: tinyVAST
+#>   Family:  single poisson (log)
+#>   Focus:   year
+#> 
+#>                  term                 component maximum_absolute_link_influence
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.08243912
+#>  level_at_maximum
+#>                 4
+#>                 4
+```
+
+``` r
+
+plot(tinyVAST_diagnostic, type = "components")
+```
+
+![tinyVAST fixed and spatiotemporal influence
+components.](influ2_files/figure-html/tinyvast-influence-1.png)
+
+tinyVAST fixed and spatiotemporal influence components.
+
+The spatial adapters propagate fixed-effect covariance and simulate
+spatial and spatiotemporal fields from each model’s sparse joint
+precision matrix. Each draw is reduced immediately to focus-level
+influence, so the returned object does not contain an
+observations-by-draws field array. Delta fields use the same joint draw
+for occurrence and positive components before the unconditional mean is
+calculated.
+
+## One interface and compact uncertainty
+
+All fitted-model methods return an `influ_diag`:
+
+``` r
+
+methods("influ")
+#> [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     
+#> [5] influ.glmmTMB*  influ.sdmTMB*   influ.tinyVAST*
+#> see '?methods' for accessing help and source code
+```
+
+The result contains compact tables for influence, coefficient or field
+summaries, data composition, and index comparisons:
+
+``` r
+
+head(influ_effects(glm_diagnostic))
+#>   focus level term   component scale    estimate  std_error       lower
+#> 1  year  2000 year conditional  link -0.16074335 0.02970967 -0.21897323
+#> 2  year  2001 year conditional  link  0.01254268 0.02970715 -0.04568226
+#> 3  year  2002 year conditional  link  0.08292310 0.02836334  0.02733198
+#> 4  year  2003 year conditional  link  0.08293093 0.02880397  0.02647618
+#> 5  year  2004 year conditional  link -0.07019748 0.03178861 -0.13250202
+#> 6  year  2005 year conditional  link  0.27226926 0.02619993  0.22091835
+#>          upper              method
+#> 1 -0.102513463 analytic covariance
+#> 2  0.070767616 analytic covariance
+#> 3  0.138514220 analytic covariance
+#> 4  0.139385678 analytic covariance
+#> 5 -0.007892947 analytic covariance
+#> 6  0.323620172 analytic covariance
+head(influ_composition(glm_diagnostic))
+#>   focus level term term_level    n weight     effect proportion   component
+#> 1  year  2000 year       2000 1120   1120 0.00000000          1 conditional
+#> 2  year  2001 year       2001  908    908 0.17328602          1 conditional
+#> 3  year  2002 year       2002  932    932 0.24366644          1 conditional
+#> 4  year  2003 year       2003  916    916 0.24367427          1 conditional
+#> 5  year  2004 year       2004  851    851 0.09054586          1 conditional
+#> 6  year  2005 year       2005  930    930 0.43301261          1 conditional
+influ_indices(glm_diagnostic)
+#>    focus level       series  estimate  std_error     lower     upper    scale
+#> 1   year  2000      nominal 0.9562500 0.04398645 0.8700381 1.0424619 response
+#> 2   year  2001      nominal 1.2136564 0.05441509 1.1070048 1.3203080 response
+#> 3   year  2002      nominal 1.2961373 0.05545386 1.1874498 1.4048249 response
+#> 4   year  2003      nominal 1.2794760 0.06052615 1.1608469 1.3981050 response
+#> 5   year  2004      nominal 1.1222092 0.05795160 1.0086261 1.2357922 response
+#> 6   year  2005      nominal 1.5548387 0.07392648 1.4099455 1.6997319 response
+#> 7   year  2006      nominal 0.9878855 0.04419910 0.9012568 1.0745141 response
+#> 8   year  2007      nominal 1.1785323 0.05590008 1.0689702 1.2880945 response
+#> 9   year  2008      nominal 1.1427184 0.04994662 1.0448249 1.2406120 response
+#> 10  year  2009      nominal 0.7919747 0.03538992 0.7226117 0.8613376 response
+#> 11  year  2010      nominal 0.7082097 0.03256584 0.6443818 0.7720376 response
+#> 12  year  2011      nominal 0.6854220 0.03611562 0.6146367 0.7562073 response
+#> 13  year  2012      nominal 0.7623529 0.03677567 0.6902740 0.8344319 response
+#> 14  year  2013      nominal 1.3824885 0.06167845 1.2616009 1.5033760 response
+#> 15  year  2014      nominal 1.6788413 0.06269746 1.5559566 1.8017261 response
+#> 16  year  2015      nominal 2.1147541 0.08272017 1.9526255 2.2768826 response
+#> 17  year  2016      nominal 1.9854911 0.07536500 1.8377784 2.1332037 response
+#> 18  year  2017      nominal 1.9848229 0.08172794 1.8246391 2.1450068 response
+#> 19  year  2000 standardised 0.8515106 0.02531240 0.8033432 0.9025660    ratio
+#> 20  year  2001 standardised 1.0126217 0.03009910 0.9553455 1.0733318    ratio
+#> 21  year  2002 standardised 1.0864583 0.03083146 1.0277089 1.1485660    ratio
+#> 22  year  2003 standardised 1.0864668 0.03131119 1.0268298 1.1495674    ratio
+#> 23  year  2004 standardised 0.9322097 0.02965283 0.8759012 0.9921381    ratio
+#> 24  year  2005 standardised 1.3129405 0.03441406 1.2472216 1.3821222    ratio
+#> 25  year  2006 standardised 0.8334966 0.02717347 0.7819374 0.8884554    ratio
+#> 26  year  2007 standardised 1.0023551 0.02997694 0.9453219 1.0628293    ratio
+#> 27  year  2008 standardised 0.9877008 0.02815334 0.9340614 1.0444205    ratio
+#> 28  year  2009 standardised 0.8343751 0.05358657 0.7359317 0.9459872    ratio
+#> 29  year  2010 standardised 0.6106419 0.02204332 0.5689643 0.6553725    ratio
+#> 30  year  2011 standardised 0.5526912 0.02320329 0.5090815 0.6000367    ratio
+#> 31  year  2012 standardised 0.6332071 0.02418162 0.5875832 0.6823734    ratio
+#> 32  year  2013 standardised 1.1382279 0.03784457 1.0664681 1.2148161    ratio
+#> 33  year  2014 standardised 1.4663704 0.04099518 1.3882210 1.5489192    ratio
+#> 34  year  2015 standardised 1.7502213 0.04950275 1.6558849 1.8499321    ratio
+#> 35  year  2016 standardised 1.7222154 0.04171102 1.6424026 1.8059068    ratio
+#> 36  year  2017 standardised 1.6680227 0.05009487 1.5727258 1.7690941    ratio
+#>      component
+#> 1  conditional
+#> 2  conditional
+#> 3  conditional
+#> 4  conditional
+#> 5  conditional
+#> 6  conditional
+#> 7  conditional
+#> 8  conditional
+#> 9  conditional
+#> 10 conditional
+#> 11 conditional
+#> 12 conditional
+#> 13 conditional
+#> 14 conditional
+#> 15 conditional
+#> 16 conditional
+#> 17 conditional
+#> 18 conditional
+#> 19 conditional
+#> 20 conditional
+#> 21 conditional
+#> 22 conditional
+#> 23 conditional
+#> 24 conditional
+#> 25 conditional
+#> 26 conditional
+#> 27 conditional
+#> 28 conditional
+#> 29 conditional
+#> 30 conditional
+#> 31 conditional
+#> 32 conditional
+#> 33 conditional
+#> 34 conditional
+#> 35 conditional
+#> 36 conditional
+influ_metrics(glm_diagnostic)
+#>             term   component  metric      estimate std_error lower upper
+#> 1           year conditional overall  3.005338e-01        NA    NA    NA
+#> 2           year conditional   trend  2.283307e-02        NA    NA    NA
+#> 3          month conditional overall  2.244757e-02        NA    NA    NA
+#> 4          month conditional   trend  4.102224e-05        NA    NA    NA
+#> 5 poly(depth, 3) conditional overall  5.227671e-03        NA    NA    NA
+#> 6 poly(depth, 3) conditional   trend  5.112907e-04        NA    NA    NA
+#> 7  poly(soak, 3) conditional overall  2.419570e-02        NA    NA    NA
+#> 8  poly(soak, 3) conditional   trend -3.937291e-04        NA    NA    NA
+#>                method
+#> 1 analytic covariance
+#> 2 analytic covariance
+#> 3 analytic covariance
+#> 4 analytic covariance
+#> 5 analytic covariance
+#> 6 analytic covariance
+#> 7 analytic covariance
+#> 8 analytic covariance
+```
+
+Calculation and retention are separate choices:
+
+``` r
+
+# Calculate uncertainty, retaining summaries only.
+d1 <- influ(fitted_model, focus = "year", retain = "summary")
+
+# Retain exact draws only for the derived diagnostics.
+d2 <- influ(fitted_model, focus = "year", retain = "derived_draws")
+
+# Write compact diagnostic draws to disk.
+d3 <- influ(
+  fitted_model,
+  focus = "year",
+  retain = "disk",
+  draws_path = "influence-draws.rds"
+)
+
+# Fast preview from coefficient estimates or posterior means.
+d4 <- influ(fitted_model, focus = "year", uncertainty = "none")
+```
+
+For GLMs and GAMs, linear diagnostic contrasts use fitted joint
+covariance analytically. Joint coefficient simulation is used when
+derived draws are requested. The BRMS backend reduces joint posterior
+draws during calculation, `glmmTMB` jointly simulates fixed components
+for hurdle and zero-inflated means, and the spatial backends reduce
+sparse joint-precision draws to the same compact schema. This separation
+draws on the posterior-processing approach used in CPUETools ([Dragonfly
+Science, n.d.](#ref-CPUETools)), while the S3 design and GAM
+implementation were also informed by `gamInflu` ([Dunn
+2025](#ref-Dunn2025)).
+
+## Families and response structures
+
+The initial family set is:
+
+``` r
+
+influ_families()
+#>              family                       aliases default_scale
+#> 1          gaussian                        normal    difference
+#> 2          binomial                     bernoulli    difference
+#> 3           poisson                       poisson         ratio
+#> 4 negative_binomial negbinomial, nbinom1, nbinom2         ratio
+#> 5         lognormal                     lognormal         ratio
+#> 6             gamma                         Gamma         ratio
+#> 7           tweedie                       Tweedie         ratio
+```
+
+It covers Gaussian, binomial, Poisson, negative binomial, lognormal,
+Gamma, and Tweedie responses. Hurdle/delta combinations cover Gamma,
+lognormal, Poisson, and negative-binomial positive components.
+Zero-inflated combinations cover Poisson and negative-binomial counts.
+Quasi families and more specialised positive distributions are
+deliberately outside the initial scope.
+
+The separate [hurdle and zero-inflation
+vignette](https://www.quantifish.co.nz/influ2/articles/hurdle.md)
+explains named components and unconditional means. The [Bentley
+validation
+vignette](https://www.quantifish.co.nz/influ2/articles/bentley-validation.md)
+runs the frozen original `proto` implementation, compares values, and
+displays old and new plots side by side. The [spatial and spatiotemporal
+vignette](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.md)
+maps persistent and time-varying fields alongside their influence
+components.
+
+## References
+
+Anderson, Sean C., Eric J. Ward, Phil A. English, Lewis A. K. Barnett,
+and James T. Thorson. 2025. “sdmTMB: An r Package for Fast, Flexible,
+and User-Friendly Generalized Linear Mixed Effects Models with Spatial
+and Spatiotemporal Random Fields.” *Journal of Statistical Software* 115
+(2): 1–46. <https://doi.org/10.18637/jss.v115.i02>.
+
+Bentley, Nokome, Terese H. Kendrick, Paul J. Starr, and Paul A. Breen.
+2012. “Influence Plots and Metrics: Tools for Better Understanding
+Fisheries Catch-Per-Unit-Effort Standardizations.” *ICES Journal of
+Marine Science* 69 (1): 84–88. <https://doi.org/10.1093/icesjms/fsr174>.
+
+Brooks, Mollie E., Kasper Kristensen, Koen J. van Benthem, et al. 2017.
+“glmmTMB Balances Speed and Flexibility Among Packages for Zero-Inflated
+Generalized Linear Mixed Modeling.” *The R Journal* 9 (2): 378–400.
+<https://doi.org/10.32614/RJ-2017-066>.
+
+Bürkner, Paul-Christian. 2017. “Brms: An r Package for Bayesian
+Multilevel Models Using Stan.” *Journal of Statistical Software* 80 (1):
+1–28. <https://doi.org/10.18637/jss.v080.i01>.
+
+Dragonfly Science. n.d. *CPUETools*.
+<https://github.com/dragonfly-science/CPUETools>.
+
+Dunn, Alistair. 2025. *gamInflu: Influence Analysis for Generalized
+Additive Models*. <https://github.com/alistairdunn1/gamInflu>.
+
+Hsu, Jhen, Yi-Jay Chang, and Nicholas D. Ducharme-Barth. 2022.
+“Evaluation of the Influence of Spatial Treatments on
+Catch-Per-Unit-Effort Standardization: A Fishery Application and
+Simulation Study of Pacific Saury in the Northwestern Pacific Ocean.”
+*Fisheries Research* 255: 106440.
+<https://doi.org/10.1016/j.fishres.2022.106440>.
+
+Thorson, James T., Sean C. Anderson, Pamela Goddard, and Christopher N.
+Rooper. 2025. “tinyVAST: R Package with an Expressive Interface to
+Specify Lagged and Simultaneous Effects in Multivariate Spatio-Temporal
+Models.” *Global Ecology and Biogeography* 34 (4): e70035.
+<https://doi.org/10.1111/geb.70035>.
+
+Wood, Simon N. 2017. *Generalized Additive Models: An Introduction with
+r*. 2nd ed. Chapman; Hall/CRC. <https://doi.org/10.1201/9781315370279>.

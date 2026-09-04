@@ -1,0 +1,156 @@
+# influ2
+
+[![R-CMD-check](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml)
+
+`influ2` calculates and visualises how explanatory variables, random
+effects, and spatial fields influence standardised fisheries CPUE
+indices.
+
+The package uses one model-neutral S3 interface:
+
+``` r
+
+diagnostic <- influ(model, focus = "year")
+diagnostic
+summary(diagnostic)
+plot(diagnostic, type = "influence")
+plot(diagnostic, type = "cdi", term = "vessel")
+```
+
+Initial adapters are available for:
+
+- [`stats::glm()`](https://rdrr.io/r/stats/glm.html);
+- [`mgcv::gam()`](https://rdrr.io/pkg/mgcv/man/gam.html);
+- [`brms::brm()`](https://paulbuerkner.com/brms/reference/brm.html);
+- [`glmmTMB::glmmTMB()`](https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html);
+- [`sdmTMB::sdmTMB()`](https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html);
+  and
+- [`tinyVAST::tinyVAST()`](https://vast-lib.github.io/tinyVAST/reference/tinyVAST.html).
+
+The result is a compact `influ_diag` object with consistent tables and
+plots across backends. BRMS posterior coefficients are projected
+directly into focus-by-term diagnostics, avoiding
+observation-by-draw-by-term arrays.
+
+``` r
+
+# Full posterior calculation, compact stored summaries.
+diagnostic <- influ(brms_fit, focus = "year", retain = "summary")
+
+# Retain only draws of the derived diagnostics.
+diagnostic <- influ(
+  brms_fit,
+  focus = "year",
+  retain = "derived_draws"
+)
+
+# Fast posterior-mean preview.
+preview <- influ(brms_fit, focus = "year", uncertainty = "none")
+```
+
+Supported base families in the first implementation are Gaussian,
+binomial, Poisson, negative binomial, lognormal, Gamma, and Tweedie.
+Hurdle/delta and zero-inflated components are kept explicit.
+
+## Installation
+
+``` r
+
+pak::pak("quantifish/influ2")
+```
+
+See
+[`vignette("influ2")`](https://www.quantifish.co.nz/influ2/articles/influ2.md)
+for the framework, memory strategy, and model examples. The separate
+[`vignette("bentley-validation")`](https://www.quantifish.co.nz/influ2/articles/bentley-validation.md)
+documents and plots the frozen agreement check against the original
+Bentley implementation.
+
+# Package index
+
+## Model-neutral diagnostics
+
+Calculate, inspect, and plot influence diagnostics.
+
+- [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) :
+  Calculate CPUE influence diagnostics
+- [`influ(`*`<brmsfit>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.brmsfit.md)
+  : Influence diagnostics for brms models
+- [`influ(`*`<gam>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.gam.md)
+  : Influence diagnostics for generalised additive models
+- [`influ(`*`<glm>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.glm.md)
+  : Influence diagnostics for generalised linear models
+- [`influ(`*`<glmmTMB>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.glmmTMB.md)
+  : Influence diagnostics for glmmTMB models
+- [`influ(`*`<sdmTMB>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.sdmTMB.md)
+  : Influence diagnostics for sdmTMB models
+- [`influ(`*`<tinyVAST>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.tinyVAST.md)
+  : Influence diagnostics for tinyVAST models
+- [`influ_effects()`](https://www.quantifish.co.nz/influ2/reference/influ_extractors.md)
+  [`influ_indices()`](https://www.quantifish.co.nz/influ2/reference/influ_extractors.md)
+  [`influ_composition()`](https://www.quantifish.co.nz/influ2/reference/influ_extractors.md)
+  [`influ_draws()`](https://www.quantifish.co.nz/influ2/reference/influ_extractors.md)
+  [`influ_metrics()`](https://www.quantifish.co.nz/influ2/reference/influ_extractors.md)
+  : Extract a table from an influence diagnostic
+- [`influ_families()`](https://www.quantifish.co.nz/influ2/reference/influ_families.md)
+  : Families supported by the influence engine
+- [`plot(`*`<influ_diag>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
+  [`autoplot(`*`<influ_diag>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
+  : Plot a model-neutral influence diagnostic
+- [`plot_bubble()`](https://www.quantifish.co.nz/influ2/reference/plot_bubble.md)
+  : Bubble plot of sampling composition
+
+## Additional diagnostics and comparisons
+
+Compare indices, inspect data coverage, and diagnose fitted models.
+
+- [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
+  : Compare standardised CPUE indices
+- [`plot_step()`](https://www.quantifish.co.nz/influ2/reference/plot_step.md)
+  : Display the effect of sequential model-standardisation steps
+- [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
+  : Plot the completeness of variables through time
+- [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+  : Plot implied residual coefficients
+- [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
+  : Plot predicted values against residuals
+- [`plot_qq()`](https://www.quantifish.co.nz/influ2/reference/plot_qq.md)
+  : Quantile-quantile plot of model residuals
+
+## Bayesian model comparison
+
+Optional summaries for fitted BRMS models.
+
+- [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md)
+  : Summarise Bayesian R-squared for BRMS models
+- [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
+  : Compare BRMS model criteria
+
+## Data
+
+Simulated data supplied with the package.
+
+- [`lobsters_per_pot`](https://www.quantifish.co.nz/influ2/reference/lobsters_per_pot.md)
+  : Simulated CPUE data
+
+## Package
+
+- [`influ2`](https://www.quantifish.co.nz/influ2/reference/influ2.md) :
+  Model-neutral influence diagnostics
+
+# Articles
+
+### Get started
+
+- [Influence
+  diagnostics](https://www.quantifish.co.nz/influ2/articles/influ2.md):
+
+### Validation and response structures
+
+- [Bentley
+  validation](https://www.quantifish.co.nz/influ2/articles/bentley-validation.md):
+- [Hurdle and zero-inflated
+  models](https://www.quantifish.co.nz/influ2/articles/hurdle.md):
+- [Spatial and spatiotemporal
+  diagnostics](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.md):
