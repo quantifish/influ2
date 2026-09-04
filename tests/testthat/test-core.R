@@ -27,6 +27,60 @@ test_that("GLM diagnostics reproduce the frozen Bentley fixture", {
   )
 })
 
+test_that("GLM diagnostics agree with Bentley proto on the lobster example", {
+  skip_if_not_installed("proto")
+  data("lobsters_per_pot", package = "influ2", envir = environment())
+
+  model <- stats::glm(
+    lobsters ~ year + month + stats::poly(depth, 3) + stats::poly(soak, 3),
+    family = stats::poisson(link = "log"),
+    data = lobsters_per_pot
+  )
+  # The legacy method refits reduced models with update(), so keep the data
+  # self-contained in the stored call rather than relying on a test frame.
+  model$call$data <- lobsters_per_pot
+  legacy_environment <- new.env(parent = globalenv())
+  legacy_environment$proto <- proto::proto
+  sys.source(
+    system.file("legacy", "influ-proto.R", package = "influ2"),
+    envir = legacy_environment
+  )
+  legacy_diagnostic <- legacy_environment$Influence$new(
+    model = model,
+    data = lobsters_per_pot,
+    response = "lobsters",
+    focus = "year"
+  )
+  legacy_diagnostic$calc()
+
+  legacy <- stats::reshape(
+    as.data.frame(legacy_diagnostic$influences),
+    direction = "long",
+    varying = names(legacy_diagnostic$influences)[-1],
+    v.names = "link_influence_legacy",
+    timevar = "term",
+    times = names(legacy_diagnostic$influences)[-1]
+  )
+  current <- subset(
+    influ_effects(influ(model, focus = "year")),
+    term != "year" & scale == "link",
+    select = c(level, term, estimate)
+  )
+  names(current)[3] <- "link_influence_new"
+  comparison <- merge(
+    legacy[c("level", "term", "link_influence_legacy")],
+    current,
+    by = c("level", "term")
+  )
+
+  expect_equal(nrow(comparison), 54L)
+  expect_equal(
+    comparison$link_influence_new,
+    comparison$link_influence_legacy,
+    tolerance = 1e-10
+  )
+})
+
 test_that("influ_diag has a stable compact schema", {
   fixture <- bentley_fixture()
   diagnostic <- influ(fixture$model, focus = "year")

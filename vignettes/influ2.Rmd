@@ -1,5 +1,5 @@
 ---
-title: "Influence diagnostics across fisheries CPUE models"
+title: "Influence diagnostics"
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -7,7 +7,7 @@ output:
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Influence diagnostics across fisheries CPUE models}
+  %\VignetteIndexEntry{Influence diagnostics}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -28,6 +28,7 @@ has_brms <- requireNamespace("brms", quietly = TRUE) &&
 has_sdmTMB <- requireNamespace("sdmTMB", quietly = TRUE)
 has_tinyVAST <- requireNamespace("tinyVAST", quietly = TRUE) &&
   requireNamespace("fmesher", quietly = TRUE)
+suppressPackageStartupMessages(library(ggplot2))
 ```
 
 ## Why influence diagnostics?
@@ -66,16 +67,27 @@ head(lobsters_per_pot)
 ```
 
 The changing distribution of records by year and month is visible before a
-model is fitted. Larger bubbles represent more pot records.
+model is fitted. Larger bubbles represent more pot records. With no `fill`
+argument, `plot_bubble()` uses its default purple palette.
 
-```{r lobster-sampling, fig.height=6, fig.cap="Sampling effort by year and month in the simulated lobster CPUE data."}
+```{r lobster-sampling-purple, fig.height=6, fig.cap="Sampling effort by year and month, using the default purple bubble style."}
+plot_bubble(
+  df = lobsters_per_pot,
+  group = c("year", "month")
+) +
+  labs(x = "Month", y = "Year")
+```
+
+Mapping month to colour gives a second view of the same sampling pattern.
+
+```{r lobster-sampling-colour, fig.height=6, fig.cap="Sampling effort by year and month, with a rainbow palette distinguishing months."}
 plot_bubble(
   df = lobsters_per_pot,
   group = c("year", "month"),
   fill = "month"
 ) +
-  ggplot2::labs(x = "Month", y = "Year") +
-  ggplot2::theme(legend.position = "none")
+  labs(x = "Month", y = "Year") +
+  theme(legend.position = "none")
 ```
 
 Depth and soak-time coverage also change through time.
@@ -88,15 +100,19 @@ covariates <- tidyr::pivot_longer(
   values_to = "value"
 )
 
-ggplot2::ggplot(
+ggplot(
   covariates,
-  ggplot2::aes(x = year, y = value, group = year)
+  aes(x = year, y = value, group = year)
 ) +
-  ggplot2::geom_boxplot(outlier.alpha = 0.08, linewidth = 0.25) +
-  ggplot2::facet_wrap(~covariate, scales = "free_y", ncol = 1) +
-  ggplot2::labs(x = "Year", y = NULL) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+  geom_boxplot(outlier.alpha = 0.08, linewidth = 0.25) +
+  facet_wrap(~covariate, scales = "free_y", ncol = 1) +
+  scale_y_continuous(
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  labs(x = "Year", y = NULL) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ## GLM
@@ -231,17 +247,27 @@ Population-level, group-level, and smooth contributions all preserve posterior
 dependence during calculation. The default object retains interval summaries;
 `retain = "derived_draws"` retains only the compact diagnostic draws.
 
-## Spatial and spatiotemporal models
+The same posterior diagnostic can be displayed as a complete Bayesian CDI
+plot. Here, the coefficient panel, observed monthly composition, and resulting
+yearly influence are kept together, while the influence intervals retain the
+joint posterior dependence.
+
+```{r lobster-brms-cdi, eval=has_brms, fig.width=10, fig.height=6, fig.cap="Bayesian coefficient-distribution-influence display for the monthly group-level effect."}
+plot(
+  brms_diagnostic,
+  type = "cdi",
+  term = "month",
+  component = "conditional:group_level"
+)
+```
+
+## sdmTMB
 
 The lobster data deliberately have no coordinates. Inventing coordinates from
-depth or soak time would create a misleading spatial example, so the spatial
-backends use small data sets that genuinely contain locations.
-
-### sdmTMB
-
-This example uses the Pacific cod data and mesh supplied by `sdmTMB`
-[@Anderson2025]. Fixed, spatial, and spatiotemporal contributions are returned
-in the same schema as the lobster examples.
+depth or soak time would create a misleading spatial example, so this example
+uses the Pacific cod data and mesh supplied by `sdmTMB` [@Anderson2025]. Fixed,
+spatial, and spatiotemporal contributions are returned in the same schema as
+the lobster examples.
 
 ```{r sdmtmb-example, eval=has_sdmTMB}
 data("pcod_2011", package = "sdmTMB")
@@ -266,9 +292,9 @@ summary(sdmTMB_diagnostic)
 plot(sdmTMB_diagnostic, type = "components")
 ```
 
-### TinyVAST
+## tinyVAST
 
-The TinyVAST example uses a small reproducible spatial count data set. The
+The `tinyVAST` example uses a small reproducible spatial count data set. The
 purpose is to exercise the spatial and spatiotemporal component interface, not
 to represent a complete survey analysis [@Thorson2025].
 
@@ -304,7 +330,7 @@ tinyVAST_diagnostic <- influ(tiny_model, focus = "year")
 summary(tinyVAST_diagnostic)
 ```
 
-```{r tinyvast-influence, eval=has_tinyVAST, fig.cap="TinyVAST fixed and spatiotemporal influence components."}
+```{r tinyvast-influence, eval=has_tinyVAST, fig.cap="tinyVAST fixed and spatiotemporal influence components."}
 plot(tinyVAST_diagnostic, type = "components")
 ```
 
@@ -377,6 +403,7 @@ The separate [hurdle and zero-inflation vignette](hurdle.html) explains named
 components and unconditional means. The
 [Bentley validation vignette](bentley-validation.html) runs the frozen original
 `proto` implementation, compares values, and displays old and new plots side by
-side.
+side. The [spatial and spatiotemporal vignette](spatial-spatiotemporal.html)
+maps persistent and time-varying fields alongside their influence components.
 
 ## References

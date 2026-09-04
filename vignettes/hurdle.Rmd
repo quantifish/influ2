@@ -1,12 +1,12 @@
 ---
-title: "Hurdle, delta, and zero-inflated influence"
+title: "Hurdle and zero-inflated models"
 output:
   rmarkdown::html_vignette:
     toc: true
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Hurdle, delta, and zero-inflated influence}
+  %\VignetteIndexEntry{Hurdle and zero-inflated models}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---

@@ -2,6 +2,26 @@ document.addEventListener("DOMContentLoaded", function () {
   const images = Array.from(document.querySelectorAll("main img.r-plt"));
   if (images.length === 0) return;
 
+  const figures = Array.from(document.querySelectorAll("main .figure"));
+  figures.forEach(function (figure, index) {
+    const caption = figure.querySelector(".caption, figcaption");
+    const figureImages = Array.from(figure.querySelectorAll("img.r-plt"));
+    if (!caption || figureImages.length === 0) return;
+
+    const number = "Figure " + (index + 1);
+    const captionText = caption.textContent.trim();
+    const numberLabel = document.createElement("span");
+    numberLabel.className = "influ-figure-number";
+    numberLabel.textContent = number + ". ";
+    caption.prepend(numberLabel);
+
+    figureImages.forEach(function (image) {
+      const description = image.alt || captionText;
+      image.dataset.influFigureNumber = number;
+      image.dataset.influLightboxCaption = number + ". " + description;
+    });
+  });
+
   const lightbox = document.createElement("div");
   lightbox.className = "influ-lightbox";
   lightbox.setAttribute("role", "dialog");
@@ -27,10 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let trigger = null;
 
   function figureCaption(image) {
-    const figure = image.closest("figure");
-    const labelledCaption = figure && figure.querySelector("figcaption");
-    return image.getAttribute("alt") ||
-      (labelledCaption && labelledCaption.textContent) || "";
+    return image.dataset.influLightboxCaption || image.getAttribute("alt") || "";
   }
 
   function show(index) {
@@ -59,7 +76,12 @@ document.addEventListener("DOMContentLoaded", function () {
   images.forEach(function (image) {
     image.tabIndex = 0;
     image.setAttribute("role", "button");
-    image.setAttribute("aria-label", (image.alt || "Figure") + ". Open larger view.");
+    const number = image.dataset.influFigureNumber || "Figure";
+    const description = (image.alt || "plot").replace(/[.!?]\s*$/, "");
+    image.setAttribute(
+      "aria-label",
+      number + ": " + description + ". Open larger view."
+    );
     image.addEventListener("click", function () { open(image); });
     image.addEventListener("keydown", function (event) {
       if (event.key === "Enter" || event.key === " ") {

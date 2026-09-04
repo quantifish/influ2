@@ -15,9 +15,11 @@ articles:
   contents:
   - influ2
 - title: Validation and response structures
+  navbar: ~
   contents:
   - bentley-validation
   - hurdle
+  - spatial-spatiotemporal
 
 reference:
 - title: Model-neutral diagnostics

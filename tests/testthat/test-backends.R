@@ -81,6 +81,15 @@ test_that("brms group-level terms retain joint uncertainty compactly", {
   expect_true(any(grepl("group_level$", diagnostic$influence$component)))
   expect_equal(nrow(diagnostic$draws), 40)
   expect_lt(ncol(diagnostic$draws), nrow(fit$data))
+  expect_s3_class(
+    plot(
+      diagnostic,
+      type = "cdi",
+      term = "month",
+      component = "conditional:group_level"
+    ),
+    "patchwork"
+  )
 })
 
 test_that("brms smooth bases are projected without observation-by-draw arrays", {
@@ -262,6 +271,15 @@ test_that("sdmTMB exposes fixed and spatiotemporal influence components", {
   expect_s3_class(diagnostic, "influ_diag_sdmtmb")
   expect_true(any(diagnostic$influence$term == "spatial_field"))
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
+  expect_true(all(is.finite(diagnostic$influence$estimate)))
+  expect_s3_class(
+    plot(
+      diagnostic,
+      type = "components",
+      term = c("spatial_field", "spatiotemporal_field")
+    ),
+    "ggplot"
+  )
 })
 
 test_that("sdmTMB delta fixed effects have a joint unconditional mean", {
@@ -315,7 +333,7 @@ test_that("tinyVAST fixed terms use the common influence schema", {
   expect_setequal(unique(diagnostic$influence$term), c("year", "x"))
 })
 
-test_that("tinyVAST exposes a fitted spatiotemporal component", {
+test_that("tinyVAST exposes fitted spatial and spatiotemporal components", {
   skip_if_not_installed("tinyVAST")
   skip_if_not_installed("fmesher")
   set.seed(2)
@@ -328,7 +346,9 @@ test_that("tinyVAST exposes a fitted spatiotemporal component", {
   data$year <- factor(data$time)
   data$var <- "catch"
   data$dist <- "poisson"
-  eta <- 0.3 + 0.08 * data$time + 0.3 * sin(2 * pi * data$x)
+  eta <- 0.3 + 0.08 * data$time +
+    0.5 * sin(2 * pi * data$x) +
+    0.35 * cos(2 * pi * (data$ycoord + 0.15 * data$time))
   data$catch <- stats::rpois(n, exp(eta))
   mesh <- fmesher::fm_mesh_2d(data[c("x", "ycoord")], n = 25)
   model <- tinyVAST::tinyVAST(
@@ -336,16 +356,27 @@ test_that("tinyVAST exposes a fitted spatiotemporal component", {
     data = data,
     family = list(poisson = stats::poisson()),
     spatial_domain = mesh,
-    spacetime_term = "",
+    space_term = "catch <-> catch, spatial_sd",
+    spacetime_term = "catch <-> catch, 0, spatiotemporal_sd",
     space_columns = c("x", "ycoord")
   )
   diagnostic <- influ(model, focus = "year")
 
+  expect_true(any(diagnostic$influence$term == "spatial_field"))
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
   expect_true(any(grepl(
     "spatiotemporal_field$",
     diagnostic$influence$component
   )))
+  expect_true(all(is.finite(diagnostic$influence$estimate)))
+  expect_s3_class(
+    plot(
+      diagnostic,
+      type = "components",
+      term = c("spatial_field", "spatiotemporal_field")
+    ),
+    "ggplot"
+  )
 })
 
 test_that("tinyVAST delta fixed effects have a joint unconditional mean", {

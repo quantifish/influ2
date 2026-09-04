@@ -1,5 +1,5 @@
 ---
-title: "Validation against the original Bentley influ implementation"
+title: "Bentley validation"
 output:
   rmarkdown::html_vignette:
     toc: true
@@ -7,7 +7,7 @@ output:
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Validation against the original Bentley influ implementation}
+  %\VignetteIndexEntry{Bentley validation}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE
 )
+suppressPackageStartupMessages(library(ggplot2))
 ```
 
 ## Purpose
@@ -30,27 +31,20 @@ system and GLMs [@Bentley2012]. That implementation is retained in `influ2` as
 a frozen validation artefact, not as part of the package API. This vignette
 runs the old code explicitly and compares it with the model-neutral S3 engine.
 
-The compact fixture is intentionally separate from the realistic lobster
-examples in the [main vignette](influ2.html). Its role is regression testing:
-known inputs should reproduce known values and visual behaviour.
+The comparison uses the same realistic `lobsters_per_pot` example as the
+[main vignette](influ2.html). A smaller frozen fixture remains in the test
+suite for fast regression testing.
 
 ## Fit the common model
 
 ```{r common-model}
 library(influ2)
-
-fixture_file <- system.file(
-  "extdata", "bentley-poisson-data.csv", package = "influ2"
-)
-bentley_data <- read.csv(
-  fixture_file,
-  colClasses = c(year = "factor", area = "factor", vessel = "factor")
-)
+data(lobsters_per_pot)
 
 bentley_glm <- glm(
-  catch ~ year + area + vessel,
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
   family = poisson(link = "log"),
-  data = bentley_data
+  data = lobsters_per_pot
 )
 new_diagnostic <- influ(bentley_glm, focus = "year")
 ```
@@ -69,8 +63,8 @@ if (legacy_available) {
   )
   legacy_diagnostic <- legacy_environment$Influence$new(
     model = bentley_glm,
-    data = bentley_data,
-    response = "catch",
+    data = lobsters_per_pot,
+    response = "lobsters",
     focus = "year"
   )
   legacy_diagnostic$calc()
@@ -88,93 +82,96 @@ legacy_available
 ## Influence plots
 
 The left-hand figure is produced by the original `proto` method. The
-right-hand figure is produced from the new `influ_diag`. Both show area and
-vessel influence as ratios centred on one.
+right-hand figure is produced from the new `influ_diag`. Both show monthly,
+depth, and soak-time influence as ratios centred on one across 18 years.
 
-```{r bentley-influence-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=6.5, fig.height=5.5, fig.cap='Influence plots from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley influence plot for area and vessel by year.', 'New influ2 influence plot for area and vessel by year.')}
+```{r bentley-influence-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=7, fig.height=7, fig.cap='Influence plots for the lobster example from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley influence plot for month, depth, and soak time by year.', 'New influ2 influence plot for month, depth, and soak time by year.')}
 legacy_diagnostic$influPlot()
 
 plot(
   new_diagnostic,
   type = "influence",
-  term = c("area", "vessel"),
+  term = c("month", "poly(depth, 3)", "poly(soak, 3)"),
   scale = "ratio"
 ) +
-  ggplot2::facet_grid(term ~ scale, scales = "free_y") +
-  ggplot2::labs(title = "New influ2")
+  facet_grid(term ~ scale, scales = "free_y") +
+  labs(title = "New influ2")
 ```
 
 ## CDI plots
 
 The complete coefficient-distribution-influence display combines the fitted
 effect, the distribution of observations, and the resulting influence. Both
-figures below use area as the model term and year as the focus.
+figures below use month as the model term and year as the focus.
 
-```{r bentley-cdi-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=8, fig.height=5.5, fig.cap='CDI plots from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley coefficient-distribution-influence plot for area.', 'New influ2 coefficient-distribution-influence plot for area.')}
-legacy_diagnostic$cdiPlot(term = "area")
-plot(new_diagnostic, type = "cdi", term = "area")
+```{r bentley-cdi-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=8, fig.height=5.5, fig.cap='CDI plots for month in the lobster example from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley coefficient-distribution-influence plot for month.', 'New influ2 coefficient-distribution-influence plot for month.')}
+legacy_diagnostic$cdiPlot(term = "month")
+plot(new_diagnostic, type = "cdi", term = "month")
 ```
 
 ## Numerical agreement
 
-Routine `testthat` tests compare the new result against values frozen from the
-legacy implementation. The reference is not regenerated during tests, so a
-change in the new implementation cannot silently move both sides of the
-comparison.
+The old and new engines are also compared directly on all 54 year-by-term
+contrasts in the lobster example. Routine `testthat` tests retain both this
+realistic comparison and a smaller frozen numerical fixture.
 
 ```{r bentley-parity}
-reference <- read.csv(system.file(
-  "extdata", "bentley-poisson-reference.csv", package = "influ2"
-))
+legacy <- reshape(
+  as.data.frame(legacy_diagnostic$influences),
+  direction = "long",
+  varying = names(legacy_diagnostic$influences)[-1],
+  v.names = "link_influence_legacy",
+  timevar = "term",
+  times = names(legacy_diagnostic$influences)[-1]
+)
+rownames(legacy) <- NULL
+
 current <- subset(
   influ_effects(new_diagnostic),
-  term %in% c("area", "vessel") & scale == "link",
-  select = c(focus, level, term, estimate)
+  term != "year" & scale == "link",
+  select = c(level, term, estimate)
 )
-names(current)[names(current) == "estimate"] <- "link_influence"
+names(current)[names(current) == "estimate"] <- "link_influence_new"
 
 comparison <- merge(
-  reference,
+  legacy[c("level", "term", "link_influence_legacy")],
   current,
-  by = c("focus", "level", "term"),
-  suffixes = c("_legacy", "_new")
+  by = c("level", "term")
 )
+comparison$natural_influence_legacy <- exp(comparison$link_influence_legacy)
 comparison$absolute_difference <- abs(
   comparison$link_influence_legacy - comparison$link_influence_new
 )
-comparison
+head(comparison)
+max(comparison$absolute_difference)
 stopifnot(max(comparison$absolute_difference) < 1e-8)
 ```
 
 The final overlay makes exact agreement visually apparent: legacy results are
 points, and new results are lines.
 
-```{r bentley-parity-plot, fig.width=7, fig.height=5, fig.cap='Direct overlay of legacy Bentley influence values and new influ2 results.', fig.alt='Legacy influence points overlaid by new influ2 lines for area and vessel.'}
-ggplot2::ggplot(comparison, ggplot2::aes(x = level, group = term)) +
-  ggplot2::geom_hline(yintercept = 1, linetype = 3, colour = "grey55") +
-  ggplot2::geom_point(
-    ggplot2::aes(y = natural_influence, shape = "Legacy proto"),
+```{r bentley-parity-plot, fig.width=7, fig.height=7, fig.cap='Direct overlay of legacy Bentley influence values and new influ2 results for the lobster example.', fig.alt='Legacy influence points overlaid by new influ2 lines for month, depth, and soak time.'}
+ggplot(comparison, aes(x = level, group = term)) +
+  geom_hline(yintercept = 1, linetype = 3, colour = "grey55") +
+  geom_point(
+    aes(y = natural_influence_legacy, shape = "Legacy proto"),
     size = 3
   ) +
-  ggplot2::geom_line(
-    ggplot2::aes(y = exp(link_influence_new), colour = "New influ2"),
+  geom_line(
+    aes(y = exp(link_influence_new), colour = "New influ2"),
     linewidth = 0.9
   ) +
-  ggplot2::facet_wrap(~term, ncol = 1, scales = "free_y") +
-  ggplot2::scale_colour_manual(values = c("New influ2" = "#0072B2")) +
-  ggplot2::scale_shape_manual(values = c("Legacy proto" = 21)) +
-  ggplot2::labs(
+  facet_wrap(~term, ncol = 1, scales = "free_y") +
+  scale_colour_manual(values = c("New influ2" = "#0072B2")) +
+  scale_shape_manual(values = c("Legacy proto" = 21)) +
+  labs(
     x = "Year",
     y = "Influence ratio",
     colour = NULL,
     shape = NULL
   ) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(legend.position = "bottom")
+  theme_bw() +
+  theme(legend.position = "bottom")
 ```
-
-The frozen values can be deliberately regenerated with
-`tools/legacy/regenerate-bentley-fixture.R`. That script is never run as part
-of the ordinary test suite.
 
 ## References

@@ -11,6 +11,10 @@ main img.r-plt:focus-visible {
   transform: translateY(-1px);
 }
 
+.influ-figure-number {
+  font-weight: 600;
+}
+
 .influ-lightbox {
   align-items: center;
   background: rgba(10, 15, 20, 0.93);
