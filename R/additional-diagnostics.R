@@ -421,7 +421,9 @@ plot_data_extent <- function(data, xvar, yvar) {
 #'
 #' @references Starr, P. J., and Kendrick, T. H. (2019). *FLA 1 Fishery
 #'   Characterisation and CPUE*. New Zealand Fisheries Assessment Report
-#'   2019/09, Figure O.9.
+#'   2019/09, Figure O.9. See also Middleton, D. A. J. (2025). *A Rapid Update
+#'   of CPUE for the Snapper Fishery in SNA 2 to 2024*. New Zealand Fisheries
+#'   Assessment Report 2025/32, Appendix C.
 #'
 #' @param fit A fitted model supported by [influ()].
 #' @param data Optional original model data.

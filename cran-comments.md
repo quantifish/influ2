@@ -1,8 +1,8 @@
 ## Test environments
 
 * macOS, R release: local `R CMD check --as-cran`
-* Ubuntu, R devel, release, and oldrel-1: GitHub Actions
-* macOS and Windows, R release: GitHub Actions
+* Pop!_OS, R release: local `R CMD check --as-cran`
+* Ubuntu and Windows, R release: GitHub Actions
 
 ## R CMD check results
 

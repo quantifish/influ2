@@ -10,6 +10,8 @@ data-raw/
 /*.tar.gz
 # Output files from R CMD check
 /*.Rcheck/
+# Default graphics-device output occasionally produced by tests
+Rplots.pdf
 # RStudio files
 .Rproj.user/
 # produced vignettes

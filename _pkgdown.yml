@@ -8,6 +8,18 @@ navbar:
   structure:
     left:  [intro, articles, tutorials, reference, news]
     right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: Bentley validation
+        href: articles/bentley-validation.html
+      - text: Hurdle, delta, and zero-inflated models
+        href: articles/hurdle.html
+      - text: Spatial and spatiotemporal diagnostics
+        href: articles/spatial-spatiotemporal.html
+      - text: Legacy Get Started (frozen)
+        href: articles/legacy-get-started.html
 
 articles:
 - title: Get started
