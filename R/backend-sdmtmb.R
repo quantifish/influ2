@@ -479,6 +479,11 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
   if (!requireNamespace("sdmTMB", quietly = TRUE)) {
     stop("Package 'sdmTMB' is required for this model.", call. = FALSE)
   }
+  uncertainty <- match.arg(
+    uncertainty,
+    c("auto", "none", "analytic", "simulation")
+  )
+  ndraws <- .validate_ndraws(ndraws)
   if (is.null(model$sd_report) || is.null(model$parlist)) {
     stop("The sdmTMB object must be fitted before influence is calculated.", call. = FALSE)
   }

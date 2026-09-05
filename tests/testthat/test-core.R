@@ -154,6 +154,19 @@ test_that("uncertainty calculation and retention are separate", {
   expect_equal(nrow(readRDS(disk$retained$path)), 20)
 })
 
+test_that("frequentist preparation permits unavailable covariance", {
+  fixture <- bentley_fixture()
+  matrix <- stats::model.matrix(fixture$model)
+  prepared <- influ2:::.prepare_frequentist_matrix(
+    fixture$model,
+    matrix,
+    influ2:::.glm_term_columns(fixture$model, matrix),
+    V = NULL
+  )
+  expect_null(prepared$vcov)
+  expect_equal(ncol(prepared$X), length(prepared$beta))
+})
+
 test_that("an explicit prediction grid controls the reference distribution", {
   fixture <- bentley_fixture()
   observed <- influ(fixture$model, focus = "year")
@@ -234,4 +247,23 @@ test_that("standard plotting methods use the common object", {
   expect_s3_class(plot(diagnostic, type = "index"), "ggplot")
   expect_s3_class(plot(diagnostic, type = "cdi", term = "area"), "patchwork")
   expect_s3_class(ggplot2::autoplot(diagnostic), "ggplot")
+})
+
+test_that("influ_diag validation rejects malformed intervals", {
+  diagnostic <- influ(bentley_fixture()$model, focus = "year")
+  diagnostic$influence$lower[1] <- diagnostic$influence$upper[1] + 1
+  expect_error(
+    influ2:::validate_influ_diag(diagnostic),
+    "lower bounds must not exceed upper bounds"
+  )
+})
+
+test_that("summary handles non-finite influence estimates", {
+  diagnostic <- influ(bentley_fixture()$model, focus = "year")
+  diagnostic$influence$estimate[diagnostic$influence$term == "area"] <- NA_real_
+  observed <- summary(diagnostic)$term_summary
+  observed <- observed[observed$term == "area", , drop = FALSE]
+
+  expect_true(is.na(observed$maximum_absolute_link_influence))
+  expect_true(is.na(observed$level_at_maximum))
 })

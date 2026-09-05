@@ -30,3 +30,5 @@ vignettes/*.R
 rsconnect/
 docs
 influ2.Rproj
+/doc/
+/Meta/

@@ -29,8 +29,24 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"),
   if (!is.data.frame(df)) {
     stop("`df` must be a data frame.", call. = FALSE)
   }
+  if (!nrow(df)) {
+    stop("`df` must contain at least one row.", call. = FALSE)
+  }
   if (length(group) != 2L || !all(group %in% names(df))) {
     stop("`group` must name exactly two columns in `df`.", call. = FALSE)
+  }
+  if (anyNA(df[group])) {
+    stop("Grouping columns must not contain missing values.", call. = FALSE)
+  }
+  if (!is.character(sum_by) || length(sum_by) != 1L || is.na(sum_by)) {
+    stop("`sum_by` must be one character value.", call. = FALSE)
+  }
+  if (!is.numeric(alpha) || length(alpha) != 1L || !is.finite(alpha) ||
+      alpha < 0 || alpha > 1) {
+    stop("`alpha` must be one number between zero and one.", call. = FALSE)
+  }
+  if (!is.character(fill) || length(fill) != 1L || is.na(fill)) {
+    stop("`fill` must be one colour or column name.", call. = FALSE)
   }
 
   aliases <- c(rows = "row", y = "row", col = "column", cols = "column",
@@ -40,6 +56,9 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"),
 
   colour_by <- length(fill) == 1L && fill %in% names(df)
   grouping <- if (colour_by) unique(c(group, fill)) else group
+  if (colour_by && anyNA(df[[fill]])) {
+    stop("The colour-mapping column must not contain missing values.", call. = FALSE)
+  }
   values <- df[grouping]
   values[[group[2]]] <- as.factor(values[[group[2]]])
   counts <- stats::aggregate(
@@ -58,6 +77,15 @@ plot_bubble <- function(df, group = c("fishing_year", "vessel"),
   }
 
   if (!is.null(sort_order)) {
+    observed <- unique(as.character(counts[[group[2]]]))
+    if (anyNA(sort_order) || anyDuplicated(sort_order) ||
+        !setequal(as.character(sort_order), observed)) {
+      stop(
+        "`sort_order` must contain every observed horizontal-group level ",
+        "exactly once.",
+        call. = FALSE
+      )
+    }
     counts[[group[2]]] <- factor(counts[[group[2]]], levels = sort_order)
   }
 

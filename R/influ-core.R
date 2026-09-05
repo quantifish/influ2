@@ -102,8 +102,22 @@ validate_influ_diag <- function(x) {
     )
   }
 
-  if (!all(x$influence$focus == x$focus)) {
+  if (!nrow(x$influence)) {
+    stop("The influence table must contain at least one row.", call. = FALSE)
+  }
+
+  numeric_columns <- c("estimate", "std_error", "lower", "upper")
+  if (!all(vapply(x$influence[numeric_columns], is.numeric, logical(1)))) {
+    stop("Influence estimates and intervals must be numeric.", call. = FALSE)
+  }
+
+  if (anyNA(x$influence$focus) || !all(x$influence$focus == x$focus)) {
     stop("Every influence row must use the object's focus variable.", call. = FALSE)
+  }
+
+  bounded <- is.finite(x$influence$lower) & is.finite(x$influence$upper)
+  if (any(x$influence$lower[bounded] > x$influence$upper[bounded])) {
+    stop("Influence interval lower bounds must not exceed upper bounds.", call. = FALSE)
   }
 
   x
@@ -199,11 +213,25 @@ summary.influ_diag <- function(object, ...) {
     rbind,
     lapply(names(split_rows), function(term) {
       z <- link[split_rows[[term]], , drop = FALSE]
+      finite <- which(is.finite(z$estimate))
+      maximum <- if (length(finite)) {
+        finite[which.max(abs(z$estimate[finite]))]
+      } else {
+        NA_integer_
+      }
       data.frame(
         term = term,
         component = paste(unique(z$component), collapse = ", "),
-        maximum_absolute_link_influence = max(abs(z$estimate), na.rm = TRUE),
-        level_at_maximum = as.character(z$level[which.max(abs(z$estimate))]),
+        maximum_absolute_link_influence = if (is.na(maximum)) {
+          NA_real_
+        } else {
+          abs(z$estimate[maximum])
+        },
+        level_at_maximum = if (is.na(maximum)) {
+          NA_character_
+        } else {
+          as.character(z$level[maximum])
+        },
         stringsAsFactors = FALSE
       )
     })

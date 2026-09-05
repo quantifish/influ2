@@ -597,6 +597,11 @@ influ.tinyVAST <- function(model, focus, data = NULL, weights = NULL,
   if (!requireNamespace("tinyVAST", quietly = TRUE)) {
     stop("Package 'tinyVAST' is required for this model.", call. = FALSE)
   }
+  uncertainty <- match.arg(
+    uncertainty,
+    c("auto", "none", "analytic", "simulation")
+  )
+  ndraws <- .validate_ndraws(ndraws)
   if (is.null(model$sdrep) || is.null(model$internal$parlist)) {
     stop("The tinyVAST object must be fitted before influence is calculated.", call. = FALSE)
   }

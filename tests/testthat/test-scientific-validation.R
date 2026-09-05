@@ -136,6 +136,145 @@ test_that("weight and reference-grid validation fails explicitly", {
     "one value"
   )
   expect_error(influ(model, focus = "missing"), "must name one column")
+  expect_error(
+    influ(model, focus = "year", uncertainty = "simulation", ndraws = 0),
+    "positive whole number"
+  )
+  expect_error(
+    influ(model, focus = "year", probs = c(NA_real_, 0.9)),
+    "increasing probabilities"
+  )
+})
+
+test_that("numeric focus levels are ordered independently of row order", {
+  set.seed(102)
+  data <- data.frame(
+    year = rep(c(2003, 2001, 2002), each = 30),
+    x = stats::rnorm(90)
+  )
+  data$catch <- stats::rpois(
+    nrow(data),
+    exp(0.2 + 0.03 * (data$year - 2001) + 0.1 * data$x)
+  )
+  model <- stats::glm(
+    catch ~ year + x,
+    family = stats::poisson(),
+    data = data
+  )
+  diagnostic <- influ(model, focus = "year")
+
+  expect_identical(unique(diagnostic$influence$level), c("2001", "2002", "2003"))
+  expect_identical(unique(diagnostic$indices$level), c("2001", "2002", "2003"))
+})
+
+test_that("analytic intervals honour asymmetric probabilities", {
+  fixture <- bentley_fixture()
+  probs <- c(0.1, 0.8)
+  diagnostic <- influ(fixture$model, focus = "year", probs = probs)
+  observed <- subset(
+    diagnostic$influence,
+    term == "area" & scale == "link"
+  )
+
+  expect_equal(
+    observed$lower,
+    observed$estimate + stats::qnorm(probs[1]) * observed$std_error,
+    tolerance = 1e-12
+  )
+  expect_equal(
+    observed$upper,
+    observed$estimate + stats::qnorm(probs[2]) * observed$std_error,
+    tolerance = 1e-12
+  )
+})
+
+test_that("nominal index uncertainty uses weights and requested probabilities", {
+  fixture <- bentley_fixture()
+  weights <- seq_len(nrow(fixture$data))
+  probs <- c(0.1, 0.8)
+  diagnostic <- influ(
+    fixture$model,
+    focus = "year",
+    weights = weights,
+    probs = probs
+  )
+  observed <- subset(diagnostic$indices, series == "nominal")
+  keep <- fixture$data$year == observed$level[1]
+  y <- fixture$data$catch[keep]
+  w <- weights[keep]
+  weight_sum <- sum(w)
+  squared_weight_sum <- sum(w^2)
+  effective_n <- weight_sum^2 / squared_weight_sum
+  estimate <- stats::weighted.mean(y, w)
+  variance <- sum(w * (y - estimate)^2) /
+    (weight_sum - squared_weight_sum / weight_sum)
+  se <- sqrt(variance / effective_n)
+
+  expect_equal(observed$estimate[1], estimate, tolerance = 1e-12)
+  expect_equal(observed$std_error[1], se, tolerance = 1e-12)
+  expect_equal(observed$lower[1], estimate + stats::qnorm(probs[1]) * se)
+  expect_equal(observed$upper[1], estimate + stats::qnorm(probs[2]) * se)
+})
+
+test_that("zero total weight within a focus level fails explicitly", {
+  fixture <- bentley_fixture()
+  weights <- rep(1, nrow(fixture$data))
+  weights[fixture$data$year == levels(fixture$data$year)[1]] <- 0
+
+  expect_error(
+    influ(fixture$model, focus = "year", weights = weights),
+    "Every focus level must have a positive total weight"
+  )
+})
+
+test_that("ambiguous focus interactions do not create a partial index", {
+  fixture <- bentley_fixture()
+  model <- stats::glm(
+    catch ~ year * area + vessel,
+    family = stats::poisson(),
+    data = fixture$data
+  )
+
+  expect_warning(
+    diagnostic <- influ(model, focus = "year"),
+    "multiple model terms contain the focus variable"
+  )
+  expect_identical(unique(diagnostic$indices$series), "nominal")
+})
+
+test_that("two-part preview does not retain a synthetic draw", {
+  data <- data.frame(
+    y = c(0, 1, 2, 3),
+    year = factor(c(1, 1, 2, 2))
+  )
+  projection <- function(spec, delta) {
+    list(
+      family_spec = spec,
+      eta_reference = 0,
+      term_deltas = list(`as.factor(year)` = matrix(delta, nrow = 1)),
+      reference = "observed",
+      method = "none"
+    )
+  }
+  probability_spec <- influ2:::.new_family_spec("binomial", "logit")
+  main_spec <- influ2:::.new_family_spec("gamma", "log")
+  diagnostic <- influ2:::.two_part_combined_diag(
+    backend = "test",
+    model = NULL,
+    data = data,
+    response = "y",
+    focus = "year",
+    family_spec = main_spec,
+    main_projection = projection(main_spec, c(-0.1, 0.1)),
+    probability_projection = projection(probability_spec, c(-0.2, 0.2)),
+    probability_is_zero = FALSE,
+    retain = "derived_draws"
+  )
+
+  expect_null(influ_draws(diagnostic))
+  expect_identical(diagnostic$retained$n_derived_draws, 0L)
+  expect_identical(diagnostic$retained$n_derived_estimands, 0L)
+  expect_true("standardised" %in% diagnostic$indices$series)
 })
 
 test_that("glmmTMB random effects retain joint simulated uncertainty", {

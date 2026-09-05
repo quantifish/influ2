@@ -67,6 +67,9 @@
 .rescale_comparison_indices <- function(data, rescale = "raw", rescale_series = NULL) {
   models <- unique(data$Model)
   if (is.numeric(rescale) && length(rescale) == 1L) {
+    if (!is.finite(rescale) || rescale <= 0) {
+      stop("Numeric `rescale` must be finite and positive.", call. = FALSE)
+    }
     for (model in models) {
       keep <- data$Model == model
       multiplier <- rescale / .geometric_mean(data$estimate[keep])
@@ -87,6 +90,13 @@
         data$level[data$Model == reference_model],
         data$level[data$Model == model]
       )
+      if (!length(common)) {
+        stop(
+          "Compared index series must share at least one focus level when ",
+          "`rescale_series` is used.",
+          call. = FALSE
+        )
+      }
       reference <- data$estimate[data$Model == reference_model & data$level %in% common]
       target <- data$estimate[data$Model == model & data$level %in% common]
       multiplier <- .geometric_mean(reference) / .geometric_mean(target)
@@ -232,6 +242,7 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
       !all(vapply(fits, inherits, logical(1), "brmsfit"))) {
     stop("`fits` must contain only brmsfit objects.", call. = FALSE)
   }
+  probs <- .validate_probs(probs)
   out <- lapply(fits, function(fit) {
     draws <- as.numeric(brms::bayes_R2(fit, summary = FALSE, ...))
     interval <- stats::quantile(draws, probs = probs, names = FALSE)
@@ -341,7 +352,11 @@ plot_data_extent <- function(data, xvar, yvar) {
       !length(yvar) || any(!yvar %in% names(data))) {
     stop("`xvar` and `yvar` must name columns in `data`.", call. = FALSE)
   }
-  time_levels <- unique(data[[xvar]])
+  observed_time <- !is.na(data[[xvar]])
+  if (!any(observed_time)) {
+    stop("`xvar` must contain at least one non-missing value.", call. = FALSE)
+  }
+  time_levels <- .focus_info(data[observed_time, , drop = FALSE], xvar)$levels
   out <- do.call(rbind, lapply(yvar, function(variable) {
     proportion <- vapply(time_levels, function(level) {
       keep <- !is.na(data[[xvar]]) & data[[xvar]] == level
@@ -404,6 +419,14 @@ plot_data_extent <- function(data, xvar, yvar) {
   if (!length(focus_terms)) {
     stop("The diagnostic does not contain a link-scale focus effect.", call. = FALSE)
   }
+  if (length(focus_terms) > 1L) {
+    stop(
+      "Implied residuals are ambiguous when multiple model terms contain ",
+      "the focus variable. Fit a main-effects model, or calculate the ",
+      "interaction-specific baseline explicitly.",
+      call. = FALSE
+    )
+  }
   d <- d[d$term == focus_terms[1], , drop = FALSE]
   priority <- c("unconditional_mean", "conditional")
   component <- priority[priority %in% d$component][1]
@@ -444,6 +467,13 @@ plot_implied_residuals <- function(fit, data = NULL, year = "year",
   data <- .resolve_influ_data(fit, data)
   if (!all(c(year, groups) %in% names(data))) {
     stop("`year` and `groups` must name columns in the model data.", call. = FALSE)
+  }
+  if (anyNA(data[c(year, groups)])) {
+    stop("`year` and `groups` must not contain missing values.", call. = FALSE)
+  }
+  if (!is.numeric(min_n) || length(min_n) != 1L || !is.finite(min_n) ||
+      min_n < 1 || min_n != floor(min_n)) {
+    stop("`min_n` must be a positive whole number.", call. = FALSE)
   }
   residual <- .residual_estimate(fit, type)
   if (length(residual) != nrow(data)) {
@@ -562,11 +592,12 @@ plot_predicted_residuals <- function(fit, trend = "loess", type = "pearson") {
 #' @return A [ggplot2::ggplot()] object.
 #' @export
 plot_qq <- function(fit, probs = c(0.25, 0.75), type = "pearson") {
-  if (length(probs) != 2L || any(probs <= 0 | probs >= 1) || probs[1] >= probs[2]) {
-    stop("`probs` must contain two increasing probabilities between zero and one.", call. = FALSE)
-  }
+  probs <- .validate_probs(probs)
   residual <- sort(.residual_estimate(fit, type))
   residual <- residual[is.finite(residual)]
+  if (length(residual) < 2L) {
+    stop("At least two finite residuals are required for a Q-Q plot.", call. = FALSE)
+  }
   theoretical <- stats::qnorm(stats::ppoints(length(residual)))
   x <- stats::qnorm(probs)
   y <- stats::quantile(residual, probs, names = FALSE)

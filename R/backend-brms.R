@@ -69,6 +69,7 @@
 
 .brms_population_draws <- function(model, X, dpar = NULL, ndraws = NULL,
                                    keep_draws = TRUE) {
+  ndraws <- .validate_ndraws(ndraws, allow_null = TRUE)
   variables <- .brms_parameter_names(X, dpar)
   available <- .brms_available_variables(model)
   missing <- setdiff(variables, available)
@@ -92,6 +93,7 @@
 }
 
 .brms_draw_matrix <- function(model, variables, ndraws = NULL) {
+  ndraws <- .validate_ndraws(ndraws, allow_null = TRUE)
   available <- .brms_available_variables(model)
   missing <- setdiff(variables, available)
   if (length(missing)) {
@@ -130,6 +132,13 @@
   )
   for (i in seq_along(focus_info$levels)) {
     keep <- focus_info$value == focus_info$levels[i]
+    if (sum(weights[keep]) <= 0) {
+      stop(
+        "Every focus level must have a positive total weight; level '",
+        focus_info$levels[i], "' does not.",
+        call. = FALSE
+      )
+    }
     contrast[i, ] <- group_sum(weights[keep] * Z[keep], J[keep]) /
       sum(weights[keep]) - overall
   }
@@ -241,9 +250,12 @@
       "' is projected directly from joint posterior draws without an observation-by-draw array."
     )
   )
-  contribution_levels <- .term_level_values(data, term, contribution)
+  keep <- weights > 0 & is.finite(contribution)
+  contribution_levels <- .term_level_values(
+    data[keep, , drop = FALSE], term, contribution[keep]
+  )
   level_rows <- split(
-    seq_len(nrow(data)),
+    which(keep),
     factor(contribution_levels, levels = unique(contribution_levels))
   )
   coefficient_rows <- lapply(names(level_rows), function(level) {

@@ -279,6 +279,7 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
   if (!requireNamespace("glmmTMB", quietly = TRUE)) {
     stop("Package 'glmmTMB' is required for this model.", call. = FALSE)
   }
+  ndraws <- .validate_ndraws(ndraws)
   data <- .resolve_influ_data(model, data)
   response_structure <- .glmmTMB_structure(model)
   fam <- stats::family(model)

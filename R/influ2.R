@@ -1,7 +1,7 @@
 #' Model-neutral influence diagnostics
 #'
 #' @description
-#' \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
+#' \if{html}{\figure{logo.png}{options: alt='influ2 logo' width='120'}}
 #'
 #' Standardising catch per unit effort attempts to distinguish changes in
 #' abundance from changes in fishing practice and sampling composition.

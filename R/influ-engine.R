@@ -59,15 +59,45 @@
     stop("`focus` must name one column in the model data.", call. = FALSE)
   }
   value <- data[[focus]]
+  if (!length(value)) {
+    stop("The model data contain no observations.", call. = FALSE)
+  }
   if (anyNA(value)) {
     stop("The focus variable contains missing values.", call. = FALSE)
   }
+  if ((is.numeric(value) || inherits(value, c("Date", "POSIXt"))) &&
+      any(!is.finite(value))) {
+    stop("The focus variable contains non-finite values.", call. = FALSE)
+  }
   levels <- if (is.factor(value)) {
     levels(droplevels(value))
+  } else if (is.numeric(value) || inherits(value, c("Date", "POSIXt"))) {
+    as.character(sort(unique(value)))
   } else {
     unique(as.character(value))
   }
   list(value = as.character(value), levels = levels)
+}
+
+.validate_probs <- function(probs) {
+  if (!is.numeric(probs) || length(probs) != 2L ||
+      any(!is.finite(probs)) || any(probs <= 0 | probs >= 1) ||
+      probs[1] >= probs[2]) {
+    stop(
+      "`probs` must contain two increasing probabilities between zero and one.",
+      call. = FALSE
+    )
+  }
+  as.numeric(probs)
+}
+
+.validate_ndraws <- function(ndraws, allow_null = FALSE) {
+  if (is.null(ndraws) && isTRUE(allow_null)) return(NULL)
+  if (!is.numeric(ndraws) || length(ndraws) != 1L ||
+      !is.finite(ndraws) || ndraws < 1 || ndraws != floor(ndraws)) {
+    stop("`ndraws` must be a positive whole number.", call. = FALSE)
+  }
+  as.integer(ndraws)
 }
 
 .weighted_col_mean <- function(x, w) {
@@ -90,6 +120,13 @@
   colnames(out) <- colnames(x)
   for (i in seq_along(focus_info$levels)) {
     keep <- focus_info$value == focus_info$levels[i]
+    if (sum(weights[keep]) <= 0) {
+      stop(
+        "Every focus level must have a positive total weight; level '",
+        focus_info$levels[i], "' does not.",
+        call. = FALSE
+      )
+    }
     out[i, ] <- .weighted_col_mean(x[keep, , drop = FALSE], weights[keep]) - overall
   }
   out
@@ -125,11 +162,8 @@
   )
 }
 
-.normal_quantile <- function(level) {
-  stats::qnorm((1 + level) / 2)
-}
-
 .draw_mvn <- function(n, mean, sigma, seed = NULL) {
+  n <- .validate_ndraws(n)
   if (!is.null(seed)) set.seed(seed)
   sigma <- (sigma + t(sigma)) / 2
   eig <- eigen(sigma, symmetric = TRUE)
@@ -197,8 +231,7 @@
 
 .component_influence <- function(B, beta, vcov, beta_draws, eta_reference,
                                  eta_reference_draws, family_spec, focus,
-                                 levels, term, component, method, probs,
-                                 confidence_level) {
+                                 levels, term, component, method, probs) {
   link_estimate <- as.numeric(B %*% beta)
   link_draws <- NULL
 
@@ -213,11 +246,11 @@
     )
   } else if (!is.null(vcov)) {
     se <- sqrt(pmax(0, rowSums((B %*% vcov) * B)))
-    z <- .normal_quantile(confidence_level)
+    z <- stats::qnorm(probs)
     link_uncertainty <- list(
       std_error = se,
-      lower = link_estimate - z * se,
-      upper = link_estimate + z * se
+      lower = link_estimate + z[1] * se,
+      upper = link_estimate + z[2] * se
     )
   } else {
     link_uncertainty <- .empty_uncertainty(length(link_estimate))
@@ -250,11 +283,11 @@
     natural_estimate <- .effect_transform(link_estimate, family_spec, eta_reference)
     lower <- .effect_transform(link_uncertainty$lower, family_spec, eta_reference)
     upper <- .effect_transform(link_uncertainty$upper, family_spec, eta_reference)
-    z <- .normal_quantile(confidence_level)
+    z_width <- diff(stats::qnorm(probs))
     natural_uncertainty <- list(
       std_error = ifelse(
         is.finite(lower) & is.finite(upper),
-        abs(upper - lower) / (2 * z),
+        abs(upper - lower) / z_width,
         NA_real_
       ),
       lower = pmin(lower, upper),
@@ -298,13 +331,18 @@
 .term_composition <- function(data, focus, focus_info, term, contribution,
                               weights, bins = 20L) {
   value <- .term_level_values(data, term, contribution, bins)
+  keep <- weights > 0 & !is.na(value) & is.finite(contribution)
+  value <- value[keep]
+  contribution <- contribution[keep]
+  weights <- weights[keep]
+  focus_value <- focus_info$value[keep]
 
-  key <- interaction(focus_info$value, value, drop = TRUE, lex.order = TRUE)
+  key <- interaction(focus_value, value, drop = TRUE, lex.order = TRUE)
   rows <- split(seq_along(key), key)
   out <- do.call(rbind, lapply(rows, function(i) {
     data.frame(
       focus = focus,
-      level = focus_info$value[i[1]],
+      level = focus_value[i[1]],
       term = term,
       term_level = value[i[1]],
       n = length(i),
@@ -345,6 +383,10 @@
                                       bins = 20L) {
   contribution <- as.numeric(X %*% beta)
   value <- .term_level_values(data, term, contribution, bins)
+  keep <- weights > 0 & !is.na(value) & is.finite(contribution)
+  value <- value[keep]
+  X <- X[keep, , drop = FALSE]
+  weights <- weights[keep]
   rows <- split(seq_along(value), factor(value, levels = unique(value)))
   out <- do.call(rbind, lapply(names(rows), function(level) {
     i <- rows[[level]]
@@ -354,12 +396,12 @@
       stats <- .summarise_vector(as.numeric(beta_draws %*% design), probs)
     } else if (!is.null(vcov)) {
       se <- sqrt(max(0, as.numeric(t(design) %*% vcov %*% design)))
-      z <- stats::qnorm(1 - probs[1])
+      z <- stats::qnorm(probs)
       stats <- c(
         estimate = estimate,
         std_error = se,
-        lower = estimate - z * se,
-        upper = estimate + z * se
+        lower = estimate + z[1] * se,
+        upper = estimate + z[2] * se
       )
     } else {
       stats <- c(estimate = estimate, std_error = NA, lower = NA, upper = NA)
@@ -419,23 +461,40 @@
   }))
 }
 
-.nominal_indices <- function(data, response, focus, focus_info, weights) {
+.nominal_indices <- function(data, response, focus, focus_info, weights,
+                             probs = c(0.025, 0.975)) {
   if (is.null(response) || !response %in% names(data)) return(data.frame())
   y <- data[[response]]
   if (!is.numeric(y)) return(data.frame())
 
   out <- do.call(rbind, lapply(focus_info$levels, function(level) {
-    keep <- focus_info$value == level
-    est <- stats::weighted.mean(y[keep], weights[keep])
-    se <- stats::sd(y[keep]) / sqrt(sum(keep))
+    keep <- focus_info$value == level & is.finite(y) & weights > 0
+    level_y <- y[keep]
+    level_weights <- weights[keep]
+    if (!length(level_y)) {
+      est <- se <- NA_real_
+    } else {
+      weight_sum <- sum(level_weights)
+      squared_weight_sum <- sum(level_weights^2)
+      effective_n <- weight_sum^2 / squared_weight_sum
+      est <- stats::weighted.mean(level_y, level_weights)
+      variance_denominator <- weight_sum - squared_weight_sum / weight_sum
+      variance <- if (variance_denominator > 0) {
+        sum(level_weights * (level_y - est)^2) / variance_denominator
+      } else {
+        NA_real_
+      }
+      se <- sqrt(variance / effective_n)
+    }
+    z <- stats::qnorm(probs)
     data.frame(
       focus = focus,
       level = as.character(level),
       series = "nominal",
       estimate = est,
       std_error = se,
-      lower = est - stats::qnorm(0.975) * se,
-      upper = est + stats::qnorm(0.975) * se,
+      lower = est + z[1] * se,
+      upper = est + z[2] * se,
       scale = "response",
       stringsAsFactors = FALSE
     )
@@ -446,6 +505,15 @@
 
 .standardised_indices <- function(influence, focus, focus_terms) {
   if (!length(focus_terms)) return(data.frame())
+  if (length(focus_terms) > 1L) {
+    warning(
+      "A standardised index was not created because multiple model terms ",
+      "contain the focus variable. Use a model-specific prediction grid to ",
+      "define how interactions should be marginalised.",
+      call. = FALSE
+    )
+    return(data.frame())
+  }
   natural <- influence[
     influence$term %in% focus_terms & influence$scale != "link",
     , drop = FALSE
@@ -502,11 +570,7 @@
     c("auto", "none", "analytic", "posterior", "simulation")
   )
   retain <- match.arg(retain, c("summary", "derived_draws", "disk"))
-  if (length(probs) != 2L || any(probs <= 0 | probs >= 1) || probs[1] >= probs[2]) {
-    stop("`probs` must contain two increasing probabilities between zero and one.", call. = FALSE)
-  }
-  confidence_level <- probs[2] - probs[1]
-
+  probs <- .validate_probs(probs)
   data <- as.data.frame(data)
   weights <- .resolve_influ_weights(data, weights)
   focus_info <- .focus_info(data, focus)
@@ -605,8 +669,7 @@
       term = term,
       component = component,
       method = method,
-      probs = probs,
-      confidence_level = confidence_level
+      probs = probs
     )
     effect_list[[term]] <- component_result$rows
     metric_list[[term]] <- .term_metrics(
@@ -665,7 +728,7 @@
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
 
   indices <- rbind(
-    .nominal_indices(data, response, focus, focus_info, weights),
+    .nominal_indices(data, response, focus, focus_info, weights, probs),
     .standardised_indices(influence, focus, .focus_terms(term_columns, focus, data))
   )
   rownames(indices) <- NULL
@@ -725,9 +788,7 @@
     uncertainty,
     c("none", "analytic", "posterior", "simulation")
   )
-  if (length(probs) != 2L || any(probs <= 0 | probs >= 1) || probs[1] >= probs[2]) {
-    stop("`probs` must contain two increasing probabilities between zero and one.", call. = FALSE)
-  }
+  probs <- .validate_probs(probs)
   if (!length(term_contrasts) || !identical(names(term_contrasts), names(term_contributions))) {
     stop("Precomputed contrasts and contributions must be matching named lists.", call. = FALSE)
   }
@@ -753,7 +814,6 @@
     posterior = "posterior draws",
     simulation = "joint coefficient simulation"
   )
-  confidence_level <- probs[2] - probs[1]
   effects <- list()
   compositions <- list()
   retained_draws <- list()
@@ -777,8 +837,7 @@
       term = term,
       component = component,
       method = method,
-      probs = probs,
-      confidence_level = confidence_level
+      probs = probs
     )
     effects[[term]] <- result$rows
     metric_rows[[term]] <- .term_metrics(
@@ -918,8 +977,7 @@
       term = term,
       component = component,
       method = method,
-      probs = probs,
-      confidence_level = probs[2] - probs[1]
+      probs = probs
     )
     effects[[term]] <- result$rows
     compositions[[term]] <- .term_composition(
@@ -1012,6 +1070,13 @@
     main_projection$family_spec
   )
   baseline <- p0 * mu0
+  if (any(!is.finite(baseline)) || any(baseline <= 0)) {
+    stop(
+      "The two-part model produced a non-positive or non-finite reference ",
+      "mean, so unconditional influence ratios cannot be calculated.",
+      call. = FALSE
+    )
+  }
   rows <- list()
   retained_draws <- list()
   metric_rows <- list()
@@ -1041,6 +1106,13 @@
     )
     if (probability_is_zero) p1 <- 1 - p1
     ratio_draws <- sweep(p1 * mu1, 1L, baseline, "/")
+    if (any(!is.finite(ratio_draws)) || any(ratio_draws <= 0)) {
+      stop(
+        "The two-part model produced non-positive or non-finite ",
+        "unconditional influence ratios.",
+        call. = FALSE
+      )
+    }
     link_draws <- log(ratio_draws)
     ratio_stats <- .summarise_draw_matrix(ratio_draws, method, probs)
     link_stats <- .summarise_draw_matrix(link_draws, method, probs)
@@ -1064,29 +1136,41 @@
       method, probs
     )
 
-    colnames(link_draws) <- paste(
-      "unconditional_mean", term, focus_info$levels, "link", sep = "|"
-    )
-    colnames(ratio_draws) <- paste(
-      "unconditional_mean", term, focus_info$levels, "ratio", sep = "|"
-    )
-    retained_draws[[paste0(term, "_link")]] <- link_draws
-    retained_draws[[paste0(term, "_ratio")]] <- ratio_draws
+    if (method != "none") {
+      colnames(link_draws) <- paste(
+        "unconditional_mean", term, focus_info$levels, "link", sep = "|"
+      )
+      colnames(ratio_draws) <- paste(
+        "unconditional_mean", term, focus_info$levels, "ratio", sep = "|"
+      )
+      retained_draws[[paste0(term, "_link")]] <- link_draws
+      retained_draws[[paste0(term, "_ratio")]] <- ratio_draws
+    }
   }
 
   influence <- do.call(rbind, rows)
   rownames(influence) <- NULL
-  derived_draws <- do.call(cbind, retained_draws)
+  derived_draws <- if (length(retained_draws)) {
+    do.call(cbind, retained_draws)
+  } else {
+    NULL
+  }
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
   metrics <- do.call(rbind, metric_rows)
   rownames(metrics) <- NULL
   nominal <- .nominal_indices(
     data, response, focus, focus_info,
-    .resolve_influ_weights(data, weights)
+    .resolve_influ_weights(data, weights), probs
   )
+  focus_terms <- terms[vapply(terms, function(term) {
+    focus %in% all.vars(tryCatch(
+      stats::as.formula(paste("~", term)),
+      error = function(e) stats::as.formula("~ 1")
+    ))
+  }, logical(1))]
   indices <- rbind(
     nominal,
-    .standardised_indices(influence, focus, intersect(focus, terms))
+    .standardised_indices(influence, focus, focus_terms)
   )
   if (nrow(indices)) indices$component <- "unconditional_mean"
 
@@ -1106,7 +1190,7 @@
       mode = retain,
       path = stored$path,
       n_derived_draws = if (method == "none") 0L else n_draws,
-      n_derived_estimands = ncol(derived_draws)
+      n_derived_estimands = if (is.null(derived_draws)) 0L else ncol(derived_draws)
     ),
     metadata = list(
       response = response,
@@ -1137,6 +1221,12 @@
 
   draw_pieces <- lapply(diags, `[[`, "draws")
   draw_pieces <- Filter(Negate(is.null), draw_pieces)
+  if (length(unique(vapply(draw_pieces, nrow, integer(1)))) > 1L) {
+    stop(
+      "Component diagnostics must retain the same number of joint draws.",
+      call. = FALSE
+    )
+  }
   draws <- if (length(draw_pieces)) do.call(cbind, draw_pieces) else NULL
 
   methods <- unique(vapply(diags, function(x) x$uncertainty$method, character(1)))

@@ -46,7 +46,9 @@
     keep_names <- intersect(colnames(X), names(beta))
     X <- X[, keep_names, drop = FALSE]
     beta <- beta[keep_names]
-    V <- V[keep_names, keep_names, drop = FALSE]
+    if (!is.null(V)) {
+      V <- V[keep_names, keep_names, drop = FALSE]
+    }
     old_index <- match(keep_names, original_x_names)
     new_index <- seq_along(keep_names)
     names(new_index) <- old_index
@@ -59,7 +61,9 @@
   if (!all(finite)) {
     old <- seq_along(beta)
     X <- X[, finite, drop = FALSE]
-    V <- V[finite, finite, drop = FALSE]
+    if (!is.null(V)) {
+      V <- V[finite, finite, drop = FALSE]
+    }
     beta <- beta[finite]
     map <- seq_along(old[finite])
     names(map) <- old[finite]

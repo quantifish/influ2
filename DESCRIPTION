@@ -4,7 +4,7 @@ Version: 1.1.0
 Authors@R: c(
     person(given = "Darcy", family = "Webber",
            role = c("aut", "cre", "cph"),
-           email = "darcy.webber@quantifish.co.nz"),
+           email = "darcy@quantifish.co.nz"),
     person(given = "Nokome", family = "Bentley",
            role = c("ctb", "cph"),
            comment = "Original influence methodology and legacy validation implementation"),

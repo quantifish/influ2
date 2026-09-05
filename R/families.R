@@ -120,8 +120,8 @@ influ_families <- function() {
   if (parsed$structure == "zero_inflated" &&
       !parsed$family %in% c("binomial", "poisson", "negative_binomial")) {
     stop(
-      "Zero-inflated support is currently limited to Poisson and ",
-      "negative-binomial count components.",
+      "Zero-inflated support is currently limited to binomial, Poisson, and ",
+      "negative-binomial components.",
       call. = FALSE
     )
   }

@@ -115,7 +115,7 @@ The old and new engines are also compared directly on all 54 year-by-term
 contrasts in the lobster example. Routine `testthat` tests retain both this
 realistic comparison and a smaller frozen numerical fixture.
 
-```{r bentley-parity}
+```{r bentley-parity, eval=legacy_available}
 legacy <- reshape(
   as.data.frame(legacy_diagnostic$influences),
   direction = "long",
@@ -151,7 +151,7 @@ The same validation covers the two scalar metrics from the original
 implementation. `overall` summarises mean absolute influence, while `trend`
 summarises the ordered change through the focus levels.
 
-```{r bentley-metrics}
+```{r bentley-metrics, eval=legacy_available}
 legacy_metrics <- subset(
   legacy_diagnostic$summary,
   term != "intercept" & term != "year",
@@ -180,7 +180,7 @@ stopifnot(
 The final overlay makes exact agreement visually apparent: legacy results are
 points, and new results are lines.
 
-```{r bentley-parity-plot, fig.width=7, fig.height=7, fig.cap='Direct overlay of legacy Bentley influence values and new influ2 results for the lobster example.', fig.alt='Legacy influence points overlaid by new influ2 lines for month, depth, and soak time.'}
+```{r bentley-parity-plot, eval=legacy_available, fig.width=7, fig.height=7, fig.cap='Direct overlay of legacy Bentley influence values and new influ2 results for the lobster example.', fig.alt='Legacy influence points overlaid by new influ2 lines for month, depth, and soak time.'}
 ggplot(comparison, aes(x = level, group = term)) +
   geom_hline(yintercept = 1, linetype = 3, colour = "grey55") +
   geom_point(

@@ -17,3 +17,6 @@ R/testing.R
 ^docs$
 ^pkgdown$
 ^\.github$
+^doc$
+^Meta$
+^tests/testthat/Rplots\.pdf$
