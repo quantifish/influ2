@@ -207,21 +207,21 @@ smaller frozen numerical fixture.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   level           term link_influence_legacy link_influence_new</span></span>
-<span><span class="co">#&gt; 1  2000          month         -5.459421e-02      -5.459421e-02</span></span>
-<span><span class="co">#&gt; 2  2000 poly(depth, 3)         -4.025057e-03      -4.025057e-03</span></span>
-<span><span class="co">#&gt; 3  2000  poly(soak, 3)          1.734128e-02       1.734128e-02</span></span>
-<span><span class="co">#&gt; 4  2001          month          1.075912e-02       1.075912e-02</span></span>
-<span><span class="co">#&gt; 5  2001 poly(depth, 3)          7.654306e-05       7.654306e-05</span></span>
-<span><span class="co">#&gt; 6  2001  poly(soak, 3)          2.001786e-02       2.001786e-02</span></span>
+<span><span class="co">#&gt; 1  2000          month          -0.003223419       -0.003223419</span></span>
+<span><span class="co">#&gt; 2  2000 poly(depth, 3)          -0.062021221       -0.062021221</span></span>
+<span><span class="co">#&gt; 3  2000  poly(soak, 3)          -0.010853447       -0.010853447</span></span>
+<span><span class="co">#&gt; 4  2001          month           0.030204085        0.030204085</span></span>
+<span><span class="co">#&gt; 5  2001 poly(depth, 3)          -0.070410691       -0.070410691</span></span>
+<span><span class="co">#&gt; 6  2001  poly(soak, 3)          -0.011494141       -0.011494141</span></span>
 <span><span class="co">#&gt;   natural_influence_legacy absolute_difference</span></span>
-<span><span class="co">#&gt; 1                0.9468693        0.000000e+00</span></span>
-<span><span class="co">#&gt; 2                0.9959830        8.673617e-19</span></span>
-<span><span class="co">#&gt; 3                1.0174925        0.000000e+00</span></span>
-<span><span class="co">#&gt; 4                1.0108172        6.938894e-18</span></span>
-<span><span class="co">#&gt; 5                1.0000765        5.014435e-19</span></span>
-<span><span class="co">#&gt; 6                1.0202196        0.000000e+00</span></span>
+<span><span class="co">#&gt; 1                0.9967818        3.903128e-18</span></span>
+<span><span class="co">#&gt; 2                0.9398629        6.938894e-18</span></span>
+<span><span class="co">#&gt; 3                0.9892052        0.000000e+00</span></span>
+<span><span class="co">#&gt; 4                1.0306649        6.938894e-18</span></span>
+<span><span class="co">#&gt; 5                0.9320110        0.000000e+00</span></span>
+<span><span class="co">#&gt; 6                0.9885717        1.734723e-18</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">absolute_difference</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 2.775558e-17</span></span>
+<span><span class="co">#&gt; [1] 1.387779e-17</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">absolute_difference</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-8</span><span class="op">)</span></span></code></pre></div>
 <p>The same validation covers the two scalar metrics from the original
 implementation. <code>overall</code> summarises mean absolute influence,
@@ -248,9 +248,9 @@ levels.</p>
 <span><span class="op">)</span></span>
 <span><span class="va">metric_comparison</span></span>
 <span><span class="co">#&gt;             term overall_legacy  trend_legacy overall_new     trend_new</span></span>
-<span><span class="co">#&gt; 1          month    0.022447566  4.102224e-05 0.022447566  4.102224e-05</span></span>
-<span><span class="co">#&gt; 2 poly(depth, 3)    0.005227671  5.112907e-04 0.005227671  5.112907e-04</span></span>
-<span><span class="co">#&gt; 3  poly(soak, 3)    0.024195702 -3.937291e-04 0.024195702 -3.937291e-04</span></span>
+<span><span class="co">#&gt; 1          month    0.013690247 -0.0009107806 0.013690247 -0.0009107806</span></span>
+<span><span class="co">#&gt; 2 poly(depth, 3)    0.025304894  0.0041030111 0.025304894  0.0041030111</span></span>
+<span><span class="co">#&gt; 3  poly(soak, 3)    0.007202846  0.0014664819 0.007202846  0.0014664819</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">metric_comparison</span><span class="op">$</span><span class="va">overall_legacy</span> <span class="op">-</span> <span class="va">metric_comparison</span><span class="op">$</span><span class="va">overall_new</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-8</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">metric_comparison</span><span class="op">$</span><span class="va">trend_legacy</span> <span class="op">-</span> <span class="va">metric_comparison</span><span class="op">$</span><span class="va">trend_new</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-8</span></span>

@@ -33,3 +33,7 @@
   function-by-function triage.
 - Replaced embedded fitted-model test data with compact posterior-draw
   fixtures, substantially reducing the source-package size.
+- Replaced the lobster example with a reproducible, fully synthetic
+  dataset and added stricter validation for intervals, weights, focus
+  ordering, component draws, data-extent plots, bubble plots, and
+  implied residuals.

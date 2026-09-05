@@ -53,6 +53,7 @@
 <li>Propagated the joint conditional latent covariance for <code>glmmTMB</code> random effects instead of treating conditional modes as uncertainty-free.</li>
 <li>Retained selected comparison, model-criterion, data-extent, residual, Q-Q, and step-plot helpers, while moving their BRMS and <code>rstan</code> tooling out of mandatory dependencies. The remaining historical helper source is frozen under <code>tools/legacy/</code> for explicit function-by-function triage.</li>
 <li>Replaced embedded fitted-model test data with compact posterior-draw fixtures, substantially reducing the source-package size.</li>
+<li>Replaced the lobster example with a reproducible, fully synthetic dataset and added stricter validation for intervals, weights, focus ordering, component draws, data-extent plots, bubble plots, and implied residuals.</li>
 </ul></div>
   </main></div>
 

@@ -147,21 +147,21 @@ comparison$absolute_difference <- abs(
 )
 head(comparison)
 #>   level           term link_influence_legacy link_influence_new
-#> 1  2000          month         -5.459421e-02      -5.459421e-02
-#> 2  2000 poly(depth, 3)         -4.025057e-03      -4.025057e-03
-#> 3  2000  poly(soak, 3)          1.734128e-02       1.734128e-02
-#> 4  2001          month          1.075912e-02       1.075912e-02
-#> 5  2001 poly(depth, 3)          7.654306e-05       7.654306e-05
-#> 6  2001  poly(soak, 3)          2.001786e-02       2.001786e-02
+#> 1  2000          month          -0.003223419       -0.003223419
+#> 2  2000 poly(depth, 3)          -0.062021221       -0.062021221
+#> 3  2000  poly(soak, 3)          -0.010853447       -0.010853447
+#> 4  2001          month           0.030204085        0.030204085
+#> 5  2001 poly(depth, 3)          -0.070410691       -0.070410691
+#> 6  2001  poly(soak, 3)          -0.011494141       -0.011494141
 #>   natural_influence_legacy absolute_difference
-#> 1                0.9468693        0.000000e+00
-#> 2                0.9959830        8.673617e-19
-#> 3                1.0174925        0.000000e+00
-#> 4                1.0108172        6.938894e-18
-#> 5                1.0000765        5.014435e-19
-#> 6                1.0202196        0.000000e+00
+#> 1                0.9967818        3.903128e-18
+#> 2                0.9398629        6.938894e-18
+#> 3                0.9892052        0.000000e+00
+#> 4                1.0306649        6.938894e-18
+#> 5                0.9320110        0.000000e+00
+#> 6                0.9885717        1.734723e-18
 max(comparison$absolute_difference)
-#> [1] 2.775558e-17
+#> [1] 1.387779e-17
 stopifnot(max(comparison$absolute_difference) < 1e-8)
 ```
 
@@ -191,9 +191,9 @@ metric_comparison <- merge(
 )
 metric_comparison
 #>             term overall_legacy  trend_legacy overall_new     trend_new
-#> 1          month    0.022447566  4.102224e-05 0.022447566  4.102224e-05
-#> 2 poly(depth, 3)    0.005227671  5.112907e-04 0.005227671  5.112907e-04
-#> 3  poly(soak, 3)    0.024195702 -3.937291e-04 0.024195702 -3.937291e-04
+#> 1          month    0.013690247 -0.0009107806 0.013690247 -0.0009107806
+#> 2 poly(depth, 3)    0.025304894  0.0041030111 0.025304894  0.0041030111
+#> 3  poly(soak, 3)    0.007202846  0.0014664819 0.007202846  0.0014664819
 stopifnot(
   max(abs(metric_comparison$overall_legacy - metric_comparison$overall_new)) < 1e-8,
   max(abs(metric_comparison$trend_legacy - metric_comparison$trend_new)) < 1e-8

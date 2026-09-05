@@ -27,6 +27,26 @@ positive catch and the probability of a zero:
 
 ``` r
 
+set.seed(42)
+n <- 1000
+year_effect <- data.frame(
+  year = 1995:2015,
+  value = rnorm(21)
+)
+sampled_year <- year_effect[
+  sample(seq_len(nrow(year_effect)), size = n, replace = TRUE),
+]
+group <- sample(c("treat", "placebo"), size = n, replace = TRUE)
+simulated_cpue <- data.frame(
+  y = (1 - rbinom(n, 1, 0.3)) * rlnorm(
+    n,
+    meanlog = 2 + ifelse(group == "treat", 0.9, 0) + sampled_year$value,
+    sdlog = 0.2
+  ),
+  year = factor(sampled_year$year),
+  group = group
+)
+
 fit <- brms::brm(
   brms::bf(y ~ year + group, hu ~ 1),
   data = simulated_cpue,
@@ -59,8 +79,8 @@ summary(hurdle_diagnostic)
 #>   Focus:   year
 #> 
 #>   term                    component maximum_absolute_link_influence
-#>   year positive, unconditional_mean                       2.7992119
-#>  group positive, unconditional_mean                       0.0999098
+#>   year positive, unconditional_mean                       2.8045228
+#>  group positive, unconditional_mean                       0.1003416
 #>  level_at_maximum
 #>              2012
 #>              2006
