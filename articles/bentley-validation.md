@@ -312,7 +312,6 @@ ggplot(comparison, aes(x = level, group = term)) +
     colour = NULL,
     shape = NULL
   ) +
-  theme_bw() +
   theme(legend.position = "bottom")
 ```
 

@@ -42,8 +42,7 @@ ggplot(pcod, aes(X, Y, colour = density)) +
   geom_point(size = 1.2) +
   coord_fixed() +
   scale_colour_viridis_c(trans = "sqrt") +
-  labs(x = "Easting (km)", y = "Northing (km)", colour = "Density") +
-  theme_bw()
+  labs(x = "Easting (km)", y = "Northing (km)", colour = "Density")
 ```
 
 ![Observed Pacific cod survey tows, coloured by catch
@@ -170,8 +169,7 @@ ggplot(field_surfaces, aes(X, Y, fill = link_contribution)) +
   labs(
     x = "Easting (km)", y = "Northing (km)",
     fill = "Link-scale\ncontribution"
-  ) +
-  theme_bw()
+  )
 ```
 
 ![Persistent spatial field, year-specific spatiotemporal field, and
@@ -263,8 +261,7 @@ ggplot(tiny_data, aes(x, ycoord, colour = count, size = count + 1)) +
   facet_wrap(~time, nrow = 2) +
   scale_colour_viridis_c() +
   scale_size_area(max_size = 5) +
-  labs(x = "X", y = "Y", colour = "Count", size = "Count + 1") +
-  theme_bw()
+  labs(x = "X", y = "Y", colour = "Count", size = "Count + 1")
 ```
 
 ![Changing spatial coverage in the simulated tinyVAST
@@ -384,8 +381,7 @@ ggplot(tiny_surfaces, aes(x, ycoord, fill = link_contribution)) +
   scale_fill_gradient2(
     low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0
   ) +
-  labs(x = "X", y = "Y", fill = "Link-scale\ncontribution") +
-  theme_bw()
+  labs(x = "X", y = "Y", fill = "Link-scale\ncontribution")
 ```
 
 ![Fitted persistent spatial field, spatiotemporal field, and their sum

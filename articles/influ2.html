@@ -171,7 +171,6 @@ months.
 <span>    expand <span class="op">=</span> <span class="fu">expansion</span><span class="op">(</span>mult <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Year"</span>, y <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">theme</span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-covariates-1.png" class="r-plt" alt="Observed depth and soak-time distributions by year." width="768"><p class="caption">
@@ -228,12 +227,22 @@ composition is the focus, not a sampling-distribution effect.</p>
 GLM influence ratios for the changing lobster covariate distributions.
 </p>
 </div>
-<p>The same object contains nominal and standardised indices.</p>
+<p>The same object contains nominal and standardised indices. Here,
+<strong>nominal</strong> means the observed annual arithmetic mean of
+lobsters per pot, including zero catches, without adjusting for month,
+depth, or soak time. Each pot record has equal weight in this example;
+supplying <code>weights</code> to <code><a href="../reference/influ.html">influ()</a></code> instead gives a
+weighted annual mean. The standardised index is the exponentiated,
+centred year effect from the fitted log-link model. It is a relative
+index, not an estimate in lobsters per pot, so the two series appear in
+separate panels labelled <code>response</code> and <code>ratio</code>,
+respectively.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">glm_diagnostic</span>, type <span class="op">=</span> <span class="st">"index"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="influ2_files/figure-html/lobster-glm-index-1.png" class="r-plt" alt="Nominal and Poisson-GLM-standardised lobster indices." width="768"><p class="caption">
-Nominal and Poisson-GLM-standardised lobster indices.
+<img src="influ2_files/figure-html/lobster-glm-index-1.png" class="r-plt" alt="Observed annual mean lobsters per pot (nominal, response scale) and the relative Poisson-GLM-standardised index (ratio scale)." width="768"><p class="caption">
+Observed annual mean lobsters per pot (nominal, response scale) and the
+relative Poisson-GLM-standardised index (ratio scale).
 </p>
 </div>
 <p>The model-neutral overall and trend metrics reproduce Bentley’s
@@ -624,17 +633,71 @@ for occurrence and positive components before the unconditional mean is
 calculated.</p>
 </div>
 <div class="section level2">
+<h2 id="comparing-standardised-indices">Comparing standardised indices<a class="anchor" aria-label="anchor" href="#comparing-standardised-indices"></a>
+</h2>
+<p><code><a href="../reference/plot_compare.html">plot_compare()</a></code> accepts a list of fitted models from
+different backends, or their already-calculated <code>influ_diag</code>
+objects. Reusing the diagnostics below avoids repeating model fitting,
+posterior sampling, or influence calculations.</p>
+<p>These four lobster models use the same response, pot records, and
+years. They differ in both their model structure and their distribution:
+the GLM is Poisson, the other models are negative binomial, and their
+covariate and month-effect specifications differ. This is therefore a
+sensitivity comparison between the fitted models, not a controlled
+comparison of fitting software.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lobster_diagnostics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>GLM <span class="op">=</span> <span class="va">glm_diagnostic</span><span class="op">)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_mgcv</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">GAM</span> <span class="op">&lt;-</span> <span class="va">gam_diagnostic</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_glmmTMB</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">glmmTMB</span> <span class="op">&lt;-</span> <span class="va">glmmTMB_diagnostic</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_brms</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">BRMS</span> <span class="op">&lt;-</span> <span class="va">brms_diagnostic</span></span></code></pre></div>
+<p><code>rescale = 1</code> gives each series a geometric mean of one
+over the common 2000–2017 period, making their relative trajectories
+directly comparable. Uncertainty ribbons are omitted here to keep
+overlapping lines readable.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_compare.html">plot_compare</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_diagnostics</span>,</span>
+<span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">lobster_diagnostics</span><span class="op">)</span>,</span>
+<span>  rescale <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  show_probs <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Year"</span>, y <span class="op">=</span> <span class="st">"Relative standardised CPUE"</span>, colour <span class="op">=</span> <span class="st">"Model"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="influ2_files/figure-html/lobster-model-comparison-1.png" class="r-plt" alt="Annual standardised lobster CPUE indices on a common relative scale, with separate labelled lines for each fitted model." width="768"><p class="caption">
+Relative standardised lobster CPUE indices from the available GLM, GAM,
+glmmTMB, and BRMS examples. Each series has a geometric mean of one over
+2000–2017; differences reflect the models’ distributions and structures
+as well as their estimation methods.
+</p>
+</div>
+<p>Set <code>show_probs = TRUE</code> to display the intervals already
+stored in the diagnostics. For these objects, they are 95% confidence or
+credible intervals, depending on the backend. Rescaling multiplies the
+estimates and interval bounds by the same display constant; it does not
+recalculate uncertainty in the estimated normalising constant or provide
+a test of differences between models.</p>
+<p>The same function can include <code>sdmTMB</code> and
+<code>tinyVAST</code> models when their indices represent the same
+response, population, and time period on a compatible scale. Their
+demonstrations above use different data, so they are deliberately
+excluded here. For other comparisons, also check the reference
+distribution, component (for example, unconditional mean versus positive
+catch), and shared years before overlaying indices. A common plotting
+interface does not by itself make those quantities comparable.</p>
+</div>
+<div class="section level2">
 <h2 id="one-interface-and-compact-uncertainty">One interface and compact uncertainty<a class="anchor" aria-label="anchor" href="#one-interface-and-compact-uncertainty"></a>
 </h2>
 <p>All fitted-model methods return an <code>influ_diag</code>:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/methods.html" class="external-link">methods</a></span><span class="op">(</span><span class="st">"influ"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     </span></span>
 <span><span class="co">#&gt; [5] influ.glmmTMB*  influ.sdmTMB*   influ.tinyVAST*</span></span>
 <span><span class="co">#&gt; see '?methods' for accessing help and source code</span></span></code></pre></div>
 <p>The result contains compact tables for influence, coefficient or
 field summaries, data composition, and index comparisons:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/influ_extractors.html">influ_effects</a></span><span class="op">(</span><span class="va">glm_diagnostic</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   focus level term   component scale     estimate  std_error       lower</span></span>
 <span><span class="co">#&gt; 1  year  2000 year conditional  link -0.001656916 0.05369007 -0.10688752</span></span>
@@ -753,7 +816,7 @@ field summaries, data composition, and index comparisons:</p>
 <span><span class="co">#&gt; 7 analytic covariance</span></span>
 <span><span class="co">#&gt; 8 analytic covariance</span></span></code></pre></div>
 <p>Calculation and retention are separate choices:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate uncertainty, retaining summaries only.</span></span>
 <span><span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">fitted_model</span>, focus <span class="op">=</span> <span class="st">"year"</span>, retain <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span>
 <span></span>
@@ -785,7 +848,7 @@ informed by <code>gamInflu</code> <span class="citation">(<a href="#ref-Dunn2025
 <h2 id="families-and-response-structures">Families and response structures<a class="anchor" aria-label="anchor" href="#families-and-response-structures"></a>
 </h2>
 <p>The initial family set is:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/influ_families.html">influ_families</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              family                       aliases default_scale</span></span>
 <span><span class="co">#&gt; 1          gaussian                        normal    difference</span></span>

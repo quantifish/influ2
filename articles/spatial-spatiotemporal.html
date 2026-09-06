@@ -116,8 +116,7 @@ quadratic effect, and year is the diagnostic focus.</p>
 <span>  <span class="fu">geom_point</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">coord_fixed</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">scale_colour_viridis_c</span><span class="op">(</span>trans <span class="op">=</span> <span class="st">"sqrt"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Easting (km)"</span>, y <span class="op">=</span> <span class="st">"Northing (km)"</span>, colour <span class="op">=</span> <span class="st">"Density"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Easting (km)"</span>, y <span class="op">=</span> <span class="st">"Northing (km)"</span>, colour <span class="op">=</span> <span class="st">"Density"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/sdmtmb-data-1.png" class="r-plt" alt="Observed Pacific cod survey tows, coloured by catch density." width="768"><p class="caption">
 Observed Pacific cod survey tows, coloured by catch density.
@@ -232,8 +231,7 @@ influence diagnostic is an important interpretation check.</p>
 <span>  <span class="fu">labs</span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="st">"Easting (km)"</span>, y <span class="op">=</span> <span class="st">"Northing (km)"</span>,</span>
 <span>    fill <span class="op">=</span> <span class="st">"Link-scale\ncontribution"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/sdmtmb-fields-1.png" class="r-plt" alt="Persistent spatial field, year-specific spatiotemporal field, and their sum for two Pacific cod survey years." width="960"><p class="caption">
 Persistent spatial field, year-specific spatiotemporal field, and their
@@ -320,8 +318,7 @@ though the field itself does not change through time.</p>
 <span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span><span class="va">time</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">scale_colour_viridis_c</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">scale_size_area</span><span class="op">(</span>max_size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"X"</span>, y <span class="op">=</span> <span class="st">"Y"</span>, colour <span class="op">=</span> <span class="st">"Count"</span>, size <span class="op">=</span> <span class="st">"Count + 1"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"X"</span>, y <span class="op">=</span> <span class="st">"Y"</span>, colour <span class="op">=</span> <span class="st">"Count"</span>, size <span class="op">=</span> <span class="st">"Count + 1"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/tinyvast-sampling-1.png" class="r-plt" alt="Changing spatial coverage in the simulated tinyVAST example." width="864"><p class="caption">
 Changing spatial coverage in the simulated tinyVAST example.
@@ -434,8 +431,7 @@ scale before applying the inverse link.</p>
 <span>  <span class="fu">scale_fill_gradient2</span><span class="op">(</span></span>
 <span>    low <span class="op">=</span> <span class="st">"#2166AC"</span>, mid <span class="op">=</span> <span class="st">"white"</span>, high <span class="op">=</span> <span class="st">"#B2182B"</span>, midpoint <span class="op">=</span> <span class="fl">0</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"X"</span>, y <span class="op">=</span> <span class="st">"Y"</span>, fill <span class="op">=</span> <span class="st">"Link-scale\ncontribution"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"X"</span>, y <span class="op">=</span> <span class="st">"Y"</span>, fill <span class="op">=</span> <span class="st">"Link-scale\ncontribution"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/tinyvast-fields-1.png" class="r-plt" alt="Fitted persistent spatial field, spatiotemporal field, and their sum from the tinyVAST example." width="960"><p class="caption">
 Fitted persistent spatial field, spatiotemporal field, and their sum

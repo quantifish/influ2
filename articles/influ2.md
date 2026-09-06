@@ -112,7 +112,6 @@ ggplot(
     expand = expansion(mult = c(0, 0.05))
   ) +
   labs(x = "Year", y = NULL) +
-  theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
@@ -177,17 +176,28 @@ distributions.](influ2_files/figure-html/lobster-glm-influence-1.png)
 
 GLM influence ratios for the changing lobster covariate distributions.
 
-The same object contains nominal and standardised indices.
+The same object contains nominal and standardised indices. Here,
+**nominal** means the observed annual arithmetic mean of lobsters per
+pot, including zero catches, without adjusting for month, depth, or soak
+time. Each pot record has equal weight in this example; supplying
+`weights` to
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md)
+instead gives a weighted annual mean. The standardised index is the
+exponentiated, centred year effect from the fitted log-link model. It is
+a relative index, not an estimate in lobsters per pot, so the two series
+appear in separate panels labelled `response` and `ratio`, respectively.
 
 ``` r
 
 plot(glm_diagnostic, type = "index")
 ```
 
-![Nominal and Poisson-GLM-standardised lobster
-indices.](influ2_files/figure-html/lobster-glm-index-1.png)
+![Observed annual mean lobsters per pot (nominal, response scale) and
+the relative Poisson-GLM-standardised index (ratio
+scale).](influ2_files/figure-html/lobster-glm-index-1.png)
 
-Nominal and Poisson-GLM-standardised lobster indices.
+Observed annual mean lobsters per pot (nominal, response scale) and the
+relative Poisson-GLM-standardised index (ratio scale).
 
 The model-neutral overall and trend metrics reproduce Bentley’s
 definitions. The overall metric is the mean absolute link-scale
@@ -625,6 +635,71 @@ influence, so the returned object does not contain an
 observations-by-draws field array. Delta fields use the same joint draw
 for occurrence and positive components before the unconditional mean is
 calculated.
+
+## Comparing standardised indices
+
+[`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
+accepts a list of fitted models from different backends, or their
+already-calculated `influ_diag` objects. Reusing the diagnostics below
+avoids repeating model fitting, posterior sampling, or influence
+calculations.
+
+These four lobster models use the same response, pot records, and years.
+They differ in both their model structure and their distribution: the
+GLM is Poisson, the other models are negative binomial, and their
+covariate and month-effect specifications differ. This is therefore a
+sensitivity comparison between the fitted models, not a controlled
+comparison of fitting software.
+
+``` r
+
+lobster_diagnostics <- list(GLM = glm_diagnostic)
+if (has_mgcv) lobster_diagnostics$GAM <- gam_diagnostic
+if (has_glmmTMB) lobster_diagnostics$glmmTMB <- glmmTMB_diagnostic
+if (has_brms) lobster_diagnostics$BRMS <- brms_diagnostic
+```
+
+`rescale = 1` gives each series a geometric mean of one over the common
+2000–2017 period, making their relative trajectories directly
+comparable. Uncertainty ribbons are omitted here to keep overlapping
+lines readable.
+
+``` r
+
+plot_compare(
+  lobster_diagnostics,
+  labels = names(lobster_diagnostics),
+  rescale = 1,
+  show_probs = FALSE
+) +
+  labs(x = "Year", y = "Relative standardised CPUE", colour = "Model") +
+  theme(legend.position = "bottom")
+```
+
+![Annual standardised lobster CPUE indices on a common relative scale,
+with separate labelled lines for each fitted
+model.](influ2_files/figure-html/lobster-model-comparison-1.png)
+
+Relative standardised lobster CPUE indices from the available GLM, GAM,
+glmmTMB, and BRMS examples. Each series has a geometric mean of one over
+2000–2017; differences reflect the models’ distributions and structures
+as well as their estimation methods.
+
+Set `show_probs = TRUE` to display the intervals already stored in the
+diagnostics. For these objects, they are 95% confidence or credible
+intervals, depending on the backend. Rescaling multiplies the estimates
+and interval bounds by the same display constant; it does not
+recalculate uncertainty in the estimated normalising constant or provide
+a test of differences between models.
+
+The same function can include `sdmTMB` and `tinyVAST` models when their
+indices represent the same response, population, and time period on a
+compatible scale. Their demonstrations above use different data, so they
+are deliberately excluded here. For other comparisons, also check the
+reference distribution, component (for example, unconditional mean
+versus positive catch), and shared years before overlaying indices. A
+common plotting interface does not by itself make those quantities
+comparable.
 
 ## One interface and compact uncertainty
 
