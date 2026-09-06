@@ -44,18 +44,18 @@ diagnostic
 #>   Uncertainty: analytic covariance
 #>   Retained:    summary
 head(influ_effects(diagnostic))
-#>   focus level term   component scale     estimate  std_error       lower
-#> 1  year  2000 year conditional  link -0.004510875 0.05366972 -0.10970160
-#> 2  year  2001 year conditional  link  0.119144290 0.04705117  0.02692570
-#> 3  year  2002 year conditional  link  0.057827451 0.05056566 -0.04127942
-#> 4  year  2003 year conditional  link  0.181677318 0.04104143  0.10123760
-#> 5  year  2004 year conditional  link  0.252435210 0.04365982  0.16686353
-#> 6  year  2005 year conditional  link  0.026666454 0.05368873 -0.07856152
+#>   focus level term   component scale   estimate  std_error       lower
+#> 1  year  2000 year conditional  link 0.26372139 0.05631806  0.15334002
+#> 2  year  2001 year conditional  link 0.32518319 0.05439295  0.21857498
+#> 3  year  2002 year conditional  link 0.35979168 0.05009542  0.26160645
+#> 4  year  2003 year conditional  link 0.06774274 0.04881851 -0.02793978
+#> 5  year  2004 year conditional  link 0.23960938 0.04452008  0.15235163
+#> 6  year  2005 year conditional  link 0.02245967 0.05465950 -0.08467098
 #>       upper              method
-#> 1 0.1006798 analytic covariance
-#> 2 0.2113629 analytic covariance
-#> 3 0.1569343 analytic covariance
-#> 4 0.2621170 analytic covariance
-#> 5 0.3380069 analytic covariance
-#> 6 0.1318944 analytic covariance
+#> 1 0.3741028 analytic covariance
+#> 2 0.4317914 analytic covariance
+#> 3 0.4579769 analytic covariance
+#> 4 0.1634253 analytic covariance
+#> 5 0.3268671 analytic covariance
+#> 6 0.1295903 analytic covariance
 ```

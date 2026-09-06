@@ -8,9 +8,12 @@ implementation is retained in `influ2` as a frozen validation artefact,
 not as part of the package API. This vignette runs the old code
 explicitly and compares it with the model-neutral S3 engine.
 
-The comparison uses the same realistic `lobsters_per_pot` example as the
+The comparison uses the same synthetic `lobsters_per_pot` example as the
 [main vignette](https://www.quantifish.co.nz/influ2/articles/influ2.md).
-A smaller frozen fixture remains in the test suite for fast regression
+Its deliberate shifts in sampled season, fishing depth, and soak time
+make the influence patterns more apparent. These are constructed
+teaching relationships, not empirical findings from a lobster fishery. A
+smaller frozen fixture remains in the test suite for fast regression
 testing.
 
 ## Fit the common model
@@ -27,6 +30,13 @@ bentley_glm <- glm(
 )
 new_diagnostic <- influ(bentley_glm, focus = "year")
 ```
+
+The shared Poisson model provides a transparent test of agreement
+between implementations. The simulated catches have negative-binomial
+variation, so the Poisson uncertainty intervals are model-based and do
+not account for that overdispersion. Agreement of the calculations does
+not establish that their intervals have the intended coverage for these
+data.
 
 The legacy source remains outside the namespace under `inst/legacy`. It
 is loaded into an isolated environment only for this comparison.
@@ -167,31 +177,31 @@ coefficient_comparison$relative_effect <- exp(
 )
 coefficient_comparison
 #>    level centred_estimate_legacy centred_std_error_legacy centred_estimate
-#> 1     01             -0.14004993               0.04649725      -0.14004993
-#> 2     02             -0.27181758               0.05128402      -0.27181758
-#> 3     03             -0.29337051               0.05182085      -0.29337051
-#> 4     04             -0.28778981               0.05397717      -0.28778981
-#> 5     05             -0.13601827               0.04396847      -0.13601827
-#> 6     06             -0.02220567               0.03552861      -0.02220567
-#> 7     07              0.12778911               0.03080286       0.12778911
-#> 8     08              0.17036079               0.03076136       0.17036079
-#> 9     09              0.19382951               0.03098455       0.19382951
-#> 10    10              0.12568185               0.03422592       0.12568185
-#> 11    11              0.10712741               0.03563925       0.10712741
-#> 12    12             -0.05538157               0.04346794      -0.05538157
+#> 1     01             -0.54808969               0.05585420      -0.54808969
+#> 2     02             -0.69438688               0.05387027      -0.69438688
+#> 3     03             -0.75016486               0.05788165      -0.75016486
+#> 4     04             -0.49270009               0.07588558      -0.49270009
+#> 5     05             -0.38650045               0.06486564      -0.38650045
+#> 6     06             -0.23598670               0.04500541      -0.23598670
+#> 7     07              0.04580356               0.03468835       0.04580356
+#> 8     08              0.38848291               0.02469844       0.38848291
+#> 9     09              0.47247605               0.02238562       0.47247605
+#> 10    10              0.32365699               0.02475293       0.32365699
+#> 11    11              0.18089320               0.03091266       0.18089320
+#> 12    12             -0.17448551               0.04703920      -0.17448551
 #>    centred_std_error relative_effect
-#> 1         0.04649725       0.8693148
-#> 2         0.05128402       0.7619933
-#> 3         0.05182085       0.7457458
-#> 4         0.05397717       0.7499192
-#> 5         0.04396847       0.8728267
-#> 6         0.03552861       0.9780391
-#> 7         0.03080286       1.1363133
-#> 8         0.03076136       1.1857326
-#> 9         0.03098455       1.2138893
-#> 10        0.03422592       1.1339214
-#> 11        0.03563925       1.1130761
-#> 12        0.04346794       0.9461241
+#> 1         0.05585420       0.5780530
+#> 2         0.05387027       0.4993805
+#> 3         0.05788165       0.4722887
+#> 4         0.07588558       0.6109745
+#> 5         0.06486564       0.6794304
+#> 6         0.04500541       0.7897912
+#> 7         0.03468835       1.0468687
+#> 8         0.02469844       1.4747418
+#> 9         0.02238562       1.6039608
+#> 10        0.02475293       1.3821731
+#> 11        0.03091266       1.1982872
+#> 12        0.04703920       0.8398890
 stopifnot(
   max(abs(coefficient_comparison$centred_estimate_legacy -
     coefficient_comparison$centred_estimate)) < 1e-8,
@@ -235,21 +245,21 @@ comparison$absolute_difference <- abs(
 )
 head(comparison)
 #>   level           term link_influence_legacy link_influence_new
-#> 1  2000          month          -0.003223419       -0.003223419
-#> 2  2000 poly(depth, 3)          -0.062021221       -0.062021221
-#> 3  2000  poly(soak, 3)          -0.010853447       -0.010853447
-#> 4  2001          month           0.030204085        0.030204085
-#> 5  2001 poly(depth, 3)          -0.070410691       -0.070410691
-#> 6  2001  poly(soak, 3)          -0.011494141       -0.011494141
+#> 1  2000          month           -0.43233253        -0.43233253
+#> 2  2000 poly(depth, 3)            0.10599428         0.10599428
+#> 3  2000  poly(soak, 3)           -0.12260121        -0.12260121
+#> 4  2001          month           -0.41522396        -0.41522396
+#> 5  2001 poly(depth, 3)            0.11516257         0.11516257
+#> 6  2001  poly(soak, 3)           -0.09831081        -0.09831081
 #>   natural_influence_legacy absolute_difference
-#> 1                0.9967818        3.903128e-18
-#> 2                0.9398629        6.938894e-18
-#> 3                0.9892052        0.000000e+00
-#> 4                1.0306649        6.938894e-18
-#> 5                0.9320110        0.000000e+00
-#> 6                0.9885717        1.734723e-18
+#> 1                0.6489935        5.551115e-17
+#> 2                1.1118155        1.387779e-17
+#> 3                0.8846164        0.000000e+00
+#> 4                0.6601924        0.000000e+00
+#> 5                1.1220558        1.387779e-17
+#> 6                0.9063672        0.000000e+00
 max(comparison$absolute_difference)
-#> [1] 1.387779e-17
+#> [1] 1.110223e-16
 stopifnot(max(comparison$absolute_difference) < 1e-8)
 ```
 
@@ -278,10 +288,10 @@ metric_comparison <- merge(
   suffixes = c("_legacy", "_new")
 )
 metric_comparison
-#>             term overall_legacy  trend_legacy overall_new     trend_new
-#> 1          month    0.013690247 -0.0009107806 0.013690247 -0.0009107806
-#> 2 poly(depth, 3)    0.025304894  0.0041030111 0.025304894  0.0041030111
-#> 3  poly(soak, 3)    0.007202846  0.0014664819 0.007202846  0.0014664819
+#>             term overall_legacy trend_legacy overall_new    trend_new
+#> 1          month      0.2001537  0.037814471   0.2001537  0.037814471
+#> 2 poly(depth, 3)      0.1164328 -0.004176475   0.1164328 -0.004176475
+#> 3  poly(soak, 3)      0.1409172  0.024185229   0.1409172  0.024185229
 stopifnot(
   max(abs(metric_comparison$overall_legacy - metric_comparison$overall_new)) < 1e-8,
   max(abs(metric_comparison$trend_legacy - metric_comparison$trend_new)) < 1e-8

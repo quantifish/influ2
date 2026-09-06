@@ -54,3 +54,13 @@
   dataset and added stricter validation for intervals, weights, focus
   ordering, component draws, data-extent plots, bubble plots, and
   implied residuals.
+- Strengthened the synthetic lobster teaching scenario with changes in
+  sampled season, depth, and soak time. Retained its known annual
+  effects as dataset metadata and added a dynamically calculated truth
+  check for the refitted GLM sequence. The BRMS example includes soak
+  time alongside monthly and depth effects. Documentation distinguishes
+  point-estimate recovery from interval coverage under the demonstration
+  Poisson model.
+- Corrected BRMS population-term mapping when ordinary predictors follow
+  group-level or smooth terms, so their labels and CDI grouping match
+  the fixed-effect design matrix.
