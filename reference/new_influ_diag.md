@@ -45,7 +45,11 @@ new_influ_diag(
 
 - coefficients:
 
-  Compact coefficient or field summaries.
+  Compact coefficient or field summaries. The original model-coded
+  summaries are accompanied by \`centred\_\*\` link contrasts and
+  \`relative\_\*\` display summaries, using the influence reference
+  distribution. Link and component metadata determine the CDI display
+  scale.
 
 - composition:
 

@@ -53,6 +53,8 @@
 <span>  term <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  component <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  coefficient_reference <span class="op">=</span> <span class="st">"centred"</span>,</span>
+<span>  coefficient_scale <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -86,6 +88,20 @@
 contrast is plotted rather than the link-scale contrast.</p></dd>
 
 
+<dt id="arg-coefficient-reference">coefficient_reference<a class="anchor" aria-label="anchor" href="#arg-coefficient-reference"></a></dt>
+<dd><p>For CDI plots, `"centred"` (default) subtracts
+the term's mean over the same weighted reference distribution used for
+influence. `"model"` displays the original model-coded contribution on
+the link scale, including its reference factor level.</p></dd>
+
+
+<dt id="arg-coefficient-scale">coefficient_scale<a class="anchor" aria-label="anchor" href="#arg-coefficient-scale"></a></dt>
+<dd><p>For CDI plots, `"auto"` (default) displays centred
+log-response effects as ratios on a logarithmic axis. Other links remain
+in their labelled link units. `"link"` displays centred link effects for
+every model. The `"model"` reference always uses link units.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Reserved for future plotting options.</p></dd>
 
@@ -97,6 +113,16 @@ contrast is plotted rather than the link-scale contrast.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A `ggplot` or `patchwork` object.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>CDI intervals use the probabilities supplied to [influ()] (95<!-- % -->
+  by default). Centring propagates the joint coefficient covariance or is
+  performed within each posterior/simulation draw. Ratio summaries are
+  calculated after transforming those draws. A CDI plot displays one
+  component at a time; select `component` when a term occurs in several
+  model components. Zero-probability components retain their fitted link
+  orientation and are explicitly labelled as such.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

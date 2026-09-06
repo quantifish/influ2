@@ -255,6 +255,49 @@ proportional scale.</p>
 <span><span class="co">#&gt; 7  poly(soak, 3) overall  0.0072028462</span></span>
 <span><span class="co">#&gt; 8  poly(soak, 3)   trend  0.0014664819</span></span></code></pre></div>
 <div class="section level3">
+<h3 id="reading-a-cdi-plot">Reading a CDI plot<a class="anchor" aria-label="anchor" href="#reading-a-cdi-plot"></a>
+</h3>
+<p>A CDI plot aligns the fitted term effect above its observed
+distribution, with the resulting annual influence beside it. By default,
+the top panel centres the term on the same weighted reference
+distribution as the influence calculation. For this log-link model, it
+shows relative month effects on a logarithmic axis, with one as the
+reference. A value of 1.2 represents a 20% higher monthly contribution
+to expected catch than the reference, holding the other model components
+fixed. No month is singled out merely because it is the model’s first
+factor level.</p>
+<p>The default reference uses the observations and any supplied
+<code>weights</code>. Supplying <code>reference_data</code> and,
+optionally, <code>reference_weights</code> changes both the influence
+reference and the CDI centring to that explicit distribution. The
+bubbles continue to show the observed sampling distribution.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Centred relative month effects, with 95% confidence intervals.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">glm_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The same centred effects in additive log units.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">glm_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"month"</span>,</span>
+<span>  coefficient_scale <span class="op">=</span> <span class="st">"link"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Original model coding: log effects relative to month 1 for this GLM.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  <span class="va">glm_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"month"</span>,</span>
+<span>  coefficient_reference <span class="op">=</span> <span class="st">"model"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The interval calculation includes uncertainty in the estimated centre
+and its covariance with each term effect. The default interval covers
+95%; set <code>probs</code> when calling <code><a href="../reference/influ.html">influ()</a></code> to choose
+other bounds. The model-reference option changes only the top panel,
+leaving the composition and influence panels unchanged.</p>
+<p>The display scale follows the component’s link. Log-link and
+lognormal components use relative effects; identity-link components use
+additive effects. Logit, probit, and complementary-log-log components
+remain in their labelled link units, centred on zero. Their top panels
+are not catch multipliers or changes in encounter probability.</p>
+</div>
+<div class="section level3">
 <h3 id="a-common-prediction-grid-reference">A common prediction-grid reference<a class="anchor" aria-label="anchor" href="#a-common-prediction-grid-reference"></a>
 </h3>
 <p>Observed-data standardisation is the default. For comparisons among
@@ -262,7 +305,7 @@ fleets, areas, or models, an explicit prediction grid prevents
 differences in their observed samples from silently changing the
 reference distribution. This grid crosses every year and month at common
 depth and soak values.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
 <span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>,</span>
 <span>  month <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">month</span><span class="op">)</span>,</span>
@@ -303,7 +346,7 @@ accidental sample imbalance.</p>
 <span class="citation">(<a href="#ref-Wood2017">Wood 2017</a>)</span>.
 Here, negative-binomial variation is combined with smooth depth and soak
 effects.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_gam</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">depth</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">soak</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/negbin.html" class="external-link">nb</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -323,7 +366,7 @@ effects.</p>
 <span><span class="co">#&gt;  s(depth) conditional                      0.07110698             2001</span></span>
 <span><span class="co">#&gt;     month conditional                      0.03255782             2001</span></span>
 <span><span class="co">#&gt;   s(soak) conditional                      0.01147183             2001</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
 <span>  <span class="va">gam_diagnostic</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"influence"</span>,</span>
@@ -343,7 +386,7 @@ plotting code needs to know that two of the terms are smooths.</p>
 <p><code>glmmTMB</code> adds mixed effects, negative-binomial models,
 hurdle models, and zero-inflation <span class="citation">(<a href="#ref-Brooks2017">Brooks et al. 2017</a>)</span>. The example
 treats month as a random intercept.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_glmmTMB</span> <span class="op">&lt;-</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">month</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/nbinom2.html" class="external-link">nbinom2</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -362,7 +405,7 @@ treats month as a random intercept.</p>
 <span><span class="co">#&gt;  poly(depth, 2)    conditional                      0.05682356             2001</span></span>
 <span><span class="co">#&gt;  random_effects random_effects                      0.02746086             2001</span></span>
 <span><span class="co">#&gt;   poly(soak, 2)    conditional                      0.01180634             2001</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">glmmTMB_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-glmmtmb-influence-1.png" class="r-plt" alt="glmmTMB fixed- and random-effect influence ratios." width="768"><p class="caption">
@@ -383,7 +426,7 @@ covariance of both components.</p>
 each draw directly to the much smaller focus-by-term diagnostic. It
 never constructs an observation-by-draw-by-term array <span class="citation">(<a href="#ref-Buerkner2017">Bürkner 2017</a>)</span>.
 A model for the same lobster data can be fitted as follows:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_brms</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brm.html" class="external-link">brm</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">month</span><span class="op">)</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">depth</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brmsfamily.html" class="external-link">negbinomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -396,7 +439,7 @@ A model for the same lobster data can be fitted as follows:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The vignette uses the fitted model shipped with its source, rather
 than running MCMC whenever the documentation is built.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_brms</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
 <span>  <span class="st">"extdata"</span>, <span class="st">"brms-fixtures"</span>, <span class="st">"fit2.rds"</span>, package <span class="op">=</span> <span class="st">"influ2"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
@@ -420,7 +463,7 @@ than running MCMC whenever the documentation is built.</p>
 <span><span class="co">#&gt;              2007</span></span>
 <span><span class="co">#&gt;              2001</span></span>
 <span><span class="co">#&gt;              2001</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">brms_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-brms-influence-1.png" class="r-plt" alt="BRMS population-level, month group-level, and depth-smooth influence ratios." width="768"><p class="caption">
@@ -433,10 +476,16 @@ posterior dependence during calculation. The default object retains
 interval summaries; <code>retain = "derived_draws"</code> retains only
 the compact diagnostic draws.</p>
 <p>The same posterior diagnostic can be displayed as a complete Bayesian
-CDI plot. Here, the coefficient panel, observed monthly composition, and
-resulting yearly influence are kept together, while the influence
-intervals retain the joint posterior dependence.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+CDI plot. The top panel shows relative month effects centred on the
+observed monthly distribution; the lower panels align that distribution
+with the resulting yearly influence. Each joint posterior draw is
+centred before it is exponentiated. Points are posterior means of those
+relative effects, and bars are 95% credible intervals. This preserves
+dependence between each month and the estimated reference, without
+retaining the full posterior array in the diagnostic. The first month
+therefore has an estimated effect and an interval, just like every other
+month.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
 <span>  <span class="va">brms_diagnostic</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"cdi"</span>,</span>
@@ -444,9 +493,10 @@ intervals retain the joint posterior dependence.</p>
 <span>  component <span class="op">=</span> <span class="st">"conditional:group_level"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="influ2_files/figure-html/lobster-brms-cdi-1.png" class="r-plt" alt="Bayesian coefficient-distribution-influence display for the monthly group-level effect." width="960"><p class="caption">
-Bayesian coefficient-distribution-influence display for the monthly
-group-level effect.
+<img src="influ2_files/figure-html/lobster-brms-cdi-1.png" class="r-plt" alt="Bayesian CDI for the monthly group-level effect: centred relative month effects with 95% credible intervals (top left), observed monthly composition (bottom left), and annual influence (bottom right)." width="960"><p class="caption">
+Bayesian CDI for the monthly group-level effect: centred relative month
+effects with 95% credible intervals (top left), observed monthly
+composition (bottom left), and annual influence (bottom right).
 </p>
 </div>
 </div>
@@ -459,7 +509,7 @@ example, so this example uses the Pacific cod data and mesh supplied by
 <code>sdmTMB</code> <span class="citation">(<a href="#ref-Anderson2025">Anderson et al. 2025</a>)</span>. Fixed,
 spatial, and spatiotemporal contributions are returned in the same
 schema as the lobster examples.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcod_2011"</span>, package <span class="op">=</span> <span class="st">"sdmTMB"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcod_mesh_2011"</span>, package <span class="op">=</span> <span class="st">"sdmTMB"</span><span class="op">)</span></span>
 <span></span>
@@ -496,7 +546,7 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt;              2015</span></span>
 <span><span class="co">#&gt;              2015</span></span>
 <span><span class="co">#&gt;              2013</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sdmTMB_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/sdmtmb-influence-1.png" class="r-plt" alt="sdmTMB fixed, spatial, and spatiotemporal influence components." width="768"><p class="caption">
@@ -512,7 +562,7 @@ count data set. The purpose is to exercise the spatial and
 spatiotemporal component interface, not to represent a complete survey
 analysis <span class="citation">(<a href="#ref-Thorson2025">Thorson et
 al. 2025</a>)</span>.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">120</span></span>
 <span><span class="va">spatial_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -558,7 +608,7 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
 <span><span class="co">#&gt;                 4</span></span></code></pre></div>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/tinyvast-influence-1.png" class="r-plt" alt="tinyVAST fixed and spatial influence components." width="768"><p class="caption">
@@ -577,14 +627,14 @@ calculated.</p>
 <h2 id="one-interface-and-compact-uncertainty">One interface and compact uncertainty<a class="anchor" aria-label="anchor" href="#one-interface-and-compact-uncertainty"></a>
 </h2>
 <p>All fitted-model methods return an <code>influ_diag</code>:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/methods.html" class="external-link">methods</a></span><span class="op">(</span><span class="st">"influ"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     </span></span>
 <span><span class="co">#&gt; [5] influ.glmmTMB*  influ.sdmTMB*   influ.tinyVAST*</span></span>
 <span><span class="co">#&gt; see '?methods' for accessing help and source code</span></span></code></pre></div>
 <p>The result contains compact tables for influence, coefficient or
 field summaries, data composition, and index comparisons:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/influ_extractors.html">influ_effects</a></span><span class="op">(</span><span class="va">glm_diagnostic</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   focus level term   component scale     estimate  std_error       lower</span></span>
 <span><span class="co">#&gt; 1  year  2000 year conditional  link -0.001656916 0.05369007 -0.10688752</span></span>
@@ -703,7 +753,7 @@ field summaries, data composition, and index comparisons:</p>
 <span><span class="co">#&gt; 7 analytic covariance</span></span>
 <span><span class="co">#&gt; 8 analytic covariance</span></span></code></pre></div>
 <p>Calculation and retention are separate choices:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate uncertainty, retaining summaries only.</span></span>
 <span><span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">fitted_model</span>, focus <span class="op">=</span> <span class="st">"year"</span>, retain <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span>
 <span></span>
@@ -735,7 +785,7 @@ informed by <code>gamInflu</code> <span class="citation">(<a href="#ref-Dunn2025
 <h2 id="families-and-response-structures">Families and response structures<a class="anchor" aria-label="anchor" href="#families-and-response-structures"></a>
 </h2>
 <p>The initial family set is:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/influ_families.html">influ_families</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              family                       aliases default_scale</span></span>
 <span><span class="co">#&gt; 1          gaussian                        normal    difference</span></span>

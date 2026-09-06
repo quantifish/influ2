@@ -502,6 +502,15 @@ fitted-mode preview. An explicit <code>reference_data</code> grid,
 optionally with <code>reference_weights</code>, can be used to hold the
 spatial and covariate standardisation distribution fixed across model
 comparisons.</p>
+<p>The same reference is used to centre the fitted-effect panel in a CDI
+plot. For a binomial logit component, as in the Pacific cod example,
+centred effects remain in log-odds, with zero as the reference. A
+log-link component, as in the simulated count example, uses relative
+effects about one on a logarithmic axis. Select the relevant response
+and component when comparing different fields or mixed-family responses.
+The fitted field maps above remain on their original link scale; they
+describe the underlying field, whereas the influence panels describe its
+contribution relative to the chosen reference distribution.</p>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

@@ -161,24 +161,103 @@ implementation (left) and the new influ2 engine (right).
 fitted effect, the distribution of observations, and the resulting
 influence. Both figures below use month as the model term and year as
 the focus.</p>
+<p>Both top-left panels now show the same relative monthly effects:
+log-scale term contributions are centred on the observed monthly
+distribution, then exponentiated. The reference is one on a logarithmic
+axis. This removes the arbitrary choice of month 1 as the zero
+coefficient; a relative effect of 1.2 means a 20% higher monthly
+contribution to expected catch than the reference. The legacy label
+“Coefficient” and the new label “Relative month effect” describe the
+same fitted quantity in this example.</p>
+<p>The interval widths deliberately differ. The original plot uses plus
+or minus one standard error on the centred log scale, followed by
+exponentiation. The new plot uses approximate 95% confidence intervals,
+including uncertainty in the estimated centre and its covariance with
+each month’s effect. Its annual influence panel also includes
+uncertainty intervals.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">legacy_diagnostic</span><span class="op">$</span><span class="fu">cdiPlot</span><span class="op">(</span>term <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">new_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="bentley-validation_files/figure-html/bentley-cdi-plots-1.png" class="r-plt" alt="Legacy Bentley coefficient-distribution-influence plot for month." width="49%"><img src="bentley-validation_files/figure-html/bentley-cdi-plots-2.png" class="r-plt" alt="New influ2 coefficient-distribution-influence plot for month." width="49%"><p class="caption">
-CDI plots for month in the lobster example from the original Bentley
-proto implementation (left) and the new influ2 engine (right).
+<img src="bentley-validation_files/figure-html/bentley-cdi-plots-1.png" class="r-plt" alt="Legacy Bentley CDI plot with centred monthly multipliers and one-standard-error bars." width="49%"><img src="bentley-validation_files/figure-html/bentley-cdi-plots-2.png" class="r-plt" alt="New influ2 CDI plot with matching centred monthly multipliers and 95% confidence intervals." width="49%"><p class="caption">
+CDI plots for month from Bentley proto (left) and influ2 (right). The
+centred relative-effect points agree; legacy top-panel bars use plus or
+minus one standard error, while influ2 uses 95% confidence intervals.
 </p>
 </div>
+<p>To inspect the earlier reference-coded display instead, use
+<code>coefficient_reference = "model"</code>. In this GLM that puts
+month 1 at zero and shows the other months relative to it, on the log
+scale. Alternatively, <code>coefficient_scale = "link"</code> keeps the
+new centring but displays additive log effects. Neither option changes
+the annual influence calculations.</p>
 </div>
 <div class="section level2">
 <h2 id="numerical-agreement">Numerical agreement<a class="anchor" aria-label="anchor" href="#numerical-agreement"></a>
 </h2>
+<p>First, compare the top-panel centred log effects and their standard
+errors. Exponentiating the estimates gives the matching relative-effect
+points shown above. Checking the standard errors separately verifies
+that the difference between the plotted intervals comes from their
+stated coverage.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">legacy_coefficients</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span></span>
+<span>  <span class="va">legacy_diagnostic</span><span class="op">$</span><span class="va">preds</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fit.month"</span>, <span class="st">"se.fit.month"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>level <span class="op">=</span> <span class="va">legacy_diagnostic</span><span class="op">$</span><span class="va">preds</span><span class="op">$</span><span class="va">month</span><span class="op">)</span>,</span>
+<span>  <span class="va">mean</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">legacy_coefficients</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"level"</span>, <span class="st">"centred_estimate_legacy"</span>, <span class="st">"centred_std_error_legacy"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">current_coefficients</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span></span>
+<span>  <span class="va">new_diagnostic</span><span class="op">$</span><span class="va">coefficients</span>,</span>
+<span>  <span class="va">term</span> <span class="op">==</span> <span class="st">"month"</span>,</span>
+<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">level</span>, <span class="va">centred_estimate</span>, <span class="va">centred_std_error</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">coefficient_comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
+<span>  <span class="va">legacy_coefficients</span>, <span class="va">current_coefficients</span>, by <span class="op">=</span> <span class="st">"level"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">coefficient_comparison</span><span class="op">$</span><span class="va">relative_effect</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span></span>
+<span>  <span class="va">coefficient_comparison</span><span class="op">$</span><span class="va">centred_estimate</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">coefficient_comparison</span></span>
+<span><span class="co">#&gt;    level centred_estimate_legacy centred_std_error_legacy centred_estimate</span></span>
+<span><span class="co">#&gt; 1     01             -0.14004993               0.04649725      -0.14004993</span></span>
+<span><span class="co">#&gt; 2     02             -0.27181758               0.05128402      -0.27181758</span></span>
+<span><span class="co">#&gt; 3     03             -0.29337051               0.05182085      -0.29337051</span></span>
+<span><span class="co">#&gt; 4     04             -0.28778981               0.05397717      -0.28778981</span></span>
+<span><span class="co">#&gt; 5     05             -0.13601827               0.04396847      -0.13601827</span></span>
+<span><span class="co">#&gt; 6     06             -0.02220567               0.03552861      -0.02220567</span></span>
+<span><span class="co">#&gt; 7     07              0.12778911               0.03080286       0.12778911</span></span>
+<span><span class="co">#&gt; 8     08              0.17036079               0.03076136       0.17036079</span></span>
+<span><span class="co">#&gt; 9     09              0.19382951               0.03098455       0.19382951</span></span>
+<span><span class="co">#&gt; 10    10              0.12568185               0.03422592       0.12568185</span></span>
+<span><span class="co">#&gt; 11    11              0.10712741               0.03563925       0.10712741</span></span>
+<span><span class="co">#&gt; 12    12             -0.05538157               0.04346794      -0.05538157</span></span>
+<span><span class="co">#&gt;    centred_std_error relative_effect</span></span>
+<span><span class="co">#&gt; 1         0.04649725       0.8693148</span></span>
+<span><span class="co">#&gt; 2         0.05128402       0.7619933</span></span>
+<span><span class="co">#&gt; 3         0.05182085       0.7457458</span></span>
+<span><span class="co">#&gt; 4         0.05397717       0.7499192</span></span>
+<span><span class="co">#&gt; 5         0.04396847       0.8728267</span></span>
+<span><span class="co">#&gt; 6         0.03552861       0.9780391</span></span>
+<span><span class="co">#&gt; 7         0.03080286       1.1363133</span></span>
+<span><span class="co">#&gt; 8         0.03076136       1.1857326</span></span>
+<span><span class="co">#&gt; 9         0.03098455       1.2138893</span></span>
+<span><span class="co">#&gt; 10        0.03422592       1.1339214</span></span>
+<span><span class="co">#&gt; 11        0.03563925       1.1130761</span></span>
+<span><span class="co">#&gt; 12        0.04346794       0.9461241</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">coefficient_comparison</span><span class="op">$</span><span class="va">centred_estimate_legacy</span> <span class="op">-</span></span>
+<span>    <span class="va">coefficient_comparison</span><span class="op">$</span><span class="va">centred_estimate</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-8</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">coefficient_comparison</span><span class="op">$</span><span class="va">centred_std_error_legacy</span> <span class="op">-</span></span>
+<span>    <span class="va">coefficient_comparison</span><span class="op">$</span><span class="va">centred_std_error</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-8</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>The old and new engines are also compared directly on all 54
 year-by-term contrasts in the lobster example. Routine
 <code>testthat</code> tests retain both this realistic comparison and a
 smaller frozen numerical fixture.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">legacy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">legacy_diagnostic</span><span class="op">$</span><span class="va">influences</span><span class="op">)</span>,</span>
 <span>  direction <span class="op">=</span> <span class="st">"long"</span>,</span>
@@ -227,7 +306,7 @@ smaller frozen numerical fixture.</p>
 implementation. <code>overall</code> summarises mean absolute influence,
 while <code>trend</code> summarises the ordered change through the focus
 levels.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">legacy_metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span></span>
 <span>  <span class="va">legacy_diagnostic</span><span class="op">$</span><span class="va">summary</span>,</span>
 <span>  <span class="va">term</span> <span class="op">!=</span> <span class="st">"intercept"</span> <span class="op">&amp;</span> <span class="va">term</span> <span class="op">!=</span> <span class="st">"year"</span>,</span>
@@ -257,7 +336,7 @@ levels.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The final overlay makes exact agreement visually apparent: legacy
 results are points, and new results are lines.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">comparison</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">level</span>, group <span class="op">=</span> <span class="va">term</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_hline</span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">1</span>, linetype <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="st">"grey55"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_point</span><span class="op">(</span></span>

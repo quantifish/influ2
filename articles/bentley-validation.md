@@ -96,21 +96,109 @@ fitted effect, the distribution of observations, and the resulting
 influence. Both figures below use month as the model term and year as
 the focus.
 
+Both top-left panels now show the same relative monthly effects:
+log-scale term contributions are centred on the observed monthly
+distribution, then exponentiated. The reference is one on a logarithmic
+axis. This removes the arbitrary choice of month 1 as the zero
+coefficient; a relative effect of 1.2 means a 20% higher monthly
+contribution to expected catch than the reference. The legacy label
+“Coefficient” and the new label “Relative month effect” describe the
+same fitted quantity in this example.
+
+The interval widths deliberately differ. The original plot uses plus or
+minus one standard error on the centred log scale, followed by
+exponentiation. The new plot uses approximate 95% confidence intervals,
+including uncertainty in the estimated centre and its covariance with
+each month’s effect. Its annual influence panel also includes
+uncertainty intervals.
+
 ``` r
 
 legacy_diagnostic$cdiPlot(term = "month")
 plot(new_diagnostic, type = "cdi", term = "month")
 ```
 
-![Legacy Bentley coefficient-distribution-influence plot for
-month.](bentley-validation_files/figure-html/bentley-cdi-plots-1.png)![New
-influ2 coefficient-distribution-influence plot for
-month.](bentley-validation_files/figure-html/bentley-cdi-plots-2.png)
+![Legacy Bentley CDI plot with centred monthly multipliers and
+one-standard-error
+bars.](bentley-validation_files/figure-html/bentley-cdi-plots-1.png)![New
+influ2 CDI plot with matching centred monthly multipliers and 95%
+confidence
+intervals.](bentley-validation_files/figure-html/bentley-cdi-plots-2.png)
 
-CDI plots for month in the lobster example from the original Bentley
-proto implementation (left) and the new influ2 engine (right).
+CDI plots for month from Bentley proto (left) and influ2 (right). The
+centred relative-effect points agree; legacy top-panel bars use plus or
+minus one standard error, while influ2 uses 95% confidence intervals.
+
+To inspect the earlier reference-coded display instead, use
+`coefficient_reference = "model"`. In this GLM that puts month 1 at zero
+and shows the other months relative to it, on the log scale.
+Alternatively, `coefficient_scale = "link"` keeps the new centring but
+displays additive log effects. Neither option changes the annual
+influence calculations.
 
 ## Numerical agreement
+
+First, compare the top-panel centred log effects and their standard
+errors. Exponentiating the estimates gives the matching relative-effect
+points shown above. Checking the standard errors separately verifies
+that the difference between the plotted intervals comes from their
+stated coverage.
+
+``` r
+
+legacy_coefficients <- aggregate(
+  legacy_diagnostic$preds[c("fit.month", "se.fit.month")],
+  list(level = legacy_diagnostic$preds$month),
+  mean
+)
+names(legacy_coefficients) <- c(
+  "level", "centred_estimate_legacy", "centred_std_error_legacy"
+)
+current_coefficients <- subset(
+  new_diagnostic$coefficients,
+  term == "month",
+  select = c(level, centred_estimate, centred_std_error)
+)
+coefficient_comparison <- merge(
+  legacy_coefficients, current_coefficients, by = "level"
+)
+coefficient_comparison$relative_effect <- exp(
+  coefficient_comparison$centred_estimate
+)
+coefficient_comparison
+#>    level centred_estimate_legacy centred_std_error_legacy centred_estimate
+#> 1     01             -0.14004993               0.04649725      -0.14004993
+#> 2     02             -0.27181758               0.05128402      -0.27181758
+#> 3     03             -0.29337051               0.05182085      -0.29337051
+#> 4     04             -0.28778981               0.05397717      -0.28778981
+#> 5     05             -0.13601827               0.04396847      -0.13601827
+#> 6     06             -0.02220567               0.03552861      -0.02220567
+#> 7     07              0.12778911               0.03080286       0.12778911
+#> 8     08              0.17036079               0.03076136       0.17036079
+#> 9     09              0.19382951               0.03098455       0.19382951
+#> 10    10              0.12568185               0.03422592       0.12568185
+#> 11    11              0.10712741               0.03563925       0.10712741
+#> 12    12             -0.05538157               0.04346794      -0.05538157
+#>    centred_std_error relative_effect
+#> 1         0.04649725       0.8693148
+#> 2         0.05128402       0.7619933
+#> 3         0.05182085       0.7457458
+#> 4         0.05397717       0.7499192
+#> 5         0.04396847       0.8728267
+#> 6         0.03552861       0.9780391
+#> 7         0.03080286       1.1363133
+#> 8         0.03076136       1.1857326
+#> 9         0.03098455       1.2138893
+#> 10        0.03422592       1.1339214
+#> 11        0.03563925       1.1130761
+#> 12        0.04346794       0.9461241
+stopifnot(
+  max(abs(coefficient_comparison$centred_estimate_legacy -
+    coefficient_comparison$centred_estimate)) < 1e-8,
+  max(abs(coefficient_comparison$centred_std_error_legacy -
+    coefficient_comparison$centred_std_error)) < 1e-8
+)
+```
 
 The old and new engines are also compared directly on all 54
 year-by-term contrasts in the lobster example. Routine `testthat` tests

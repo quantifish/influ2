@@ -211,6 +211,55 @@ subset(
 #> 8  poly(soak, 3)   trend  0.0014664819
 ```
 
+### Reading a CDI plot
+
+A CDI plot aligns the fitted term effect above its observed
+distribution, with the resulting annual influence beside it. By default,
+the top panel centres the term on the same weighted reference
+distribution as the influence calculation. For this log-link model, it
+shows relative month effects on a logarithmic axis, with one as the
+reference. A value of 1.2 represents a 20% higher monthly contribution
+to expected catch than the reference, holding the other model components
+fixed. No month is singled out merely because it is the model’s first
+factor level.
+
+The default reference uses the observations and any supplied `weights`.
+Supplying `reference_data` and, optionally, `reference_weights` changes
+both the influence reference and the CDI centring to that explicit
+distribution. The bubbles continue to show the observed sampling
+distribution.
+
+``` r
+
+# Centred relative month effects, with 95% confidence intervals.
+plot(glm_diagnostic, type = "cdi", term = "month")
+
+# The same centred effects in additive log units.
+plot(
+  glm_diagnostic, type = "cdi", term = "month",
+  coefficient_scale = "link"
+)
+
+# Original model coding: log effects relative to month 1 for this GLM.
+plot(
+  glm_diagnostic, type = "cdi", term = "month",
+  coefficient_reference = "model"
+)
+```
+
+The interval calculation includes uncertainty in the estimated centre
+and its covariance with each term effect. The default interval covers
+95%; set `probs` when calling
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) to
+choose other bounds. The model-reference option changes only the top
+panel, leaving the composition and influence panels unchanged.
+
+The display scale follows the component’s link. Log-link and lognormal
+components use relative effects; identity-link components use additive
+effects. Logit, probit, and complementary-log-log components remain in
+their labelled link units, centred on zero. Their top panels are not
+catch multipliers or changes in encounter probability.
+
 ### A common prediction-grid reference
 
 Observed-data standardisation is the default. For comparisons among
@@ -415,9 +464,15 @@ interval summaries; `retain = "derived_draws"` retains only the compact
 diagnostic draws.
 
 The same posterior diagnostic can be displayed as a complete Bayesian
-CDI plot. Here, the coefficient panel, observed monthly composition, and
-resulting yearly influence are kept together, while the influence
-intervals retain the joint posterior dependence.
+CDI plot. The top panel shows relative month effects centred on the
+observed monthly distribution; the lower panels align that distribution
+with the resulting yearly influence. Each joint posterior draw is
+centred before it is exponentiated. Points are posterior means of those
+relative effects, and bars are 95% credible intervals. This preserves
+dependence between each month and the estimated reference, without
+retaining the full posterior array in the diagnostic. The first month
+therefore has an estimated effect and an interval, just like every other
+month.
 
 ``` r
 
@@ -429,11 +484,14 @@ plot(
 )
 ```
 
-![Bayesian coefficient-distribution-influence display for the monthly
-group-level effect.](influ2_files/figure-html/lobster-brms-cdi-1.png)
+![Bayesian CDI for the monthly group-level effect: centred relative
+month effects with 95% credible intervals (top left), observed monthly
+composition (bottom left), and annual influence (bottom
+right).](influ2_files/figure-html/lobster-brms-cdi-1.png)
 
-Bayesian coefficient-distribution-influence display for the monthly
-group-level effect.
+Bayesian CDI for the monthly group-level effect: centred relative month
+effects with 95% credible intervals (top left), observed monthly
+composition (bottom left), and annual influence (bottom right).
 
 ## sdmTMB
 
