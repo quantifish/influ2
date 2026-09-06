@@ -272,25 +272,24 @@
       values[as.integer(rownames(group_totals))] <- group_totals[, 1]
       design[slices[[i]]] <- values / sum(weights[rows])
     }
-    stats <- if (uncertainty == "none") {
-      c(
-        estimate = sum(beta * design), std_error = NA_real_,
-        lower = NA_real_, upper = NA_real_
-      )
-    } else {
-      .summarise_vector(as.numeric(draws %*% design), probs)
-    }
-    data.frame(
+    centred_design <- design - overall
+    row <- .cdi_summary_row(
       term = term,
       level = level,
-      estimate = unname(stats["estimate"]),
-      std_error = unname(stats["std_error"]),
-      lower = unname(stats["lower"]),
-      upper = unname(stats["upper"]),
+      estimate = sum(beta * design),
+      centred_estimate = sum(beta * centred_design),
+      draws = if (uncertainty == "none") NULL else {
+        as.numeric(draws %*% design)
+      },
+      centred_draws = if (uncertainty == "none") NULL else {
+        as.numeric(draws %*% centred_design)
+      },
+      family_spec = family_spec,
       method = if (uncertainty == "none") "none" else "posterior draws",
-      component = paste(component, "group_level", sep = ":"),
-      stringsAsFactors = FALSE
+      probs = probs
     )
+    row$component <- paste(component, "group_level", sep = ":")
+    row
   })
   diagnostic$coefficients <- do.call(rbind, coefficient_rows)
   rownames(diagnostic$coefficients) <- NULL
@@ -423,7 +422,9 @@
       weights = weights,
       beta_draws = if (uncertainty == "none") NULL else draws,
       method = if (uncertainty == "none") "none" else "posterior draws",
-      probs = probs
+      probs = probs,
+      reference_design = overall,
+      family_spec = family_spec
     )
     out[[i]]$coefficients$component <- paste(component, "smooth", sep = ":")
   }

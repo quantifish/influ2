@@ -83,7 +83,51 @@
     ggplot2::theme_bw()
 }
 
-.plot_influ_cdi <- function(x, term = NULL, component = NULL) {
+.cdi_plot_coefficients <- function(coefficients, term, coefficient_reference,
+                                   coefficient_scale) {
+  coefficient_reference <- match.arg(coefficient_reference, c("centred", "model"))
+  coefficient_scale <- match.arg(coefficient_scale, c("auto", "link"))
+  ratio <- coefficient_reference == "centred" && coefficient_scale == "auto" &&
+    all(coefficients$cdi_scale == "ratio")
+  prefix <- if (coefficient_reference == "model") "" else if (ratio) "relative_" else "centred_"
+  columns <- paste0(prefix, c("estimate", "std_error", "lower", "upper"))
+  if (!all(columns %in% names(coefficients))) {
+    stop("Recalculate this diagnostic with influ() to obtain centred CDI summaries.", call. = FALSE)
+  }
+  coefficients[c("estimate", "std_error", "lower", "upper")] <- coefficients[columns]
+  if (any(!is.finite(coefficients$estimate))) {
+    stop("Finite CDI effects are unavailable; recalculate the diagnostic or use coefficient_scale = 'link'.", call. = FALSE)
+  }
+  if (ratio) {
+    values <- unlist(coefficients[c("estimate", "lower", "upper")], use.names = FALSE)
+    if (any(values <= 0 | is.infinite(values), na.rm = TRUE)) {
+      stop("CDI ratios exceed the plotting range; use coefficient_scale = 'link'.", call. = FALSE)
+    }
+    label <- paste("Relative", term, "effect")
+  } else {
+    link <- unique(coefficients$link)
+    zero_probability <- all(coefficients$complement) ||
+      any(grepl("(^|:)zero_probability($|:)", coefficients$component))
+    units <- if (all(coefficients$cdi_scale == "ratio")) "log scale" else {
+      switch(link,
+        identity = NULL,
+        logit = if (zero_probability) "log-odds of zero" else "log-odds",
+        probit = if (zero_probability) "probit of zero probability" else "probit scale",
+        cloglog = if (zero_probability) "cloglog of zero probability" else "cloglog scale",
+        paste(link, "scale")
+      )
+    }
+    label <- if (coefficient_reference == "centred") {
+      paste("Centred", term, "effect")
+    } else paste(term, "contribution")
+    if (length(units)) label <- paste0(label, " (", units, ")")
+  }
+  list(data = coefficients, ratio = ratio, label = label)
+}
+
+.plot_influ_cdi <- function(x, term = NULL, component = NULL,
+                            coefficient_reference = "centred",
+                            coefficient_scale = "auto") {
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("Package 'patchwork' is required for CDI plots.", call. = FALSE)
   }
@@ -104,6 +148,24 @@
   if (!nrow(composition) || !nrow(effects)) {
     stop("No CDI information is available for term '", term, "'.", call. = FALSE)
   }
+  if (!nrow(coefficients)) {
+    stop("No CDI coefficient summaries are available for this term and component.", call. = FALSE)
+  }
+  components <- unique(coefficients$component)
+  if (length(components) != 1L) {
+    stop(
+      "A CDI plot displays one component at a time. Select component = one of: ",
+      paste(components, collapse = ", "), ".", call. = FALSE
+    )
+  }
+  # Combined response means have influence results but no separate term
+  # coefficient. Keep all three panels on the selected component.
+  composition <- composition[composition$component == components, , drop = FALSE]
+  effects <- effects[effects$component == components, , drop = FALSE]
+  coefficient_display <- .cdi_plot_coefficients(
+    coefficients, term, coefficient_reference, coefficient_scale
+  )
+  coefficients <- coefficient_display$data
 
   term_levels <- unique(as.character(coefficients$level))
   if (!length(term_levels)) term_levels <- unique(as.character(composition$term_level))
@@ -121,7 +183,10 @@
       group = .data$component
     )
   ) +
-    ggplot2::geom_hline(yintercept = 0, linetype = 3, colour = "grey45") +
+    ggplot2::geom_hline(
+      yintercept = if (coefficient_display$ratio) 1 else 0,
+      linetype = 3, colour = "grey45"
+    ) +
     ggplot2::geom_errorbar(
       ggplot2::aes(ymin = .data$lower, ymax = .data$upper),
       width = 0.18,
@@ -129,7 +194,7 @@
       na.rm = TRUE
     ) +
     ggplot2::geom_point(colour = "purple4", size = 1.8) +
-    ggplot2::labs(x = NULL, y = "Term contribution") +
+    ggplot2::labs(x = NULL, y = coefficient_display$label) +
     ggplot2::theme_bw() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_blank(),
@@ -137,6 +202,9 @@
       legend.position = "none",
       plot.margin = ggplot2::margin(b = 1, r = 1, unit = "mm")
     )
+  if (coefficient_display$ratio) {
+    coefficient_plot <- coefficient_plot + ggplot2::scale_y_log10()
+  }
 
   distribution_with_legend <- ggplot2::ggplot(
     composition,
@@ -216,19 +284,37 @@
 #' @param component Optional component selection.
 #' @param scale Optional influence scale. By default the natural response
 #'   contrast is plotted rather than the link-scale contrast.
+#' @param coefficient_reference For CDI plots, `"centred"` (default) subtracts
+#'   the term's mean over the same weighted reference distribution used for
+#'   influence. `"model"` displays the original model-coded contribution on
+#'   the link scale, including its reference factor level.
+#' @param coefficient_scale For CDI plots, `"auto"` (default) displays centred
+#'   log-response effects as ratios on a logarithmic axis. Other links remain
+#'   in their labelled link units. `"link"` displays centred link effects for
+#'   every model. The `"model"` reference always uses link units.
 #' @param ... Reserved for future plotting options.
+#'
+#' @details CDI intervals use the probabilities supplied to [influ()] (95%
+#'   by default). Centring propagates the joint coefficient covariance or is
+#'   performed within each posterior/simulation draw. Ratio summaries are
+#'   calculated after transforming those draws. A CDI plot displays one
+#'   component at a time; select `component` when a term occurs in several
+#'   model components. Zero-probability components retain their fitted link
+#'   orientation and are explicitly labelled as such.
 #'
 #' @return A `ggplot` or `patchwork` object.
 #' @export
 plot.influ_diag <- function(x, type = c("influence", "index", "cdi", "components"),
-                            term = NULL, component = NULL, scale = NULL, ...) {
+                            term = NULL, component = NULL, scale = NULL,
+                            coefficient_reference = "centred",
+                            coefficient_scale = "auto", ...) {
   type <- match.arg(type)
   switch(
     type,
     influence = .plot_influ_effects(x, term, component, scale),
     components = .plot_influ_effects(x, term, component, scale),
     index = .plot_influ_indices(x),
-    cdi = .plot_influ_cdi(x, term, component)
+    cdi = .plot_influ_cdi(x, term, component, coefficient_reference, coefficient_scale)
   )
 }
 

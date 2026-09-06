@@ -388,4 +388,14 @@ explicit `reference_data` grid, optionally with `reference_weights`, can be
 used to hold the spatial and covariate standardisation distribution fixed
 across model comparisons.
 
+The same reference is used to centre the fitted-effect panel in a CDI plot.
+For a binomial logit component, as in the Pacific cod example, centred
+effects remain in log-odds, with zero as the reference. A log-link component,
+as in the simulated count example, uses relative effects about one on a
+logarithmic axis. Select the relevant response and component when comparing
+different fields or mixed-family responses. The fitted field maps above
+remain on their original link scale; they describe the underlying field,
+whereas the influence panels describe its contribution relative to the
+chosen reference distribution.
+
 ## References

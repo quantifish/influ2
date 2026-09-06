@@ -288,7 +288,8 @@
                                             weights, ndraws, seed = NULL,
                                             reference_data = NULL,
                                             reference_weights = NULL,
-                                            batch_size = 25L) {
+                                            batch_size = 25L,
+                                            probs = c(0.025, 0.975)) {
   report_mode <- model$tmb_obj$report(model$last.par.best)
   candidate_names <- c(
     spatial_field = "omega_s_A",
@@ -358,6 +359,18 @@
       active[[component_index]]
     )
   })
+  coefficient_groups <- lapply(seq_len(n_components), function(component_index) {
+    stats::setNames(lapply(active[[component_index]], function(term) {
+      .cdi_level_groups(data, term, point[[component_index]][[term]], weights)
+    }), active[[component_index]])
+  })
+  coefficient_draws <- lapply(coefficient_groups, function(terms) {
+    lapply(terms, function(groups) {
+      matrix(NA_real_, nrow = ndraws, ncol = length(groups),
+        dimnames = list(NULL, names(groups)))
+    })
+  })
+  centred_coefficient_draws <- coefficient_draws
 
   starts <- seq.int(1L, ndraws, by = batch_size)
   for (start in starts) {
@@ -408,6 +421,17 @@
               contribution, data, focus, weights,
               reference_contribution, reference_weights
             )
+          level_values <- vapply(
+            coefficient_groups[[component_index]][[term]],
+            function(rows) stats::weighted.mean(contribution[rows], weights[rows]),
+            numeric(1)
+          )
+          centre <- stats::weighted.mean(
+            reference_contribution %||% contribution, reference_weights
+          )
+          coefficient_draws[[component_index]][[term]][draw_index, ] <- level_values
+          centred_coefficient_draws[[component_index]][[term]][draw_index, ] <-
+            level_values - centre
         }
       }
     }
@@ -420,12 +444,26 @@
       "conditional"
     }
     spec <- if (isTRUE(model$family$delta)) specs[[component]] else specs$conditional
+    coefficient_summaries <- lapply(active[[component_index]], function(term) {
+      raw <- coefficient_draws[[component_index]][[term]]
+      centred <- centred_coefficient_draws[[component_index]][[term]]
+      do.call(rbind, lapply(seq_len(ncol(raw)), function(i) {
+        .cdi_summary_row(
+          term = term, level = colnames(raw)[i],
+          estimate = mean(raw[, i]), centred_estimate = mean(centred[, i]),
+          draws = raw[, i], centred_draws = centred[, i],
+          family_spec = spec, method = "joint precision simulation", probs = probs
+        )
+      }))
+    })
+    names(coefficient_summaries) <- active[[component_index]]
     list(
       component = component,
       family_spec = spec,
       eta_reference = eta_reference[[component_index]],
       term_deltas = term_deltas[[component_index]],
       point_contributions = point[[component_index]],
+      coefficient_summaries = coefficient_summaries,
       reference = if (is.null(reference_data)) "observed" else "prediction_grid",
       method = "joint precision simulation"
     )
@@ -444,6 +482,7 @@
       family_spec = projection$family_spec,
       term_draws = projection$term_deltas,
       point_contributions = projection$point_contributions,
+      coefficient_summaries = projection$coefficient_summaries,
       eta_reference_draws = projection$eta_reference,
       weights = weights,
       component = paste0(projection$component, ":latent_fields"),
@@ -520,7 +559,7 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
   if (uncertainty != "none") {
     joint_projections <- .sdmTMB_joint_field_projections(
       model, data, focus, specs, weights, ndraws, seed,
-      reference_data, reference_weights
+      reference_data, reference_weights, probs = probs
     )
     if (!is.null(joint_projections)) {
       field_diags <- .sdmTMB_joint_field_diags(

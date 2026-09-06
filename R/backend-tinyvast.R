@@ -303,7 +303,8 @@
                                               reference_data = NULL,
                                               reference_weights = NULL,
                                               component_prefix = "",
-                                              batch_size = 25L) {
+                                              batch_size = 25L,
+                                              probs = c(0.025, 0.975)) {
   n_components <- if (isTRUE(specs$overall$structure == "hurdle")) 2L else 1L
   focus_info <- .focus_info(data, focus)
   weights <- .resolve_influ_weights(data, weights)
@@ -379,6 +380,19 @@
       names(point_all[[component_index]])
     )
   })
+  coefficient_groups <- lapply(seq_len(n_components), function(component_index) {
+    term_names <- names(point_all[[component_index]])
+    stats::setNames(lapply(term_names, function(term) {
+      .cdi_level_groups(data, term, point_all[[component_index]][[term]], weights)
+    }), term_names)
+  })
+  coefficient_draws <- lapply(coefficient_groups, function(terms) {
+    lapply(terms, function(groups) {
+      matrix(NA_real_, nrow = ndraws, ncol = length(groups),
+        dimnames = list(NULL, names(groups)))
+    })
+  })
+  centred_coefficient_draws <- coefficient_draws
 
   for (start in seq.int(1L, ndraws, by = batch_size)) {
     batch_n <- min(batch_size, ndraws - start + 1L)
@@ -418,6 +432,17 @@
               contribution, data, focus, weights,
               reference_contribution, reference_weights
             )
+          level_values <- vapply(
+            coefficient_groups[[component_index]][[term]],
+            function(rows) stats::weighted.mean(contribution[rows], weights[rows]),
+            numeric(1)
+          )
+          centre <- stats::weighted.mean(
+            reference_contribution %||% contribution, reference_weights
+          )
+          coefficient_draws[[component_index]][[term]][draw_index, ] <- level_values
+          centred_coefficient_draws[[component_index]][[term]][draw_index, ] <-
+            level_values - centre
         }
       }
     }
@@ -431,12 +456,27 @@
     }
     if (nzchar(component_prefix)) component <- paste(component_prefix, component, sep = ":")
     spec_name <- if (n_components == 2L) c("occurrence", "positive")[component_index] else "conditional"
+    coefficient_summaries <- lapply(names(point_all[[component_index]]), function(term) {
+      raw <- coefficient_draws[[component_index]][[term]]
+      centred <- centred_coefficient_draws[[component_index]][[term]]
+      do.call(rbind, lapply(seq_len(ncol(raw)), function(i) {
+        .cdi_summary_row(
+          term = term, level = colnames(raw)[i],
+          estimate = mean(raw[, i]), centred_estimate = mean(centred[, i]),
+          draws = raw[, i], centred_draws = centred[, i],
+          family_spec = specs[[spec_name]],
+          method = "joint precision simulation", probs = probs
+        )
+      }))
+    })
+    names(coefficient_summaries) <- names(point_all[[component_index]])
     list(
       component = component,
       family_spec = specs[[spec_name]],
       eta_reference = eta_reference[[component_index]],
       term_deltas = term_deltas[[component_index]],
       point_contributions = point_all[[component_index]],
+      coefficient_summaries = coefficient_summaries,
       reference = if (is.null(reference_data)) "observed" else "prediction_grid",
       method = "joint precision simulation"
     )
@@ -455,6 +495,7 @@
       family_spec = projection$family_spec,
       term_draws = projection$term_deltas,
       point_contributions = projection$point_contributions,
+      coefficient_summaries = projection$coefficient_summaries,
       eta_reference_draws = projection$eta_reference,
       weights = weights,
       component = paste0(projection$component, ":latent_fields"),
@@ -519,7 +560,8 @@
       model, data, focus, specs, weights, ndraws, seed,
       row_index = row_index,
       reference_data = reference_data,
-      reference_weights = reference_weights
+      reference_weights = reference_weights,
+      probs = probs
     )
     if (!is.null(joint_projections)) {
       field_diags <- .tinyVAST_joint_field_diags(

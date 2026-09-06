@@ -102,6 +102,12 @@
 
 .weighted_col_mean <- function(x, w) {
   if (!nrow(x)) return(rep(NA_real_, ncol(x)))
+  keep <- w > 0
+  x <- x[keep, , drop = FALSE]
+  w <- w[keep]
+  if (!length(w) || any(!is.finite(x))) {
+    stop("Model and reference designs must be finite on positive-weight rows.", call. = FALSE)
+  }
   if (inherits(x, "Matrix")) {
     return(as.numeric(Matrix::colSums(x * w) / sum(w)))
   }
@@ -357,20 +363,23 @@
   out
 }
 
-.coefficient_summary <- function(composition, method = "none") {
+.coefficient_summary <- function(composition, method = "none",
+                                 family_spec = NULL, reference_values = NULL,
+                                 probs = c(0.025, 0.975)) {
   if (!nrow(composition)) return(data.frame())
   key <- interaction(composition$term, composition$term_level, drop = TRUE)
   rows <- split(seq_len(nrow(composition)), key)
   out <- do.call(rbind, lapply(rows, function(i) {
-    data.frame(
-      term = composition$term[i[1]],
-      level = composition$term_level[i[1]],
-      estimate = stats::weighted.mean(composition$effect[i], composition$weight[i]),
-      std_error = NA_real_,
-      lower = NA_real_,
-      upper = NA_real_,
-      method = method,
-      stringsAsFactors = FALSE
+    term <- composition$term[i[1]]
+    same_term <- composition$term == term
+    centre <- if (is.null(reference_values)) {
+      stats::weighted.mean(composition$effect[same_term], composition$weight[same_term])
+    } else reference_values[[term]] %||% NA_real_
+    estimate <- stats::weighted.mean(composition$effect[i], composition$weight[i])
+    .cdi_summary_row(
+      term = term, level = composition$term_level[i[1]],
+      estimate = estimate, centred_estimate = estimate - centre,
+      family_spec = family_spec, method = method, probs = probs
     )
   }))
   rownames(out) <- NULL
@@ -380,41 +389,30 @@
 .coefficient_term_summary <- function(data, term, X, beta, weights,
                                       beta_draws = NULL, vcov = NULL,
                                       method = "none", probs = c(0.025, 0.975),
-                                      bins = 20L) {
+                                      bins = 20L, reference_design = NULL,
+                                      family_spec = NULL) {
   contribution <- as.numeric(X %*% beta)
-  value <- .term_level_values(data, term, contribution, bins)
-  keep <- weights > 0 & !is.na(value) & is.finite(contribution)
-  value <- value[keep]
-  X <- X[keep, , drop = FALSE]
-  weights <- weights[keep]
-  rows <- split(seq_along(value), factor(value, levels = unique(value)))
+  if (is.null(reference_design)) reference_design <- .weighted_col_mean(X, weights)
+  rows <- .cdi_level_groups(data, term, contribution, weights, bins)
   out <- do.call(rbind, lapply(names(rows), function(level) {
     i <- rows[[level]]
     design <- .weighted_col_mean(X[i, , drop = FALSE], weights[i])
-    estimate <- sum(design * beta)
-    if (!is.null(beta_draws)) {
-      stats <- .summarise_vector(as.numeric(beta_draws %*% design), probs)
-    } else if (!is.null(vcov)) {
-      se <- sqrt(max(0, as.numeric(t(design) %*% vcov %*% design)))
-      z <- stats::qnorm(probs)
-      stats <- c(
-        estimate = estimate,
-        std_error = se,
-        lower = estimate + z[1] * se,
-        upper = estimate + z[2] * se
-      )
-    } else {
-      stats <- c(estimate = estimate, std_error = NA, lower = NA, upper = NA)
+    contrast <- design - reference_design
+    se <- function(design) {
+      if (is.null(vcov)) return(NA_real_)
+      sqrt(max(0, as.numeric(t(design) %*% vcov %*% design)))
     }
-    data.frame(
-      term = term,
-      level = level,
-      estimate = unname(stats["estimate"]),
-      std_error = unname(stats["std_error"]),
-      lower = unname(stats["lower"]),
-      upper = unname(stats["upper"]),
-      method = method,
-      stringsAsFactors = FALSE
+    draws <- function(design) {
+      if (is.null(beta_draws)) return(NULL)
+      as.numeric(beta_draws %*% design)
+    }
+    .cdi_summary_row(
+      term = term, level = level,
+      estimate = sum(design * beta),
+      centred_estimate = sum(contrast * beta),
+      std_error = se(design), centred_std_error = se(contrast),
+      draws = draws(design), centred_draws = draws(contrast),
+      family_spec = family_spec, method = method, probs = probs
     )
   }))
   rownames(out) <- NULL
@@ -705,7 +703,9 @@
       beta_draws = if (is.null(beta_draws)) NULL else beta_draws[, columns, drop = FALSE],
       vcov = if (is.null(vcov)) NULL else vcov[columns, columns, drop = FALSE],
       method = method,
-      probs = probs
+      probs = probs,
+      reference_design = reference_design[columns],
+      family_spec = family_spec
     )
   }
 
@@ -875,7 +875,11 @@
   composition <- do.call(rbind, compositions)
   rownames(composition) <- NULL
   composition$component <- component
-  coefficients <- .coefficient_summary(composition)
+  coefficients <- .coefficient_summary(
+    composition, family_spec = family_spec,
+    reference_values = if (reference == "observed") NULL else list(),
+    probs = probs
+  )
   if (nrow(coefficients)) coefficients$component <- component
   derived_draws <- if (length(retained_draws)) do.call(cbind, retained_draws) else NULL
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
@@ -941,7 +945,8 @@
                                   method = "joint precision simulation",
                                   response = NULL,
                                   reference = "observed",
-                                  notes = character()) {
+                                  notes = character(),
+                                  coefficient_summaries = NULL) {
   if (!length(term_draws) || !identical(names(term_draws), names(point_contributions))) {
     stop("Term draws and point contributions must be matching named lists.", call. = FALSE)
   }
@@ -983,7 +988,12 @@
     compositions[[term]] <- .term_composition(
       data, focus, focus_info, term, point_contributions[[term]], weights
     )
-    coefficients[[term]] <- .coefficient_summary(compositions[[term]], method)
+    coefficients[[term]] <- coefficient_summaries[[term]] %||%
+      .coefficient_summary(
+        compositions[[term]], method, family_spec,
+        reference_values = if (reference == "observed") NULL else list(),
+        probs = probs
+      )
     metrics[[term]] <- .term_metrics(
       term, component,
       result$rows$estimate[result$rows$scale == "link"],

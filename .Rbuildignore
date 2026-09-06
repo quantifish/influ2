@@ -20,3 +20,4 @@ R/testing.R
 ^doc$
 ^Meta$
 ^tests/testthat/Rplots\.pdf$
+^tools/release-review\.md$

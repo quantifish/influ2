@@ -15,6 +15,11 @@ test_that("core influence figures remain visually stable", {
     plot(diagnostic, type = "cdi", term = "area")
   )
   vdiffr::expect_doppelganger(
+    "model coded CDI plot",
+    plot(diagnostic, type = "cdi", term = "area",
+      coefficient_reference = "model")
+  )
+  vdiffr::expect_doppelganger(
     "purple bubble plot",
     plot_bubble(
       bentley_fixture()$data,

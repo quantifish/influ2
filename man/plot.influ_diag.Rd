@@ -11,6 +11,8 @@
   term = NULL,
   component = NULL,
   scale = NULL,
+  coefficient_reference = "centred",
+  coefficient_scale = "auto",
   ...
 )
 
@@ -29,6 +31,16 @@
 \item{scale}{Optional influence scale. By default the natural response
 contrast is plotted rather than the link-scale contrast.}
 
+\item{coefficient_reference}{For CDI plots, `"centred"` (default) subtracts
+the term's mean over the same weighted reference distribution used for
+influence. `"model"` displays the original model-coded contribution on
+the link scale, including its reference factor level.}
+
+\item{coefficient_scale}{For CDI plots, `"auto"` (default) displays centred
+log-response effects as ratios on a logarithmic axis. Other links remain
+in their labelled link units. `"link"` displays centred link effects for
+every model. The `"model"` reference always uses link units.}
+
 \item{...}{Reserved for future plotting options.}
 
 \item{object}{An [influ_diag] object passed to `autoplot()`.}
@@ -38,4 +50,13 @@ A `ggplot` or `patchwork` object.
 }
 \description{
 Plot a model-neutral influence diagnostic
+}
+\details{
+CDI intervals use the probabilities supplied to [influ()] (95%
+  by default). Centring propagates the joint coefficient covariance or is
+  performed within each posterior/simulation draw. Ratio summaries are
+  calculated after transforming those draws. A CDI plot displays one
+  component at a time; select `component` when a term occurs in several
+  model components. Zero-probability components retain their fitted link
+  orientation and are explicitly labelled as such.
 }

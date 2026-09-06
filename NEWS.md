@@ -6,6 +6,13 @@
 * Separated uncertainty calculation from draw retention, including a
   posterior-mean preview mode and derived-draw or disk retention.
 * Added common print, summary, plot, and autoplot methods.
+* Centred CDI fitted-effect panels on the same weighted reference as influence.
+  Log-link and lognormal components now display relative effects about one on
+  a logarithmic axis; other links retain clearly labelled additive units.
+  Confidence and credible intervals propagate uncertainty in the estimated
+  reference, and posterior ratios are summarised after transforming each
+  centred joint draw. The previous model-coded link display remains available
+  with `coefficient_reference = "model"`.
 * Added the initial Gaussian, binomial, Poisson, negative-binomial, lognormal,
   Gamma, and Tweedie family registry. Quasi and specialist extended families
   are deliberately excluded.

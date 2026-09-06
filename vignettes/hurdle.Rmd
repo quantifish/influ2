@@ -150,6 +150,15 @@ Zero-inflated Poisson and negative-binomial models follow the same pathway,
 with `zero_probability` and `count` labels replacing `occurrence` and
 `positive`.
 
+When inspecting a term with `plot(diagnostic, type = "cdi", term = ...)`,
+select one `component` at a time. The top panel centres that component's effect
+on the same reference as its influence. Positive log-link and lognormal
+effects appear as ratios about one, whereas a logit occurrence or extra-zero
+effect remains in centred log-odds about zero. An increase in extra-zero
+log-odds has the opposite interpretation to an increase in occurrence
+log-odds. Neither is itself an unconditional catch multiplier; use the
+combined unconditional-mean influence to assess that quantity.
+
 ## Dependence and memory
 
 Component combination must be performed draw by draw, or with a joint

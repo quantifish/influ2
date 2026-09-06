@@ -43,7 +43,10 @@ influ.default <- function(model, ...) {
 #' @param family An `influ_family_spec` object.
 #' @param focus Name of the focus variable, usually time.
 #' @param influence Long-form influence results.
-#' @param coefficients Compact coefficient or field summaries.
+#' @param coefficients Compact coefficient or field summaries. The original
+#'   model-coded summaries are accompanied by `centred_*` link contrasts and
+#'   `relative_*` display summaries, using the influence reference distribution.
+#'   Link and component metadata determine the CDI display scale.
 #' @param composition Compact data-composition summaries.
 #' @param indices Nominal and standardised index summaries.
 #' @param metrics Compact overall and trend influence metrics.

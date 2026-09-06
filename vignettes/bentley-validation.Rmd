@@ -104,12 +104,66 @@ The complete coefficient-distribution-influence display combines the fitted
 effect, the distribution of observations, and the resulting influence. Both
 figures below use month as the model term and year as the focus.
 
-```{r bentley-cdi-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=8, fig.height=5.5, fig.cap='CDI plots for month in the lobster example from the original Bentley proto implementation (left) and the new influ2 engine (right).', fig.alt=c('Legacy Bentley coefficient-distribution-influence plot for month.', 'New influ2 coefficient-distribution-influence plot for month.')}
+Both top-left panels now show the same relative monthly effects: log-scale
+term contributions are centred on the observed monthly distribution, then
+exponentiated. The reference is one on a logarithmic axis. This removes the
+arbitrary choice of month 1 as the zero coefficient; a relative effect of 1.2
+means a 20% higher monthly contribution to expected catch than the reference.
+The legacy label "Coefficient" and the new label "Relative month effect"
+describe the same fitted quantity in this example.
+
+The interval widths deliberately differ. The original plot uses plus or minus
+one standard error on the centred log scale, followed by exponentiation. The
+new plot uses approximate 95% confidence intervals, including uncertainty in
+the estimated centre and its covariance with each month's effect. Its annual
+influence panel also includes uncertainty intervals.
+
+```{r bentley-cdi-plots, eval=legacy_available, fig.show='hold', out.width='49%', fig.width=8, fig.height=5.5, fig.cap='CDI plots for month from Bentley proto (left) and influ2 (right). The centred relative-effect points agree; legacy top-panel bars use plus or minus one standard error, while influ2 uses 95% confidence intervals.', fig.alt=c('Legacy Bentley CDI plot with centred monthly multipliers and one-standard-error bars.', 'New influ2 CDI plot with matching centred monthly multipliers and 95% confidence intervals.')}
 legacy_diagnostic$cdiPlot(term = "month")
 plot(new_diagnostic, type = "cdi", term = "month")
 ```
 
+To inspect the earlier reference-coded display instead, use
+`coefficient_reference = "model"`. In this GLM that puts month 1 at zero and
+shows the other months relative to it, on the log scale. Alternatively,
+`coefficient_scale = "link"` keeps the new centring but displays additive log
+effects. Neither option changes the annual influence calculations.
+
 ## Numerical agreement
+
+First, compare the top-panel centred log effects and their standard errors.
+Exponentiating the estimates gives the matching relative-effect points shown
+above. Checking the standard errors separately verifies that the difference
+between the plotted intervals comes from their stated coverage.
+
+```{r bentley-coefficient-parity, eval=legacy_available}
+legacy_coefficients <- aggregate(
+  legacy_diagnostic$preds[c("fit.month", "se.fit.month")],
+  list(level = legacy_diagnostic$preds$month),
+  mean
+)
+names(legacy_coefficients) <- c(
+  "level", "centred_estimate_legacy", "centred_std_error_legacy"
+)
+current_coefficients <- subset(
+  new_diagnostic$coefficients,
+  term == "month",
+  select = c(level, centred_estimate, centred_std_error)
+)
+coefficient_comparison <- merge(
+  legacy_coefficients, current_coefficients, by = "level"
+)
+coefficient_comparison$relative_effect <- exp(
+  coefficient_comparison$centred_estimate
+)
+coefficient_comparison
+stopifnot(
+  max(abs(coefficient_comparison$centred_estimate_legacy -
+    coefficient_comparison$centred_estimate)) < 1e-8,
+  max(abs(coefficient_comparison$centred_std_error_legacy -
+    coefficient_comparison$centred_std_error)) < 1e-8
+)
+```
 
 The old and new engines are also compared directly on all 54 year-by-term
 contrasts in the lobster example. Routine `testthat` tests retain both this

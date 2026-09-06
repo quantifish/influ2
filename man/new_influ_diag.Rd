@@ -29,7 +29,10 @@ new_influ_diag(
 
 \item{influence}{Long-form influence results.}
 
-\item{coefficients}{Compact coefficient or field summaries.}
+\item{coefficients}{Compact coefficient or field summaries. The original
+model-coded summaries are accompanied by `centred_*` link contrasts and
+`relative_*` display summaries, using the influence reference distribution.
+Link and component metadata determine the CDI display scale.}
 
 \item{composition}{Compact data-composition summaries.}
 
