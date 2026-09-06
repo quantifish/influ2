@@ -23,6 +23,8 @@ knitr::opts_chunk$set(
 has_brms <- requireNamespace("brms", quietly = TRUE) &&
   requireNamespace("posterior", quietly = TRUE)
 has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)
+suppressPackageStartupMessages(library(ggplot2))
+theme_set(theme_bw())
 ```
 
 ## Why retain components?

@@ -25,6 +25,7 @@ has_sdmTMB <- requireNamespace("sdmTMB", quietly = TRUE)
 has_tinyVAST <- requireNamespace("tinyVAST", quietly = TRUE) &&
   requireNamespace("fmesher", quietly = TRUE)
 suppressPackageStartupMessages(library(ggplot2))
+theme_set(theme_bw())
 ```
 
 ## Why separate field components?
@@ -64,8 +65,7 @@ ggplot(pcod, aes(X, Y, colour = density)) +
   geom_point(size = 1.2) +
   coord_fixed() +
   scale_colour_viridis_c(trans = "sqrt") +
-  labs(x = "Easting (km)", y = "Northing (km)", colour = "Density") +
-  theme_bw()
+  labs(x = "Easting (km)", y = "Northing (km)", colour = "Density")
 ```
 
 The triangulated mesh approximates a continuous Matérn spatial field. The
@@ -154,8 +154,7 @@ ggplot(field_surfaces, aes(X, Y, fill = link_contribution)) +
   labs(
     x = "Easting (km)", y = "Northing (km)",
     fill = "Link-scale\ncontribution"
-  ) +
-  theme_bw()
+  )
 ```
 
 ## tinyVAST
@@ -237,8 +236,7 @@ ggplot(tiny_data, aes(x, ycoord, colour = count, size = count + 1)) +
   facet_wrap(~time, nrow = 2) +
   scale_colour_viridis_c() +
   scale_size_area(max_size = 5) +
-  labs(x = "X", y = "Y", colour = "Count", size = "Count + 1") +
-  theme_bw()
+  labs(x = "X", y = "Y", colour = "Count", size = "Count + 1")
 ```
 
 ### Fit and diagnose
@@ -330,8 +328,7 @@ ggplot(tiny_surfaces, aes(x, ycoord, fill = link_contribution)) +
   scale_fill_gradient2(
     low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0
   ) +
-  labs(x = "X", y = "Y", fill = "Link-scale\ncontribution") +
-  theme_bw()
+  labs(x = "X", y = "Y", fill = "Link-scale\ncontribution")
 ```
 
 ## Multivariate tinyVAST responses
