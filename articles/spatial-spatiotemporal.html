@@ -239,6 +239,55 @@ sum for two Pacific cod survey years.
 </p>
 </div>
 </div>
+<div class="section level3">
+<h3 id="refitted-year-effect-steps">Refitted year-effect steps<a class="anchor" aria-label="anchor" href="#refitted-year-effect-steps"></a>
+</h3>
+<p>A separate step plot can show how the fitted year effects change when
+spatial and spatiotemporal structure is added. Its models must all
+contain an explicit fixed year term. The Pacific cod model above does
+not contain one, so the following code first fits a version with
+<code>factor(year)</code> while retaining its depth effects and field
+structure. This additional sequence is shown without running the refits
+during the vignette build.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pcod_year_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span></span>
+<span>  <span class="va">pcod_model</span>,</span>
+<span>  formula. <span class="op">=</span> <span class="va">present</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pcod_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
+<span>  <span class="va">pcod_year_model</span>,</span>
+<span>  year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"conditional"</span>,</span>
+<span>  refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  steps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Year + depth"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      formula <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span>,</span>
+<span>      spatial <span class="op">=</span> <span class="st">"off"</span>,</span>
+<span>      spatiotemporal <span class="op">=</span> <span class="st">"off"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="st">"Add spatial field"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      formula <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span>,</span>
+<span>      spatial <span class="op">=</span> <span class="st">"on"</span>,</span>
+<span>      spatiotemporal <span class="op">=</span> <span class="st">"off"</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="st">"Add spatiotemporal field"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      formula <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span> <span class="va">depth_scaled</span> <span class="op">+</span> <span class="va">depth_scaled2</span>,</span>
+<span>      spatial <span class="op">=</span> <span class="st">"on"</span>,</span>
+<span>      spatiotemporal <span class="op">=</span> <span class="st">"IID"</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  ndraws <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">13</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">pcod_steps</span><span class="op">)</span></span></code></pre></div>
+<p>Every step retains the same observations, depth covariates, and year
+term. The fitted year coefficients can change because the likelihood is
+re-optimised with a different field structure. These are year-effect
+contrasts from refitted models. They are not area-weighted abundance
+indices, and the <code>qcs_grid</code> used for the maps is not
+integrated to create this plot.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="tinyvast">tinyVAST<a class="anchor" aria-label="anchor" href="#tinyvast"></a>
@@ -252,7 +301,7 @@ uses a Poisson response, and adds changing spatial coverage so that an
 influence diagnostic has a sampling pattern to detect. The known process
 contains a persistent spatial field and an AR(1) spatiotemporal
 field.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">101</span><span class="op">)</span></span>
 <span><span class="va">n_x</span> <span class="op">&lt;-</span> <span class="va">n_y</span> <span class="op">&lt;-</span> <span class="fl">7</span></span>
 <span><span class="va">n_time</span> <span class="op">&lt;-</span> <span class="fl">6</span></span>
@@ -311,7 +360,7 @@ field.</p>
 <p>The observation window shifts from left to right through time. That
 imbalance allows the persistent field to affect temporal summaries even
 though the field itself does not change through time.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">tiny_data</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">x</span>, <span class="va">ycoord</span>, colour <span class="op">=</span> <span class="va">count</span>, size <span class="op">=</span> <span class="va">count</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_point</span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">coord_equal</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -331,7 +380,7 @@ Changing spatial coverage in the simulated tinyVAST example.
 <p>The structural-equation strings match the official
 <code>tinyVAST</code> notation: one persistent spatial variance, plus an
 AR(1) spatiotemporal process.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_mesh</span> <span class="op">&lt;-</span> <span class="fu">fmesher</span><span class="fu">::</span><span class="fu"><a href="https://inlabru-org.github.io/fmesher/reference/fm_mesh_2d.html" class="external-link">fm_mesh_2d</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_data</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"ycoord"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="fl">1</span></span>
@@ -374,7 +423,7 @@ AR(1) spatiotemporal process.</p>
 <span><span class="co">#&gt;                 5</span></span>
 <span><span class="co">#&gt;                 6</span></span>
 <span><span class="co">#&gt;                 6</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tiny_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/tinyvast-components-1.png" class="r-plt" alt="Fixed, spatial, and spatiotemporal influence components from the tinyVAST model." width="768"><p class="caption">
@@ -389,7 +438,7 @@ tinyVAST model.
 <p><code><a href="https://vast-lib.github.io/tinyVAST/reference/project.html" class="external-link">tinyVAST::project()</a></code> exposes the same latent components
 used by the adapter. The combined map below is calculated on the link
 scale before applying the inverse link.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_mapping_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">tiny_grid</span>, <span class="va">time</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">tiny_mapping_grid</span><span class="op">$</span><span class="va">spatial</span> <span class="op">&lt;-</span> <span class="fu">tinyVAST</span><span class="fu">::</span><span class="fu"><a href="https://vast-lib.github.io/tinyVAST/reference/project.html" class="external-link">project</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>,</span>
@@ -439,6 +488,82 @@ from the tinyVAST example.
 </p>
 </div>
 </div>
+<div class="section level3">
+<h3 id="refitted-year-effect-steps-1">Refitted year-effect steps<a class="anchor" aria-label="anchor" href="#refitted-year-effect-steps-1"></a>
+</h3>
+<p>The small simulated example already has a fixed
+<code>factor(time)</code> term, so it can be used directly for an
+executed refitting sequence. <code>tinyVAST</code> controls its fields
+through structural-equation strings. Set a field argument to
+<code>NULL</code> to disable that field. An empty string instead
+requests a variance field, so it is not a field-off setting. The final
+step uses the persistent spatial and AR(1) spatiotemporal strings
+defined above. The observation data and spatial mesh stay the same
+throughout, and <code>factor(time)</code> is retained in every step.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tiny_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
+<span>  <span class="va">tiny_model</span>,</span>
+<span>  year <span class="op">=</span> <span class="st">"time"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"conditional"</span>,</span>
+<span>  refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  steps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Year only"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      formula <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span>,</span>
+<span>      space_term <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>      spacetime_term <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="st">"Add spatial field"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      formula <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span>,</span>
+<span>      space_term <span class="op">=</span> <span class="va">space_term</span>,</span>
+<span>      spacetime_term <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="st">"Add spatiotemporal field"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      formula <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">time</span><span class="op">)</span>,</span>
+<span>      space_term <span class="op">=</span> <span class="va">space_term</span>,</span>
+<span>      spacetime_term <span class="op">=</span> <span class="va">spacetime_term</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  ndraws <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">13</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">tiny_steps</span></span>
+<span><span class="co">#&gt; &lt;influ_steps&gt;</span></span>
+<span><span class="co">#&gt;   Estimand: year-effect contrasts (not spatial abundance)</span></span>
+<span><span class="co">#&gt;   Focus: time</span></span>
+<span><span class="co">#&gt;   Steps: 3</span></span>
+<span><span class="co">#&gt;   Refitted: 2</span></span>
+<span><span class="co">#&gt;  step_id                    label  backend          status</span></span>
+<span><span class="co">#&gt;        1                Year only tinyVAST        refitted</span></span>
+<span><span class="co">#&gt;        2        Add spatial field tinyVAST        refitted</span></span>
+<span><span class="co">#&gt;        3 Add spatiotemporal field tinyVAST reused original</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">tiny_steps</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="spatial-spatiotemporal_files/figure-html/tinyvast-refitted-step-plot-1.png" class="r-plt" alt="Three sequential tinyVAST model panels showing how the centred year-effect ratios change as persistent and time-varying fields are added." width="768"><p class="caption">
+Relative year-effect contrasts from refitted tinyVAST models with year
+only, a persistent spatial field, and both spatial and spatiotemporal
+fields. Shading shows the current model’s 95% interval; these are not
+spatially integrated abundance indices.
+</p>
+</div>
+<p>This sequence compares the estimated year effects from models fitted
+with their own coefficients and field parameters. The final step can
+reuse the original fit when its specification is unchanged. The
+comparison is order-dependent: adding the spatiotemporal field before
+the persistent field would pose a different comparison. The intervals
+describe each fitted year effect, not the difference between consecutive
+models. The fitted-field surfaces and component-influence plots above
+provide complementary information about the model structure; they are
+separate from this refitted comparison.</p>
+<p><code>plot(tiny_steps)</code> reuses the stored results. For larger
+spatial models, a named list of previously fitted models can be passed
+to <code><a href="../reference/influ_steps.html">influ_steps()</a></code> instead, so the same comparison can be
+produced without fitting them again. Keep the response, observations,
+year levels, component, and reference distribution consistent across
+that list. Set <code>keep_fits = TRUE</code> if the intermediate fitted
+objects are needed afterwards; otherwise the step result retains compact
+diagnostic summaries.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="multivariate-tinyvast-responses">Multivariate tinyVAST responses<a class="anchor" aria-label="anchor" href="#multivariate-tinyvast-responses"></a>
@@ -448,7 +573,7 @@ with different families. <code>influ2</code> keeps the common schema and
 prefixes each component with its response name. This small non-spatial
 example isolates that interface; the same response labels are used when
 spatial and spatiotemporal terms are added.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multivariate_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span></span>
 <span>    <span class="va">tiny_data</span>,</span>

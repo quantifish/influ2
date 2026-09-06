@@ -179,6 +179,58 @@ years.](spatial-spatiotemporal_files/figure-html/sdmtmb-fields-1.png)
 Persistent spatial field, year-specific spatiotemporal field, and their
 sum for two Pacific cod survey years.
 
+### Refitted year-effect steps
+
+A separate step plot can show how the fitted year effects change when
+spatial and spatiotemporal structure is added. Its models must all
+contain an explicit fixed year term. The Pacific cod model above does
+not contain one, so the following code first fits a version with
+`factor(year)` while retaining its depth effects and field structure.
+This additional sequence is shown without running the refits during the
+vignette build.
+
+``` r
+
+pcod_year_model <- update(
+  pcod_model,
+  formula. = present ~ factor(year) + depth_scaled + depth_scaled2
+)
+
+pcod_steps <- influ_steps(
+  pcod_year_model,
+  year = "year",
+  component = "conditional",
+  refit = TRUE,
+  steps = list(
+    "Year + depth" = list(
+      formula = ~factor(year) + depth_scaled + depth_scaled2,
+      spatial = "off",
+      spatiotemporal = "off"
+    ),
+    "Add spatial field" = list(
+      formula = ~factor(year) + depth_scaled + depth_scaled2,
+      spatial = "on",
+      spatiotemporal = "off"
+    ),
+    "Add spatiotemporal field" = list(
+      formula = ~factor(year) + depth_scaled + depth_scaled2,
+      spatial = "on",
+      spatiotemporal = "IID"
+    )
+  ),
+  ndraws = 100,
+  seed = 13
+)
+plot_step(pcod_steps)
+```
+
+Every step retains the same observations, depth covariates, and year
+term. The fitted year coefficients can change because the likelihood is
+re-optimised with a different field structure. These are year-effect
+contrasts from refitted models. They are not area-weighted abundance
+indices, and the `qcs_grid` used for the maps is not integrated to
+create this plot.
+
 ## tinyVAST
 
 ### Simulated spatiotemporal process
@@ -390,6 +442,90 @@ example.](spatial-spatiotemporal_files/figure-html/tinyvast-fields-1.png)
 
 Fitted persistent spatial field, spatiotemporal field, and their sum
 from the tinyVAST example.
+
+### Refitted year-effect steps
+
+The small simulated example already has a fixed `factor(time)` term, so
+it can be used directly for an executed refitting sequence. `tinyVAST`
+controls its fields through structural-equation strings. Set a field
+argument to `NULL` to disable that field. An empty string instead
+requests a variance field, so it is not a field-off setting. The final
+step uses the persistent spatial and AR(1) spatiotemporal strings
+defined above. The observation data and spatial mesh stay the same
+throughout, and `factor(time)` is retained in every step.
+
+``` r
+
+tiny_steps <- influ_steps(
+  tiny_model,
+  year = "time",
+  component = "conditional",
+  refit = TRUE,
+  steps = list(
+    "Year only" = list(
+      formula = ~factor(time),
+      space_term = NULL,
+      spacetime_term = NULL
+    ),
+    "Add spatial field" = list(
+      formula = ~factor(time),
+      space_term = space_term,
+      spacetime_term = NULL
+    ),
+    "Add spatiotemporal field" = list(
+      formula = ~factor(time),
+      space_term = space_term,
+      spacetime_term = spacetime_term
+    )
+  ),
+  ndraws = 100,
+  seed = 13
+)
+tiny_steps
+#> <influ_steps>
+#>   Estimand: year-effect contrasts (not spatial abundance)
+#>   Focus: time
+#>   Steps: 3
+#>   Refitted: 2
+#>  step_id                    label  backend          status
+#>        1                Year only tinyVAST        refitted
+#>        2        Add spatial field tinyVAST        refitted
+#>        3 Add spatiotemporal field tinyVAST reused original
+```
+
+``` r
+
+plot_step(tiny_steps)
+```
+
+![Three sequential tinyVAST model panels showing how the centred
+year-effect ratios change as persistent and time-varying fields are
+added.](spatial-spatiotemporal_files/figure-html/tinyvast-refitted-step-plot-1.png)
+
+Relative year-effect contrasts from refitted tinyVAST models with year
+only, a persistent spatial field, and both spatial and spatiotemporal
+fields. Shading shows the current model’s 95% interval; these are not
+spatially integrated abundance indices.
+
+This sequence compares the estimated year effects from models fitted
+with their own coefficients and field parameters. The final step can
+reuse the original fit when its specification is unchanged. The
+comparison is order-dependent: adding the spatiotemporal field before
+the persistent field would pose a different comparison. The intervals
+describe each fitted year effect, not the difference between consecutive
+models. The fitted-field surfaces and component-influence plots above
+provide complementary information about the model structure; they are
+separate from this refitted comparison.
+
+`plot(tiny_steps)` reuses the stored results. For larger spatial models,
+a named list of previously fitted models can be passed to
+[`influ_steps()`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
+instead, so the same comparison can be produced without fitting them
+again. Keep the response, observations, year levels, component, and
+reference distribution consistent across that list. Set
+`keep_fits = TRUE` if the intermediate fitted objects are needed
+afterwards; otherwise the step result retains compact diagnostic
+summaries.
 
 ## Multivariate tinyVAST responses
 

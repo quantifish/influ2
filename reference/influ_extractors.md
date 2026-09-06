@@ -20,7 +20,8 @@ influ_metrics(x)
 
 - x:
 
-  An \[influ_diag\] object.
+  An \[influ_diag\] object. \`influ_indices()\` also accepts an
+  \[influ_steps\] object and returns its annual step table.
 
 ## Value
 

@@ -107,6 +107,13 @@ Compare indices, inspect data coverage, and diagnose fitted models.
 
 - [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
   : Compare standardised CPUE indices
+- [`influ_steps()`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
+  [`print(`*`<influ_steps>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
+  [`summary(`*`<influ_steps>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
+  : Calculate a sequence of refitted year-effect contrasts
+- [`plot(`*`<influ_steps>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_steps.md)
+  [`autoplot(`*`<influ_steps>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_steps.md)
+  : Plot a stored step sequence
 - [`plot_step()`](https://www.quantifish.co.nz/influ2/reference/plot_step.md)
   : Display the effect of sequential model-standardisation steps
 - [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
