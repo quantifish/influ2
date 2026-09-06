@@ -50,4 +50,8 @@ test_that("core influence figures remain visually stable", {
       min_n = 1
     )
   )
+  vdiffr::expect_doppelganger(
+    "refitted year-effect step plot",
+    plot_step(influ_steps(bentley_fixture()$model, year = "year", refit = TRUE))
+  )
 })

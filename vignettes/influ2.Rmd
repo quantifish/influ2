@@ -510,6 +510,109 @@ component (for example, unconditional mean versus positive catch), and shared
 years before overlaying indices. A common plotting interface does not by
 itself make those quantities comparable.
 
+## Refitted step plots
+
+A refitted step plot asks how the estimated year effect changes as terms are
+added to a model. Each changed specification is fitted afresh, re-estimating
+all its coefficients. The result therefore depends on the order in which terms are
+added: it describes that sequence of models, rather than allocating an
+order-independent share of the final result to each term.
+
+For a simple GLM, `influ_steps()` can construct the sequence from the fitted
+formula. It starts with the year term, preserves any offsets, and then adds
+the remaining terms in formula order. This lobster example starts with year,
+then adds month, the depth polynomial, and the soak-time polynomial. All
+steps use the same pot records and observed reference distribution.
+
+```{r lobster-refitted-steps}
+lobster_steps <- influ_steps(
+  lobster_glm,
+  year = "year",
+  refit = TRUE
+)
+lobster_steps
+```
+
+A step that exactly matches the original model or an earlier step reuses that
+fit. The printed status records whether each model was refitted or reused;
+this avoids repeating an identical fit while preserving the model comparison.
+
+```{r lobster-refitted-step-plot, fig.height=8, fig.cap="Changes in the relative year effect as month, depth, and soak-time terms are added in a lobster GLM refitting sequence. Each panel highlights the current model with its 95% confidence interval and retains the preceding models for comparison.", fig.alt="Four sequential GLM panels showing centred year-effect ratios for year only, year plus month, then depth, then soak time."}
+plot_step(lobster_steps)
+```
+
+These are centred year-effect contrasts. For the lobster log-link models,
+they are exponentiated year effects relative to a common reference, not
+area-weighted abundance indices or spatially integrated predictions.
+The shaded interval belongs to the current fitted model. It is not an
+interval for the difference between that model and the preceding one, because
+the models were fitted to the same observations and their estimates are
+dependent.
+
+Once calculated, `plot(lobster_steps)` or `plot_step(lobster_steps)` reuses the
+stored summaries without fitting again. The shortcut below creates the same
+kind of plot directly from a fitted model, but it performs the refits each
+time it is called. The automatic main-formula sequence also supports simple
+GAMs and `glmmTMB` models.
+
+```{r lobster-refitted-step-shortcuts, eval=FALSE}
+plot_step(lobster_glm, year = "year", refit = TRUE)
+
+gam_steps <- influ_steps(lobster_gam, year = "year", refit = TRUE)
+plot(gam_steps)
+```
+
+Use an explicit named `steps` list when the order or model structure needs
+closer control. Each formula is fitted against the original model's settings,
+so the sequence is visible in the code. A common `reference_data` grid and
+`reference_weights` may be passed to `influ_steps()` when the observed
+reference is not the intended comparison.
+
+```{r lobster-explicit-steps, eval=FALSE}
+lobster_steps <- influ_steps(
+  lobster_glm,
+  year = "year",
+  refit = TRUE,
+  steps = list(
+    "Year" = ~year,
+    "Year + depth" = ~year + poly(depth, 3),
+    "Year + depth + month" = ~year + poly(depth, 3) + month,
+    "Year + depth + month + soak" =
+      ~year + poly(depth, 3) + month + poly(soak, 3)
+  ),
+  reference_data = lobster_reference
+)
+```
+
+For expensive models, particularly BRMS fits, supply an ordered list of
+models that have already been fitted. This calculates and plots their year
+contrasts without running MCMC again. The models should use the same response,
+observations, focus levels, and reference distribution. Select the intended
+`component` explicitly for models with several response components. Check the
+convergence of supplied fits before including them; their `supplied` status
+does not record a new convergence assessment.
+
+```{r brms-existing-step-models, eval=FALSE}
+brms_steps <- influ_steps(
+  list(
+    "Year" = brms_year_fit,
+    "Year + month" = brms_month_fit,
+    "Year + month + depth" = brms_depth_fit
+  ),
+  year = "year",
+  ndraws = 250
+)
+plot(brms_steps)
+```
+
+Intervals default to 95% when step diagnostics are calculated; set `probs`
+to change their coverage. The default `keep_fits = FALSE` keeps the result
+compact. Set `keep_fits = TRUE` only when the fitted intermediate models are
+needed afterwards, because retaining those models can substantially increase
+the object's size. The [spatial vignette](spatial-spatiotemporal.html) shows
+explicit sequences that add spatial and spatiotemporal structure while
+continuing to compare the fitted year effects.
+
 ## One interface and compact uncertainty
 
 All fitted-model methods return an `influ_diag`:

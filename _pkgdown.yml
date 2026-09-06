@@ -57,6 +57,8 @@ reference:
   desc: Compare indices, inspect data coverage, and diagnose fitted models.
   contents:
   - plot_compare
+  - influ_steps
+  - plot.influ_steps
   - plot_step
   - plot_data_extent
   - plot_implied_residuals

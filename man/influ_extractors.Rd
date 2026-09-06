@@ -20,7 +20,8 @@ influ_draws(x)
 influ_metrics(x)
 }
 \arguments{
-\item{x}{An [influ_diag] object.}
+\item{x}{An [influ_diag] object. `influ_indices()` also accepts an
+[influ_steps] object and returns its annual step table.}
 }
 \value{
 A data frame.

@@ -166,17 +166,30 @@ diagnostics_focus <- function(data) {
 
 #' Display the effect of sequential model-standardisation steps
 #'
-#' @inheritParams plot_compare
+#' Plot supplied fits, calculated diagnostics, or a stored [influ_steps] object.
+#' Set `refit = TRUE` with one original model to fit a sequence internally.
+#' The displayed quantities are year-effect contrasts, including when spatial
+#' processes are changed between fits; they are not area-integrated indices.
+#'
+#' @inheritParams influ_steps
 #' @param fill Colour used for the current model's interval.
+#' @param show_probs Show each step's uncertainty interval. These are not
+#'   intervals for differences between models.
+#' @md
 #'
 #' @return A [ggplot2::ggplot()] object.
 #' @export
 plot_step <- function(fits, labels = NULL, year = NULL, fill = "purple4",
-                      probs = c(0.25, 0.75), show_probs = TRUE, ...) {
-  current <- .comparison_index_data(
-    fits, labels = labels, focus = year, probs = probs, ...
+                      probs = c(0.025, 0.975), show_probs = TRUE,
+                      steps = NULL, refit = FALSE, component = NULL,
+                      keep_fits = FALSE, refit_args = list(), ...) {
+  sequence <- influ_steps(
+    fits, labels = labels, year = year, probs = probs, steps = steps,
+    refit = refit, component = component, keep_fits = keep_fits,
+    refit_args = refit_args, ...
   )
-  models <- unique(current$Model)
+  current <- sequence$indices
+  models <- sequence$steps$label
   history <- do.call(rbind, lapply(seq_along(models), function(i) {
     do.call(rbind, lapply(seq_len(i), function(j) {
       d <- current[current$Model == models[j], , drop = FALSE]
@@ -197,7 +210,7 @@ plot_step <- function(fits, labels = NULL, year = NULL, fill = "purple4",
       fill = fill, alpha = 0.18, colour = NA, na.rm = TRUE
     )
   }
-  plot +
+  plot <- plot +
     ggplot2::geom_line(
       ggplot2::aes(
         x = .data$x, y = .data$estimate,
@@ -216,13 +229,17 @@ plot_step <- function(fits, labels = NULL, year = NULL, fill = "purple4",
     ggplot2::scale_linetype_manual(values = c(
       Current = "solid", Previous = "dashed", Earlier = "solid"
     )) +
-    ggplot2::scale_y_continuous(
-      limits = c(0, NA),
-      expand = ggplot2::expansion(mult = c(0, 0.05))
-    ) +
-    ggplot2::labs(x = diagnostics_focus(history), y = "Standardised index") +
+    ggplot2::labs(x = sequence$focus, y = switch(sequence$metadata$scale,
+      ratio = "Year-effect ratio", difference = "Year-effect difference",
+      "Year-effect contrast")) +
     ggplot2::theme_bw() +
     ggplot2::theme(legend.position = "none")
+  if (identical(sequence$metadata$scale, "ratio")) {
+    plot <- plot + ggplot2::scale_y_continuous(
+      limits = c(0, NA), expand = ggplot2::expansion(mult = c(0, 0.05))
+    )
+  }
+  plot
 }
 
 #' Summarise Bayesian R-squared for BRMS models

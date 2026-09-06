@@ -26,6 +26,9 @@ is a separate, later step authorised by the maintainer.
 - Review mapped persistent and spatiotemporal fields alongside their influence
   panels. Decide whether the small demonstration fits are adequate illustrations
   of the methods and state their limits clearly.
+- Review the refitted GLM and tinyVAST step plots. These compare centred year
+  effects on fixed analysis rows, not area-integrated abundance. Confirm the
+  explicit process order, common effort offsets, and per-model interval labels.
 
 ## 2. Decide what to keep from the earlier interface
 
@@ -44,7 +47,7 @@ package. They are not merely historical helpers:
 | `plot_bubble()` | Confirm the purple and coloured sampling displays cover the old usage. |
 | `plot_data_extent()` | Confirm the missing-data coverage display and ordering are suitable. |
 | `plot_compare()` | Confirm index selection, common-period rescaling, labels, and interval defaults. |
-| `plot_step()` | Confirm sequential model comparisons still support the required workflow. |
+| `plot_step()`, `influ_steps()` | Review automatic ordinary-model refits, explicit spatial-process stages, and reuse of compact results or supplied fits. |
 | `get_bayes_R2()` | Retain the BRMS summary; decide whether a worked example is needed. |
 | `table_criterion()` | Retain the BRMS criteria; review interpretation of LOO, R-squared, and log likelihood. |
 | `plot_implied_residuals()` | Review the fisheries interpretation, strata threshold, residual choice, and one-standard-error bars. |

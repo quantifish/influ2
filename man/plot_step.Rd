@@ -9,29 +9,64 @@ plot_step(
   labels = NULL,
   year = NULL,
   fill = "purple4",
-  probs = c(0.25, 0.75),
+  probs = c(0.025, 0.975),
   show_probs = TRUE,
+  steps = NULL,
+  refit = FALSE,
+  component = NULL,
+  keep_fits = FALSE,
+  refit_args = list(),
   ...
 )
 }
 \arguments{
-\item{fits}{A fitted model, an [influ_diag], or a list of either.}
+\item{fits}{One supported fitted model, an \code{influ_diag}, or an ordered list
+of fitted models or diagnostics. An existing \code{influ_steps} is also accepted.}
 
-\item{labels}{Optional model labels.}
+\item{labels}{Unique step labels. Defaults to list names or generated labels.}
 
-\item{year}{Optional focus-variable name. It is inferred when omitted.}
+\item{year}{Focus-variable name, inferred from the first input when omitted.}
 
 \item{fill}{Colour used for the current model's interval.}
 
-\item{probs}{Interval probabilities used when diagnostics must be calculated.}
+\item{probs}{Interval probabilities for newly calculated diagnostics.
+Existing diagnostics retain their original intervals.}
 
-\item{show_probs}{Show uncertainty ribbons.}
+\item{show_probs}{Show each step's uncertainty interval. These are not
+intervals for differences between models.}
 
-\item{...}{Arguments passed to [influ()] when `fits` contains models.}
+\item{steps}{For refitting, an ordered, uniquely named list of cumulative
+formulas or lists of model-update arguments. Each specification updates the
+original model. Use \code{formula} in an argument list for its formula change.
+If omitted, ordinary single-component models start with the focus term and
+progressively add the remaining formula terms. Offsets are retained.
+Spatial models require explicit steps so field changes are deliberate.}
+
+\item{refit}{Explicitly allow new model fitting. Defaults to \code{FALSE}.}
+
+\item{component}{Index component. Must be supplied if more than one is
+available, for example \code{"positive"} or \code{"unconditional_mean"} in a hurdle
+model. Even a combined-component index remains a focus-effect contrast,
+not the full expected response integrated over space.}
+
+\item{keep_fits}{Retain fitted models in the result? Defaults to \code{FALSE} to
+keep the returned object small. Save expensive fits separately if needed.}
+
+\item{refit_args}{Named arguments passed to the model update at every step,
+such as BRMS sampling controls. Stage-specific arguments take precedence.
+Execution-only controls (\code{seed}, \code{cores}, \code{refresh}, \code{silent}, and \code{verbose})
+do not by themselves force an otherwise unchanged original fit to rerun.}
+
+\item{...}{Arguments passed to \code{\link[=influ]{influ()}} for fitted-model inputs, such as
+\code{uncertainty = "none"}, \code{weights}, or \code{reference_data}. All steps use the
+same calculation arguments. Not used for model-fitting controls.}
 }
 \value{
-A [ggplot2::ggplot()] object.
+A \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} object.
 }
 \description{
-Display the effect of sequential model-standardisation steps
+Plot supplied fits, calculated diagnostics, or a stored \link{influ_steps} object.
+Set \code{refit = TRUE} with one original model to fit a sequence internally.
+The displayed quantities are year-effect contrasts, including when spatial
+processes are changed between fits; they are not area-integrated indices.
 }

@@ -128,7 +128,8 @@ validate_influ_diag <- function(x) {
 
 #' Extract a table from an influence diagnostic
 #'
-#' @param x An [influ_diag] object.
+#' @param x An [influ_diag] object. `influ_indices()` also accepts an
+#'   [influ_steps] object and returns its annual step table.
 #'
 #' @return A data frame.
 #' @name influ_extractors
@@ -144,6 +145,7 @@ influ_effects <- function(x) {
 #' @rdname influ_extractors
 #' @export
 influ_indices <- function(x) {
+  if (inherits(x, "influ_steps")) return(x$indices)
   .assert_influ_diag(x)
   x$indices
 }

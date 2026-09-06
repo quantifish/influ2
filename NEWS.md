@@ -6,6 +6,12 @@
 * Separated uncertainty calculation from draw retention, including a
   posterior-mean preview mode and derived-draw or disk retention.
 * Added common print, summary, plot, and autoplot methods.
+* Added `influ_steps()` for ordered comparisons of genuinely refitted models,
+  with automatic main-formula sequences for simple GLMs, GAMs, and `glmmTMB`
+  models, explicit step specifications, and reuse of already fitted models.
+  `plot_step()` accepts the same refitting route or a reusable `influ_steps`
+  result. Step plots compare centred year-effect contrasts, with 95% intervals
+  by default; they do not calculate area-weighted abundance indices.
 * Centred CDI fitted-effect panels on the same weighted reference as influence.
   Log-link and lognormal components now display relative effects about one on
   a logarithmic axis; other links retain clearly labelled additive units.
