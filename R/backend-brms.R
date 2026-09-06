@@ -46,15 +46,24 @@
   X <- standata[[paste0("X", suffix)]]
   if (is.null(X)) return(NULL)
 
-  formula <- if (is.null(dpar) || dpar == "mu") {
-    model$formula$formula
-  } else {
-    model$formula$pforms[[dpar]]
+  # X contains population effects only. Its assignment indices therefore
+  # refer to brms' fixed-effect formula, not the full formula containing
+  # random effects and smooths between the population terms.
+  parameter <- dpar %||% "mu"
+  parsed <- brms::brmsterms(model$formula)
+  formula <- parsed$dpars[[parameter]]$fe
+  if (!inherits(formula, "formula")) {
+    stop("Could not recover the brms population-effect formula for '",
+      parameter, "'.", call. = FALSE)
   }
-  if (is.null(formula)) return(NULL)
 
   labels <- attr(stats::terms(formula), "term.labels")
   assign <- attr(X, "assign")
+  if (is.null(assign) || length(assign) != ncol(X) ||
+      anyNA(assign) || !all(assign %in% seq.int(0L, length(labels)))) {
+    stop("The brms population model-matrix assignments do not match its fixed-effect formula for '",
+      parameter, "'.", call. = FALSE)
+  }
   columns <- lapply(seq_along(labels), function(i) which(assign == i))
   names(columns) <- labels
   columns <- columns[lengths(columns) > 0L]

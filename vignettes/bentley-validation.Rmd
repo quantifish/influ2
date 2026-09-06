@@ -32,9 +32,12 @@ system and GLMs [@Bentley2012]. That implementation is retained in `influ2` as
 a frozen validation artefact, not as part of the package API. This vignette
 runs the old code explicitly and compares it with the model-neutral S3 engine.
 
-The comparison uses the same realistic `lobsters_per_pot` example as the
-[main vignette](influ2.html). A smaller frozen fixture remains in the test
-suite for fast regression testing.
+The comparison uses the same synthetic `lobsters_per_pot` example as the
+[main vignette](influ2.html). Its deliberate shifts in sampled season, fishing
+depth, and soak time make the influence patterns more apparent. These are
+constructed teaching relationships, not empirical findings from a lobster
+fishery. A smaller frozen fixture remains in the test suite for fast
+regression testing.
 
 ## Fit the common model
 
@@ -49,6 +52,12 @@ bentley_glm <- glm(
 )
 new_diagnostic <- influ(bentley_glm, focus = "year")
 ```
+
+The shared Poisson model provides a transparent test of agreement between
+implementations. The simulated catches have negative-binomial variation, so
+the Poisson uncertainty intervals are model-based and do not account for that
+overdispersion. Agreement of the calculations does not establish that their
+intervals have the intended coverage for these data.
 
 The legacy source remains outside the namespace under `inst/legacy`. It is
 loaded into an isolated environment only for this comparison.

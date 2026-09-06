@@ -120,7 +120,8 @@ test_that("brms smooth bases are projected without observation-by-draw arrays", 
   reference <- expand.grid(
     year = levels(fit$data$year),
     month = levels(fit$data$month),
-    depth = stats::median(fit$data$depth)
+    depth = stats::median(fit$data$depth),
+    soak = stats::median(fit$data$soak)
   )
   reference$year <- factor(reference$year, levels = levels(fit$data$year))
   reference$month <- factor(reference$month, levels = levels(fit$data$month))

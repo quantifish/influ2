@@ -14,9 +14,16 @@ simulate_lobsters_per_pot <- function(seed = 20260905L) {
     KEEP.OUT.ATTRS = FALSE
   )
   year_index <- cells$year - min(cells$year)
-  seasonal_effort <- 1 + 0.28 * cos(2 * pi * (cells$month - 8) / 12)
-  annual_effort <- 1 + 0.22 * sin(2 * pi * year_index / 7)
-  cells$n <- stats::rpois(nrow(cells), 27 * seasonal_effort * annual_effort)
+  # Sampling moves from lower-catch autumn months towards higher-catch spring
+  # months. Both seasonal mixtures retain overlap, rather than identifying
+  # month almost perfectly with year.
+  seasonal_shift <- stats::plogis((year_index - 4.5) / 1.2)
+  early_effort <- exp(1.15 * cos(2 * pi * (cells$month - 3) / 12))
+  late_effort <- exp(1.15 * cos(2 * pi * (cells$month - 9) / 12))
+  seasonal_effort <- (1 - seasonal_shift) * early_effort + seasonal_shift * late_effort
+  seasonal_effort <- seasonal_effort / stats::ave(seasonal_effort, cells$year, FUN = mean)
+  annual_effort <- 1 + 0.15 * sin(2 * pi * year_index / 7)
+  cells$n <- stats::rpois(nrow(cells), 25 * seasonal_effort * annual_effort)
 
   # Deliberate holes and sparse cells make the composition diagnostics useful.
   holes <- (2 * year_index + 3 * cells$month) %% 17 == 0 |
@@ -28,32 +35,45 @@ simulate_lobsters_per_pot <- function(seed = 20260905L) {
   month <- cells$month[row]
   observation_year <- year - min(cells$year)
 
-  depth_mean <- 16 + 0.75 * observation_year +
-    5 * cos(2 * pi * (month - 3) / 12)
-  depth <- stats::rgamma(length(row), shape = 9, scale = depth_mean / 9)
+  # A temporary move into deeper, lower-catch grounds creates a separate
+  # mid-series correction. Gamma variation preserves within-year overlap.
+  deep_period <- stats::plogis((observation_year - 6.5) / 0.8) -
+    stats::plogis((observation_year - 11.5) / 0.8)
+  depth_mean <- 18 + 22 * deep_period +
+    6 * stats::plogis((observation_year - 12) / 0.9) +
+    2 * cos(2 * pi * (month - 3) / 12)
+  depth <- stats::rgamma(length(row), shape = 10, scale = depth_mean / 10)
 
-  longer_soak <- stats::plogis(
-    -0.8 + 0.08 * observation_year +
-      0.35 * cos(2 * pi * (month - 7) / 12)
-  )
+  # Two-day soaks become common later, raising catch independently of the
+  # underlying annual signal. Occasional three-day soaks occur throughout.
+  longer_soak <- 0.10 + 0.72 * stats::plogis((observation_year - 12) / 0.8)
   soak <- 24 + 24 * stats::rbinom(length(row), 1, longer_soak) +
-    24 * stats::rbinom(length(row), 1, 0.07)
+    24 * stats::rbinom(length(row), 1, 0.04)
   soak <- pmax(2, soak + stats::rnorm(length(row), sd = 2.2))
 
-  annual_abundance <- 0.18 * sin(2 * pi * observation_year / 9) -
-    0.012 * observation_year
-  seasonal_abundance <- 0.25 * cos(2 * pi * (month - 9) / 12)
+  annual_abundance <- 0.16 * sin(2 * pi * observation_year / 10) -
+    0.018 * observation_year
+  seasonal_abundance <- 0.6 * cos(2 * pi * (month - 9) / 12)
   eta <- log(1.6) + annual_abundance + seasonal_abundance -
-    0.0011 * (depth - 27)^2 + 0.004 * (soak - 24)
-  lobsters <- stats::rnbinom(length(row), mu = exp(eta), size = 1.25)
+    0.0009 * (depth - 20)^2 + 0.018 * (soak - 24)
+  lobsters <- stats::rnbinom(length(row), mu = exp(eta), size = 1.8)
 
-  data.frame(
+  data <- data.frame(
     lobsters = lobsters,
     year = factor(year, levels = 2000:2017),
     month = factor(sprintf("%02d", month), levels = sprintf("%02d", 1:12)),
     depth = depth,
     soak = soak
   )
+  attr(data, "simulation") <- list(
+    seed = seed,
+    scenario = "season-depth-soak-shifts-v2",
+    year_effect = data.frame(
+      year = 2000:2017,
+      log_effect = 0.16 * sin(2 * pi * (0:17) / 10) - 0.018 * (0:17)
+    )
+  )
+  data
 }
 
 simulate_hurdle_cpue <- function(seed = 42L, n = 1000L) {
@@ -83,13 +103,23 @@ simulate_hurdle_cpue <- function(seed = 42L, n = 1000L) {
 }
 
 lobsters_per_pot <- simulate_lobsters_per_pot()
-save(
-  lobsters_per_pot,
-  file = "data/lobsters_per_pot.rda",
-  compress = "xz",
-  version = 2
-)
-
+refit_lobster <- identical(tolower(Sys.getenv("INFLU2_REFIT_BRMS_FIXTURE")), "true")
+if (!refit_lobster) {
+  stored <- readRDS("inst/extdata/brms-fixtures/fit2.rds")
+  observation_column <- function(x) {
+    # BRMS stores its factor coding alongside unchanged observed labels.
+    # Ignore only that fitting metadata, retaining values and factor levels.
+    if (is.factor(x)) attr(x, "contrasts") <- NULL
+    unname(x)
+  }
+  same_data <- identical(
+    lapply(stored$data[names(lobsters_per_pot)], observation_column),
+    lapply(lobsters_per_pot, observation_column)
+  )
+  if (!same_data) {
+    stop("The lobster simulation changed. Set INFLU2_REFIT_BRMS_FIXTURE=true to regenerate its matching posterior fixture before saving the data.")
+  }
+}
 compact_brms_fixture <- function(path, ndraws = 200L, metadata = NULL) {
   model <- readRDS(path)
   draws <- if (!is.null(model$influ2_draws)) {
@@ -116,22 +146,22 @@ compact_brms_fixture <- function(path, ndraws = 200L, metadata = NULL) {
 refit_lobster_brms_fixture <- function(
     data = lobsters_per_pot,
     path = "inst/extdata/brms-fixtures/fit2.rds",
-    seed = 20260905L) {
+    seed = 20260905L, iter = 5000L, warmup = 2000L) {
   if (!requireNamespace("brms", quietly = TRUE) ||
       !requireNamespace("posterior", quietly = TRUE)) {
     stop("Packages 'brms' and 'posterior' are required to refit the fixture.")
   }
   fit <- brms::brm(
     formula = stats::as.formula(
-      "lobsters ~ year + (1 | month) + s(depth, k = 3)",
+      "lobsters ~ year + (1 | month) + s(depth, k = 3) + soak",
       env = globalenv()
     ),
     family = brms::negbinomial(),
     data = data,
     chains = 4,
     cores = 4,
-    iter = 3000,
-    warmup = 1500,
+    iter = iter,
+    warmup = warmup,
     seed = seed,
     refresh = 100,
     control = list(adapt_delta = 0.99, max_treedepth = 12)
@@ -152,7 +182,7 @@ refit_lobster_brms_fixture <- function(
       sprintf(
         paste(
           "The lobster fixture fit did not pass its gates:",
-          "max R-hat %.3f, min bulk ESS %.0f, and min tail ESS %.0f."
+          "max R-hat %.5f, min bulk ESS %.0f, and min tail ESS %.0f."
         ),
         max(diagnostics$rhat, na.rm = TRUE),
         min(diagnostics$ess_bulk, na.rm = TRUE),
@@ -162,9 +192,12 @@ refit_lobster_brms_fixture <- function(
   }
   fit$influ2_fixture <- list(
     provenance = "Fully synthetic lobsters_per_pot data",
+    simulation = attr(data, "simulation"),
     seed = seed,
     chains = 4L,
-    post_warmup_draws = 6000L,
+    iterations = iter,
+    warmup = warmup,
+    post_warmup_draws = 4L * (iter - warmup),
     max_rhat = max(diagnostics$rhat, na.rm = TRUE),
     min_ess_bulk = min(diagnostics$ess_bulk, na.rm = TRUE),
     min_ess_tail = min(diagnostics$ess_tail, na.rm = TRUE)
@@ -234,22 +267,19 @@ refit_hurdle_brms_fixture <- function(
   compact_brms_fixture(path)
 }
 
-if (identical(tolower(Sys.getenv("INFLU2_REFIT_BRMS_FIXTURE")), "true")) {
+if (refit_lobster) {
   refit_lobster_brms_fixture()
 } else {
   compact_brms_fixture("inst/extdata/brms-fixtures/fit2.rds")
 }
+# Publish the data only after the matching posterior has passed its gates.
+# A rejected refit must not replace the existing data with unmatched rows.
+save(
+  lobsters_per_pot,
+  file = "data/lobsters_per_pot.rda",
+  compress = "xz",
+  version = 2
+)
 if (identical(tolower(Sys.getenv("INFLU2_REFIT_HURDLE_FIXTURE")), "true")) {
   refit_hurdle_brms_fixture()
-} else {
-  compact_brms_fixture(
-    "inst/extdata/brms-fixtures/m1.rds",
-    metadata = list(
-      provenance = paste(
-        "Fully synthetic hurdle CPUE data generated by",
-        "simulate_hurdle_cpue()"
-      ),
-      seed = 42L
-    )
-  )
 }

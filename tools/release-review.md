@@ -29,6 +29,9 @@ is a separate, later step authorised by the maintainer.
 - Review the refitted GLM and tinyVAST step plots. These compare centred year
   effects on fixed analysis rows, not area-integrated abundance. Confirm the
   explicit process order, common effort offsets, and per-model interval labels.
+- Review the revised lobster sampling shifts and known-truth table. Its
+  designed confounding illustrates point-estimate recovery; the Poisson bands
+  are not an assessment of interval coverage for negative-binomial catches.
 
 ## 2. Decide what to keep from the earlier interface
 

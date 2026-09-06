@@ -16,20 +16,25 @@ The note identifies this as a new submission and records that the suggested
 authors' R-universe repository. All `tinyVAST` examples and tests are skipped
 when that suggested package is unavailable.
 
-The source-archive check passed 2,246 test expectations and rebuilt all four
+The source-archive check passed 2,327 test expectations and rebuilt all four
 vignettes successfully. The visual-regression group is intentionally skipped
-in CRAN mode; a separate full local run passed all 2,254 expectations,
+in CRAN mode; a separate full local run passed all 2,335 expectations,
 including the eight visual snapshots, with no failures, warnings, or skips.
 The pkgdown site also rebuilt successfully, including the new cross-model
 index comparison, the shared vignette theme setup, and executed GLM and
 tinyVAST refitted step-plot examples. The refitting tests include actual GLM,
 GAM, glmmTMB, sdmTMB, and tinyVAST fits, alongside BRMS update and cache-safety
 tests. Step plots retain year-effect contrasts, not area-integrated indices.
-A separate BRMS smoke check fitted and updated a 150-observation Gaussian
-model using four chains of 2,000 iterations, including 1,000 warmup iterations.
-The reduced fit passed the live convergence checks, the unchanged original
-fit was reused, and all plotted intervals were finite. No fits were retained
-in the compact step result.
+The revised synthetic lobster scenario contains 5,049 observations with
+deliberate seasonal, depth, and soak-time shifts. Tests verify covariate
+overlap, visible refitted corrections, and recovery of its known annual
+effects. The matching BRMS posterior was regenerated with four chains of
+5,000 iterations, including 2,000 warmup iterations per chain. It passed with
+maximum R-hat 1.003966, minimum bulk ESS 1,774, minimum tail ESS 2,823, and no
+divergences. Its 12,000 post-warmup draws were compacted to 200 joint draws.
+A regression test confirms that this fixture uses the bundled observations.
+Additional BRMS regressions verify population-term mapping after random and
+smooth terms, including observed/reference-grid uncertainty and hurdle parts.
 
 ## Earlier win-builder validation: 5 September 2026
 
@@ -40,7 +45,8 @@ versions of the reference manual all completed successfully. The note also
 listed domain-specific words in DESCRIPTION (`CPUE`, `estimands`, and
 `spatiotemporal`; `et al.` is part of a bibliographic reference).
 
-That win-builder result predates the centred CDI, refitted step plots, and
-subsequent vignette changes. Repeat win-builder
+That win-builder result predates the centred CDI, refitted step plots,
+revised lobster data and posterior fixture, and subsequent vignette changes.
+Repeat win-builder
 on the final reviewed source before CRAN submission, using maintainer address
 `darcy@quantifish.co.nz`.
