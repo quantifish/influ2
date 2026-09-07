@@ -174,6 +174,11 @@
   composition$term_level <- factor(composition$term_level, levels = term_levels)
   composition$focus_level <- factor(composition$level, levels = focus_levels)
   effects$focus_level <- factor(effects$level, levels = focus_levels)
+  # Months and other short categorical labels read cleanly horizontally.
+  # Retain angled labels for the longer bin labels used by continuous terms.
+  label_angle <- if (length(term_levels) <= 12L &&
+      max(nchar(term_levels)) <= 6L) 0 else 45
+  label_hjust <- if (label_angle == 0) 0.5 else 1
 
   coefficient_plot <- ggplot2::ggplot(
     coefficients,
@@ -194,11 +199,11 @@
       na.rm = TRUE
     ) +
     ggplot2::geom_point(colour = "purple4", size = 1.8) +
+    ggplot2::scale_x_discrete(limits = term_levels, position = "top") +
     ggplot2::labs(x = NULL, y = coefficient_display$label) +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(angle = label_angle, hjust = label_hjust),
       legend.position = "none",
       plot.margin = ggplot2::margin(b = 1, r = 1, unit = "mm")
     )
@@ -215,23 +220,24 @@
     )
   ) +
     ggplot2::geom_point(colour = "purple4", fill = "purple", alpha = 0.65) +
+    ggplot2::scale_x_discrete(limits = term_levels) +
+    ggplot2::scale_y_discrete(limits = focus_levels) +
     ggplot2::scale_size_area(max_size = 10) +
+    ggplot2::guides(size = ggplot2::guide_legend(
+      ncol = 2, byrow = TRUE, title.position = "top"
+    )) +
     ggplot2::labs(
       x = term,
       y = x$focus,
       size = "Proportion"
     ) +
     ggplot2::theme_bw()
-  legend <- gtable::gtable_filter(
-    ggplot2::ggplotGrob(distribution_with_legend),
-    "guide-box",
-    fixed = TRUE
-  )
-  legend_plot <- patchwork::wrap_elements(full = legend)
+  legend <- .cdi_size_legend(distribution_with_legend)
+  legend_plot <- patchwork::wrap_elements(full = legend, clip = FALSE)
   distribution_plot <- distribution_with_legend +
     ggplot2::theme(
       legend.position = "none",
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      axis.text.x = ggplot2::element_text(angle = label_angle, hjust = label_hjust),
       plot.margin = ggplot2::margin(t = 1, r = 1, unit = "mm")
     )
 
@@ -257,8 +263,10 @@
     ) +
     ggplot2::geom_line(colour = "purple4", na.rm = TRUE) +
     ggplot2::geom_point(colour = "purple4", na.rm = TRUE) +
+    # Before coord_flip(), the top x axis becomes the right-hand year axis.
+    ggplot2::scale_x_discrete(limits = focus_levels, position = "top") +
     ggplot2::coord_flip() +
-    ggplot2::labs(x = NULL, y = "Influence") +
+    ggplot2::labs(x = x$focus, y = "Influence") +
     ggplot2::theme_bw() +
     ggplot2::theme(
       legend.position = "none",
@@ -272,6 +280,17 @@
       heights = c(1, 2),
       widths = c(2, 1)
     )
+}
+
+.cdi_size_legend <- function(plot) {
+  guides <- gtable::gtable_filter(ggplot2::ggplotGrob(plot), "guide-box", fixed = TRUE)
+  # ggplot2 >= 3.5 includes empty slots for each legend position. Extract the
+  # actual legend, without the parent plot's layout widths and heights.
+  active <- which(!vapply(guides$grobs, inherits, logical(1), "zeroGrob"))
+  if (length(active) != 1L) {
+    stop("A CDI plot requires one size legend.", call. = FALSE)
+  }
+  guides$grobs[[active]]
 }
 
 #' Plot a model-neutral influence diagnostic
@@ -301,6 +320,9 @@
 #'   component at a time; select `component` when a term occurs in several
 #'   model components. Zero-probability components retain their fitted link
 #'   orientation and are explicitly labelled as such.
+#'   Short term labels (including months) are horizontal on the upper fitted-
+#'   effect axis and the lower composition axis. The influence panel's focus
+#'   labels are on the right, with the same level ordering as the composition.
 #'
 #' @return A `ggplot` or `patchwork` object.
 #' @export

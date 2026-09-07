@@ -59,4 +59,7 @@ CDI intervals use the probabilities supplied to [influ()] (95%
   component at a time; select `component` when a term occurs in several
   model components. Zero-probability components retain their fitted link
   orientation and are explicitly labelled as such.
+  Short term labels (including months) are horizontal on the upper fitted-
+  effect axis and the lower composition axis. The influence panel's focus
+  labels are on the right, with the same level ordering as the composition.
 }

@@ -61,12 +61,15 @@
 #'   compact ECDF summaries, and explicit calculation metadata.
 #' @seealso [plot_predicted_residuals()], [plot_implied_residuals()], [plot_qq()]
 #' @examples
+#' if (requireNamespace("glmmTMB", quietly = TRUE)) {
 #' data(lobsters_per_pot)
-#' fit <- glm(lobsters ~ year + month + depth + soak,
-#'   family = poisson(), data = lobsters_per_pot)
+#' fit <- glmmTMB::glmmTMB(
+#'   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
+#'   family = glmmTMB::nbinom2(), data = lobsters_per_pot)
 #' checks <- influ_residuals(fit, nsim = 50, seed = 42)
 #' checks
 #' plot(checks)
+#' }
 #' @export
 influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             batch_size = 25L, seed = 1L, grid_size = 201L,

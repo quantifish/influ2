@@ -1,3 +1,37 @@
+## Figure review: 8 September 2026
+
+The four-panel residual examples now use negative-binomial and Poisson
+glmmTMB models with monthly random intercepts. Both fits converged with
+positive-definite Hessians. The article explicitly describes resimulated
+random effects and retains the exploratory calibration cautions.
+
+The shared CDI layout now has horizontal short term labels above the fitted
+effects and below the composition, right-hand influence-panel year labels,
+and an unclipped two-column size legend. Bentley Figure 1 has no redundant
+plot title, and the native spatial mesh plot uses tighter margins. No
+influence estimates, interval calculations, simulated data, frozen legacy
+source, or frozen Get Started HTML/figures changed.
+
+All 2,678 local expectations passed with no failures, warnings, or skips,
+including ten visual snapshots. New tests check axis placement, matching
+level order, the actual legend grob, and the shared Bayesian CDI layout.
+All five articles rebuilt, and the changed figures and lightbox displays
+were inspected in the browser, including the main article's Bayesian CDI.
+
+Archive: `influ2-figure-review-20260908/influ2_1.1.0.tar.gz` (2,077,593 bytes).
+
+SHA256: `9d704ddb274fd8b926a7908bff1095c73145cf3d8b98f919e2c318088a8c1f32`
+
+The clean archive passed macOS arm64 R 4.6.1 `R CMD check --as-cran
+--no-manual` with 0 errors, 0 warnings, and 1 note (new submission and
+optional tinyVAST availability). All five vignettes rebuilt. Archive tests
+passed 2,668 expectations; three visual-test groups were intentionally
+skipped in CRAN mode and passed in the separate local run above.
+
+No CRAN submission or win-builder upload is authorised or performed by this
+visual-review increment. GitHub issue review, the remaining legacy-helper
+decisions, and eventual removal of the frozen review article remain deferred.
+
 ## Four-panel residual diagnostics: 7 September 2026
 
 Added the compact `influ_residuals()` calculator and four-panel S3 display,

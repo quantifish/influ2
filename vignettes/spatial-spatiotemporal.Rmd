@@ -72,9 +72,11 @@ The triangulated mesh approximates a continuous Matérn spatial field. The
 coarse cutoff is appropriate for a documentation example, rather than a
 recommendation for production analysis.
 
-```{r sdmtmb-mesh, eval=has_sdmTMB, fig.cap="Triangulated mesh used for the Pacific cod spatiotemporal model."}
+```{r sdmtmb-mesh, eval=has_sdmTMB, fig.width=6, fig.height=4.5, fig.cap="Triangulated mesh used for the Pacific cod spatiotemporal model."}
 pcod_mesh <- sdmTMB::make_mesh(pcod, c("X", "Y"), cutoff = 10)
+mesh_par <- par(mar = rep(0.3, 4))
 plot(pcod_mesh)
+par(mesh_par)
 ```
 
 ### Fit and diagnose
