@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
@@ -41,7 +42,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="influ2-110">influ2 1.1.0<a class="anchor" aria-label="anchor" href="#influ2-110"></a></h2>
-<ul><li>Added the model-neutral <code><a href="../reference/influ.html">influ()</a></code> S3 API and compact <code>influ_diag</code> result.</li>
+<ul><li>Added a residual-diagnostics article and reference section, with executable lobster examples, optional DHARMa checks, and guidance on PIT, spatial, Bayesian, and one-step-ahead residuals.</li>
+<li>Aligned residual plots with fitted observation rows after omissions, subsets, and reordered data. Ambiguous multivariate, delta, and compact BRMS inputs now fail informatively instead of producing mismatched diagnostics.</li>
+<li>Preserved negative additive contrasts in model comparisons, rejected mixed index scales, and prevented duplicate labels from merging model curves.</li>
+<li>Added the model-neutral <code><a href="../reference/influ.html">influ()</a></code> S3 API and compact <code>influ_diag</code> result.</li>
 <li>Added adapters for GLMs, <code>mgcv</code> GAMs, <code>brms</code>, <code>glmmTMB</code>, <code>sdmTMB</code>, and <code>tinyVAST</code>.</li>
 <li>Separated uncertainty calculation from draw retention, including a posterior-mean preview mode and derived-draw or disk retention.</li>
 <li>Added common print, summary, plot, and autoplot methods.</li>
@@ -59,8 +63,8 @@
 <li>Propagated the joint conditional latent covariance for <code>glmmTMB</code> random effects instead of treating conditional modes as uncertainty-free.</li>
 <li>Retained selected comparison, model-criterion, data-extent, residual, Q-Q, and step-plot helpers, while moving their BRMS and <code>rstan</code> tooling out of mandatory dependencies. The remaining historical helper source is frozen under <code>tools/legacy/</code> for explicit function-by-function triage.</li>
 <li>Replaced embedded fitted-model test data with compact posterior-draw fixtures, substantially reducing the source-package size.</li>
-<li>Replaced the lobster example with a reproducible, fully synthetic dataset and added stricter validation for intervals, weights, focus ordering, component draws, data-extent plots, bubble plots, and implied residuals.</li>
-<li>Strengthened the synthetic lobster teaching scenario with changes in sampled season, depth, and soak time. Retained its known annual effects as dataset metadata and added a dynamically calculated truth check for the refitted negative-binomial GLM sequence. The BRMS example includes soak time alongside monthly and depth effects. Documentation distinguishes point-estimate recovery from interval coverage and explains the model-based intervals.</li>
+<li>Replaced the lobster example with a reproducible, simulated dataset and added stricter validation for intervals, weights, focus ordering, component draws, data-extent plots, bubble plots, and implied residuals.</li>
+<li>Strengthened the simulated lobster teaching scenario with changes in sampled season, depth, and soak time. Retained its known annual effects as dataset metadata and added a dynamically calculated truth check for the refitted negative-binomial GLM sequence. The BRMS example includes soak time alongside monthly and depth effects. Documentation distinguishes point-estimate recovery from interval coverage and explains the model-based intervals.</li>
 <li>Corrected BRMS population-term mapping when ordinary predictors follow group-level or smooth terms, so their labels and CDI grouping match the fixed-effect design matrix.</li>
 </ul></div>
   </main></div>

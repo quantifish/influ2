@@ -28,7 +28,10 @@ plot_implied_residuals(
 
 - data:
 
-  Optional original model data.
+  Optional original model data, retaining its original row names and
+  fitted-variable values. Supply this when \`groups\` is not stored in
+  the fitted model frame. Rows omitted from the fit are excluded from
+  the plot.
 
 - year:
 
@@ -53,6 +56,17 @@ plot_implied_residuals(
 ## Value
 
 A \[ggplot2::ggplot()\] object.
+
+## Details
+
+Residual definitions are those of the fitted model's native method;
+their scaling is not identical across packages. Using a different
+\`type\` changes the plotted residual contribution. These displays are
+exploratory, not estimates from a fitted interaction model. Original row
+identifiers are used to align residuals after omissions, subsets, or
+reordering of \`data\`. The fitted model must retain its original model
+frame (for GLMs, use \`model = TRUE\`); a saved call alone cannot verify
+observation alignment.
 
 ## References
 

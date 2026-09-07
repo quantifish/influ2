@@ -20,7 +20,13 @@ among areas of different predicted abundance ([Hsu et al.
 backend extracts model components and joint uncertainty, while the
 calculation, storage, summary, and plotting layers remain shared.
 
-## A synthetic lobster CPUE example
+Influence explains what drives an index; it does not establish that the
+model fits the observations adequately. The [Residual
+diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md)
+article checks that complementary question using the same simulated
+lobster data.
+
+## A simulated lobster CPUE example
 
 The main examples use the simulated `lobsters_per_pot` data supplied
 with the package. They contain 5,049 pot records spanning 2000 to 2017,
@@ -566,9 +572,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10520110
+#>         spatial_field conditional:latent_fields                      0.10528749
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03150923
+#>  spatiotemporal_field conditional:latent_fields                      0.03084851
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -635,11 +641,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                      0.24374040
-#>  spatiotemporal_field conditional:latent_fields                      0.08243912
+#>                  year               conditional                       0.2437404
+#>  spatiotemporal_field conditional:latent_fields                       0.0515625
 #>  level_at_maximum
 #>                 4
-#>                 4
+#>                 2
 ```
 
 ``` r
@@ -837,7 +843,7 @@ knitr::kable(
   truth_check,
   digits = 3,
   col.names = c("Model step", "RMSE of log year effect"),
-  caption = "Negative-binomial model agreement with the known annual effect in this synthetic dataset."
+  caption = "Negative-binomial model agreement with the known annual effect in this simulated dataset."
 )
 ```
 
@@ -849,7 +855,7 @@ knitr::kable(
 | Add poly(soak, 3)  |                   0.084 |
 
 Negative-binomial model agreement with the known annual effect in this
-synthetic dataset. {.table}
+simulated dataset. {.table}
 
 For this fixed simulated dataset, the fitted year contrasts move closer
 to the known truth as the three covariates are added. This is a teaching

@@ -2,6 +2,16 @@
 
 ## influ2 1.1.0
 
+- Added a residual-diagnostics article and reference section, with
+  executable lobster examples, optional DHARMa checks, and guidance on
+  PIT, spatial, Bayesian, and one-step-ahead residuals.
+- Aligned residual plots with fitted observation rows after omissions,
+  subsets, and reordered data. Ambiguous multivariate, delta, and
+  compact BRMS inputs now fail informatively instead of producing
+  mismatched diagnostics.
+- Preserved negative additive contrasts in model comparisons, rejected
+  mixed index scales, and prevented duplicate labels from merging model
+  curves.
 - Added the model-neutral
   [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) S3
   API and compact `influ_diag` result.
@@ -68,11 +78,11 @@
   function-by-function triage.
 - Replaced embedded fitted-model test data with compact posterior-draw
   fixtures, substantially reducing the source-package size.
-- Replaced the lobster example with a reproducible, fully synthetic
-  dataset and added stricter validation for intervals, weights, focus
-  ordering, component draws, data-extent plots, bubble plots, and
-  implied residuals.
-- Strengthened the synthetic lobster teaching scenario with changes in
+- Replaced the lobster example with a reproducible, simulated dataset
+  and added stricter validation for intervals, weights, focus ordering,
+  component draws, data-extent plots, bubble plots, and implied
+  residuals.
+- Strengthened the simulated lobster teaching scenario with changes in
   sampled season, depth, and soak time. Retained its known annual
   effects as dataset metadata and added a dynamically calculated truth
   check for the refitted negative-binomial GLM sequence. The BRMS

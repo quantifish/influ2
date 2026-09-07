@@ -1,6 +1,11 @@
 # Plot predicted values against residuals
 
-Plot predicted values against residuals
+Uses native response-scale fitted values and the explicitly requested
+native residual type. No residual type is substituted automatically.
+Complete BRMS fits are required; compact influence-only fixtures cannot
+supply native predictions. sdmTMB delta models require separate
+component-specific native diagnostics, and tinyVAST does not provide
+Pearson residuals.
 
 ## Usage
 

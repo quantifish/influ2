@@ -26,7 +26,8 @@ standardised residuals."><meta property="og:image" content="https://www.quantifi
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
@@ -78,7 +79,9 @@ standardised residuals.</p>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>Optional original model data.</p></dd>
+<dd><p>Optional original model data, retaining its original row names
+and fitted-variable values. Supply this when `groups` is not stored in the
+fitted model frame. Rows omitted from the fit are excluded from the plot.</p></dd>
 
 
 <dt id="arg-year">year<a class="anchor" aria-label="anchor" href="#arg-year"></a></dt>
@@ -104,6 +107,16 @@ standardised residuals.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A [ggplot2::ggplot()] object.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Residual definitions are those of the fitted model's native method; their
+scaling is not identical across packages. Using a different `type` changes
+the plotted residual contribution. These displays are exploratory, not
+estimates from a fitted interaction model. Original row identifiers are
+used to align residuals after omissions, subsets, or reordering of `data`.
+The fitted model must retain its original model frame (for GLMs, use
+`model = TRUE`); a saved call alone cannot verify observation alignment.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

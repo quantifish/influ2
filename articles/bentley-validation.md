@@ -8,7 +8,7 @@ implementation is retained in `influ2` as a frozen validation artefact,
 not as part of the package API. This vignette runs the old code
 explicitly and compares it with the model-neutral S3 engine.
 
-The comparison uses the same synthetic `lobsters_per_pot` example as the
+The comparison uses the same simulated `lobsters_per_pot` example as the
 [main vignette](https://www.quantifish.co.nz/influ2/articles/influ2.md).
 Its deliberate shifts in sampled season, fishing depth, and soak time
 make the influence patterns more apparent. These are constructed
@@ -252,14 +252,14 @@ head(comparison)
 #> 5  2001 poly(depth, 3)            0.11516257         0.11516257
 #> 6  2001  poly(soak, 3)           -0.09831081        -0.09831081
 #>   natural_influence_legacy absolute_difference
-#> 1                0.6489935        0.000000e+00
-#> 2                1.1118155        2.775558e-17
+#> 1                0.6489935        5.551115e-17
+#> 2                1.1118155        1.387779e-17
 #> 3                0.8846164        0.000000e+00
-#> 4                0.6601924        5.551115e-17
-#> 5                1.1220558        0.000000e+00
+#> 4                0.6601924        0.000000e+00
+#> 5                1.1220558        1.387779e-17
 #> 6                0.9063672        0.000000e+00
 max(comparison$absolute_difference)
-#> [1] 8.326673e-17
+#> [1] 1.110223e-16
 stopifnot(max(comparison$absolute_difference) < 1e-8)
 ```
 

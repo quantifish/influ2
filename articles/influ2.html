@@ -39,7 +39,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
+<li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
@@ -92,9 +93,12 @@ different predicted abundance <span class="citation">(<a href="#ref-Hsu2022">Hsu
 S3 class. Each backend extracts model components and joint uncertainty,
 while the calculation, storage, summary, and plotting layers remain
 shared.</p>
+<p>Influence explains what drives an index; it does not establish that
+the model fits the observations adequately. The <a href="residual-diagnostics.html">Residual diagnostics</a> article checks
+that complementary question using the same simulated lobster data.</p>
 </div>
 <div class="section level2">
-<h2 id="a-synthetic-lobster-cpue-example">A synthetic lobster CPUE example<a class="anchor" aria-label="anchor" href="#a-synthetic-lobster-cpue-example"></a>
+<h2 id="a-simulated-lobster-cpue-example">A simulated lobster CPUE example<a class="anchor" aria-label="anchor" href="#a-simulated-lobster-cpue-example"></a>
 </h2>
 <p>The main examples use the simulated <code>lobsters_per_pot</code>
 data supplied with the package. They contain 5,049 pot records spanning
@@ -567,9 +571,9 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;       as.factor(year)               conditional                      0.60757313</span></span>
-<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10520110</span></span>
+<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10528749</span></span>
 <span><span class="co">#&gt;          depth_scaled               conditional                      0.05400688</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03150923</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03084851</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;              2013</span></span>
 <span><span class="co">#&gt;              2015</span></span>
@@ -632,11 +636,11 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
-<span><span class="co">#&gt;                  year               conditional                      0.24374040</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.08243912</span></span>
+<span><span class="co">#&gt;                  year               conditional                       0.2437404</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                       0.0515625</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
-<span><span class="co">#&gt;                 4</span></span></code></pre></div>
+<span><span class="co">#&gt;                 2</span></span></code></pre></div>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -804,11 +808,11 @@ log scale.</p>
 <span>  <span class="va">truth_check</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Model step"</span>, <span class="st">"RMSE of log year effect"</span><span class="op">)</span>,</span>
-<span>  caption <span class="op">=</span> <span class="st">"Negative-binomial model agreement with the known annual effect in this synthetic dataset."</span></span>
+<span>  caption <span class="op">=</span> <span class="st">"Negative-binomial model agreement with the known annual effect in this simulated dataset."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Negative-binomial model agreement with the known annual effect
-in this synthetic dataset.</caption>
+in this simulated dataset.</caption>
 <thead><tr class="header">
 <th align="left">Model step</th>
 <th align="right">RMSE of log year effect</th>

@@ -25,3 +25,9 @@ get_bayes_R2(fits, probs = c(0.025, 0.975), ...)
 ## Value
 
 A data frame with one row per model.
+
+## Details
+
+Requires an original complete \`brmsfit\`, not a compact influence-only
+fixture shipped with influ2. The helper summarises the existing fit and
+does not run MCMC.

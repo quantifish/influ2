@@ -37,3 +37,9 @@ table_criterion(
 ## Value
 
 A data frame with one row per model.
+
+## Details
+
+Requires original complete \`brmsfit\` objects, not compact
+influence-only fixtures shipped with influ2. The helper evaluates the
+existing fits and does not run MCMC.

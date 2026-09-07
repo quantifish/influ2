@@ -27,7 +27,8 @@ plot_compare(
 
 - labels:
 
-  Optional model labels.
+  Optional unique, non-empty model labels. Repeated automatically
+  generated labels are disambiguated with numeric suffixes.
 
 - year:
 
@@ -57,3 +58,11 @@ plot_compare(
 ## Value
 
 A \[ggplot2::ggplot()\] object.
+
+## Details
+
+Compared indices must be on the same scale: response ratios, response
+differences, or link-scale contrasts. Ratio plots start at zero;
+difference and link-scale plots retain negative values. Inputs should
+describe comparable responses and focus effects; matching scales alone
+does not establish that the fitted models answer the same question.

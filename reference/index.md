@@ -34,7 +34,7 @@ Calculate, inspect, and plot influence diagnostics.
 
 ## Additional diagnostics and comparisons
 
-Compare indices, inspect data coverage, and diagnose fitted models.
+Compare indices and inspect data coverage.
 
 - [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
   : Compare standardised CPUE indices
@@ -49,6 +49,12 @@ Compare indices, inspect data coverage, and diagnose fitted models.
   : Display the effect of sequential model-standardisation steps
 - [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
   : Plot the completeness of variables through time
+
+## Residual diagnostics
+
+Inspect residual patterns, implied year effects, and quantile
+comparisons.
+
 - [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
   : Plot implied residual coefficients
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)

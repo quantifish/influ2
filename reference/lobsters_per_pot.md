@@ -43,7 +43,7 @@ A data frame with 5,049 simulated pot lifts and five columns:
 
 ## Source
 
-Fully synthetic data generated for the package examples.
+Simulated data generated for the package examples.
 
 ## Details
 
@@ -56,6 +56,6 @@ informative.
 The `simulation` attribute records `seed`, `scenario`, and
 `year_effect`. The latter is a data frame with columns `year` and
 `log_effect`, giving the annual effect used by the simulator before
-centring. It is metadata for checking the synthetic example, not an
+centring. It is metadata for checking the simulated example, not an
 additional observed covariate. Centre it using the same reference
 distribution as the diagnostic before comparing fitted year contrasts.

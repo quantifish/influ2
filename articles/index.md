@@ -7,6 +7,8 @@
 
 ### Validation and response structures
 
+- [Residual
+  diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md):
 - [Bentley
   validation](https://www.quantifish.co.nz/influ2/articles/bentley-validation.md):
 - [Hurdle and zero-inflated

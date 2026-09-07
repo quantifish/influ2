@@ -2,7 +2,11 @@
 
 Displays the fitted model's standardised residuals against normal
 quantiles. For non-Gaussian models this is a screening diagnostic, and
-should be complemented by simulation-based residual checks.
+should be complemented by simulation-based residual checks. Normal
+quantiles are a reference, not a claim that Pearson or deviance
+residuals from count models should be normally distributed. Supported
+types follow each backend's native methods; see
+\[plot_predicted_residuals()\] for backend limitations.
 
 ## Usage
 
