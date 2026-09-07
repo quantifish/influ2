@@ -2,6 +2,18 @@
 
 ## influ2 1.1.0
 
+- Added
+  [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+  and a reusable four-panel residual display: simulation-based Q-Q,
+  residuals against the predictive mean, residuals by automatically
+  detected fishing year, and observed versus simulated ECDFs. Complete
+  response simulations are processed in small batches; fitted models and
+  observation-by-simulation matrices are not retained. Backend
+  conditioning, finite-rank randomisation, and reference-band
+  limitations are explicit. An explicit `year` override handles
+  ambiguous time terms, and numeric years retain gaps in sampling. The
+  residual article demonstrates full and misspecified lobster models.
+  The frozen legacy review article is preserved.
 - Completed the first legacy-helper triage: retired `plot_hurdle()`,
   `get_coefs()`, `get_coefs_raw()`, `get_marginal()`, and the old Shiny
   `influ_app()`. No retained implementation depends on these functions.

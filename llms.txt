@@ -131,6 +131,12 @@ Compare indices and inspect data coverage.
 Inspect residual patterns, implied year effects, and quantile
 comparisons.
 
+- [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+  [`print(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+  : Calculate compact simulation-based residual diagnostics
+- [`plot(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
+  [`autoplot(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
+  : Plot a four-panel CPUE residual diagnostic
 - [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
   : Plot implied residual coefficients
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
