@@ -81,4 +81,5 @@ model components. Zero-probability components retain their fitted link
 orientation and are explicitly labelled as such. Short term labels
 (including months) are horizontal on the upper fitted- effect axis and
 the lower composition axis. The influence panel's focus labels are on
-the right, with the same level ordering as the composition.
+the right, with the same level ordering as the composition. The
+proportion legend has one column and at most four reference bubbles.

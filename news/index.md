@@ -2,6 +2,10 @@
 
 ## influ2 1.1.0
 
+- CDI proportion legends use one column with at most four reference
+  bubbles, preserving the composition panel’s bubble-size mapping. The
+  spatial article hides the mesh-margin setup and restoration while
+  still executing both.
 - Refined CDI layouts: short term labels are horizontal and repeated
   above the fitted-effect panel; focus/year labels sit on the influence
   panel’s right-hand axis. The two-column size legend is extracted

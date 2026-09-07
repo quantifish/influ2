@@ -572,9 +572,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10528749
+#>         spatial_field conditional:latent_fields                      0.10520110
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03084851
+#>  spatiotemporal_field conditional:latent_fields                      0.03150923
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -641,11 +641,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                       0.2437404
-#>  spatiotemporal_field conditional:latent_fields                       0.0515625
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.08243912
 #>  level_at_maximum
 #>                 4
-#>                 2
+#>                 4
 ```
 
 ``` r
