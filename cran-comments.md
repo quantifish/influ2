@@ -13,6 +13,11 @@ the remaining helper implementations. All 20 frozen article/figure files
 match the pre-triage checkout byte for byte, and the retained `plot_index()`
 function body is unchanged.
 
+For source commit `08a03f52afa21f2af6db281569885a2c4f53dd50`, GitHub
+Ubuntu-release and Windows-release checks passed (run 34081472524), as did
+pkgdown (34081472629) and Pages deployment (34081672960). The updated NEWS
+entry was verified on the published site.
+
 The remaining assessment-output and reporting decisions are still open.
 This is not a new final submission candidate. The results below apply to
 their identified earlier archives; rebuild and repeat release checks after
@@ -23,7 +28,7 @@ authorised by this triage.
 
 At the time of these checks, CRAN submission was unauthorised, and the
 earlier-functionality triage was parked. This candidate superseded the source
-checked in the historical section below; that pending win-builder result
+checked in the historical section below; that historical win-builder result
 cannot validate these changes.
 
 Archive: `influ2-residuals-20260907/influ2_1.1.0.tar.gz` (1,882,568 bytes).
@@ -133,14 +138,38 @@ change for gamInflu or CPUETools; applicable notices must still be retained if
 further copying is identified. The source archive contains no private source
 data, compiled model objects, or website build output.
 
-### Fresh win-builder validation
+### Historical win-builder result collected
 
 This exact archive was uploaded to the R-devel win-builder web form on
 7 September 2026. The response confirmed the filename and 1,502,370-byte
 upload. The archive's maintainer was verified as
 `Darcy Webber <darcy@quantifish.co.nz>` before upload.
 
-The new email result is pending. An earlier candidate's successful Windows
-check is not being treated as validation of this archive. This upload requests
-a test build only; it is not a CRAN submission. Changes confined to this
-excluded release record do not alter the checked source archive.
+The maintainer supplied the result link on 7 September 2026:
+<https://win-builder.r-project.org/YZRkXb63mjjL/>.
+R-devel (2026-09-06 r90498 ucrt), Windows Server 2022:
+**0 errors, 0 warnings, and 1 NOTE**. Installation, examples, all four
+vignettes, and both PDF and HTML manual checks passed. Tests passed 2,446
+expectations; the visual-regression group was intentionally skipped in
+CRAN mode.
+
+The single incoming-feasibility NOTE lists the new submission, technical
+words in DESCRIPTION (`CPUE`, `al`, `estimands`, `et`, and
+`spatiotemporal`), and optional tinyVAST availability from the declared
+additional repository. It is not an installation or test failure.
+
+The check log and binary DESCRIPTION both identify
+`Darcy Webber <darcy@quantifish.co.nz>` as maintainer. All source DESCRIPTION
+fields in the binary match the archived upload, including
+`Packaged: 2026-09-07 00:11:34 UTC; darcy`; only the Windows `Built` field
+is added. The recorded local archive checksum was reverified. Win-builder
+does not supply a source checksum here, so this is a metadata/timing match,
+not an independent remote source-hash verification. Direct email headers
+were unavailable through the connected business Gmail search.
+
+Logs, test/example output, and the Windows binary are preserved under
+`influ2-hardening-20260907.Rcheck/winbuilder-YZRkXb63mjjL/`.
+The result-collection follow-up is complete. No repeat upload or CRAN
+submission was made. This result applies only to the historical pre-residual
+archive, not to the later residual or legacy-triage changes. Changes confined
+to this excluded release record do not alter a checked source archive.
