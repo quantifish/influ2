@@ -62,4 +62,5 @@ CDI intervals use the probabilities supplied to [influ()] (95%
   Short term labels (including months) are horizontal on the upper fitted-
   effect axis and the lower composition axis. The influence panel's focus
   labels are on the right, with the same level ordering as the composition.
+  The proportion legend has one column and at most four reference bubbles.
 }

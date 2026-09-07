@@ -222,9 +222,9 @@
     ggplot2::geom_point(colour = "purple4", fill = "purple", alpha = 0.65) +
     ggplot2::scale_x_discrete(limits = term_levels) +
     ggplot2::scale_y_discrete(limits = focus_levels) +
-    ggplot2::scale_size_area(max_size = 10) +
+    ggplot2::scale_size_area(max_size = 10, breaks = .cdi_proportion_breaks) +
     ggplot2::guides(size = ggplot2::guide_legend(
-      ncol = 2, byrow = TRUE, title.position = "top"
+      ncol = 1, title.position = "top"
     )) +
     ggplot2::labs(
       x = term,
@@ -282,6 +282,14 @@
     )
 }
 
+.cdi_proportion_breaks <- function(limits) {
+  breaks <- pretty(limits, n = 5)
+  breaks <- breaks[breaks > 0 & breaks >= limits[1] & breaks <= limits[2]]
+  # Keep a short, single-column reference without altering the bubble scale.
+  if (!length(breaks)) return(limits[2])
+  utils::head(breaks, 4L)
+}
+
 .cdi_size_legend <- function(plot) {
   guides <- gtable::gtable_filter(ggplot2::ggplotGrob(plot), "guide-box", fixed = TRUE)
   # ggplot2 >= 3.5 includes empty slots for each legend position. Extract the
@@ -323,6 +331,7 @@
 #'   Short term labels (including months) are horizontal on the upper fitted-
 #'   effect axis and the lower composition axis. The influence panel's focus
 #'   labels are on the right, with the same level ordering as the composition.
+#'   The proportion legend has one column and at most four reference bubbles.
 #'
 #' @return A `ggplot` or `patchwork` object.
 #' @export

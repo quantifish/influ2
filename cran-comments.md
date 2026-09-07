@@ -1,3 +1,18 @@
+## Legend follow-up: 8 September 2026
+
+CDI proportion legends now use a single column with at most four reference
+bubbles. The shared size mapping and all calculated results are unchanged.
+The mesh-margin setup and restoration still run but are omitted from the
+spatial article's displayed code. Its mesh image is byte-identical to the
+preceding build.
+
+All 2,700 local expectations passed with no failures, warnings, or skips,
+including ten visual snapshots. All five articles rebuilt; the displayed
+mesh code contains only mesh construction and plotting, and the frequentist
+and Bayesian CDI figures have unclipped, single-column legends. The source
+archive results below refer to their identified earlier archives, not this
+follow-up. No new win-builder upload or CRAN submission was made.
+
 ## Figure review: 8 September 2026
 
 The four-panel residual examples now use negative-binomial and Poisson

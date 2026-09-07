@@ -27,6 +27,22 @@ test_that("CDI term axes are aligned and the year axis is on the outside", {
   expect_s3_class(legend, "gtable")
   expect_true("guides" %in% legend$layout$name)
   expect_false(any(grepl("guide-box", legend$layout$name)))
+
+  size_scale <- p[[3]]$scales$get_scales("size")
+  expect_equal(size_scale$breaks(range(diagnostic$composition$proportion[
+    diagnostic$composition$term == "month"])), c(0.05, 0.10, 0.15, 0.20))
+  expect_equal(p[[3]]$guides$guides$size$params$ncol, 1)
+})
+
+test_that("CDI size keys are positive, in range, and limited to four", {
+  for (limits in list(c(0, 0.27), c(0.006, 0.265), c(0.16, 0.6),
+                      c(0.001, 0.003), c(1, 1))) {
+    breaks <- .cdi_proportion_breaks(limits)
+    expect_true(length(breaks) >= 1L && length(breaks) <= 4L)
+    expect_true(all(is.finite(breaks) & breaks > 0))
+    expect_true(all(breaks >= limits[1] & breaks <= limits[2]))
+    expect_false(is.unsorted(breaks, strictly = TRUE))
+  }
 })
 
 test_that("Bayesian monthly CDI shares the same labelled layout", {
