@@ -27,6 +27,7 @@ Both source-archive checks passed 2,446 test expectations and rebuilt all four
 vignettes. The visual-regression group is intentionally skipped in CRAN mode.
 A separate full local run passed all 2,454 expectations across 112 test cases,
 including the eight visual snapshots, with no failures, warnings, or skips.
+Test coverage is 87.70% overall and 97.37% for the new scientific guard file.
 
 An isolated mandatory-dependency-only library installed and loaded the same
 archive successfully. With BRMS, glmmTMB, sdmTMB, tinyVAST, and their optional
@@ -52,6 +53,11 @@ and negative-binomial refits. Step plots remain centred year-effect contrasts,
 not spatially integrated abundance indices. The legacy review page, helper
 source, synthetic dataset, and compact posterior fixtures were not altered.
 
+GitHub Ubuntu-release and Windows-release checks passed for source commit
+`c67f54856587054cf9b3ed15239267e8ac1dd380` (run 34070568827). The pkgdown job
+(34070568852) and its Pages deployment (34070754899) passed, and the published
+article was verified. The Actions matrix remains these two release platforms.
+
 Bentley's original notice remains installed with the frozen validation source.
 A bounded source/history audit found no concrete evidence requiring a licence
 change for gamInflu or CPUETools; applicable notices must still be retained if
@@ -67,4 +73,5 @@ upload. The archive's maintainer was verified as
 
 The new email result is pending. An earlier candidate's successful Windows
 check is not being treated as validation of this archive. This upload requests
-a test build only; it is not a CRAN submission.
+a test build only; it is not a CRAN submission. Changes confined to this
+excluded release record do not alter the checked source archive.
