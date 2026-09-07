@@ -68,6 +68,8 @@ reference:
 - title: Residual diagnostics
   desc: Inspect residual patterns, implied year effects, and quantile comparisons.
   contents:
+  - influ_residuals
+  - plot.influ_residuals
   - plot_implied_residuals
   - plot_predicted_residuals
   - plot_qq

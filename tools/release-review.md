@@ -7,6 +7,13 @@ is a separate, later step authorised by the maintainer.
 
 ## 1. Scientific and visual review
 
+- Review the new four-panel residual display, especially automatic fishing-year
+  selection, gaps and sample sizes, finite-simulation rank randomisation, and
+  the distinction between nominal Q-Q reference bands and predictive ECDF bands.
+  Its default spatial simulations condition on fitted fields; unconditional
+  glmmTMB and posterior-predictive BRMS checks answer different questions.
+  GitHub issue review and remaining helper triage are deferred until this
+  display has been reviewed. No Shiny development is planned at this stage.
 - Review the current Get Started, Bentley validation, hurdle and zero-inflated,
   and spatial and spatiotemporal articles. Check figure numbering, captions,
   lightbox zoom, labels, legends, interval visibility, and CDI panel alignment
@@ -47,6 +54,8 @@ preserved for this review. Do not delete the page, its figures, or remaining
 source until each relevant feature has a recorded destination or an explicit removal
 decision. The original Bentley `proto` implementation has a separate role as
 a validation artefact and is not a candidate for the active runtime API.
+The maintainer intends to remove the frozen Get Started article eventually,
+but explicitly asked to retain it and its figures until that review is complete.
 
 The following functions are already exported and maintained in the current
 package. They are not merely historical helpers:

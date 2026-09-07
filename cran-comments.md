@@ -1,3 +1,42 @@
+## Four-panel residual diagnostics: 7 September 2026
+
+Added the compact `influ_residuals()` calculator and four-panel S3 display,
+with automatic fishing-year detection, explicit ambiguity handling, native
+simulation adapters, and a revised residual article. This is a reviewed
+development increment, not authorisation to submit the package to CRAN.
+GitHub issue review and the remaining legacy-function triage are deferred.
+The frozen Get Started HTML and its 19 accompanying figures are unchanged.
+
+Archive: `influ2-four-panel-20260907/influ2_1.1.0.tar.gz` (2,059,085 bytes).
+
+SHA256: `dc378ec5eb89d047e5b734d02a999b83affb7f35c5117a0b7fb79b2be2ac9d76`
+
+* macOS arm64, R 4.6.1: `R CMD check --as-cran --no-manual` completed
+  with 0 errors, 0 warnings, and 1 note. The note identifies a new submission
+  and the optional tinyVAST dependency from the declared additional repository.
+* All 2,662 local test expectations passed, including nine visual snapshots.
+  Archive tests passed 2,653 expectations; the two visual-test groups were
+  deliberately skipped in CRAN mode. All five vignettes rebuilt successfully.
+* Executed native checks cover ordinary GLM families, negative-binomial and
+  Tweedie GAMs, glmmTMB random effects and binomial/zero-inflated responses,
+  sdmTMB spatial/spatiotemporal and delta models, and tinyVAST single-response,
+  spatial/spatiotemporal, and delta models. A separate complete BRMS
+  negative-binomial fit exercised posterior prediction (two chains, 1,000
+  post-warmup draws in total, no divergences); no Stan object was added to
+  the source package or website.
+* The website built successfully with optional DHARMa examples. The two new
+  lobster displays, numbered captions, and lightbox zoom were inspected.
+* The saved 5,049-observation, 250-simulation lobster diagnostic is about 1 MB;
+  the full response simulation matrix alone would be about 10 MB. Native
+  backends have additional temporary allocations. The result retains no model
+  or observation-by-simulation matrix.
+
+The Q-Q ribbon is an independent-uniform reference, not a calibrated test for
+estimated, dependent, or posterior-predictive residuals. Spatial defaults use
+conditional `mle-eb` simulations and are labelled accordingly; alternative
+native residual recipes remain documented. No new win-builder upload or CRAN
+submission was performed. Repeat final-release checks after remaining review.
+
 ## Partial legacy triage: 7 September 2026
 
 The first ten legacy-helper retirements have been accepted and recorded in

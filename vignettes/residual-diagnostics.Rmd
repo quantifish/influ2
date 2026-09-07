@@ -41,6 +41,7 @@ without turning individual plots or p-values into automatic selection rules.
 
 | influ2 helper | Question it helps answer | Important limitation |
 |:--|:--|:--|
+| `influ_residuals()` then `plot()` | How do the overall response distribution, fitted-value patterns, and fishing-year residual distributions compare with model simulations? | Simulation conditioning differs between backends; the panels are exploratory, not a calibrated pass/fail test. |
 | `plot_predicted_residuals()` | Does residual behaviour change with the fitted mean? | Uses the fitted model's native residual definition; it is not a predictive interval plot. |
 | `plot_implied_residuals()` | Do groups suggest departures from the common year effect? | An exploratory CPUE display, not a fitted interaction or a distributional goodness-of-fit test. |
 | `plot_qq()` | How does the residual distribution compare with normal quantiles? | Count-model Pearson and deviance residuals need not be normal, even under a suitable model. |
@@ -75,6 +76,125 @@ lobster_poisson <- glm(
 
 `MASS` is optional. The executed model examples are skipped if it is not
 installed. Nothing in this article fits an MCMC model.
+
+## A four-panel overview
+
+Calculate the residual diagnostic once and reuse it. This does not update or
+refit the model. The four panels cover complementary questions, without making
+the user choose an arbitrary grouping variable:
+
+1. **Distributional Q-Q:** normal scores of randomised simulation ranks. Unlike
+   a normal Q-Q plot of Pearson residuals, these account for the fitted response
+   distribution, including discrete counts and zeros.
+2. **Residuals against fitted values:** check changes in centre, spread, and
+   tails. The fitted quantity is the predictive mean estimated from the same
+   simulations, so its conditioning matches the residual calculation.
+3. **Residuals by fishing year:** compare within-year distributions, not just
+   mean residuals. A year factor can make those means look reassuring by
+   construction. Boxes show medians, quartiles, whiskers, and outlying points;
+   sample sizes are printed below, and numeric year gaps remain visible.
+4. **Observed versus simulated ECDFs:** compare the complete response
+   distribution, including zero catches, with a pointwise predictive band.
+
+```{r residual-overview-calculate, eval=has_MASS}
+nb_checks <- influ_residuals(lobster_nb, nsim = 250, batch_size = 25,
+  seed = 20260907)
+nb_checks
+```
+
+```{r residual-overview, eval=has_MASS, fig.width=11, fig.height=8, fig.cap="Four-panel simulation-based residual diagnostic for the fuller negative-binomial lobster model. The year panel reports the uneven sample sizes. The Q-Q ribbon is a nominal 95% pointwise independent-uniform reference, not a calibrated test for this fitted model. The ECDF ribbon is a 95% pointwise predictive band. Its log1p response axis retains zero catches.", fig.alt="Four panels show normal-score simulation-rank Q-Q, residuals against the predictive mean, residual boxplots by fishing year, and observed and simulated lobster-catch ECDFs."}
+plot(nb_checks, response_scale = "log1p")
+```
+
+For comparison, apply exactly the same display to the Poisson candidate. Its
+mean formula includes the same terms, but it cannot reproduce the extra
+variation used to simulate the lobster data. Look for departures across the
+panels rather than declaring a model adequate from one favourable plot.
+
+```{r residual-overview-poisson, eval=has_MASS, fig.width=11, fig.height=8, fig.cap="The same four-panel diagnostic for the Poisson lobster candidate. Its response distribution lacks the extra variation in the simulated data. Compare the Q-Q shape, residual spread across fitted means and years, and predictive ECDF with the preceding negative-binomial display; the reference ribbons are not automatic model-selection thresholds.", fig.alt="Four-panel residual diagnostic for the Poisson candidate, showing distributional departures and varying residual spread."}
+poisson_checks <- influ_residuals(lobster_poisson, nsim = 250,
+  batch_size = 25, seed = 20260907)
+plot(poisson_checks, response_scale = "log1p")
+```
+
+### Automatic time selection
+
+`year`, `yr`, `fy`, `fishing_year`, `Fishing.Year`, and similar recognised
+year names in the model formula are detected without regard to case or
+punctuation. If there is no year-named term, the calculator looks for native
+time metadata, then `time` or `season`, then the first single-variable model
+term. That final fallback warns rather than silently calling a covariate
+"year". Multiple candidates require an explicit choice. The printed result
+records the selected column and how it was found.
+
+```{r residual-overview-override, eval=FALSE}
+checks <- influ_residuals(fit, data = original_data, year = "fishing_year")
+plot(checks, type = "year")
+```
+
+Supply the original data if a transformed term, such as `factor(year)`, hides
+the raw column and it cannot be recovered from the model call. Original row
+names are checked, including after subsetting or missing-value omissions.
+For a region-specific or covariate-specific question, use a separate targeted
+plot; the standard four-panel layout remains consistent across models.
+
+### Interpretation and memory
+
+With `B` simulations, `L` simulated responses below an observation, and `E`
+ties, the rank is `(L + U * (E + 1)) / (B + 1)`, where `U` is uniform. This
+finite-simulation construction randomises ties, including zero atoms, without
+jittering catches in response units. It approaches a PIT residual as the
+number of simulations increases. The normal score is a display transformation,
+not an assumption that the catches themselves are normally distributed.
+Try additional seeds and more simulations before drawing strong conclusions
+about tails. The seed and batch size are recorded; repeat both for identical
+results because native simulation methods can consume random numbers differently.
+
+The Q-Q ribbon is an **independent-uniform reference**. Fitting parameters,
+spatial dependence, and Bayesian data reuse mean it is not automatically a
+correctly calibrated goodness-of-fit envelope. There are deliberately no
+automatic p-values or red/green judgements. The ECDF band describes replicated
+data under the selected simulation scheme, not uncertainty in the abundance
+index, and is not a simultaneous band.
+
+| Backend | Default simulation target in `influ_residuals()` |
+|:--|:--|
+| GLM / GAM | Observation error at fitted parameters, including fitted smooths; parameter uncertainty is not added. |
+| glmmTMB | Native simulation with random effects resimulated from their estimated distribution. |
+| sdmTMB / tinyVAST | `mle-eb`: observation error conditional on fitted spatial, spatiotemporal, and other latent effects. |
+| BRMS | Existing joint posterior draws followed by response simulation, including existing group effects. This requires a complete fit, not a compact influence fixture. |
+
+The native documentation describes the respective
+[glmmTMB](https://glmmtmb.github.io/glmmTMB/reference/simulate.glmmTMB.html),
+[sdmTMB](https://sdmtmb.github.io/sdmTMB/reference/simulate.sdmTMB.html),
+[tinyVAST](https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html),
+and [BRMS](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
+simulation interfaces. The table above states the choices made by this wrapper,
+not a claim that every backend has the same native defaults.
+
+These targets differ. In particular, conditional checks can conceal latent
+structure absorbed by an overly flexible model, and posterior predictive
+ranks need not be uniform. For the alternative sdmTMB approximate-latent-draw
+recipe, spatial correlation checks, or specialised OSA/LOO-PIT diagnostics,
+see the later sections. Delta and zero-inflated models use the **combined
+response**, not component-specific residuals. Multivariate, censored, quasi,
+non-binomial weighted, and multi-trial sdmTMB inputs are not supported by this
+initial display. A native simulation failure is reported rather than replaced
+with a different response distribution. Binomial GLM/glmmTMB panels use success
+counts, with integer trials preserved.
+
+Calculation retains one residual and predictive mean per observation, plus
+compact ECDF summaries. It does **not** retain the model or the full
+observation-by-simulation matrix. Working memory is approximately
+observation count times batch size, plus ECDF grid size times simulation count,
+with additional allocations inside native backends. Each replicate remains a
+whole joint response vector; batching does not discard its spatial or posterior
+dependence. The ECDF uses a grid spanning the observations and first simulation
+batch, rather than storing every simulated step. Replotting `nb_checks` is
+immediate and performs no new simulations.
+
+The existing helpers below remain available. `plot_qq()` deliberately retains
+its older native-residual interpretation; it has not silently changed meaning.
 
 ## Residuals against fitted values and predictors
 

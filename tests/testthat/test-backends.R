@@ -361,6 +361,10 @@ test_that("sdmTMB delta fixed effects have a joint unconditional mean", {
       diagnostic$influence,
       component == "unconditional_mean" & method == "joint precision simulation"
     )$term))
+  checks <- influ_residuals(model, nsim = 20, batch_size = 7)
+  expect_identical(checks$metadata$response_structure, "combined delta response")
+  expect_equal(checks$observations$observed, pcod_2011$density)
+  expect_true(all(is.finite(checks$observations$residual)))
 })
 
 test_that("tinyVAST fixed terms use the common influence schema", {
@@ -423,6 +427,10 @@ test_that("tinyVAST exposes fitted spatial and spatiotemporal components", {
     grepl("field$", term)
   )$std_error)))
   expect_true(all(is.finite(diagnostic$influence$estimate)))
+  checks <- influ_residuals(model, nsim = 20, batch_size = 7)
+  expect_identical(checks$metadata$year, "year")
+  expect_equal(checks$observations$observed, data$catch)
+  expect_true(all(is.finite(checks$observations$residual)))
   expect_s3_class(
     plot(
       diagnostic,
@@ -514,4 +522,8 @@ test_that("tinyVAST delta fixed effects have a joint unconditional mean", {
   expect_true(all(c("occurrence", "positive", "unconditional_mean") %in%
     diagnostic$influence$component))
   expect_equal(nrow(diagnostic$draws), 50)
+  checks <- influ_residuals(model, nsim = 20, batch_size = 7)
+  expect_identical(checks$metadata$response_structure, "combined delta response")
+  expect_equal(checks$observations$observed, data$catch)
+  expect_true(all(is.finite(checks$observations$residual)))
 })

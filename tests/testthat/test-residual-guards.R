@@ -221,6 +221,11 @@ test_that("sdmTMB spatial residual plots retain their native response meaning", 
   expect_s3_class(plot_implied_residuals(model, groups = "present", min_n = 1), "ggplot")
   raw <- plot_predicted_residuals(model, trend = "none", type = "response")
   expect_equal(unname(raw$data$residual), pcod_2011$present - raw$data$predicted)
+  checks <- influ_residuals(model, nsim = 20, batch_size = 7)
+  expect_equal(checks$observations$observed, pcod_2011$present)
+  expect_match(checks$metadata$scheme, "conditional on fitted latent")
+  expect_identical(checks$metadata$year, "year")
+  expect_true(all(is.finite(checks$observations$residual)))
 })
 
 test_that("unsupported sdmTMB Pearson residuals retain an explicit native-type boundary", {
@@ -239,6 +244,9 @@ test_that("unsupported sdmTMB Pearson residuals retain an explicit native-type b
   }
   raw <- plot_predicted_residuals(model, trend = "none", type = "response")
   expect_equal(unname(raw$data$residual), data$catch - raw$data$predicted)
+  checks <- influ_residuals(model, nsim = 20)
+  expect_equal(checks$observations$observed, data$catch)
+  expect_s3_class(plot(checks), "patchwork")
 })
 
 test_that("tinyVAST residual types are explicit and native failures are visible", {
@@ -263,6 +271,10 @@ test_that("tinyVAST residual types are explicit and native failures are visible"
   expect_equal(unname(plot$data$residual), unname(stats::residuals(model, type = "deviance")))
   expect_s3_class(plot_qq(model, type = "deviance"), "ggplot")
   expect_s3_class(plot_implied_residuals(model, groups = "month", type = "deviance", min_n = 1), "ggplot")
+  checks <- influ_residuals(model, nsim = 20, batch_size = 1)
+  expect_equal(checks$observations$observed, data$catch)
+  expect_match(checks$metadata$scheme, "conditional on fitted latent")
+  expect_s3_class(plot(checks), "patchwork")
   native_response <- stats::residuals(model, type = "response")
   if (!length(native_response)) {
     expect_error(plot_predicted_residuals(model, type = "response"), "returned no values")
