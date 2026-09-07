@@ -12,6 +12,8 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: Residual diagnostics
+        href: articles/residual-diagnostics.html
       - text: Bentley validation
         href: articles/bentley-validation.html
       - text: Hurdle, delta, and zero-inflated models
@@ -29,6 +31,7 @@ articles:
 - title: Validation and response structures
   navbar: ~
   contents:
+  - residual-diagnostics
   - bentley-validation
   - hurdle
   - spatial-spatiotemporal
@@ -54,13 +57,17 @@ reference:
   - plot_bubble
 
 - title: Additional diagnostics and comparisons
-  desc: Compare indices, inspect data coverage, and diagnose fitted models.
+  desc: Compare indices and inspect data coverage.
   contents:
   - plot_compare
   - influ_steps
   - plot.influ_steps
   - plot_step
   - plot_data_extent
+
+- title: Residual diagnostics
+  desc: Inspect residual patterns, implied year effects, and quantile comparisons.
+  contents:
   - plot_implied_residuals
   - plot_predicted_residuals
   - plot_qq

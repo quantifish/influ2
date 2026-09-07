@@ -1,4 +1,46 @@
-## Current candidate: 7 September 2026
+## Current residual-diagnostics candidate: 7 September 2026
+
+CRAN submission remains unauthorised, and the earlier-functionality triage is
+still parked. This candidate supersedes the source checked in the historical
+section below; that pending win-builder result cannot validate these changes.
+
+Archive: `influ2-residuals-20260907/influ2_1.1.0.tar.gz` (1,882,568 bytes).
+
+SHA256: `5c5a93db97cef8c02dd2bac47a09b0b69a52b5b8f1b7a55ed2fd3c1c0805ed4a`
+
+* macOS Tahoe 26.6.2 (arm64), R 4.6.1: local
+  `R CMD check --as-cran --no-manual`; 0 errors, 0 warnings, and 1 note.
+  The note identifies a new submission and the optional tinyVAST dependency
+  available from the declared additional repository.
+* All five vignettes rebuilt successfully, including the optional DHARMa
+  examples with DHARMa 0.5.0. Archive tests passed 2,554 expectations, with the
+  visual-regression group intentionally skipped in CRAN mode.
+* A separate full local suite passed 2,562 expectations, including all eight
+  visual snapshots, with no failures, warnings, or skips. The new coverage
+  includes observation alignment, retained model frames, polynomial roundoff,
+  residual-type boundaries, compact BRMS fixtures, and comparison scales.
+* Source URL validation passed all 21 URLs, and spelling checks passed. The
+  pkgdown site rebuilt; seven new figures, numbering, lightbox operation, and
+  the separate residual reference section were inspected.
+* Direct native-method audits covered GLM/NB, GAM, glmmTMB, and selected spatial
+  sdmTMB/tinyVAST models. External DHARMa recipes were also exercised for
+  sdmTMB single and delta responses, and single-response tinyVAST fields.
+  Complete-fit BRMS residual/R-squared/criterion execution was not rerun:
+  compact fixtures intentionally cannot provide those native calculations.
+
+The article distinguishes goodness-of-fit from influence and index
+sensitivity. It documents native residual semantics, the exploratory nature
+of implied coefficients, conditional simulation choices, and specialised
+PIT/OSA workflows. DHARMa is optional and adds no runtime import. No universal
+OSA or multivariate residual adapter is claimed. The frozen legacy page,
+helper source, simulated data values, and compact fixtures are unchanged.
+
+GitHub Ubuntu-release, Windows-release, and pkgdown results for this source
+will be recorded after publication. No new win-builder upload was made for
+this candidate. A final submission candidate must be rechecked after the
+remaining API/legacy review.
+
+## Historical pre-residual candidate: 7 September 2026
 
 The maintainer has not authorised CRAN submission. Final review of the earlier
 interface remains parked until the scientific safeguards and release checks

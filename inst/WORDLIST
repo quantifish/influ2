@@ -7,6 +7,7 @@ Breen
 brm
 brms
 BRMS
+BRMS's
 brmsfit
 cdi
 CDI
@@ -16,6 +17,7 @@ CPUETools
 cutoff
 dataset's
 df
+DHARMa
 diag
 doi
 estimand
@@ -37,6 +39,7 @@ Matérn
 mgcv
 nonlinear
 Nonlinear
+OSA
 parameterise
 parameterised
 parameterises
@@ -44,6 +47,7 @@ pkgdown
 Poisson
 rstan
 sdmTMB
+sdmTMB's
 SNA
 spatiotemporal
 tinyVAST

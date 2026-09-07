@@ -35,6 +35,7 @@ Imports:
     utils
 Suggests:
     brms,
+    DHARMa,
     fmesher,
     glmmTMB,
     knitr,

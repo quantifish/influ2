@@ -19,3 +19,8 @@ A data frame with one row per model.
 \description{
 Summarise Bayesian R-squared for BRMS models
 }
+\details{
+Requires an original complete `brmsfit`, not a compact influence-only
+  fixture shipped with influ2. The helper summarises the existing fit and
+  does not run MCMC.
+}

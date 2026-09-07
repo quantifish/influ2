@@ -128,7 +128,7 @@ clear to users and should not silently produce a different estimand.
   identified.
 - Bentley's complete original notice is retained in the installed validation
   source, with Bentley and Trophia represented in copyright metadata.
-- The current data are synthetic. Earlier real-derived data are not part of
+- The current data are simulated. Earlier real-derived data are not part of
   the source archive. No Git-history rewrite was performed; that is a separate
   maintainer decision, not routine CRAN release tidying.
 

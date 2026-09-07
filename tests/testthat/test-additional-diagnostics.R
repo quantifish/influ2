@@ -28,7 +28,7 @@ test_that("comparison labels distinguish identical formulas and different famili
   poisson <- fixture$model
   gaussian <- stats::glm(
     catch ~ year + area + vessel,
-    family = stats::gaussian(),
+    family = stats::gaussian(link = "log"),
     data = fixture$data
   )
 
@@ -36,7 +36,7 @@ test_that("comparison labels distinguish identical formulas and different famili
 
   expect_length(unique(comparison$data$Model), 2)
   expect_match(unique(comparison$data$Model)[1], "poisson\\(log\\)")
-  expect_match(unique(comparison$data$Model)[2], "gaussian\\(identity\\)")
+  expect_match(unique(comparison$data$Model)[2], "gaussian\\(log\\)")
 })
 
 test_that("data extent reports the observed proportion by focus level", {

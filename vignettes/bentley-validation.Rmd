@@ -32,7 +32,7 @@ system and GLMs [@Bentley2012]. That implementation is retained in `influ2` as
 a frozen validation artefact, not as part of the package API. This vignette
 runs the old code explicitly and compares it with the model-neutral S3 engine.
 
-The comparison uses the same synthetic `lobsters_per_pot` example as the
+The comparison uses the same simulated `lobsters_per_pot` example as the
 [main vignette](influ2.html). Its deliberate shifts in sampled season, fishing
 depth, and soak time make the influence patterns more apparent. These are
 constructed teaching relationships, not empirical findings from a lobster

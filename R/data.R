@@ -27,9 +27,9 @@
 #'   The \code{simulation} attribute records \code{seed}, \code{scenario}, and
 #'   \code{year_effect}. The latter is a data frame with columns \code{year}
 #'   and \code{log_effect}, giving the annual effect used by the simulator
-#'   before centring. It is metadata for checking the synthetic example, not
+#'   before centring. It is metadata for checking the simulated example, not
 #'   an additional observed covariate. Centre it using the same reference
 #'   distribution as the diagnostic before comparing fitted year contrasts.
-#' @source Fully synthetic data generated for the package examples.
+#' @source Simulated data generated for the package examples.
 #'
 "lobsters_per_pot"

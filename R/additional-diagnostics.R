@@ -38,10 +38,14 @@
       family <- diagnostics[[i]]$family
       paste0(formula_label, " [", family$family, "(", family$link, ")]")
     }, character(1))
+    labels <- make.unique(labels, sep = " #")
   }
-  if (length(labels) != length(diagnostics)) {
-    stop("`labels` must have one value per diagnostic.", call. = FALSE)
+  if (!is.character(labels) || length(labels) != length(diagnostics) ||
+      anyNA(labels) || any(!nzchar(trimws(labels))) ||
+      anyDuplicated(trimws(labels))) {
+    stop("`labels` must contain one unique, non-empty label per diagnostic.", call. = FALSE)
   }
+  labels <- trimws(labels)
 
   out <- lapply(seq_along(diagnostics), function(i) {
     d <- influ_indices(diagnostics[[i]])
@@ -54,7 +58,16 @@
     d$Model <- labels[i]
     d
   })
-  do.call(rbind, out)
+  out <- do.call(rbind, out)
+  scales <- unique(out$scale)
+  if (length(scales) != 1L || is.na(scales) ||
+      !scales %in% c("ratio", "difference", "link")) {
+    stop(
+      "Compared indices must use the same index scale; ratio, difference, and link scales cannot be mixed.",
+      call. = FALSE
+    )
+  }
+  out
 }
 
 .geometric_mean <- function(x) {
@@ -115,7 +128,8 @@
 #' schema before plotting.
 #'
 #' @param fits A fitted model, an [influ_diag], or a list of either.
-#' @param labels Optional model labels.
+#' @param labels Optional unique, non-empty model labels. Repeated automatically
+#'   generated labels are disambiguated with numeric suffixes.
 #' @param year Optional focus-variable name. It is inferred when omitted.
 #' @param probs Interval probabilities used when diagnostics must be calculated.
 #' @param show_probs Show uncertainty ribbons.
@@ -123,6 +137,12 @@
 #' @param rescale_series Optional series number supplying the common scale over
 #'   overlapping focus levels.
 #' @param ... Arguments passed to [influ()] when `fits` contains models.
+#'
+#' @details Compared indices must be on the same scale: response ratios,
+#'   response differences, or link-scale contrasts. Ratio plots start at zero;
+#'   difference and link-scale plots retain negative values. Inputs should
+#'   describe comparable responses and focus effects; matching scales alone
+#'   does not establish that the fitted models answer the same question.
 #'
 #' @return A [ggplot2::ggplot()] object.
 #' @export
@@ -148,15 +168,19 @@ plot_compare <- function(fits, labels = NULL, year = NULL,
       alpha = 0.18, colour = NA, na.rm = TRUE
     )
   }
-  plot +
+  plot <- plot +
     ggplot2::geom_line() +
     ggplot2::geom_point() +
-    ggplot2::scale_y_continuous(
-      limits = c(0, NA),
-      expand = ggplot2::expansion(mult = c(0, 0.05))
-    ) +
-    ggplot2::labs(x = diagnostics_focus(data), y = "Standardised index") +
+    ggplot2::labs(x = diagnostics_focus(data), y = switch(unique(data$scale),
+      ratio = "Standardised index", difference = "Year-effect difference",
+      link = "Year-effect contrast (link scale)")) +
     ggplot2::theme_bw()
+  if (identical(unique(data$scale), "ratio")) {
+    plot <- plot + ggplot2::scale_y_continuous(
+      limits = c(0, NA), expand = ggplot2::expansion(mult = c(0, 0.05))
+    )
+  }
+  plot
 }
 
 diagnostics_focus <- function(data) {
@@ -242,11 +266,30 @@ plot_step <- function(fits, labels = NULL, year = NULL, fill = "purple4",
   plot
 }
 
+.check_brms_criterion_fits <- function(fits) {
+  compact <- vapply(fits, function(fit) {
+    is.null(fit$fit) && !is.null(fit$influ2_draws)
+  }, logical(1))
+  if (any(compact)) {
+    stop(
+      "Bayesian R-squared and model criteria require the original complete brmsfit, ",
+      "not a compact influence-only fixture. These helpers use an existing fit ",
+      "and do not run MCMC; influ() can still use the compact fixture.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
 #' Summarise Bayesian R-squared for BRMS models
 #'
 #' @param fits A `brmsfit` or list of `brmsfit` objects.
 #' @param probs Lower and upper interval probabilities.
 #' @param ... Arguments passed to [brms::bayes_R2()].
+#'
+#' @details Requires an original complete `brmsfit`, not a compact influence-only
+#'   fixture shipped with influ2. The helper summarises the existing fit and
+#'   does not run MCMC.
 #'
 #' @return A data frame with one row per model.
 #' @export
@@ -259,6 +302,7 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
       !all(vapply(fits, inherits, logical(1), "brmsfit"))) {
     stop("`fits` must contain only brmsfit objects.", call. = FALSE)
   }
+  .check_brms_criterion_fits(fits)
   probs <- .validate_probs(probs)
   out <- lapply(fits, function(fit) {
     draws <- as.numeric(brms::bayes_R2(fit, summary = FALSE, ...))
@@ -293,6 +337,10 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
 #'   R-squared when LOO is not requested.
 #' @param ... Arguments passed to the requested BRMS criterion functions.
 #'
+#' @details Requires original complete `brmsfit` objects, not compact
+#'   influence-only fixtures shipped with influ2. The helper evaluates the
+#'   existing fits and does not run MCMC.
+#'
 #' @return A data frame with one row per model.
 #' @export
 table_criterion <- function(fits,
@@ -310,6 +358,7 @@ table_criterion <- function(fits,
       !all(vapply(fits, inherits, logical(1), "brmsfit"))) {
     stop("`fits` must contain only brmsfit objects.", call. = FALSE)
   }
+  .check_brms_criterion_fits(fits)
 
   rows <- lapply(seq_along(fits), function(i) {
     fit <- fits[[i]]
@@ -405,19 +454,23 @@ plot_data_extent <- function(data, xvar, yvar) {
 }
 
 .residual_estimate <- function(model, type = "pearson") {
-  if (inherits(model, "brmsfit")) {
-    if (!requireNamespace("brms", quietly = TRUE)) {
-      stop("Package 'brms' is required for BRMS residuals.", call. = FALSE)
+  .check_residual_model(model, type)
+  value <- tryCatch(stats::residuals(model, type = type), error = function(e) {
+    if (inherits(model, "sdmTMB") && identical(type, "pearson")) {
+      stop("Pearson residuals are unavailable for this fitted sdmTMB model. ",
+        "Choose a supported native residual type explicitly (for example, ",
+        "`type = \"mle-mvn\"` for simulation-based checks). Native error: ",
+        conditionMessage(e), call. = FALSE)
     }
-    value <- stats::residuals(model, type = type)
-  } else {
-    value <- stats::residuals(model, type = type)
+    stop(conditionMessage(e), call. = FALSE)
+  })
+  if (inherits(model, "tinyVAST") && !length(value)) {
+    stop("The installed tinyVAST native residual method returned no values ",
+      "for `type = \"", type, "\"`. Check its supported methods; ",
+      "`type = \"deviance\"` may be available. No alternative type was ",
+      "substituted.", call. = FALSE)
   }
-  if (is.matrix(value) || is.data.frame(value)) {
-    column <- if ("Estimate" %in% colnames(value)) "Estimate" else colnames(value)[1]
-    value <- value[, column]
-  }
-  as.numeric(value)
+  .observation_estimate(value, "Residuals", summary = inherits(model, "brmsfit"))
 }
 
 .focus_link_effect <- function(model, data, focus) {
@@ -466,6 +519,14 @@ plot_data_extent <- function(data, xvar, yvar) {
 #' Zealand inshore CPUE reports. Error bars show one standard error of the
 #' standardised residuals.
 #'
+#' Residual definitions are those of the fitted model's native method; their
+#' scaling is not identical across packages. Using a different `type` changes
+#' the plotted residual contribution. These displays are exploratory, not
+#' estimates from a fitted interaction model. Original row identifiers are
+#' used to align residuals after omissions, subsets, or reordering of `data`.
+#' The fitted model must retain its original model frame (for GLMs, use
+#' `model = TRUE`); a saved call alone cannot verify observation alignment.
+#'
 #' @references Starr, P. J., and Kendrick, T. H. (2019). *FLA 1 Fishery
 #'   Characterisation and CPUE*. New Zealand Fisheries Assessment Report
 #'   2019/09, Figure O.9. See also Middleton, D. A. J. (2025). *A Rapid Update
@@ -473,7 +534,9 @@ plot_data_extent <- function(data, xvar, yvar) {
 #'   Assessment Report 2025/32, Appendix C.
 #'
 #' @param fit A fitted model supported by [influ()].
-#' @param data Optional original model data.
+#' @param data Optional original model data, retaining its original row names
+#'   and fitted-variable values. Supply this when `groups` is not stored in the
+#'   fitted model frame. Rows omitted from the fit are excluded from the plot.
 #' @param year Name of the focus variable.
 #' @param groups Name of the categorical variable used for panels.
 #' @param type Residual type passed to the fitted model's `residuals()` method.
@@ -488,7 +551,10 @@ plot_implied_residuals <- function(fit, data = NULL, year = "year",
   if (inherits(fit, "influ_diag")) {
     stop("Supply the fitted model, because observation residuals are required.", call. = FALSE)
   }
-  data <- .resolve_influ_data(fit, data)
+  residual <- .residual_estimate(fit, type)
+  aligned <- .residual_observations(fit, data, residual)
+  data <- aligned$data
+  residual <- aligned$residual
   if (!all(c(year, groups) %in% names(data))) {
     stop("`year` and `groups` must name columns in the model data.", call. = FALSE)
   }
@@ -498,10 +564,6 @@ plot_implied_residuals <- function(fit, data = NULL, year = "year",
   if (!is.numeric(min_n) || length(min_n) != 1L || !is.finite(min_n) ||
       min_n < 1 || min_n != floor(min_n)) {
     stop("`min_n` must be a positive whole number.", call. = FALSE)
-  }
-  residual <- .residual_estimate(fit, type)
-  if (length(residual) != nrow(data)) {
-    stop("The model returned a different number of residuals than data rows.", call. = FALSE)
   }
   baseline <- .focus_link_effect(fit, data, year)
   work <- data.frame(
@@ -558,15 +620,18 @@ plot_implied_residuals <- function(fit, data = NULL, year = "year",
 }
 
 .fitted_estimate <- function(model) {
+  .check_residual_model(model)
   value <- stats::fitted(model)
-  if (is.matrix(value) || is.data.frame(value)) {
-    column <- if ("Estimate" %in% colnames(value)) "Estimate" else colnames(value)[1]
-    value <- value[, column]
-  }
-  as.numeric(value)
+  .observation_estimate(value, "Fitted values", summary = inherits(model, "brmsfit"))
 }
 
 #' Plot predicted values against residuals
+#'
+#' Uses native response-scale fitted values and the explicitly requested native
+#' residual type. No residual type is substituted automatically. Complete BRMS
+#' fits are required; compact influence-only fixtures cannot supply native
+#' predictions. sdmTMB delta models require separate component-specific native
+#' diagnostics, and tinyVAST does not provide Pearson residuals.
 #'
 #' @param fit A fitted model.
 #' @param trend One of `"loess"`, `"lm"`, `"linear"`, or `"none"`.
@@ -577,6 +642,9 @@ plot_implied_residuals <- function(fit, data = NULL, year = "year",
 plot_predicted_residuals <- function(fit, trend = "loess", type = "pearson") {
   predicted <- .fitted_estimate(fit)
   residual <- .residual_estimate(fit, type)
+  frame <- .residual_model_frame(fit)
+  predicted <- .align_observation_values(predicted, frame, "Fitted values", fit)
+  residual <- .align_observation_values(residual, frame, "Residuals", fit)
   if (length(predicted) != length(residual)) {
     stop("Fitted values and residuals have different lengths.", call. = FALSE)
   }
@@ -608,6 +676,10 @@ plot_predicted_residuals <- function(fit, trend = "loess", type = "pearson") {
 #' Displays the fitted model's standardised residuals against normal
 #' quantiles. For non-Gaussian models this is a screening diagnostic, and
 #' should be complemented by simulation-based residual checks.
+#' Normal quantiles are a reference, not a claim that Pearson or deviance
+#' residuals from count models should be normally distributed. Supported types
+#' follow each backend's native methods; see [plot_predicted_residuals()] for
+#' backend limitations.
 #'
 #' @param fit A fitted model.
 #' @param probs Two probabilities defining the reference line.

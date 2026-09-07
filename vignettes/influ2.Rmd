@@ -51,7 +51,11 @@ move observations among areas of different predicted abundance [@Hsu2022].
 extracts model components and joint uncertainty, while the calculation,
 storage, summary, and plotting layers remain shared.
 
-## A synthetic lobster CPUE example
+Influence explains what drives an index; it does not establish that the model
+fits the observations adequately. The [Residual diagnostics](residual-diagnostics.html)
+article checks that complementary question using the same simulated lobster data.
+
+## A simulated lobster CPUE example
 
 The main examples use the simulated `lobsters_per_pot` data supplied with the
 package. They contain 5,049 pot records spanning 2000 to 2017, with uneven
@@ -611,7 +615,7 @@ knitr::kable(
   truth_check,
   digits = 3,
   col.names = c("Model step", "RMSE of log year effect"),
-  caption = "Negative-binomial model agreement with the known annual effect in this synthetic dataset."
+  caption = "Negative-binomial model agreement with the known annual effect in this simulated dataset."
 )
 ```
 

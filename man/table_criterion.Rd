@@ -29,3 +29,8 @@ A data frame with one row per model.
 Calculates selected public BRMS criteria without inspecting the underlying
 Stan object. This keeps `rstan` out of the package's mandatory dependencies.
 }
+\details{
+Requires original complete `brmsfit` objects, not compact
+  influence-only fixtures shipped with influ2. The helper evaluates the
+  existing fits and does not run MCMC.
+}
