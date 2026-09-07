@@ -35,10 +35,15 @@ PIT/OSA workflows. DHARMa is optional and adds no runtime import. No universal
 OSA or multivariate residual adapter is claimed. The frozen legacy page,
 helper source, simulated data values, and compact fixtures are unchanged.
 
-GitHub Ubuntu-release, Windows-release, and pkgdown results for this source
-will be recorded after publication. No new win-builder upload was made for
-this candidate. A final submission candidate must be rechecked after the
-remaining API/legacy review.
+GitHub Ubuntu-release and Windows-release both passed for source commit
+`6559b2ed8c8e05a957edeacdab25ae506220b8d2` (run 34077210580). The pkgdown job
+(34077210644) and Pages deployment (34077395318) also passed. The published
+residual article and its seven lightbox figures were verified. The deployment
+action reports a non-blocking Node 20 deprecation warning; it ran successfully
+under GitHub's Node 24 override, and can be updated in routine maintenance.
+
+No new win-builder upload was made for this candidate. A final submission
+candidate must be rechecked after the remaining API/legacy review.
 
 ## Historical pre-residual candidate: 7 September 2026
 
