@@ -52,11 +52,12 @@ test_that("the lobster showcase retains holes, covariate overlap, and known trut
     tolerance = 1e-12)
 })
 
-test_that("refitted lobster steps visibly correct the known year-effect bias", {
+test_that("negative-binomial lobster steps visibly correct the known year-effect bias", {
+  skip_if_not_installed("MASS")
   data <- lobster_showcase_data()
-  model <- stats::glm(
+  model <- MASS::glm.nb(
     lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
-    data = data, family = stats::poisson(link = "log")
+    data = data, link = log
   )
   sequence <- influ_steps(
     model, year = "year", refit = TRUE, uncertainty = "none"
@@ -90,7 +91,7 @@ test_that("refitted lobster steps visibly correct the known year-effect bias", {
     expect_gt(max(abs(relative_change)), 0.1)
   }
   # Intermediate errors need not improve monotonically: nuisance terms can
-  # be correlated. Poisson intervals are not a coverage test for NB counts.
+  # be correlated. This point-estimate check does not test interval coverage.
 })
 
 test_that("the compact lobster BRMS fixture uses the bundled observations", {

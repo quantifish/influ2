@@ -501,13 +501,30 @@
   out
 }
 
+.is_pure_focus_term <- function(term, focus) {
+  variables <- tryCatch(
+    all.vars(stats::as.formula(paste("~", term))),
+    error = function(e) character()
+  )
+  identical(variables, focus)
+}
+
 .standardised_indices <- function(influence, focus, focus_terms) {
   if (!length(focus_terms)) return(data.frame())
   if (length(focus_terms) > 1L) {
     warning(
       "A standardised index was not created because multiple model terms ",
-      "contain the focus variable. Use a model-specific prediction grid to ",
-      "define how interactions should be marginalised.",
+      "contain the focus variable. Define and calculate a model-specific ",
+      "marginalisation separately; supplying reference_data alone does not do this.",
+      call. = FALSE
+    )
+    return(data.frame())
+  }
+  if (!.is_pure_focus_term(focus_terms[1L], focus)) {
+    warning(
+      "A standardised index was not created because the focus term also ",
+      "depends on another variable. Interaction-specific effects require ",
+      "a separately defined marginalisation; reference_data alone is insufficient.",
       call. = FALSE
     )
     return(data.frame())

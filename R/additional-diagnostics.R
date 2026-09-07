@@ -444,6 +444,13 @@ plot_data_extent <- function(data, xvar, yvar) {
       call. = FALSE
     )
   }
+  if (!.is_pure_focus_term(focus_terms[1L], focus)) {
+    stop(
+      "Implied residuals require a focus effect that does not depend on ",
+      "another variable. Calculate the interaction-specific baseline explicitly.",
+      call. = FALSE
+    )
+  }
   d <- d[d$term == focus_terms[1], , drop = FALSE]
   priority <- c("unconditional_mean", "conditional")
   component <- priority[priority %in% d$component][1]

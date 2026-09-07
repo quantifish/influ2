@@ -547,6 +547,11 @@
 #' compact focus-by-term contrasts. The method therefore never constructs an
 #' observation-by-draw-by-term array. Joint posterior dependence is preserved
 #' while calculating the requested diagnostics.
+#' Lognormal models currently require constant `sigma`; varying scale needs a
+#' joint location-and-scale calculation before arithmetic-mean ratios can be
+#' reported. The `mu` link must be identity because BRMS parameterises the
+#' log-location, not the arithmetic mean. Formula offsets and response `rate()`
+#' additions have the same restrictions as the GLM adapter.
 #'
 #' @inheritParams influ.glm
 #' @param model A fitted object from [brms::brm()].
@@ -572,13 +577,32 @@ influ.brmsfit <- function(model, focus, data = NULL, weights = NULL,
   if (uncertainty == "auto") uncertainty <- "posterior"
   data <- if (is.null(data)) as.data.frame(model$data) else as.data.frame(data)
 
-  response_structure <- .normalise_family_name(model$family$family)$structure
+  parsed_family <- .normalise_family_name(model$family$family)
+  response_structure <- parsed_family$structure
+  if (parsed_family$family == "lognormal" &&
+      model$family$link != "identity") {
+    stop(
+      "BRMS lognormal diagnostics currently require an identity link for mu. ",
+      "BRMS mu is a log-location parameter, so non-identity links do not ",
+      "produce exp(contrast) response ratios.",
+      call. = FALSE
+    )
+  }
   overall_spec <- .new_family_spec(
     model$family$family,
     model$family$link,
     backend = "brms",
     response_structure = response_structure
   )
+  parsed_terms <- brms::brmsterms(model$formula)
+  .check_influ_lognormal_scale(
+    overall_spec, parsed_terms$dpars$sigma$formula
+  )
+  offset_sources <- .influ_offset_sources(
+    c(list(parsed_terms$formula),
+      lapply(parsed_terms$dpars, `[[`, "formula"), parsed_terms$adforms)
+  )
+  .check_influ_offset_scope(overall_spec, offset_sources)
   component_retain <- if (retain == "disk") "derived_draws" else retain
   main_component <- if (response_structure == "hurdle") {
     "positive"
@@ -680,5 +704,5 @@ influ.brmsfit <- function(model, focus, data = NULL, weights = NULL,
     out$retained$mode <- "disk"
     out$retained$path <- normalizePath(draws_path, mustWork = TRUE)
   }
-  out
+  .record_influ_offset_scope(out, offset_sources)
 }

@@ -77,15 +77,18 @@ fit <- brms::brm(
   brms::bf(y ~ year + group, hu ~ 1),
   data = simulated_cpue,
   family = brms::hurdle_lognormal(),
-  chains = 2,
+  chains = 4,
+  cores = 2,
   iter = 2000,
+  warmup = 1000,
   seed = 42,
+  control = list(adapt_delta = 0.99, max_treedepth = 12),
   file = "m1",
   file_refit = "on_change"
 )
 ```
 
-The vignette uses the prefitted object supplied with its source. Joint
+The vignette uses the pre-fitted object supplied with its source. Joint
 posterior draws are reduced directly to compact component and
 unconditional-mean contrasts.
 
@@ -177,9 +180,15 @@ linear predictors. `influ2` therefore combines:
 Only derived focus-by-term draws are retained when requested. The much larger
 observation-by-draw arrays are never stored.
 
-For lognormal models, a constant residual-scale adjustment cancels from an
-influence ratio. Distributional models in which the scale itself varies need a
-future scale-component adapter.
+For BRMS lognormal models, a constant residual-scale adjustment cancels from
+an influence ratio. Models in which `sigma` varies are rejected: they need a
+future joint location-and-scale calculation. BRMS lognormal location models
+also require their usual identity link. Mean-parameterised lognormal
+backends instead require a log link. In `glmmTMB`, varying data-scale
+dispersion does not invalidate log-link arithmetic-mean ratios, but its
+dispersion effects are not separately decomposed.
+Combined hurdle/zero-inflated diagnostics with offsets or exposure additions
+are also rejected until an offset-aware reference calculation is available.
 
 ## Spatial delta models
 

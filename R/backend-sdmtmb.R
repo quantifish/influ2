@@ -503,6 +503,8 @@
 #' uses sparse joint-precision simulation and is reduced directly to compact
 #' focus-level estimands. Delta fixed effects and latent fields are combined
 #' draw by draw to obtain unconditional-mean influence.
+#' Lognormal diagnostics require a log link for the arithmetic mean. Offsets
+#' have the same single-component restrictions as the GLM adapter.
 #'
 #' @inheritParams influ.glm
 #' @param model A fitted `sdmTMB` object.
@@ -528,6 +530,11 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
   }
   data <- if (is.null(data)) as.data.frame(model$data) else as.data.frame(data)
   specs <- .sdmTMB_family_specs(model)
+  .check_influ_lognormal_mean_link(specs$overall)
+  offset_sources <- .influ_offset_sources(
+    model$formula, model$call, list(model$offset, model$tmb_data$offset_i)
+  )
+  .check_influ_offset_scope(specs$overall, offset_sources)
   component_retain <- if (retain == "disk") "derived_draws" else retain
   fixed_uncertainty <- if (uncertainty == "auto") "analytic" else uncertainty
   n_components <- if (isTRUE(model$family$delta)) 2L else 1L
@@ -619,5 +626,5 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
     out$retained$mode <- "disk"
     out$retained$path <- normalizePath(draws_path, mustWork = TRUE)
   }
-  out
+  .record_influ_offset_scope(out, offset_sources)
 }

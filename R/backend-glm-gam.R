@@ -106,6 +106,13 @@
 
 #' Influence diagnostics for generalised linear models
 #'
+#' Fixed offsets/exposure are supported for single-component log-link ratios
+#' and identity-link contrasts, where the common reference offset cancels.
+#' They are not estimated influence terms. Nonlinear probability and combined
+#' hurdle/zero-inflated diagnostics with offsets fail explicitly. Nominal
+#' summaries always describe the observed response; they are not automatically
+#' divided by exposure to obtain CPUE.
+#'
 #' @param model A fitted object from [stats::glm()].
 #' @param focus Name of the focus variable, usually year.
 #' @param data Optional model data. The model frame is used by default.
@@ -144,8 +151,12 @@ influ.glm <- function(model, focus, data = NULL, weights = NULL,
   }
   response <- names(stats::model.frame(model))[1]
   family_spec <- .frequentist_family_spec(model, "glm", response)
+  offset_sources <- .influ_offset_sources(
+    stats::formula(model), model$call, model$offset
+  )
+  .check_influ_offset_scope(family_spec, offset_sources)
 
-  .influ_linear_engine(
+  out <- .influ_linear_engine(
     backend = "glm",
     model = model,
     data = data,
@@ -168,6 +179,7 @@ influ.glm <- function(model, focus, data = NULL, weights = NULL,
     draws_path = draws_path,
     keep_model = keep_model
   )
+  .record_influ_offset_scope(out, offset_sources)
 }
 
 #' Influence diagnostics for generalised additive models
@@ -194,8 +206,12 @@ influ.gam <- function(model, focus, data = NULL, weights = NULL,
   }
   response <- names(stats::model.frame(model))[1]
   family_spec <- .frequentist_family_spec(model, "gam", response)
+  offset_sources <- .influ_offset_sources(
+    stats::formula(model), model$call, model$offset
+  )
+  .check_influ_offset_scope(family_spec, offset_sources)
 
-  .influ_linear_engine(
+  out <- .influ_linear_engine(
     backend = "gam",
     model = model,
     data = data,
@@ -218,4 +234,5 @@ influ.gam <- function(model, focus, data = NULL, weights = NULL,
     draws_path = draws_path,
     keep_model = keep_model
   )
+  .record_influ_offset_scope(out, offset_sources)
 }

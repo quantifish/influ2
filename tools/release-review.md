@@ -30,10 +30,16 @@ is a separate, later step authorised by the maintainer.
   effects on fixed analysis rows, not area-integrated abundance. Confirm the
   explicit process order, common effort offsets, and per-model interval labels.
 - Review the revised lobster sampling shifts and known-truth table. Its
-  designed confounding illustrates point-estimate recovery; the Poisson bands
-  are not an assessment of interval coverage for negative-binomial catches.
+  designed confounding illustrates point-estimate recovery. The main step
+  demonstration now uses negative-binomial fits with dispersion re-estimated
+  at each stage; approximate model-based bands are not a coverage experiment.
 
 ## 2. Decide what to keep from the earlier interface
+
+**Parked by the maintainer on 7 September 2026.** Return to this as the final
+review step before authorising CRAN submission. The current hardening and
+validation work does not retire additional helpers or imply that this
+function-by-function review is complete.
 
 Review the frozen page at `pkgdown/assets/articles/legacy-get-started.html`
 against the current package. The source in `tools/legacy/R/` is preserved for
@@ -79,18 +85,25 @@ replacement or removal in NEWS. Freeze the public API only after these choices.
 
 ## 3. Agree the supported scientific scope
 
-The current interfaces expose limitations that need either a documented
-release decision or further development:
+The 7 September hardening implements these conservative release boundaries:
 
-- Multiple terms involving the focus variable, especially interactions, do
-  not automatically define a unique standardised index. Decide the required
-  marginalisation rule and how an explicit prediction grid should express it.
-- Review offset and exposure handling before claiming general support for
-  catch-rate models with changing effort. An offset is not an estimated
-  coefficient and requires an explicit place in the reference predictor.
-- Varying lognormal scale or other distributional parameters require a
-  separate treatment; a constant scale adjustment cancelling from a ratio
-  does not establish support for a distributional model.
+- Multiple focus terms and single terms involving both focus and another
+  variable warn and omit the standardised index. Implied-residual baselines
+  and step plots reject ambiguous focus effects. A reference grid does not
+  itself implement interaction marginalisation.
+- Ordinary step refits preserve offsets, including negative-binomial GLMs.
+  Diagnostic calculations with offsets are restricted to single-component
+  log-link ratios and identity-link contrasts, where the reference offset
+  cancels. Nonlinear probability and combined hurdle/zero-inflated outputs
+  with offsets fail explicitly. Nominal summaries remain observed-response
+  means, not response divided by exposure.
+- BRMS lognormal models require constant sigma and an identity location link.
+  Mean-parameterised lognormal backends require a log link. glmmTMB log-mean
+  ratios remain supported with varying data-scale dispersion; dispersion
+  effects are not separately decomposed.
+
+Further extensions remain optional rather than promises of the initial release:
+
 - Review grouping of multiple random-effect terms and the distinction between
   conditional latent uncertainty and full parameter uncertainty. Verify the
   specific structures needed for fisheries examples before extending claims.
@@ -107,14 +120,17 @@ clear to users and should not silently produce a different estimand.
 
 ## 4. Close the existing provenance questions
 
-- Confirm authorship and licence compatibility for any code actually copied
-  or adapted from `gamInflu` or CPUETools, retaining applicable notices.
-  Methodological acknowledgement alone does not record copied-code authorship.
-- Confirm whether the earlier real-derived lobster data in Git history need
-  to be removed. The current dataset is synthetic; a history rewrite is a
-  separate decision and must not be done as routine release tidying.
-- Keep the frozen Bentley implementation and its original notices with the
-  validation material.
+- A bounded source/history audit on 7 September found no concrete evidence
+  requiring a licence change for gamInflu or CPUETools. Local upstream
+  snapshots were compared with active and frozen influ2 source, including
+  manual inspection of relevant methods. This is not a claim that no
+  adaptation ever occurred; retain applicable notices if copying is later
+  identified.
+- Bentley's complete original notice is retained in the installed validation
+  source, with Bentley and Trophia represented in copyright metadata.
+- The current data are synthetic. Earlier real-derived data are not part of
+  the source archive. No Git-history rewrite was performed; that is a separate
+  maintainer decision, not routine CRAN release tidying.
 
 ## 5. Validate the final reviewed source
 

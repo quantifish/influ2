@@ -28,7 +28,7 @@ Language: en-GB
 Depends:
     R (>= 4.1.0)
 Imports:
-    ggplot2,
+    ggplot2 (>= 3.4.0),
     gtable,
     patchwork,
     stats,
@@ -38,13 +38,14 @@ Suggests:
     fmesher,
     glmmTMB,
     knitr,
+    MASS,
     Matrix,
     mgcv,
     posterior,
     proto,
     rmarkdown,
     sdmTMB,
-    testthat (>= 3.0.0),
+    testthat (>= 3.2.0),
     tinyVAST,
     tidyr,
     TMB,

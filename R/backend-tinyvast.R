@@ -624,6 +624,8 @@
 #' sparse joint-precision simulation. Delta fixed effects and latent fields are
 #' combined draw by draw to obtain unconditional-mean influence. Multivariate
 #' mixed-family responses are returned as response-labelled components.
+#' Lognormal diagnostics require a log link for the arithmetic mean. Offsets
+#' have the same single-component restrictions as the GLM adapter.
 #'
 #' @inheritParams influ.glm
 #' @param model A fitted `tinyVAST` object.
@@ -648,6 +650,12 @@ influ.tinyVAST <- function(model, focus, data = NULL, weights = NULL,
     stop("The tinyVAST object must be fitted before influence is calculated.", call. = FALSE)
   }
   data <- if (is.null(data)) as.data.frame(model$data) else as.data.frame(data)
+  offset_sources <- .influ_offset_sources(
+    list(model$formula, model$internal$delta_formula), model$call,
+    list(model$internal$gam_setup$offset,
+      model$internal$delta_gam_setup$offset,
+      model$tmb_inputs$tmb_data$offset_i)
+  )
   component_retain <- if (retain == "disk") "derived_draws" else retain
   variable_column <- model$internal$variable_column
   distribution_column <- model$internal$distribution_column
@@ -664,6 +672,8 @@ influ.tinyVAST <- function(model, focus, data = NULL, weights = NULL,
     }
     distribution <- if (length(model$internal$family) == 1L) NULL else distributions
     specs <- .tinyVAST_family_specs(model, distribution)
+    .check_influ_lognormal_mean_link(specs$overall)
+    .check_influ_offset_scope(specs$overall, offset_sources)
     response_weights <- if (is.numeric(weights) && length(weights) == nrow(data)) {
       weights[row_index]
     } else {
@@ -728,5 +738,5 @@ influ.tinyVAST <- function(model, focus, data = NULL, weights = NULL,
     out$retained$mode <- "disk"
     out$retained$path <- normalizePath(draws_path, mustWork = TRUE)
   }
-  out
+  .record_influ_offset_scope(out, offset_sources)
 }

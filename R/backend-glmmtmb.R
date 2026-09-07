@@ -264,6 +264,12 @@
 #' Zero-inflation or hurdle occurrence terms are returned as a separate
 #' component. Random-effect modes are included as a compact aggregate term,
 #' with uncertainty propagated from their joint conditional latent covariance.
+#' Lognormal models require a log link for their arithmetic mean. Dispersion
+#' may vary, but its effects are not decomposed: the diagnostics describe
+#' mean-model terms. Unlike BRMS, glmmTMB does not parameterise log-location.
+#' Offsets have the same single-component restrictions as the GLM adapter,
+#' and nominal summaries
+#' are observed-response summaries, not automatically exposure-adjusted CPUE.
 #'
 #' @inheritParams influ.glm
 #' @param model A fitted object from [glmmTMB::glmmTMB()].
@@ -289,6 +295,13 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     backend = "glmmTMB",
     response_structure = response_structure
   )
+  .check_influ_lognormal_mean_link(overall_spec)
+  offset_sources <- .influ_offset_sources(
+    lapply(c("cond", "zi", "disp"), function(component) {
+      stats::formula(model, component = component)
+    }), model$call, stats::model.offset(stats::model.frame(model))
+  )
+  .check_influ_offset_scope(overall_spec, offset_sources)
 
   component_retain <- if (retain == "disk") "derived_draws" else retain
   components <- list(
@@ -343,5 +356,11 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     out$retained$mode <- "disk"
     out$retained$path <- normalizePath(draws_path, mustWork = TRUE)
   }
-  out
+  if (overall_spec$family == "lognormal") {
+    out$metadata$lognormal <- list(
+      parameterisation = "arithmetic mean and data-scale standard deviation",
+      scope = "Mean-model terms only; dispersion effects are not decomposed."
+    )
+  }
+  .record_influ_offset_scope(out, offset_sources)
 }

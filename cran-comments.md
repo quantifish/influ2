@@ -1,52 +1,70 @@
 ## Current candidate: 7 September 2026
 
-### Test environments
+The maintainer has not authorised CRAN submission. Final review of the earlier
+interface remains parked until the scientific safeguards and release checks
+are complete. Repeat the affected checks after any subsequent source changes.
+
+Source archive: `influ2_1.1.0.tar.gz` (1,502,370 bytes).
+
+SHA256: `700724341f44ab729e55339e7a63958a77e83388c7f37ea7525cba1d3cb823f4`
+
+### Test environments and R CMD check results
 
 * macOS Tahoe 26.6.2 (arm64), R 4.6.1 (2026-06-24): local
-  `R CMD check --as-cran --no-manual`
+  `R CMD check --as-cran --no-manual`; 0 errors, 0 warnings, and 1 note.
+* Pop!_OS 24.04 LTS (x86_64), R 4.6.1 (2026-06-24): isolated PC
+  `R CMD check --as-cran`, including the PDF manual; 0 errors, 0 warnings,
+  and 2 notes.
 
-### R CMD check results
+The incoming-feasibility note identifies a new submission and records that
+the suggested `tinyVAST` package is available from the declared additional
+repository, <https://vast-lib.r-universe.dev>. It is optional; its examples
+and tests are guarded when it is unavailable. The PC's additional note says
+HTML validation was skipped because that machine has no HTML Tidy command.
+The PDF manual built successfully, and its changed pages were visually checked.
 
-0 errors | 0 warnings | 1 note
-
-The note identifies this as a new submission and records that the suggested
-`tinyVAST` package is available from the declared additional repository.
-
-`tinyVAST` is an optional backend and is currently obtained from the package
-authors' R-universe repository. All `tinyVAST` examples and tests are skipped
-when that suggested package is unavailable.
-
-The source-archive check passed 2,327 test expectations and rebuilt all four
-vignettes successfully. The visual-regression group is intentionally skipped
-in CRAN mode; a separate full local run passed all 2,335 expectations,
+Both source-archive checks passed 2,446 test expectations and rebuilt all four
+vignettes. The visual-regression group is intentionally skipped in CRAN mode.
+A separate full local run passed all 2,454 expectations across 112 test cases,
 including the eight visual snapshots, with no failures, warnings, or skips.
-The pkgdown site also rebuilt successfully, including the new cross-model
-index comparison, the shared vignette theme setup, and executed GLM and
-tinyVAST refitted step-plot examples. The refitting tests include actual GLM,
-GAM, glmmTMB, sdmTMB, and tinyVAST fits, alongside BRMS update and cache-safety
-tests. Step plots retain year-effect contrasts, not area-integrated indices.
-The revised synthetic lobster scenario contains 5,049 observations with
-deliberate seasonal, depth, and soak-time shifts. Tests verify covariate
-overlap, visible refitted corrections, and recovery of its known annual
-effects. The matching BRMS posterior was regenerated with four chains of
-5,000 iterations, including 2,000 warmup iterations per chain. It passed with
-maximum R-hat 1.003966, minimum bulk ESS 1,774, minimum tail ESS 2,823, and no
-divergences. Its 12,000 post-warmup draws were compacted to 200 joint draws.
-A regression test confirms that this fixture uses the bundled observations.
-Additional BRMS regressions verify population-term mapping after random and
-smooth terms, including observed/reference-grid uncertainty and hurdle parts.
 
-## Earlier win-builder validation: 5 September 2026
+An isolated mandatory-dependency-only library installed and loaded the same
+archive successfully. With BRMS, glmmTMB, sdmTMB, tinyVAST, and their optional
+stacks unavailable, GLM diagnostics, GLM/negative-binomial step calculations,
+uncertainty summaries, and plots passed. R's base/recommended packages,
+including MASS and mgcv, remained available. This was an installation/core
+smoke test, not a complete vignette rebuild without suggested packages.
 
-The preceding source candidate passed on Windows Server 2022 x64, R-devel
-(2026-09-04 r90492 ucrt), with 0 errors, 0 warnings, and 1 note. Package
-installation, examples, tests, vignette rebuilding, and the PDF and HTML
-versions of the reference manual all completed successfully. The note also
-listed domain-specific words in DESCRIPTION (`CPUE`, `estimands`, and
-`spatiotemporal`; `et al.` is part of a bibliographic reference).
+### Documentation and archive review
 
-That win-builder result predates the centred CDI, refitted step plots,
-revised lobster data and posterior fixture, and subsequent vignette changes.
-Repeat win-builder
-on the final reviewed source before CRAN submission, using maintainer address
-`darcy@quantifish.co.nz`.
+The pkgdown site rebuilt successfully. Figure 13 now runs negative-binomial
+GLM refits, re-estimating dispersion for each changed stage and reusing the
+original final model. The known-truth log-scale RMSE decreases from 0.311 to
+0.084 across this designed teaching sequence. Its intervals are approximate
+model-based intervals, not a coverage or model-selection experiment. Browser
+checks verified figure numbering and lightbox opening/closing at normal and
+narrow widths. All 18 URLs checked in the built archive passed, and spelling
+checks passed with the reviewed technical word list.
+
+The new regression coverage verifies focus-interaction boundaries,
+offset/exposure restrictions, backend-specific lognormal parameterisations,
+and negative-binomial refits. Step plots remain centred year-effect contrasts,
+not spatially integrated abundance indices. The legacy review page, helper
+source, synthetic dataset, and compact posterior fixtures were not altered.
+
+Bentley's original notice remains installed with the frozen validation source.
+A bounded source/history audit found no concrete evidence requiring a licence
+change for gamInflu or CPUETools; applicable notices must still be retained if
+further copying is identified. The source archive contains no private source
+data, compiled model objects, or website build output.
+
+### Fresh win-builder validation
+
+This exact archive was uploaded to the R-devel win-builder web form on
+7 September 2026. The response confirmed the filename and 1,502,370-byte
+upload. The archive's maintainer was verified as
+`Darcy Webber <darcy@quantifish.co.nz>` before upload.
+
+The new email result is pending. An earlier candidate's successful Windows
+check is not being treated as validation of this archive. This upload requests
+a test build only; it is not a CRAN submission.

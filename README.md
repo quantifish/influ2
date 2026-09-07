@@ -48,6 +48,12 @@ Supported base families in the first implementation are Gaussian, binomial,
 Poisson, negative binomial, lognormal, Gamma, and Tweedie. Hurdle/delta and
 zero-inflated components are kept explicit.
 
+Standardised indices require an unambiguous focus effect. Offset/exposure
+diagnostics currently support single-component log-link ratios and
+identity-link contrasts, not combined or nonlinear-probability outputs.
+Lognormal support follows each backend's parameterisation; see the main
+vignette for the supported location, scale, and link combinations.
+
 ## Installation
 
 ```r

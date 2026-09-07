@@ -53,7 +53,7 @@
         length(expression) == 2L && is.symbol(expression[[2L]]))
   }, logical(1))
   if (length(year_terms) != 1L || !all(simple)) {
-    stop("Every refit formula must retain one additive year term (year or factor(year)); year interactions require separately fitted steps.", call. = FALSE)
+    stop("Every refit formula must retain one additive year term (year or factor(year)); year interactions require an explicitly defined marginalisation outside this interface.", call. = FALSE)
   }
   year_terms
 }
@@ -173,6 +173,14 @@
   if (backend %in% c("glm", "gam") && !isTRUE(model$converged)) {
     fail("did not converge.")
   }
+  if (inherits(model, "negbin") && !is.null(model$th.warn)) {
+    fail(paste0("has incomplete negative-binomial dispersion convergence: ",
+      paste(model$th.warn, collapse = "; "), "."))
+  }
+  if (inherits(model, "negbin") &&
+      (length(model$theta) != 1L || !is.finite(model$theta) || model$theta <= 0)) {
+    fail("does not have a finite positive negative-binomial dispersion estimate.")
+  }
   if (backend == "gam" && !is.null(model$outer.info$conv) &&
       !identical(model$outer.info$conv, "full convergence")) {
     fail(paste0("has incomplete GAM outer convergence: ", model$outer.info$conv, "."))
@@ -251,7 +259,8 @@
   # package was attached. Resolve the known backend without attaching it.
   if (!is.null(model$call)) {
     model$call[[1L]] <- switch(backend,
-      lm = quote(stats::lm), glm = quote(stats::glm),
+      lm = quote(stats::lm),
+      glm = if (inherits(model, "negbin")) quote(MASS::glm.nb) else quote(stats::glm),
       gam = if (inherits(model, "bam")) quote(mgcv::bam) else quote(mgcv::gam),
       glmmTMB = quote(glmmTMB::glmmTMB), sdmTMB = quote(sdmTMB::sdmTMB))
   }
@@ -261,7 +270,12 @@
     # NULL must be passed explicitly to erase the original subset expression.
     extras <- c(extras, list(subset = NULL, na.action = stats::na.fail))
   }
-  extras <- c(extras, list(weights = locked$weights, offset = locked$offset))
+  extras <- c(extras, list(weights = locked$weights))
+  # glm.nb re-estimates theta from its saved starting value and accepts
+  # offsets in the formula only, not as an extra glm.control argument.
+  if (!inherits(model, "negbin")) {
+    extras <- c(extras, list(offset = locked$offset))
+  }
   if (backend == "sdmTMB") {
     # update.sdmTMB removes NULL entries with [[<-, which fails when a call
     # never contained the optional argument. Omitting those is equivalent.

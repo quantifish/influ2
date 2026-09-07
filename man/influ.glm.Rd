@@ -58,5 +58,10 @@ standardisation distribution. By default the observed data are used.}
 An [influ_diag] object.
 }
 \description{
-Influence diagnostics for generalised linear models
+Fixed offsets/exposure are supported for single-component log-link ratios
+and identity-link contrasts, where the common reference offset cancels.
+They are not estimated influence terms. Nonlinear probability and combined
+hurdle/zero-inflated diagnostics with offsets fail explicitly. Nominal
+summaries always describe the observed response; they are not automatically
+divided by exposure to obtain CPUE.
 }
