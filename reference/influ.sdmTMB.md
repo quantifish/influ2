@@ -6,7 +6,9 @@ projected from the fitted fields without retaining dense draw arrays.
 Field uncertainty uses sparse joint-precision simulation and is reduced
 directly to compact focus-level estimands. Delta fixed effects and
 latent fields are combined draw by draw to obtain unconditional-mean
-influence.
+influence. Lognormal diagnostics require a log link for the arithmetic
+mean. Offsets have the same single-component restrictions as the GLM
+adapter.
 
 ## Usage
 

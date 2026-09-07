@@ -567,9 +567,9 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;       as.factor(year)               conditional                      0.60757313</span></span>
-<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10528749</span></span>
+<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10520110</span></span>
 <span><span class="co">#&gt;          depth_scaled               conditional                      0.05400688</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03084851</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03150923</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;              2013</span></span>
 <span><span class="co">#&gt;              2015</span></span>
@@ -632,11 +632,11 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
-<span><span class="co">#&gt;                  year               conditional                       0.2437404</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                       0.0515625</span></span>
+<span><span class="co">#&gt;                  year               conditional                      0.24374040</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.08243912</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
-<span><span class="co">#&gt;                 2</span></span></code></pre></div>
+<span><span class="co">#&gt;                 4</span></span></code></pre></div>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -721,9 +721,23 @@ preserves any offsets, and then adds the remaining terms in formula
 order. This lobster example starts with year, then adds month, the depth
 polynomial, and the soak-time polynomial. All steps use the same pot
 records and observed reference distribution.</p>
+<p>For the main step demonstration we fit a negative-binomial GLM,
+matching the overdispersed count distribution used by the simulator. The
+earlier Poisson GLM remains a simple introduction, but here both the
+coefficients and the negative-binomial dispersion parameter,
+<code>theta</code>, are estimated for every changed model specification.
+A reduced model can absorb omitted structure into its dispersion, so
+<code>theta</code> is not held at the full model’s estimate. This
+example requires the suggested package <code>MASS</code>.</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lobster_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
-<span>  <span class="va">lobster_glm</span>,</span>
+<code class="sourceCode R"><span><span class="va">lobster_nb</span> <span class="op">&lt;-</span> <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">glm.nb</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  link <span class="op">=</span> <span class="va">log</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">lobster_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_nb</span>,</span>
 <span>  year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  refit <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -745,11 +759,12 @@ preserving the model comparison.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">lobster_steps</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="influ2_files/figure-html/lobster-refitted-step-plot-1.png" class="r-plt" alt="Four sequential GLM panels showing centred year-effect ratios for year only, year plus month, then depth, then soak time." width="768"><p class="caption">
+<img src="influ2_files/figure-html/lobster-refitted-step-plot-1.png" class="r-plt" alt="Four sequential negative-binomial GLM panels showing centred year-effect ratios for year only, year plus month, then depth, then soak time." width="768"><p class="caption">
 Changes in the relative year effect as month, depth, and soak-time terms
-are added in a lobster GLM refitting sequence. Each panel highlights the
-current model with its 95% confidence interval and retains the preceding
-models for comparison.
+are added in a negative-binomial lobster GLM refitting sequence. Each
+changed model re-estimates its coefficients and dispersion; each panel
+highlights the current model with its approximate 95% confidence
+interval and retains the preceding models for comparison.
 </p>
 </div>
 <p>The sequence now exposes the changes built into the simulation.
@@ -789,11 +804,11 @@ log scale.</p>
 <span>  <span class="va">truth_check</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Model step"</span>, <span class="st">"RMSE of log year effect"</span><span class="op">)</span>,</span>
-<span>  caption <span class="op">=</span> <span class="st">"Agreement with the known annual effect in this synthetic dataset."</span></span>
+<span>  caption <span class="op">=</span> <span class="st">"Negative-binomial model agreement with the known annual effect in this synthetic dataset."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>Agreement with the known annual effect in this synthetic
-dataset.</caption>
+<caption>Negative-binomial model agreement with the known annual effect
+in this synthetic dataset.</caption>
 <thead><tr class="header">
 <th align="left">Model step</th>
 <th align="right">RMSE of log year effect</th>
@@ -805,15 +820,15 @@ dataset.</caption>
 </tr>
 <tr class="even">
 <td align="left">Add month</td>
-<td align="right">0.218</td>
+<td align="right">0.216</td>
 </tr>
 <tr class="odd">
 <td align="left">Add poly(depth, 3)</td>
-<td align="right">0.171</td>
+<td align="right">0.169</td>
 </tr>
 <tr class="even">
 <td align="left">Add poly(soak, 3)</td>
-<td align="right">0.086</td>
+<td align="right">0.084</td>
 </tr>
 </tbody>
 </table>
@@ -821,10 +836,12 @@ dataset.</caption>
 closer to the known truth as the three covariates are added. This is a
 teaching check of point estimates, not cross-validated predictive
 performance or evidence that every added term improves an index in
-practice. The Poisson confidence bands in the step plot are model-based
-and are not calibrated for the negative-binomial overdispersion used to
-generate these catches. The truth check does not evaluate their
-coverage.</p>
+practice. The approximate confidence bands use each negative-binomial
+model’s coefficient covariance matrix at its estimated dispersion. They
+account for count overdispersion under that model, but are not a
+bootstrap over dispersion estimation or model selection. In particular,
+reduced models deliberately omit relevant terms. This point-estimate
+truth check does not evaluate interval coverage.</p>
 <p>These are centred year-effect contrasts. For the lobster log-link
 models, they are exponentiated year effects relative to a common
 reference, not area-weighted abundance indices or spatially integrated
@@ -839,7 +856,7 @@ directly from a fitted model, but it performs the refits each time it is
 called. The automatic main-formula sequence also supports simple GAMs
 and <code>glmmTMB</code> models.</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">lobster_glm</span>, year <span class="op">=</span> <span class="st">"year"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">lobster_nb</span>, year <span class="op">=</span> <span class="st">"year"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gam_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span><span class="va">lobster_gam</span>, year <span class="op">=</span> <span class="st">"year"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">gam_steps</span><span class="op">)</span></span></code></pre></div>
@@ -852,7 +869,7 @@ common <code>reference_data</code> grid and
 intended comparison.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
-<span>  <span class="va">lobster_glm</span>,</span>
+<span>  <span class="va">lobster_nb</span>,</span>
 <span>  year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  steps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -1071,12 +1088,42 @@ lognormal, Poisson, and negative-binomial positive components.
 Zero-inflated combinations cover Poisson and negative-binomial counts.
 Quasi families and more specialised positive distributions are
 deliberately outside the initial scope.</p>
+<div class="section level3">
+<h3 id="model-structure-boundaries">Model-structure boundaries<a class="anchor" aria-label="anchor" href="#model-structure-boundaries"></a>
+</h3>
+<p>A standardised year-effect index requires an unambiguous term
+depending only on year. A term such as <code>year:area</code>, or
+several terms involving year, does not define one index without an
+additional marginalisation choice. <code><a href="../reference/influ.html">influ()</a></code> retains those
+influence terms but warns and omits the standardised index. Supplying
+<code>reference_data</code> changes the reference distribution; it does
+not automatically perform that marginalisation. Step plots and
+implied-residual baselines need an unambiguous focus effect as well.</p>
+<p>Fixed offsets are retained when models are refitted. Single-component
+log-link ratios and identity-link contrasts can be calculated with
+offsets held unchanged, because the reference offset cancels. An offset
+is not an estimated term and is not assigned its own influence
+coefficient. Nonlinear probability and combined hurdle/zero-inflated
+diagnostics with offsets are explicitly unsupported for now. For catch
+models with an effort offset, nominal summaries still report mean
+observed catch, not catch divided by effort; supply an appropriate
+separate nominal CPUE series if needed.</p>
+<p>BRMS lognormal models require constant <code>sigma</code> and their
+usual identity location link. Varying log-scale models are rejected
+rather than treating a log-location ratio as an arithmetic-mean ratio.
+In contrast, <code>glmmTMB</code> parameterises the lognormal arithmetic
+mean directly: its log-link mean ratios remain valid with varying
+dispersion, although dispersion effects are not separately decomposed.
+Mean-parameterised lognormal backends require a log link for these ratio
+diagnostics. These boundaries do not add area weighting or spatially
+integrated abundance to the year-effect indices.</p>
 <p>The separate <a href="hurdle.html">hurdle and zero-inflation
 vignette</a> explains named components and unconditional means. The <a href="bentley-validation.html">Bentley validation vignette</a> runs the
 frozen original <code>proto</code> implementation, compares values, and
 displays old and new plots side by side. The <a href="spatial-spatiotemporal.html">spatial and spatiotemporal
 vignette</a> maps persistent and time-varying fields alongside their
 influence components.</p>
+</div>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

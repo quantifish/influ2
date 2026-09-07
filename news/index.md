@@ -19,6 +19,24 @@
   accepts the same refitting route or a reusable `influ_steps` result.
   Step plots compare centred year-effect contrasts, with 95% intervals
   by default; they do not calculate area-weighted abundance indices.
+- Added negative-binomial GLM refitting through
+  [`MASS::glm.nb()`](https://rdrr.io/pkg/MASS/man/glm.nb.html),
+  preserving formula offsets, weights, and analysis rows while
+  re-estimating dispersion at each changed stage. The main lobster step
+  demonstration now uses this model and its approximate
+  negative-binomial confidence intervals.
+- Guarded ambiguous interaction-only focus indices and implied-residual
+  baselines. Reference grids centre effects; they do not automatically
+  marginalise interactions.
+- Restricted offset/exposure diagnostics to supported single-component
+  log-link ratios and identity-link contrasts. Other links and combined
+  hurdle/zero-inflated calculations with offsets fail explicitly.
+  Nominal summaries remain observed-response means, not
+  exposure-adjusted CPUE.
+- Added backend-specific lognormal guards: BRMS requires constant
+  log-scale `sigma` and an identity location link; mean-parameterised
+  backends require log links. `glmmTMB` log-mean ratios remain available
+  with varying dispersion.
 - Centred CDI fitted-effect panels on the same weighted reference as
   influence. Log-link and lognormal components now display relative
   effects about one on a logarithmic axis; other links retain clearly
@@ -57,10 +75,10 @@
 - Strengthened the synthetic lobster teaching scenario with changes in
   sampled season, depth, and soak time. Retained its known annual
   effects as dataset metadata and added a dynamically calculated truth
-  check for the refitted GLM sequence. The BRMS example includes soak
-  time alongside monthly and depth effects. Documentation distinguishes
-  point-estimate recovery from interval coverage under the demonstration
-  Poisson model.
+  check for the refitted negative-binomial GLM sequence. The BRMS
+  example includes soak time alongside monthly and depth effects.
+  Documentation distinguishes point-estimate recovery from interval
+  coverage and explains the model-based intervals.
 - Corrected BRMS population-term mapping when ordinary predictors follow
   group-level or smooth terms, so their labels and CDI grouping match
   the fixed-effect design matrix.

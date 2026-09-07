@@ -24,6 +24,26 @@ influ(model, ...)
 
 An object inheriting from \`influ_diag\`.
 
+## Details
+
+Standardised focus indices require one term depending only on the focus
+variable. If a focus term also involves another variable, or several
+terms contain the focus, the diagnostic retains their influence but
+warns and omits the standardised index. A prediction-grid reference
+changes the centring distribution; it does not automatically marginalise
+interactions. Define such indices in a separate model-specific
+prediction workflow. Step plots and implied-residual baselines require
+an unambiguous focus effect.
+
+Fixed offsets/exposure are supported only for single-component log-link
+ratios and identity-link contrasts; other offset-dependent reference
+calculations fail explicitly. Nominal summaries describe the observed
+response, not response divided by exposure. BRMS lognormal models
+require an identity location link and constant \`sigma\`.
+Mean-parameterised lognormal backends require a log link; \`glmmTMB\`
+may have varying dispersion, but its dispersion effects are not
+separately decomposed.
+
 ## Examples
 
 ``` r

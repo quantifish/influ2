@@ -107,6 +107,7 @@
 <span><span class="co"># Fast posterior-mean preview.</span></span>
 <span><span class="va">preview</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ.html">influ</a></span><span class="op">(</span><span class="va">brms_fit</span>, focus <span class="op">=</span> <span class="st">"year"</span>, uncertainty <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 <p>Supported base families in the first implementation are Gaussian, binomial, Poisson, negative binomial, lognormal, Gamma, and Tweedie. Hurdle/delta and zero-inflated components are kept explicit.</p>
+<p>Standardised indices require an unambiguous focus effect. Offset/exposure diagnostics currently support single-component log-link ratios and identity-link contrasts, not combined or nonlinear-probability outputs. Lognormal support follows each backend’s parameterisation; see the main vignette for the supported location, scale, and link combinations.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>

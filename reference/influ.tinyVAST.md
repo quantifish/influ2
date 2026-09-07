@@ -7,7 +7,9 @@ compact focus-level diagnostics. Spatial and spatiotemporal uncertainty
 uses sparse joint-precision simulation. Delta fixed effects and latent
 fields are combined draw by draw to obtain unconditional-mean influence.
 Multivariate mixed-family responses are returned as response-labelled
-components.
+components. Lognormal diagnostics require a log link for the arithmetic
+mean. Offsets have the same single-component restrictions as the GLM
+adapter.
 
 ## Usage
 

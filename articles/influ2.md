@@ -566,9 +566,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10528749
+#>         spatial_field conditional:latent_fields                      0.10520110
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03084851
+#>  spatiotemporal_field conditional:latent_fields                      0.03150923
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -635,11 +635,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                       0.2437404
-#>  spatiotemporal_field conditional:latent_fields                       0.0515625
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.08243912
 #>  level_at_maximum
 #>                 4
-#>                 2
+#>                 4
 ```
 
 ``` r
@@ -742,10 +742,25 @@ formula order. This lobster example starts with year, then adds month,
 the depth polynomial, and the soak-time polynomial. All steps use the
 same pot records and observed reference distribution.
 
+For the main step demonstration we fit a negative-binomial GLM, matching
+the overdispersed count distribution used by the simulator. The earlier
+Poisson GLM remains a simple introduction, but here both the
+coefficients and the negative-binomial dispersion parameter, `theta`,
+are estimated for every changed model specification. A reduced model can
+absorb omitted structure into its dispersion, so `theta` is not held at
+the full model’s estimate. This example requires the suggested package
+`MASS`.
+
 ``` r
 
+lobster_nb <- MASS::glm.nb(
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  link = log,
+  data = lobsters_per_pot
+)
+
 lobster_steps <- influ_steps(
-  lobster_glm,
+  lobster_nb,
   year = "year",
   refit = TRUE
 )
@@ -772,14 +787,15 @@ model comparison.
 plot_step(lobster_steps)
 ```
 
-![Four sequential GLM panels showing centred year-effect ratios for year
-only, year plus month, then depth, then soak
+![Four sequential negative-binomial GLM panels showing centred
+year-effect ratios for year only, year plus month, then depth, then soak
 time.](influ2_files/figure-html/lobster-refitted-step-plot-1.png)
 
 Changes in the relative year effect as month, depth, and soak-time terms
-are added in a lobster GLM refitting sequence. Each panel highlights the
-current model with its 95% confidence interval and retains the preceding
-models for comparison.
+are added in a negative-binomial lobster GLM refitting sequence. Each
+changed model re-estimates its coefficients and dispersion; each panel
+highlights the current model with its approximate 95% confidence
+interval and retains the preceding models for comparison.
 
 The sequence now exposes the changes built into the simulation. Adding
 month raises the early relative year effects, correcting for sampling in
@@ -821,27 +837,30 @@ knitr::kable(
   truth_check,
   digits = 3,
   col.names = c("Model step", "RMSE of log year effect"),
-  caption = "Agreement with the known annual effect in this synthetic dataset."
+  caption = "Negative-binomial model agreement with the known annual effect in this synthetic dataset."
 )
 ```
 
 | Model step         | RMSE of log year effect |
 |:-------------------|------------------------:|
 | Year only          |                   0.311 |
-| Add month          |                   0.218 |
-| Add poly(depth, 3) |                   0.171 |
-| Add poly(soak, 3)  |                   0.086 |
+| Add month          |                   0.216 |
+| Add poly(depth, 3) |                   0.169 |
+| Add poly(soak, 3)  |                   0.084 |
 
-Agreement with the known annual effect in this synthetic dataset.
-{.table}
+Negative-binomial model agreement with the known annual effect in this
+synthetic dataset. {.table}
 
 For this fixed simulated dataset, the fitted year contrasts move closer
 to the known truth as the three covariates are added. This is a teaching
 check of point estimates, not cross-validated predictive performance or
 evidence that every added term improves an index in practice. The
-Poisson confidence bands in the step plot are model-based and are not
-calibrated for the negative-binomial overdispersion used to generate
-these catches. The truth check does not evaluate their coverage.
+approximate confidence bands use each negative-binomial model’s
+coefficient covariance matrix at its estimated dispersion. They account
+for count overdispersion under that model, but are not a bootstrap over
+dispersion estimation or model selection. In particular, reduced models
+deliberately omit relevant terms. This point-estimate truth check does
+not evaluate interval coverage.
 
 These are centred year-effect contrasts. For the lobster log-link
 models, they are exponentiated year effects relative to a common
@@ -859,7 +878,7 @@ sequence also supports simple GAMs and `glmmTMB` models.
 
 ``` r
 
-plot_step(lobster_glm, year = "year", refit = TRUE)
+plot_step(lobster_nb, year = "year", refit = TRUE)
 
 gam_steps <- influ_steps(lobster_gam, year = "year", refit = TRUE)
 plot(gam_steps)
@@ -875,7 +894,7 @@ when the observed reference is not the intended comparison.
 ``` r
 
 lobster_steps <- influ_steps(
-  lobster_glm,
+  lobster_nb,
   year = "year",
   refit = TRUE,
   steps = list(
@@ -1114,6 +1133,38 @@ lognormal, Poisson, and negative-binomial positive components.
 Zero-inflated combinations cover Poisson and negative-binomial counts.
 Quasi families and more specialised positive distributions are
 deliberately outside the initial scope.
+
+### Model-structure boundaries
+
+A standardised year-effect index requires an unambiguous term depending
+only on year. A term such as `year:area`, or several terms involving
+year, does not define one index without an additional marginalisation
+choice.
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md)
+retains those influence terms but warns and omits the standardised
+index. Supplying `reference_data` changes the reference distribution; it
+does not automatically perform that marginalisation. Step plots and
+implied-residual baselines need an unambiguous focus effect as well.
+
+Fixed offsets are retained when models are refitted. Single-component
+log-link ratios and identity-link contrasts can be calculated with
+offsets held unchanged, because the reference offset cancels. An offset
+is not an estimated term and is not assigned its own influence
+coefficient. Nonlinear probability and combined hurdle/zero-inflated
+diagnostics with offsets are explicitly unsupported for now. For catch
+models with an effort offset, nominal summaries still report mean
+observed catch, not catch divided by effort; supply an appropriate
+separate nominal CPUE series if needed.
+
+BRMS lognormal models require constant `sigma` and their usual identity
+location link. Varying log-scale models are rejected rather than
+treating a log-location ratio as an arithmetic-mean ratio. In contrast,
+`glmmTMB` parameterises the lognormal arithmetic mean directly: its
+log-link mean ratios remain valid with varying dispersion, although
+dispersion effects are not separately decomposed. Mean-parameterised
+lognormal backends require a log link for these ratio diagnostics. These
+boundaries do not add area weighting or spatially integrated abundance
+to the year-effect indices.
 
 The separate [hurdle and zero-inflation
 vignette](https://www.quantifish.co.nz/influ2/articles/hurdle.md)

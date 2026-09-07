@@ -303,14 +303,14 @@ smaller frozen numerical fixture.</p>
 <span><span class="co">#&gt; 5  2001 poly(depth, 3)            0.11516257         0.11516257</span></span>
 <span><span class="co">#&gt; 6  2001  poly(soak, 3)           -0.09831081        -0.09831081</span></span>
 <span><span class="co">#&gt;   natural_influence_legacy absolute_difference</span></span>
-<span><span class="co">#&gt; 1                0.6489935        5.551115e-17</span></span>
-<span><span class="co">#&gt; 2                1.1118155        1.387779e-17</span></span>
+<span><span class="co">#&gt; 1                0.6489935        0.000000e+00</span></span>
+<span><span class="co">#&gt; 2                1.1118155        2.775558e-17</span></span>
 <span><span class="co">#&gt; 3                0.8846164        0.000000e+00</span></span>
-<span><span class="co">#&gt; 4                0.6601924        0.000000e+00</span></span>
-<span><span class="co">#&gt; 5                1.1220558        1.387779e-17</span></span>
+<span><span class="co">#&gt; 4                0.6601924        5.551115e-17</span></span>
+<span><span class="co">#&gt; 5                1.1220558        0.000000e+00</span></span>
 <span><span class="co">#&gt; 6                0.9063672        0.000000e+00</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">absolute_difference</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.110223e-16</span></span>
+<span><span class="co">#&gt; [1] 8.326673e-17</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">absolute_difference</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1e-8</span><span class="op">)</span></span></code></pre></div>
 <p>The same validation covers the two scalar metrics from the original
 implementation. <code>overall</code> summarises mean absolute influence,

@@ -122,13 +122,16 @@ positive catch and the probability of a zero:</p>
 <span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brmsformula.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">group</span>, <span class="va">hu</span> <span class="op">~</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">simulated_cpue</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brmsfamily.html" class="external-link">hurdle_lognormal</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  chains <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  cores <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42</span>,</span>
+<span>  control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta <span class="op">=</span> <span class="fl">0.99</span>, max_treedepth <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
 <span>  file <span class="op">=</span> <span class="st">"m1"</span>,</span>
 <span>  file_refit <span class="op">=</span> <span class="st">"on_change"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The vignette uses the prefitted object supplied with its source.
+<p>The vignette uses the pre-fitted object supplied with its source.
 Joint posterior draws are reduced directly to compact component and
 unconditional-mean contrasts.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -243,9 +246,16 @@ draw from their sparse joint precision matrices.</li>
 </ul>
 <p>Only derived focus-by-term draws are retained when requested. The
 much larger observation-by-draw arrays are never stored.</p>
-<p>For lognormal models, a constant residual-scale adjustment cancels
-from an influence ratio. Distributional models in which the scale itself
-varies need a future scale-component adapter.</p>
+<p>For BRMS lognormal models, a constant residual-scale adjustment
+cancels from an influence ratio. Models in which <code>sigma</code>
+varies are rejected: they need a future joint location-and-scale
+calculation. BRMS lognormal location models also require their usual
+identity link. Mean-parameterised lognormal backends instead require a
+log link. In <code>glmmTMB</code>, varying data-scale dispersion does
+not invalidate log-link arithmetic-mean ratios, but its dispersion
+effects are not separately decomposed. Combined hurdle/zero-inflated
+diagnostics with offsets or exposure additions are also rejected until
+an offset-aware reference calculation is available.</p>
 </div>
 <div class="section level2">
 <h2 id="spatial-delta-models">Spatial delta models<a class="anchor" aria-label="anchor" href="#spatial-delta-models"></a>
