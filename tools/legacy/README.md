@@ -6,19 +6,21 @@ runtime namespace and retained only to document and regenerate the Bentley
 parity fixture. Keeping it under `inst/` also allows the comparison vignette
 to run the original code through `system.file()` after installation.
 
-The routine package tests compare the new engine with the compact reference
-values in `inst/extdata/bentley-poisson-reference.csv`; they do not source the
-legacy implementation or require `proto`. To deliberately rebuild the fixture, run
+The routine fixture tests compare the new engine with the compact reference
+values in `inst/extdata/bentley-poisson-reference.csv` without requiring
+`proto`. A separate lobster parity test sources the original implementation
+when `proto` is installed. To deliberately rebuild the fixture, run
 `Rscript tools/legacy/regenerate-bentley-fixture.R` from the package root.
 
 The source file retains its original copyright and licence notice.
 
 ## Earlier influ2 helpers
 
-`tools/legacy/R/` and `tools/legacy/man/` contain a frozen copy of the earlier
-BRMS-specific helper interface. These files are deliberately outside the
-runtime package namespace while each helper is triaged. Selected functions
-have already been rebuilt in the active package as model-neutral diagnostics:
+`tools/legacy/R/` and `tools/legacy/man/` contain the remaining review copies
+of the earlier BRMS-specific helper interface. These files are deliberately
+outside the runtime package namespace while each helper is triaged. Selected
+functions have already been rebuilt in the active package as model-neutral
+diagnostics:
 
 - `plot_compare()` and `plot_step()`;
 - `plot_data_extent()`;
@@ -26,6 +28,28 @@ have already been rebuilt in the active package as model-neutral diagnostics:
 - `get_bayes_R2()` and `table_criterion()`; and
 - `plot_bubble()`.
 
-The frozen files are comparison material, not maintained implementations.
+The remaining files are comparison material, not maintained implementations.
 They should only be deleted after the remaining functions have been reviewed
-individually.
+individually. Retaining their source does not re-export their old names.
+
+### Accepted removals: 7 September 2026
+
+The maintainer approved retirement of `plot_hurdle()`, `get_coefs()`,
+`get_coefs_raw()`, `get_marginal()`, `get_influ()`, `get_influ2()`,
+`plot_influ()`, `plot_bayesian_cdi()`, `plot_bayesian_cdi2()`, and `influ_app()`.
+Their source and help files have been removed. The coefficient helpers had
+no callers outside the retired influence/CDI helpers; no retained function
+requires the old Shiny app. Its use of `get_bayes_R2()` and `plot_compare()`
+does not make those independently useful functions removal candidates.
+
+The current `influ()` generic, the Bentley implementation above, the frozen
+Get Started page at `pkgdown/assets/articles/legacy-get-started.html`, and all
+its figures remain intact. The full pre-triage helper source is recoverable
+from Git commit `cf12bb6`.
+
+Still retained for review: `get_index()`, `plot_index()`,
+`get_unstandarsied()` (the original spelling), `rescale_index()`, earlier
+`table_criterion()` and `get_bayes_R2()` reporting, `glm_term_table()`, and
+internal utilities and examples not yet individually triaged. See
+`tools/release-review.md` for the decisions still needed. A new model-neutral
+viewer remains an optional future idea, not an implementation commitment.

@@ -1,8 +1,30 @@
-## Current residual-diagnostics candidate: 7 September 2026
+## Partial legacy triage: 7 September 2026
 
-CRAN submission remains unauthorised, and the earlier-functionality triage is
-still parked. This candidate supersedes the source checked in the historical
-section below; that pending win-builder result cannot validate these changes.
+The first ten legacy-helper retirements have been accepted and recorded in
+`tools/release-review.md`. Only approved frozen source and help files were
+removed; active model code, dependencies, the Bentley validation artefact,
+and the frozen review HTML and figures are unchanged. Added namespace tests
+protect the maintained interface and the retirement decisions.
+
+The full local test suite passed after these removals, including the four
+new namespace expectations and all eight unchanged visual snapshots. A
+parsed-source dependency audit found no references to the retired names in
+the remaining helper implementations. All 20 frozen article/figure files
+match the pre-triage checkout byte for byte, and the retained `plot_index()`
+function body is unchanged.
+
+The remaining assessment-output and reporting decisions are still open.
+This is not a new final submission candidate. The results below apply to
+their identified earlier archives; rebuild and repeat release checks after
+the next review round. No CRAN submission or new win-builder upload is
+authorised by this triage.
+
+## Pre-triage residual-diagnostics candidate: 7 September 2026
+
+At the time of these checks, CRAN submission was unauthorised, and the
+earlier-functionality triage was parked. This candidate superseded the source
+checked in the historical section below; that pending win-builder result
+cannot validate these changes.
 
 Archive: `influ2-residuals-20260907/influ2_1.1.0.tar.gz` (1,882,568 bytes).
 

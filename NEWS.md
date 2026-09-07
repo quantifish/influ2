@@ -1,5 +1,14 @@
 # influ2 1.1.0
 
+* Completed the first legacy-helper triage: retired `plot_hurdle()`,
+  `get_coefs()`, `get_coefs_raw()`, `get_marginal()`, and the old Shiny
+  `influ_app()`. No retained implementation depends on these functions.
+  Consolidated `get_influ()`, `get_influ2()`, and `plot_influ()` on the
+  model-neutral influence interface, and `plot_bayesian_cdi()` and
+  `plot_bayesian_cdi2()` on `plot(..., type = "cdi")`. Their frozen source
+  and help files were removed without adding compatibility wrappers.
+  The current `influ()` API, hurdle/zero-inflated support, frozen review page
+  and figures, and undecided assessment-output helpers remain intact.
 * Added a residual-diagnostics article and reference section, with executable
   lobster examples, optional DHARMa checks, and guidance on PIT, spatial,
   Bayesian, and one-step-ahead residuals.

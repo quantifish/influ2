@@ -36,15 +36,15 @@ is a separate, later step authorised by the maintainer.
 
 ## 2. Decide what to keep from the earlier interface
 
-**Parked by the maintainer on 7 September 2026.** Return to this as the final
-review step before authorising CRAN submission. The current hardening and
-validation work does not retire additional helpers or imply that this
-function-by-function review is complete.
+**First retirement decisions accepted on 7 September 2026.** The maintainer
+approved the removals below, and asked to keep the undecided features for
+another review round. This partial triage does not freeze the public API or
+authorise CRAN submission.
 
 Review the frozen page at `pkgdown/assets/articles/legacy-get-started.html`
-against the current package. The source in `tools/legacy/R/` is preserved for
-this review. Do not delete the page, its figures, or the frozen source until
-each relevant feature has a recorded destination or an explicit removal
+against the current package. The remaining source in `tools/legacy/R/` is
+preserved for this review. Do not delete the page, its figures, or remaining
+source until each relevant feature has a recorded destination or an explicit removal
 decision. The original Bentley `proto` implementation has a separate role as
 a validation artefact and is not a candidate for the active runtime API.
 
@@ -61,23 +61,57 @@ package. They are not merely historical helpers:
 | `table_criterion()` | Retain the BRMS criteria; review interpretation of LOO, R-squared, and log likelihood. |
 | `plot_implied_residuals()` | Review the fisheries interpretation, strata threshold, residual choice, and one-standard-error bars. |
 | `plot_predicted_residuals()` | Review residual types and smooths for each intended backend. |
-| `plot_qq()` | Retain as normal-quantile screening; decide how to illustrate simulation-based checks for non-Gaussian models. |
+| `plot_qq()` | Retain as normal-quantile screening; review the new residual article's optional DHARMa examples and their limitations. |
 
-The frozen functions below require specific choices. The listed replacements
-cover related workflows; equivalence of every old argument and output column
-has not been assumed.
+### Accepted retirements
+
+These ten names are no longer candidates for restoration. Their frozen
+implementations and help files have been removed; they were already outside
+the runtime namespace. No compatibility wrappers or new dependencies are
+introduced.
+
+| Retired functions | Decision |
+| --- | --- |
+| `plot_hurdle()` | Remove the old BRMS-specific plot. Use the supported component and index displays; their estimands are not necessarily identical to the old reference-covariate predictions. Hurdle, delta, and zero-inflated model support remains. |
+| `get_coefs()`, `get_coefs_raw()`, `get_marginal()` | Remove: no retained implementation calls them. Current adapters calculate their own effects. The compact coefficient summaries and retained diagnostic draws are not general-purpose raw coefficient or response-curve extractors. |
+| `get_influ()`, `get_influ2()`, `plot_influ()` | Consolidate on `influ()`, `influ_effects()`, and `plot(..., type = "influence")`. |
+| `plot_bayesian_cdi()`, `plot_bayesian_cdi2()` | Consolidate on `plot(..., type = "cdi")`. |
+| `influ_app()` | Remove the old BRMS-only Shiny launcher. A possible new model-neutral viewer is deferred, not commissioned by this decision. |
+
+The complete pre-triage source remains recoverable at Git commit `cf12bb6`.
+The frozen Get Started HTML and every accompanying figure remain unchanged.
+The maintained `influ()` generic and Bentley validation implementation are
+explicitly retained.
+
+### Still awaiting review
+
+The frozen functions below require specific choices. Keeping these files for
+review does not re-export or maintain the old implementations. Related current
+workflows are not assumed to reproduce every old argument or output column.
 
 | Frozen function or feature | Proposed destination or decision |
 | --- | --- |
-| `get_influ()`, `get_influ2()`, `plot_influ()` | Use `influ()`, `influ_effects()`, and `plot(..., type = "influence")`; identify any missing behaviour before retiring the old names. |
-| `plot_bayesian_cdi()`, `plot_bayesian_cdi2()` | Use `plot(..., type = "cdi")`; compare layout, ordering, labels, intervals, and available term/component combinations. |
-| `get_index()`, `get_unstandarsied()` | Review the old stock-assessment output section against `influ_indices()`; decide which columns, uncertainty summaries, and rescaling operations users need. |
-| `plot_index()`, `plot_hurdle()` | Compare with `plot(..., type = "index")` and `plot(..., type = "components")`; check that component and combined-mean views cover the old use cases. |
+| `get_index()`, `plot_index()` | Keep for review of assessment-ready tables and plots: year, mean, median, SD, CV, intervals, and metadata. Old reference-covariate response predictions differ from the centred year-effect contrasts in `influ_indices()`. |
+| `get_unstandarsied()` (original spelling) | Keep for review of geometric-mean CPUE and positive-mean times occurrence summaries versus the current weighted arithmetic nominal mean. Decide definitions and names, including treatment of zero catches. |
 | `rescale_index()` | Check whether `plot_compare(rescale = ..., rescale_series = ...)` is sufficient, or whether users need a public function returning rescaled tables. |
-| `get_coefs()`, `get_coefs_raw()`, `get_marginal()` | Decide whether users need a public fitted-effect extractor beyond the current `diagnostic$coefficients` table, including marginal effects and draw summaries. |
-| `influ_app()` | Decide whether to defer the interactive application; static diagnostics already have a supported interface. |
+| Earlier `table_criterion()` and `get_bayes_R2()` | Keep both maintained functions and the frozen reporting examples. Review divergence counts, chain runtime, LOO model differences, and a complete-fit BRMS example. |
+| `glm_term_table()` | Keep the internal source for review of deviance/AIC summaries accompanying step plots. The historical one-percent improvement rule is not an accepted model-selection criterion. |
 | `get_first_term()`, `id_var_type()`, `geo_mean()`, and other internal utilities | Keep internal only when needed by a retained feature; do not restore exports simply because they existed previously. |
 | PPC bars and ECDF overlays in the frozen article | Decide which examples to restore using the original model and `bayesplot`; these are posterior predictive checks, not replacements for CDI. |
+
+Suggested order for the next round: assessment tables and plots; nominal
+definitions and table rescaling; Bayesian predictive examples and reporting
+extras; then sequential-fit tables and residual internal utilities.
+
+### Possible future viewer (recommendation only)
+
+An optional Shiny viewer could help users select models, terms, components,
+and plot types, and export the selected plots and tables. It should consume
+already calculated `influ_diag` and `influ_steps` objects, reuse the public
+plotting methods, and avoid silently refitting models or running MCMC.
+Diagnostic objects alone cannot supply native posterior predictive checks.
+Defer this until the static interface is settled; do not make it a first-CRAN
+release requirement or introduce Shiny dependencies now.
 
 Record each outcome as keep, consolidate, defer, or remove. For kept features,
 add a current example and appropriate tests. For removed names, document the
@@ -110,9 +144,9 @@ Further extensions remain optional rather than promises of the initial release:
 - Review joint dependence for complex component combinations. Fixed-effect,
   posterior, and sparse-precision calculations have different approximations;
   intervals should describe the calculation actually used.
-- Decide whether normal-residual Q-Q screening and the retained residual
-  helpers are sufficient for the initial release, or whether worked posterior
-  predictive or simulation-residual examples should be included first.
+- Review the residual article's normal Q-Q screening, native residual helpers,
+  and optional DHARMa simulation examples. Decide separately which complete-fit
+  Bayesian posterior predictive examples to restore from the frozen page.
 
 These decisions can narrow the documented release scope; they do not all
 require adding new features before submission. Unsupported cases should be
