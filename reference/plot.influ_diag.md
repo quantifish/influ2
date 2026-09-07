@@ -78,4 +78,7 @@ performed within each posterior/simulation draw. Ratio summaries are
 calculated after transforming those draws. A CDI plot displays one
 component at a time; select \`component\` when a term occurs in several
 model components. Zero-probability components retain their fitted link
-orientation and are explicitly labelled as such.
+orientation and are explicitly labelled as such. Short term labels
+(including months) are horizontal on the upper fitted- effect axis and
+the lower composition axis. The influence panel's focus labels are on
+the right, with the same level ordering as the composition.

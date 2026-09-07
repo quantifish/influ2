@@ -128,15 +128,13 @@ responses with integer trial weights).
 ## Examples
 
 ``` r
+if (requireNamespace("glmmTMB", quietly = TRUE)) {
 data(lobsters_per_pot)
-fit <- glm(lobsters ~ year + month + depth + soak,
-  family = poisson(), data = lobsters_per_pot)
+fit <- glmmTMB::glmmTMB(
+  lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
+  family = glmmTMB::nbinom2(), data = lobsters_per_pot)
 checks <- influ_residuals(fit, nsim = 50, seed = 42)
 checks
-#> Simulation-based residual diagnostics (glm)
-#> 5049 observations; 50 simulations
-#> Time: year [ year-name detection ]
-#> Observation simulations at fitted parameters (including fitted smooths)
-#> Exploratory ranks; not a calibrated goodness-of-fit test
 plot(checks)
+}
 ```

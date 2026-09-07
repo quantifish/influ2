@@ -57,6 +57,7 @@ than a recommendation for production analysis.
 ``` r
 
 pcod_mesh <- sdmTMB::make_mesh(pcod, c("X", "Y"), cutoff = 10)
+mesh_par <- par(mar = rep(0.3, 4))
 plot(pcod_mesh)
 ```
 
@@ -64,6 +65,11 @@ plot(pcod_mesh)
 model.](spatial-spatiotemporal_files/figure-html/sdmtmb-mesh-1.png)
 
 Triangulated mesh used for the Pacific cod spatiotemporal model.
+
+``` r
+
+par(mesh_par)
+```
 
 ### Fit and diagnose
 
@@ -98,9 +104,9 @@ summary(pcod_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>          depth_scaled               conditional                       0.5119533
-#>  spatiotemporal_field conditional:latent_fields                       0.4760166
+#>  spatiotemporal_field conditional:latent_fields                       0.4878812
 #>         depth_scaled2               conditional                       0.3191610
-#>         spatial_field conditional:latent_fields                       0.2820632
+#>         spatial_field conditional:latent_fields                       0.2723857
 #>  level_at_maximum
 #>              2003
 #>              2011
@@ -364,8 +370,8 @@ summary(tiny_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>          factor(time)               conditional                      0.24617106
-#>  spatiotemporal_field conditional:latent_fields                      0.04604271
-#>         spatial_field conditional:latent_fields                      0.02606292
+#>  spatiotemporal_field conditional:latent_fields                      0.04614354
+#>         spatial_field conditional:latent_fields                      0.02584581
 #>  level_at_maximum
 #>                 5
 #>                 6

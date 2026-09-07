@@ -82,15 +82,45 @@ variable:
     distribution, including zero catches, with a pointwise predictive
     band.
 
+For this overview, use **glmmTMB mixed models** with a monthly random
+intercept, as in the [main
+article](https://www.quantifish.co.nz/influ2/articles/influ2.html#glmmtmb).
+Year, depth, and soak time enter the mean formula as fixed effects; the
+monthly effect is partially pooled. The negative-binomial and Poisson
+candidates use the same mean structure and the original, unchanged
+simulated lobster dataset.
+
 ``` r
 
-nb_checks <- influ_residuals(lobster_nb, nsim = 250, batch_size = 25,
+data(lobsters_per_pot)
+lobster_nb_mixed <- glmmTMB::glmmTMB(
+  lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
+  family = glmmTMB::nbinom2(link = "log"), data = lobsters_per_pot
+)
+lobster_poisson_mixed <- glmmTMB::glmmTMB(
+  formula(lobster_nb_mixed),
+  family = poisson(link = "log"), data = lobsters_per_pot
+)
+```
+
+These examples require the optional `glmmTMB` package. Its native
+simulations resimulate monthly random effects from their estimated
+distribution, rather than holding the twelve fitted monthly effects
+fixed. Thus the ECDF band also reflects between-month variation in
+replicated data. These are model checks, not a test of whether
+particular observed months must follow a realised curve. The existing
+native-residual and DHARMa examples below remain separate fixed-effect
+comparisons.
+
+``` r
+
+nb_checks <- influ_residuals(lobster_nb_mixed, nsim = 250, batch_size = 25,
   seed = 20260907)
 nb_checks
-#> Simulation-based residual diagnostics (glm)
+#> Simulation-based residual diagnostics (glmmTMB)
 #> 5049 observations; 250 simulations
 #> Time: year [ year-name detection ]
-#> Observation simulations at fitted parameters (including fitted smooths)
+#> Native simulations at fitted parameters; random effects resimulated
 #> Exploratory ranks; not a calibrated goodness-of-fit test
 ```
 
@@ -99,40 +129,42 @@ nb_checks
 plot(nb_checks, response_scale = "log1p")
 ```
 
-![Four panels show normal-score simulation-rank Q-Q, residuals against
-the predictive mean, residual boxplots by fishing year, and observed and
-simulated lobster-catch
+![Four panels for a negative-binomial glmmTMB mixed model show
+simulation-rank Q-Q, residuals against the predictive mean, fishing-year
+boxplots, and observed and simulated lobster-catch
 ECDFs.](residual-diagnostics_files/figure-html/residual-overview-1.png)
 
-Four-panel simulation-based residual diagnostic for the fuller
-negative-binomial lobster model. The year panel reports the uneven
-sample sizes. The Q-Q ribbon is a nominal 95% pointwise
-independent-uniform reference, not a calibrated test for this fitted
-model. The ECDF ribbon is a 95% pointwise predictive band. Its log1p
-response axis retains zero catches.
+Four-panel simulation-based residual diagnostic for the
+negative-binomial glmmTMB lobster model with a monthly random intercept.
+The year panel reports the uneven sample sizes. The Q-Q ribbon is a
+nominal 95% pointwise independent-uniform reference, not a calibrated
+test for this mixed model. The ECDF ribbon is a 95% pointwise predictive
+band, including resimulated monthly effects. Its log1p response axis
+retains zero catches.
 
-For comparison, apply exactly the same display to the Poisson candidate.
-Its mean formula includes the same terms, but it cannot reproduce the
-extra variation used to simulate the lobster data. Look for departures
-across the panels rather than declaring a model adequate from one
-favourable plot.
+For comparison, apply exactly the same display to the Poisson glmmTMB
+candidate. Its mean formula includes the same terms, but it cannot
+reproduce the extra variation used to simulate the lobster data. Look
+for departures across the panels rather than declaring a model adequate
+from one favourable plot.
 
 ``` r
 
-poisson_checks <- influ_residuals(lobster_poisson, nsim = 250,
+poisson_checks <- influ_residuals(lobster_poisson_mixed, nsim = 250,
   batch_size = 25, seed = 20260907)
 plot(poisson_checks, response_scale = "log1p")
 ```
 
-![Four-panel residual diagnostic for the Poisson candidate, showing
-distributional departures and varying residual
-spread.](residual-diagnostics_files/figure-html/residual-overview-poisson-1.png)
+![Four-panel residual diagnostic for the Poisson glmmTMB mixed model,
+including resimulated monthly
+effects.](residual-diagnostics_files/figure-html/residual-overview-poisson-1.png)
 
-The same four-panel diagnostic for the Poisson lobster candidate. Its
-response distribution lacks the extra variation in the simulated data.
-Compare the Q-Q shape, residual spread across fitted means and years,
-and predictive ECDF with the preceding negative-binomial display; the
-reference ribbons are not automatic model-selection thresholds.
+The same four-panel diagnostic for the Poisson glmmTMB lobster
+candidate, again with a monthly random intercept. Its observation
+distribution lacks the negative-binomial variation in the simulated
+data. Compare all four panels with the preceding model; resimulated
+monthly effects contribute to both displays, and the reference ribbons
+are not automatic model-selection thresholds.
 
 ### Automatic time selection
 

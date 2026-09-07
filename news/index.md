@@ -2,6 +2,13 @@
 
 ## influ2 1.1.0
 
+- Refined CDI layouts: short term labels are horizontal and repeated
+  above the fitted-effect panel; focus/year labels sit on the influence
+  panel’s right-hand axis. The two-column size legend is extracted
+  without unused guide slots, preventing its title from being clipped.
+  Four-panel residual examples now use glmmTMB models with a monthly
+  random intercept. Bentley comparison labelling and the native mesh
+  figure’s margins are tidier.
 - Added
   [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
   and a reusable four-panel residual display: simulation-based Q-Q,
