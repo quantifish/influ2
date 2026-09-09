@@ -21,3 +21,4 @@ R/testing.R
 ^Meta$
 ^tests/testthat/Rplots\.pdf$
 ^tools/release-review\.md$
+^codecov\.yml$
