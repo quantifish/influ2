@@ -2,13 +2,13 @@
 
 ## Authors
 
-- **Darcy Webber**. Author, maintainer, copyright holder.
+- **Darcy M. Webber**. Author, maintainer, copyright holder.
 
 - **Nokome Bentley**. Contributor, copyright holder.  
-  Original influence methodology and legacy validation implementation
+  Original methodology; copyright in inst/legacy/influ-proto.R only
 
 - **Trophia Ltd**. Copyright holder.  
-  Legacy validation implementation
+  Copyright in inst/legacy/influ-proto.R only
 
 ## Citation
 
