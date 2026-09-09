@@ -150,10 +150,23 @@ totals, both ordinary and Poisson-link delta families, reference offsets,
 native-time mapping, batch invariance, random-number-state restoration,
 unchanged fitted-model state, and area/season/conversion scaling. A complete
 existing brms fit agrees with native posterior integration to 3.6e-15; no
-new MCMC was required. The full local suite passed 3,104 expectations before
-one additional explicit field/offset assertion was added. The complete site
-and source archive built, and the new figures and numbered lightbox captions
-were reviewed locally. Final archive and GitHub results are recorded separately.
+new MCMC was required. The final local suite passed 3,109 expectations in
+183 test blocks, with no failures, warnings, or skips. The final code archive
+(88e14ff) passed macOS R 4.6.1 `R CMD check --as-cran --no-manual` with zero
+errors, zero warnings, and one NOTE (new submission and optional tinyVAST from
+the declared additional repository). All vignettes rebuilt. CRAN-mode tests
+passed 3,096 expectations; the five visual groups skipped there passed locally.
+Archive SHA256: `a2ab355aad0653b3a84e657b9b4391e27a33a3081b716470421d44aa1735fec4`.
+
+The complete site built, and the new figures and numbered lightbox captions
+were reviewed locally. A subsequent prose-only correction removed an obsolete
+sentence from the main article; the corrected article was rebuilt with the
+current source package. Coverage for 88e14ff is 89.39% overall, 94.48% for the
+spatial-index adapter, and 96.30% for area integration. Relevant GitHub runs:
+R-CMD-check 34412426492, coverage 34412426533, and pkgdown 34412426567.
+The 49-cell, six-year tinyVAST example with 1,000 joint draws took about
+1.3 seconds for integration on this Mac and retained an 8,832-byte summary.
+This is output size, not a measurement of peak process RAM.
 
 Spatial `Mean` is the plug-in expected response, not a Laplace bias-corrected
 total. Uncertainty uses shared joint Gaussian parameter/field draws, not MCMC.

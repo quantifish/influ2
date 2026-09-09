@@ -1,3 +1,35 @@
+## Standardised and integrated indices: 10 September 2026
+
+Code revision: `88e14ff9e49c7adf108c0dca51997d2331c0a95e`.
+
+Added standardised expected-response CPUE indices for sdmTMB and univariate
+tinyVAST, and a separate area-integration interface for all six supported
+backends, including models without spatial effects. Explicit reference areas,
+units, catchability conversions, seasonal averaging weights, and joint
+parameter/field uncertainty are documented. Median-display and remaining
+legacy-function decisions are deferred; this is not submission authorisation.
+
+The full local suite passes 3,109 expectations in 183 blocks, with no failures,
+warnings, or skips. Native point-estimate checks cover both spatial backends
+and their standard/Poisson-link delta families. A complete existing brms fit
+agrees with direct native posterior integration to numerical precision.
+
+Archive SHA256:
+`a2ab355aad0653b3a84e657b9b4391e27a33a3081b716470421d44aa1735fec4`.
+
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with zero
+errors, zero warnings, and one NOTE: new submission and optional tinyVAST,
+which is available from the declared additional repository. All six vignettes
+rebuilt. Archive tests passed 3,096 expectations; five visual groups skipped
+in CRAN mode passed in the separate local run. Coverage on GitHub is 89.39%.
+
+The complete pkgdown site built, and new figures, caption numbering, and
+lightbox zoom were reviewed. The main article subsequently received a
+prose-only correction removing an obsolete future-work sentence and was
+rebuilt separately; the archive hash above identifies the checked code snapshot,
+not that later prose correction. Repeat final-release checks after the deferred
+review decisions. No CRAN or win-builder upload was made.
+
 ## Legend follow-up: 8 September 2026
 
 CDI proportion legends now use a single column with at most four reference
