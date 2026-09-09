@@ -380,6 +380,19 @@ remain evidence for their recorded source, which contains the older logo;
 the final release archive must be rebuilt after all remaining decisions.
 Issue #21 was closed as the accepted four-panel replacement described above.
 
+Publication: source commit `9422beb` contains the refined artwork. The full
+pkgdown run 34417685025 was deliberately cancelled during unusually slow
+Ubuntu system-dependency downloads, before building the site. For this
+image-only change, website commit `a72d8c7` instead replaces exactly eleven
+logo/icon assets; no HTML, scientific figures, or frozen article changed.
+Pages deployment 34418589606 passed. The live logo, reference logo, favicon,
+32-pixel icon, and 180-pixel touch icon match the local assets by SHA-256.
+The public homepage and GitHub README were visually checked. GitHub renders
+the cancelled pkgdown workflow badge as failing; this is not a failed site
+build or a failed Pages deployment. The next full documentation build remains
+necessary after substantive source/article changes, not solely to recolour
+the badge.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration
