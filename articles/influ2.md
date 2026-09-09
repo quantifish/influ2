@@ -1080,11 +1080,6 @@ additive log-link model the relative trajectories can coincide after
 rescaling, but that should not be assumed for models with year
 interactions or more complicated response structures.
 
-These are CPUE predictions, not area-integrated biomass estimates.
-Response standardisation currently supports GLM, GAM, glmmTMB, and
-complete brms fits; the full spatial response adapters remain separate
-work.
-
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
 now provides this expected-response table for all six model classes. A
 separate
