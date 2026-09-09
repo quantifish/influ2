@@ -76,9 +76,7 @@
       profile = model$control$profile, DLL = "sdmTMB", silent = TRUE)
     response <- function(par) {
       r <- obj$report(par)
-      eta <- switch(fields, all = r$proj_eta, none = r$proj_fe,
-        spatial = r$proj_eta - r$proj_epsilon_st_A_vec,
-        spatiotemporal = r$proj_fe + r$proj_epsilon_st_A_vec)
+      eta <- .index_sdmtmb_eta(r, fields)
       if (!is.matrix(eta) || nrow(eta) != nrow(data)) {
         stop("Native sdmTMB response predictors could not be aligned.", call. = FALSE)
       }
@@ -119,6 +117,17 @@
     response <- function(par) .index_check_prediction(obj$report(par)$mu_g, nrow(data))
   }
   list(obj = obj, response = response)
+}
+
+.index_sdmtmb_eta <- function(report, fields) {
+  # Start from the native expected-response predictor. proj_fe can omit a
+  # family-specific mixture-mean adjustment that is included in proj_eta.
+  # Subtract only fields, retaining offsets, smooths, temporal coefficients,
+  # and any native response-mean adjustment for every prediction target.
+  switch(fields, all = report$proj_eta,
+    none = report$proj_eta - report$proj_rf,
+    spatial = report$proj_eta - report$proj_epsilon_st_A_vec,
+    spatiotemporal = report$proj_eta - report$proj_rf + report$proj_epsilon_st_A_vec)
 }
 
 .index_spatial_sampler <- function(info, obj) {

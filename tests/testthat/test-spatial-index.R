@@ -1,3 +1,14 @@
+test_that("field selection preserves native family mean adjustments", {
+  r <- list(proj_fe = matrix(c(1, 2), 2), proj_rf = matrix(c(0.4, -0.2), 2),
+    proj_epsilon_st_A_vec = matrix(c(0.1, -0.1), 2))
+  adjustment <- log(1.3)
+  r$proj_eta <- r$proj_fe + r$proj_rf + adjustment
+  expect_equal(.index_sdmtmb_eta(r, "all"), r$proj_eta)
+  expect_equal(.index_sdmtmb_eta(r, "none"), r$proj_fe + adjustment)
+  expect_equal(.index_sdmtmb_eta(r, "spatial"), r$proj_eta - r$proj_epsilon_st_A_vec)
+  expect_equal(.index_sdmtmb_eta(r, "spatiotemporal"), r$proj_fe + adjustment + r$proj_epsilon_st_A_vec)
+})
+
 test_that("joint Gaussian draws retain the full covariance and parameter order", {
   skip_if_not_installed("Matrix")
   covariance <- matrix(c(1, 0.8, 0.8, 2), 2)
