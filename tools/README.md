@@ -11,7 +11,7 @@
 | `inst/legacy/` | Separately licensed, frozen Bentley validation code | Yes |
 | `inst/COPYRIGHTS` | Scope of package and validation-artefact copyrights | Yes |
 | `man/figures/logo.png` | Existing logo used by README, pkgdown, and package help | Yes |
-| `tools/branding/` | Logo-generation recipe; not automatically executed | No |
+| `tools/branding/` | Logo and website-icon recipe; not automatically executed | No |
 | `tools/references/` | Historical reference PDFs, moved without modification | No |
 | `tools/legacy/` | Fixture recipe and remaining retired-helper review copies | No |
 | `tools/release-review.md` | Pre-release decisions, issue queue, and checks | No |

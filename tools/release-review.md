@@ -253,8 +253,9 @@ clear to users and should not silently produce a different estimand.
 **Required by the maintainer, 10 September 2026:** work through all open
 issues before preparing the final CRAN submission archive. Close each with
 a linked implementation/test, or a documented maintainer-approved decision.
-Do not bulk-close issues just to empty the tracker. This snapshot records
-the six open issues; refresh it before the final build to catch new issues.
+Do not bulk-close issues just to empty the tracker. Five issues remain after
+closing #21 on 10 September; refresh this list before the final build to catch
+new issues.
 
 | Issue | Resolution work before closure |
 | --- | --- |
@@ -262,11 +263,20 @@ the six open issues; refresh it before the final build to catch new issues.
 | [#12: Add more diagnostics](https://github.com/quantifish/influ2/issues/12) | Review the ECDF/PIT examples and remaining brms predictive examples against the frozen article, then link the accepted replacements. |
 | [#13: Deprecate/consolidate old functions](https://github.com/quantifish/influ2/issues/13) | The specifically listed influence/CDI/coefficient duplicates have been retired. Verify the checked items and close with those commits; the broader remaining legacy review is still a separate release gate. |
 | [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Add or identify an explicit, executed two-region index example, for one shared model or separate fits. Demonstrate comparable reference populations, regional labelling, and uncertainty. General area integration alone does not fulfil this example request. |
-| [#21: Standard set of diagnostic plots](https://github.com/quantifish/influ2/issues/21) | Review the four-panel display against the original PPC density/bars, zero proportion, maximum, and LOO-PIT proposal. Document replacements or additions and distinguish predictive checks from residual screening. |
 | [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Resolve the assessment-table/lognormal-parameter request together with the deliberately deferred Median/NA decision. Observation dispersion and uncertainty in an annual index are different quantities. |
 
-No issue is closed by this checklist update. Finish the deferred legacy and
-median-table review, resolve the issues above, then freeze the release API.
+Issue [#21](https://github.com/quantifish/influ2/issues/21) is closed with the
+maintainer's agreement: the four-panel model-neutral overview supersedes the
+original brms-only sketch. Its Q-Q, residual-versus-prediction, fishing-year,
+and response-adaptive calibration/ECDF panels are documented in the residual
+article. The focused four-panel and residual-calibration tests passed all
+200 expectations, with no failures, warnings, or skips. This does not claim
+that the original zero/max/density-bars/LOO-PIT suite was implemented verbatim;
+simulation-rank Q-Q is not LOO-PIT. Targeted predictive checks remain part of
+the separate diagnostics and legacy review.
+
+Finish the deferred legacy and median-table review, resolve the five issues
+above, then freeze the release API.
 
 ## 6. Validate and compile the final reviewed source
 
@@ -352,6 +362,23 @@ GitHub Ubuntu-release and Windows-release both passed for `8acba31` in run
 deployment (34415852624) passed as well. The published homepage's logo and
 maintainer details were verified. The follow-up validation-record commit
 contains no packaged-source changes and does not need another matrix run.
+
+### Logo refinement and diagnostics decision: 10 September 2026
+
+Following the repository review, the maintainer approved simplifying the
+existing logo. The updated native R recipe removes miniature axis labels,
+ticks, the rectangular plot frame, and dotted grid, while preserving the
+hexagon, blue/orange palette, and iris-based bubble motif. It regenerates
+the canonical package-help/README/site logo and all nine website icon files.
+Two consecutive runs produced identical checksums; the full-size logo and
+180-pixel icon were visually inspected. The frozen legacy article is unchanged.
+
+This branding-only increment does not change statistical code, coverage
+targets, or coverage exclusions. Local pkgdown assets, the homepage, and
+package-help page were rebuilt. The prior candidate archive and checks above
+remain evidence for their recorded source, which contains the older logo;
+the final release archive must be rebuilt after all remaining decisions.
+Issue #21 was closed as the accepted four-panel replacement described above.
 
 # Response-adaptive calibration increment: 10 September 2026
 
