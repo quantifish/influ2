@@ -22,6 +22,10 @@ errors, zero warnings, and one NOTE: new submission and optional tinyVAST,
 which is available from the declared additional repository. All six vignettes
 rebuilt. Archive tests passed 3,096 expectations; five visual groups skipped
 in CRAN mode passed in the separate local run. Coverage on GitHub is 89.39%.
+GitHub Ubuntu-release and Windows-release checks passed for the same code
+revision (run 34412426492), as did coverage (34412426533). The final
+documentation-only publication and Pages deployment passed (34413390593 and
+34413922390), and the updated live articles were verified.
 
 The complete pkgdown site built, and new figures, caption numbering, and
 lightbox zoom were reviewed. The main article subsequently received a

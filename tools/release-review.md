@@ -164,6 +164,10 @@ sentence from the main article; the corrected article was rebuilt with the
 current source package. Coverage for 88e14ff is 89.39% overall, 94.48% for the
 spatial-index adapter, and 96.30% for area integration. Relevant GitHub runs:
 R-CMD-check 34412426492, coverage 34412426533, and pkgdown 34412426567.
+Ubuntu-release and Windows-release both passed for 88e14ff. The final
+prose-only site build (34413390593) and Pages deployment (34413922390) passed;
+the published main, CPUE-index, and spatial articles were checked, including
+the corrected support statement, numbered figures, and lightbox zoom.
 The 49-cell, six-year tinyVAST example with 1,000 joint draws took about
 1.3 seconds for integration on this Mac and retained an 8,832-byte summary.
 This is output size, not a measurement of peak process RAM.
