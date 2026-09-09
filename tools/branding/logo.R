@@ -1,6 +1,11 @@
-# devtools::install_github("GuangchuangYu/hexSticker")
+# Historical logo-generation recipe. Run from the repository root.
+# This script is not run during package installation, checking, or site builds.
+# It overwrites man/figures/logo.png only when deliberately sourced.
+# Development-only dependencies: hexSticker, dplyr, and ggplot2.
 library(hexSticker)
 library(influ2)
+library(dplyr)
+library(ggplot2)
 
 data(iris)
 iris <- iris %>% mutate(PetalLength = Petal.Length, SepalLength = factor(round(Sepal.Length)), SepalWidth = factor(round(Sepal.Width)))

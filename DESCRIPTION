@@ -2,14 +2,14 @@ Package: influ2
 Title: Model-Neutral Influence Diagnostics for Fisheries CPUE Models
 Version: 1.1.0
 Authors@R: c(
-    person(given = "Darcy", family = "Webber",
+    person(given = "Darcy M.", family = "Webber",
            role = c("aut", "cre", "cph"),
            email = "darcy@quantifish.co.nz"),
     person(given = "Nokome", family = "Bentley",
            role = c("ctb", "cph"),
-           comment = "Original influence methodology and legacy validation implementation"),
+           comment = "Original methodology; copyright in inst/legacy/influ-proto.R only"),
     person(given = "Trophia Ltd", role = "cph",
-           comment = "Legacy validation implementation")
+           comment = "Copyright in inst/legacy/influ-proto.R only")
     )
 Description: Calculates and visualises how changes in the distribution of
     explanatory variables affect standardised catch-per-unit-effort indices.
@@ -23,6 +23,7 @@ URL: https://github.com/quantifish/influ2,
     https://www.quantifish.co.nz/influ2/
 BugReports: https://github.com/quantifish/influ2/issues
 License: MIT + file LICENSE
+Copyright: See inst/COPYRIGHTS for the separately licensed validation artefact.
 Encoding: UTF-8
 Language: en-GB
 Depends:

@@ -1,4 +1,4 @@
-# influ2
+# influ2 <img src="man/figures/logo.png" align="right" height="139" alt="influ2 hexagon logo with a bubble influence plot" />
 
 [![R-CMD-check](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml)
 [![pkgdown](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml)

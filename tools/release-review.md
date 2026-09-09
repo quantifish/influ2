@@ -12,8 +12,9 @@ is a separate, later step authorised by the maintainer.
   the distinction between nominal Q-Q reference bands and predictive ECDF bands.
   Its default spatial simulations condition on fitted fields; unconditional
   glmmTMB and posterior-predictive brms checks answer different questions.
-  GitHub issue review and remaining helper triage are deferred until this
-  display has been reviewed. No Shiny development is planned at this stage.
+  GitHub issue resolution is now a required pre-release step, as recorded
+  below. Remaining helper triage still needs the maintainer's review.
+  No Shiny development is planned at this stage.
 - Review the current Get Started, Bentley validation, hurdle and zero-inflated,
   and spatial and spatiotemporal articles. Check figure numbering, captions,
   lightbox zoom, labels, legends, interval visibility, and CDI panel alignment
@@ -238,13 +239,36 @@ clear to users and should not silently produce a different estimand.
   manual inspection of relevant methods. This is not a claim that no
   adaptation ever occurred; retain applicable notices if copying is later
   identified.
-- Bentley's complete original notice is retained in the installed validation
-  source, with Bentley and Trophia represented in copyright metadata.
+- The package's MIT licence names Darcy M. Webber as copyright holder.
+  Bentley's complete original BSD 2-Clause notice is retained in the installed
+  validation source. `inst/COPYRIGHTS` and the `Authors@R` comments limit the
+  Bentley and Trophia copyright entries to that artefact. Referencing a paper
+  does not replace the redistribution notice required for bundled source.
 - The current data are simulated. Earlier real-derived data are not part of
   the source archive. No Git-history rewrite was performed; that is a separate
   maintainer decision, not routine CRAN release tidying.
 
-## 5. Validate the final reviewed source
+## 5. Resolve every open GitHub issue before release
+
+**Required by the maintainer, 10 September 2026:** work through all open
+issues before preparing the final CRAN submission archive. Close each with
+a linked implementation/test, or a documented maintainer-approved decision.
+Do not bulk-close issues just to empty the tracker. This snapshot records
+the six open issues; refresh it before the final build to catch new issues.
+
+| Issue | Resolution work before closure |
+| --- | --- |
+| [#6: plot_qq work](https://github.com/quantifish/influ2/issues/6) | Compare the current simulated/PIT Q-Q display and reference envelopes with the original request for posterior uncertainty. Record which question each interval answers; do not equate a nominal Q-Q band with posterior point uncertainty. |
+| [#12: Add more diagnostics](https://github.com/quantifish/influ2/issues/12) | Review the ECDF/PIT examples and remaining brms predictive examples against the frozen article, then link the accepted replacements. |
+| [#13: Deprecate/consolidate old functions](https://github.com/quantifish/influ2/issues/13) | The specifically listed influence/CDI/coefficient duplicates have been retired. Verify the checked items and close with those commits; the broader remaining legacy review is still a separate release gate. |
+| [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Add or identify an explicit, executed two-region index example, for one shared model or separate fits. Demonstrate comparable reference populations, regional labelling, and uncertainty. General area integration alone does not fulfil this example request. |
+| [#21: Standard set of diagnostic plots](https://github.com/quantifish/influ2/issues/21) | Review the four-panel display against the original PPC density/bars, zero proportion, maximum, and LOO-PIT proposal. Document replacements or additions and distinguish predictive checks from residual screening. |
+| [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Resolve the assessment-table/lognormal-parameter request together with the deliberately deferred Median/NA decision. Observation dispersion and uncertainty in an annual index are different quantities. |
+
+No issue is closed by this checklist update. Finish the deferred legacy and
+median-table review, resolve the issues above, then freeze the release API.
+
+## 6. Validate and compile the final reviewed source
 
 After the last source, documentation, or API change:
 
@@ -262,12 +286,57 @@ After the last source, documentation, or API change:
    Windows-release GitHub checks and pkgdown deployment for that commit.
 5. Record the final archive path and checksum, and confirm that package
    metadata, NEWS, README badges, and the published documentation agree.
+   Build the actual submission archive from the reviewed, committed source,
+   after all issue fixes and legacy decisions. Verify that the tested archive
+   is byte-for-byte the archive retained for submission; any later changes
+   require a new build and corresponding checks. Earlier candidate archives
+   are validation evidence, not automatically the final submission file.
 6. Recheck the current [CRAN submission checklist](https://cran.r-project.org/web/packages/submission_checklist.html)
    and [repository policy](https://cran.r-project.org/web/packages/policies.html).
    Submit through the CRAN form and confirm its email only after the maintainer
    authorises the actual submission.
 
-GitHub issue triage can be handled separately when the maintainer is ready.
+The final CRAN upload remains a separate action requiring explicit approval.
+Neither this repository cleanup nor its validation authorises a CRAN or
+win-builder submission.
+
+### Repository and coverage review: 10 September 2026
+
+The two historical root PDFs now live unchanged in `tools/references/`.
+The old `logo.R` recipe lives in `tools/branding/`; its output remains
+`man/figures/logo.png`, and it is never run by installation or checks.
+README displays that existing logo, without modifying its image bytes.
+The repository map in `tools/README.md` distinguishes development material
+from installed runtime material. All of `tools/` is excluded from the CRAN
+archive; the validation code, compact fixtures, and required notices remain
+under `inst/`. The logo is now included in the archive because package help
+also references it. Ignored local output and the frozen review page were
+not removed.
+
+The MIT licence holder is corrected to Darcy M. Webber. Upstream copyright
+and BSD redistribution terms for `inst/legacy/influ-proto.R` remain intact,
+with their scope made explicit in `inst/COPYRIGHTS` and `Authors@R`.
+See the [CRAN copyright policy](https://cran.r-project.org/web/packages/policies.html)
+and the [BSD 2-Clause terms](https://opensource.org/license/bsd-2-clause).
+
+The unchanged baseline measured 89.39% line coverage. Adding 178 expectations
+raised local coverage to 91.10%, without coverage exclusions or runtime API
+changes. Coverage is 100% for core object handling and bubble plots, 99.20%
+for family handling, and improved for residual trial/component adapters.
+The tests check numerical denominators, native simulation agreement, factor
+success coding, trial versus case weights, malformed objects, summaries, and
+family/link transformations. All 3,287 local expectations in 194 test blocks
+passed, with no failures, warnings, or skips, including visual regression.
+These percentages measure executed lines, not scientific correctness or
+complete backend/family coverage; the latter still needs targeted checks.
+
+All six vignettes rebuilt. The candidate archive contains the logo, copyright
+scope, frozen validation source, and current articles, but no `tools/` files,
+historical PDFs, local Rplots output, or website directory. The logo and both
+moved PDFs were verified byte-for-byte unchanged. The local README/homepage
+layout was visually checked. The final issue/legacy/median decisions remain
+release gates, and this candidate is not the final submission archive.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration

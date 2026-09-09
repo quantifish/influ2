@@ -1,0 +1,18 @@
+influ2
+Copyright (c) 2019-2026 Darcy M. Webber
+
+The influ2 package is distributed under the MIT licence, as specified by
+DESCRIPTION and LICENSE. The following bundled validation artefact retains
+its separate upstream copyright and licence; it is not part of the active
+influ2 runtime namespace.
+
+Source-package path: inst/legacy/influ-proto.R
+Installed-package path: legacy/influ-proto.R
+Copyright (c) 2010-2014 Nokome Bentley, Trophia Ltd
+Licence: BSD 2-Clause
+
+The complete upstream copyright notice, redistribution conditions, and
+disclaimer are preserved at the beginning of that source file, which is
+included in both source and installed distributions. The Bentley and
+Trophia copyright entries in Authors@R refer to this artefact only; they do
+not describe ownership of the new influ2 implementation.
