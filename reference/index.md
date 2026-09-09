@@ -52,12 +52,15 @@ Compare indices and inspect data coverage.
 
 ## CPUE indices and assessment tables
 
-Calculate explicit expected-response indices and plot stored results.
+Calculate standardised means or area-integrated totals, and plot stored
+results.
 
 - [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
   [`as.data.frame(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
   [`print(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
   : Calculate an assessment-ready CPUE index
+- [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+  : Calculate an area-integrated expected-response index
 - [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
   [`plot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
   [`autoplot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)

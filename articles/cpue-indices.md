@@ -14,6 +14,16 @@ This is a different quantity from the centred **year-effect contrasts**
 in the influence and step plots. Both are useful, but neither is
 automatically an area-integrated abundance or biomass index.
 
+Both
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+and the separate
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+work with GLM, GAM, glmmTMB, complete brms, sdmTMB, and univariate
+tinyVAST fits. Spatial effects are not required for either calculation.
+The difference is the question: standardisation produces a **weighted
+mean**, whereas integration produces an **area-weighted total** over a
+stated domain.
+
 We use the same simulated lobster catches as the [main
 article](https://www.quantifish.co.nz/influ2/articles/influ2.md). The
 model below includes a monthly random intercept and a negative-binomial
@@ -202,12 +212,12 @@ also remains a year-effect comparison.
 
 ## Current boundaries
 
-Response standardisation currently supports GLM, GAM, glmmTMB, and
-complete, univariate brms fits. glmmTMB indices require a converged ML
-fit and do not yet support random effects in the zero component. brms
-autocorrelation and Gaussian-process predictions need a separate
-joint-prediction adapter. GAM smooths are evaluated as fitted, including
-random-effect smooths; their target can differ from the
+Response standardisation and area integration support all six backends
+above, subject to model-structure checks. glmmTMB indices require a
+converged ML fit and do not yet support random effects in the zero
+component. brms autocorrelation and Gaussian-process predictions need a
+separate joint-prediction adapter. GAM smooths are evaluated as fitted,
+including random-effect smooths; their target can differ from the
 zero-group-effect convention used for glmmTMB and brms.
 
 For binomial GLMs and glmmTMB, native response predictions are
@@ -217,10 +227,146 @@ Quasi families and transformed responses are not supported here. Use an
 explicit lognormal family instead of asking the package to guess a
 back-transformation.
 
-For sdmTMB and tinyVAST, `cpue_index(method = "year_effect")` can
-already produce a table from the existing diagnostic contrasts. Full
-spatial response standardisation, integration over latent-effect
-distributions, and `integrate_index()` remain separate development work.
-They must preserve spatial and spatiotemporal dependence and make areas,
-units, and catchability assumptions explicit; they are not silently
-substituted by this interface.
+For sdmTMB and tinyVAST, response predictions include fitted spatial and
+spatiotemporal fields by default. `spatial_fields` can select `"all"`,
+`"spatial"`, `"spatiotemporal"`, or `"none"` without refitting. Joint
+Gaussian parameter/field draws preserve dependence across cells and
+years. These are not MCMC draws. The reported frequentist `Mean` is a
+plug-in expectation, with simulation-based uncertainty, **not a Laplace
+bias-corrected total**. Native
+[`sdmTMB::get_index()`](https://sdmTMB.github.io/sdmTMB/reference/get_index.html)
+and
+[`tinyVAST::integrate_output()`](https://vast-lib.github.io/tinyVAST/reference/integrate_output.html)
+offer bias correction; agreement checks use their uncorrected estimates
+to compare the same calculation. The `Median` convention is unchanged
+pending display review.
+
+All calculations use a fixed common reference domain in the observed
+years. They do not forecast or automatically supply year-varying
+environmental covariates. Multivariate tinyVAST response integration and
+sdmTMB nonlocal covariate operators are rejected explicitly. Integration
+over a new population of latent random effects is a different target,
+not implied by these methods.
+
+## Area integration for ordinary and spatial models
+
+No specialist spatiotemporal model is required. Given a prediction grid,
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+sums `cell area * expected response` in each year. The same routine
+works for a GLM with no spatial effects, a GAM with a spatial smooth, or
+any of the other supported model classes. A model without a spatial term
+cannot reveal spatial variation that is not explained by its other
+predictors, but its predictions can still be integrated.
+
+This separate simulated example has a density response in kg/km², so
+multiplying by cell areas in km² yields kg. It is not a conversion of
+the lobster pot catches above into biomass. The changing survey
+footprint is deliberately imbalanced.
+
+``` r
+
+set.seed(710)
+survey <- data.frame(year = factor(rep(2011:2016, each = 100)))
+survey$x <- runif(nrow(survey), 0, 10)
+survey$y <- runif(nrow(survey), 0, 10)
+survey$depth <- 20 + 3 * survey$x + 2 * survey$y
+eta <- 2 + 0.08 * as.integer(survey$year) - 0.012 * survey$depth +
+  0.7 * sin(survey$x / 2) * cos(survey$y / 3)
+survey$density <- rgamma(nrow(survey), shape = 5, scale = exp(eta) / 5)
+sampling_centre <- 1 + 8 * (as.integer(survey$year) - 1) / 5
+survey <- survey[runif(nrow(survey)) <
+  0.35 + 0.65 * exp(-(survey$x - sampling_centre)^2 / 8), ]
+
+# One row per 0.5 x 0.5 km cell: 400 cells over a 100 km² domain.
+density_grid <- expand.grid(x = seq(0.25, 9.75, by = 0.5),
+                           y = seq(0.25, 9.75, by = 0.5))
+density_grid$depth <- 20 + 3 * density_grid$x + 2 * density_grid$y
+density_grid$area_km2 <- 0.25
+```
+
+``` r
+
+gam_density <- mgcv::gam(density ~ year + s(x, y, k = 20),
+  family = Gamma(link = "log"), data = survey, method = "REML")
+glm_density <- glm(density ~ year + depth,
+  family = Gamma(link = "log"), data = survey)
+
+gam_total <- integrate_index(gam_density, density_grid, area = "area_km2",
+  area_units = "km^2", response_units = "kg/km^2", units = "kg")
+glm_total <- integrate_index(glm_density, density_grid, area = "area_km2",
+  area_units = "km^2", response_units = "kg/km^2", units = "kg")
+knitr::kable(as.data.frame(gam_total), digits = 3)
+```
+
+| Year |    Mean | Median |     SD |    CV |  Qlower |  Qupper | Method     | Distribution | Link |
+|:-----|--------:|-------:|-------:|------:|--------:|--------:|:-----------|:-------------|:-----|
+| 2011 | 472.599 |     NA | 29.482 | 0.062 | 418.208 | 534.065 | integrated | Gamma        | log  |
+| 2012 | 548.591 |     NA | 30.319 | 0.055 | 492.273 | 611.352 | integrated | Gamma        | log  |
+| 2013 | 561.066 |     NA | 30.956 | 0.055 | 503.559 | 625.141 | integrated | Gamma        | log  |
+| 2014 | 631.213 |     NA | 34.297 | 0.054 | 567.446 | 702.144 | integrated | Gamma        | log  |
+| 2015 | 635.394 |     NA | 38.429 | 0.060 | 564.368 | 715.359 | integrated | Gamma        | log  |
+| 2016 | 758.069 |     NA | 43.860 | 0.058 | 676.800 | 849.096 | integrated | Gamma        | log  |
+
+``` r
+
+plot_compare(list(`Spatial GAM` = gam_total, `Depth GLM` = glm_total))
+```
+
+![Area-integrated expected density over the same 100 km² domain,
+comparing a GAM with a spatial smooth against a GLM with a depth effect
+but no explicit spatial term. Both return totals in kg under the
+simulated density units. Pointwise 95% confidence intervals propagate
+joint coefficient uncertainty; they do not describe new catches or
+uncertainty in the difference between
+models.](cpue-indices_files/figure-html/area-comparison-1.png)
+
+Area-integrated expected density over the same 100 km² domain, comparing
+a GAM with a spatial smooth against a GLM with a depth effect but no
+explicit spatial term. Both return totals in kg under the simulated
+density units. Pointwise 95% confidence intervals propagate joint
+coefficient uncertainty; they do not describe new catches or uncertainty
+in the difference between models.
+
+Replace the fitted model with a glmmTMB or complete brms fit to use
+exactly the same integration call. The [spatial
+article](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.html#response-indices-and-area-totals)
+executes both index calculations for sdmTMB and tinyVAST, including
+their fields.
+
+Area integration and area-weighted standardisation are related, but not
+identical: with no catchability conversion, the total is the
+area-weighted mean times total area. Their units differ. `rescale = 1`
+gives a relative series and includes the shared normalising denominator
+in uncertainty calculations.
+
+### Exposure, catchability, and repeated seasons
+
+Integrating kg/tow over km² gives an area-weighted CPUE index, **not kg
+of fish**. Either model a density already expressed per km² or supply a
+defensible known `catchability` conversion with compatible units. The
+package divides predictions by that conversion; it does not estimate
+catchability or its uncertainty. It also does not infer cell areas from
+longitude and latitude: use suitable geodesic or equal-area calculations
+outside this function.
+
+If each cell appears in several seasonal reference rows, provide
+`averaging_weights` that sum to one within each cell. For example, four
+equally weighted quarters need `averaging_weights = 1 / 4`. Without this
+adjustment, repeating the full cell area four times computes a sum over
+four seasons rather than an annual mean surface. This is also relevant
+to month-by-area GAM grids: the integration weights must represent the
+intended seasonal and spatial target.
+
+``` r
+
+seasonal_total <- integrate_index(seasonal_model, quarter_grid,
+  area = "area_km2", averaging_weights = 1 / 4,
+  area_units = "km^2", response_units = "kg/km^2", units = "kg")
+```
+
+Only the compact annual table is retained by default. Spatial and brms
+indices can retain annual draws with `retain = "draws"`; grid-by-draw
+arrays are not stored. Independent cell standard errors are never added
+together. All area, covariate, and seasonal weights are treated as
+known, and valid units, domain coverage, and extrapolation remain
+scientific decisions for the analyst.

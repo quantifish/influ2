@@ -68,7 +68,10 @@ No model is fitted or updated by this function.</p>
 <span>  draw_batch_size <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  retain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"summary"</span>, <span class="st">"draws"</span><span class="op">)</span>,</span>
 <span>  units <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  spatial_fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"spatial"</span>, <span class="st">"spatiotemporal"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  prediction_offset <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_index'</span></span>
@@ -83,13 +86,15 @@ No model is fitted or updated by this function.</p>
 
 
 <dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>A fitted GLM, <code>mgcv</code> GAM, <code>glmmTMB</code>, or complete <code>brmsfit</code> for
+<dd><p>A fitted GLM, <code>mgcv</code> GAM, <code>glmmTMB</code>, complete <code>brmsfit</code>,
+<code>sdmTMB</code>, or univariate <code>tinyVAST</code> model for
 response standardisation. For <code>method = "year_effect"</code>, any model supported
 by <code><a href="influ.html">influ()</a></code> or an existing <code>influ_diag</code> can be supplied.</p></dd>
 
 
 <dt id="arg-year">year<a class="anchor" aria-label="anchor" href="#arg-year"></a></dt>
-<dd><p>Name of the year variable. Defaults to the first formula predictor.</p></dd>
+<dd><p>Name of the year variable. Defaults to the native time variable
+for spatial backends, otherwise the first formula predictor.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -125,8 +130,9 @@ draw; frequentist uncertainty includes the normalising denominator.</p></dd>
 
 
 <dt id="arg-ndraws">ndraws<a class="anchor" aria-label="anchor" href="#arg-ndraws"></a></dt>
-<dd><p>Maximum number of existing posterior draws to use for brms.
-Deterministically spaced draw identities are shared across years and batches.</p></dd>
+<dd><p>Maximum number of existing posterior draws for brms, or number
+of joint Gaussian parameter/field draws for spatial backends. The same
+draw identities are shared across years and prediction batches.</p></dd>
 
 
 <dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
@@ -139,7 +145,8 @@ Deterministically spaced draw identities are shared across years and batches.</p
 
 <dt id="arg-retain">retain<a class="anchor" aria-label="anchor" href="#arg-retain"></a></dt>
 <dd><p><code>"summary"</code> (default) or <code>"draws"</code>. Draw retention is available
-for standardised brms indices and stores only a draw-by-year matrix.</p></dd>
+for standardised brms and spatial indices and stores only a draw-by-year
+matrix. Spatial draws are a joint Gaussian approximation, not MCMC.</p></dd>
 
 
 <dt id="arg-units">units<a class="anchor" aria-label="anchor" href="#arg-units"></a></dt>
@@ -148,6 +155,26 @@ for standardised brms indices and stores only a draw-by-year matrix.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Arguments passed to <code><a href="influ.html">influ()</a></code> only for <code>method = "year_effect"</code>.</p></dd>
+
+
+<dt id="arg-spatial-fields">spatial_fields<a class="anchor" aria-label="anchor" href="#arg-spatial-fields"></a></dt>
+<dd><p>Spatial-backend prediction target: <code>"all"</code> includes
+persistent, spatially varying, and spatiotemporal fields; <code>"spatial"</code>
+excludes spatiotemporal fields; <code>"spatiotemporal"</code> excludes persistent and
+spatially varying fields; <code>"none"</code> excludes all three. This changes only
+predictions, not the fitted model. Other smooths/time effects remain.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Non-negative integer seed for spatial joint draws. The caller's
+random-number state is restored; changing batch sizes preserves draws.</p></dd>
+
+
+<dt id="arg-prediction-offset">prediction_offset<a class="anchor" aria-label="anchor" href="#arg-prediction-offset"></a></dt>
+<dd><p>For sdmTMB only, the name of a numeric link-scale
+offset column in <code>reference_data</code>. <code>NULL</code> explicitly uses offset zero
+(one unit of exposure for a log-exposure offset). Other backends obtain
+offsets from their formula and the supplied reference predictors.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
@@ -196,14 +223,22 @@ joint predictions with predictions at posterior-mean coefficients.</p>
 <p>Working storage is bounded by reference and draw batches plus a compact
 annual covariance or draw matrix. Native prediction code can allocate
 additional memory. The result does not retain the model or reference data.
-Spatial response standardisation and area integration are separate future
-adapters; <code>sdmTMB</code> and <code>tinyVAST</code> currently support <code>"year_effect"</code> here.
+Spatial response estimates evaluate the fitted model at the reference
+locations in each observed year. sdmTMB IID group effects are set to zero;
+tinyVAST non-spatial temporal effects and smooths remain as fitted. Joint
+fixed/latent Gaussian draws propagate field and parameter uncertainty,
+with empirical pointwise intervals. <code>Mean</code> remains the plug-in expected
+response and <code>Median</code> remains unavailable for these frequentist models.
+This is not a Laplace bias-corrected index or integration over a new
+population of random effects. Grid predictions are immediately reduced
+to annual values; a grid-by-draw array is never retained.
+Use <code><a href="integrate_index.html">integrate_index()</a></code> for area-weighted totals, which have different units.
 Year-effect results preserve the original diagnostic estimand and cannot
 be rescaled by this function. These indices are not biomass estimates.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="plot_index.html">plot_index()</a></code>, <code><a href="plot_compare.html">plot_compare()</a></code>, <code><a href="geo_mean.html">geo_mean()</a></code>, <code><a href="influ_extractors.html">influ_indices()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="integrate_index.html">integrate_index()</a></code>, <code><a href="plot_index.html">plot_index()</a></code>, <code><a href="plot_compare.html">plot_compare()</a></code>, <code><a href="geo_mean.html">geo_mean()</a></code>, <code><a href="influ_extractors.html">influ_indices()</a></code></p></div>
     </div>
 
     <div class="section level2">

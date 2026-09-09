@@ -2,6 +2,24 @@
 
 ## influ2 1.1.0
 
+- Standardised expected-response CPUE tables now include sdmTMB and
+  univariate tinyVAST, alongside GLM, GAM, glmmTMB, and complete brms
+  fits. Spatial indices use native combined response predictions and
+  compact joint Gaussian parameter/field uncertainty, with explicit
+  field and exposure choices. Shared draw identities are invariant to
+  prediction and draw batch sizes.
+
+- Added
+  [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+  for all six model types, with or without spatial terms. It sums
+  expected responses times supplied cell areas and records response/area
+  units, known catchability conversions, and optional within-cell
+  seasonal averaging weights. Standardised means and integrated totals
+  remain distinct calculated objects for plotting and comparison. The
+  CPUE and spatial articles demonstrate these workflows; frequentist
+  medians and the remaining legacy-function review are unchanged and
+  explicitly deferred.
+
 - Residual overviews now select encounter probability calibration for
   Bernoulli responses, while retaining ECDFs for positive, combined
   delta/hurdle, count, and grouped-binomial responses. Fixed
@@ -22,13 +40,14 @@
   [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md),
   with both standardised and standardized spellings accepted.
   Expected-response indices remain distinct from existing year-effect
-  contrasts. Response standardisation supports GLM, GAM, glmmTMB, and
-  complete brms fits, with joint delta-method or batched posterior
-  uncertainty and explicit reference-population choices.
+  contrasts. Response standardisation initially supported GLM, GAM,
+  glmmTMB, and complete brms fits, with joint delta-method or batched
+  posterior uncertainty and explicit reference-population choices.
   [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
   now also accepts calculated index objects without changing its
   existing fitted-model behaviour. The CPUE indices article documents
-  the table schema, uncertainty meaning, and remaining spatial adapters.
+  the table schema, uncertainty meaning, and model-specific prediction
+  choices.
 
 - Year-panel residual box widths now encode the square root of sample
   size; year labels no longer contain sample counts. Corrected the

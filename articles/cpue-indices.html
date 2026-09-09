@@ -91,6 +91,13 @@ table for reporting or CSV export.</p>
 contrasts</strong> in the influence and step plots. Both are useful, but
 neither is automatically an area-integrated abundance or biomass
 index.</p>
+<p>Both <code><a href="../reference/cpue_index.html">cpue_index()</a></code> and the separate
+<code><a href="../reference/integrate_index.html">integrate_index()</a></code> work with GLM, GAM, glmmTMB, complete
+brms, sdmTMB, and univariate tinyVAST fits. Spatial effects are not
+required for either calculation. The difference is the question:
+standardisation produces a <strong>weighted mean</strong>, whereas
+integration produces an <strong>area-weighted total</strong> over a
+stated domain.</p>
 <p>We use the same simulated lobster catches as the <a href="influ2.html">main article</a>. The model below includes a monthly
 random intercept and a negative-binomial observation distribution. No
 simulation of new catches is needed for its index.</p>
@@ -472,27 +479,232 @@ comparison.</p>
 <div class="section level2">
 <h2 id="current-boundaries">Current boundaries<a class="anchor" aria-label="anchor" href="#current-boundaries"></a>
 </h2>
-<p>Response standardisation currently supports GLM, GAM, glmmTMB, and
-complete, univariate brms fits. glmmTMB indices require a converged ML
-fit and do not yet support random effects in the zero component. brms
-autocorrelation and Gaussian-process predictions need a separate
-joint-prediction adapter. GAM smooths are evaluated as fitted, including
-random-effect smooths; their target can differ from the
-zero-group-effect convention used for glmmTMB and brms.</p>
+<p>Response standardisation and area integration support all six
+backends above, subject to model-structure checks. glmmTMB indices
+require a converged ML fit and do not yet support random effects in the
+zero component. brms autocorrelation and Gaussian-process predictions
+need a separate joint-prediction adapter. GAM smooths are evaluated as
+fitted, including random-effect smooths; their target can differ from
+the zero-group-effect convention used for glmmTMB and brms.</p>
 <p>For binomial GLMs and glmmTMB, native response predictions are
 probabilities. For brms binomial models they are expected counts at the
 reference number of trials: supply one trial for a per-trial comparison.
 Quasi families and transformed responses are not supported here. Use an
 explicit lognormal family instead of asking the package to guess a
 back-transformation.</p>
-<p>For sdmTMB and tinyVAST,
-<code>cpue_index(method = "year_effect")</code> can already produce a
-table from the existing diagnostic contrasts. Full spatial response
-standardisation, integration over latent-effect distributions, and
-<code>integrate_index()</code> remain separate development work. They
-must preserve spatial and spatiotemporal dependence and make areas,
-units, and catchability assumptions explicit; they are not silently
-substituted by this interface.</p>
+<p>For sdmTMB and tinyVAST, response predictions include fitted spatial
+and spatiotemporal fields by default. <code>spatial_fields</code> can
+select <code>"all"</code>, <code>"spatial"</code>,
+<code>"spatiotemporal"</code>, or <code>"none"</code> without refitting.
+Joint Gaussian parameter/field draws preserve dependence across cells
+and years. These are not MCMC draws. The reported frequentist
+<code>Mean</code> is a plug-in expectation, with simulation-based
+uncertainty, <strong>not a Laplace bias-corrected total</strong>. Native
+<code><a href="https://sdmTMB.github.io/sdmTMB/reference/get_index.html" class="external-link">sdmTMB::get_index()</a></code> and
+<code><a href="https://vast-lib.github.io/tinyVAST/reference/integrate_output.html" class="external-link">tinyVAST::integrate_output()</a></code> offer bias correction;
+agreement checks use their uncorrected estimates to compare the same
+calculation. The <code>Median</code> convention is unchanged pending
+display review.</p>
+<p>All calculations use a fixed common reference domain in the observed
+years. They do not forecast or automatically supply year-varying
+environmental covariates. Multivariate tinyVAST response integration and
+sdmTMB nonlocal covariate operators are rejected explicitly. Integration
+over a new population of latent random effects is a different target,
+not implied by these methods.</p>
+</div>
+<div class="section level2">
+<h2 id="area-integration-for-ordinary-and-spatial-models">Area integration for ordinary and spatial models<a class="anchor" aria-label="anchor" href="#area-integration-for-ordinary-and-spatial-models"></a>
+</h2>
+<p>No specialist spatiotemporal model is required. Given a prediction
+grid, <code><a href="../reference/integrate_index.html">integrate_index()</a></code> sums
+<code>cell area * expected response</code> in each year. The same
+routine works for a GLM with no spatial effects, a GAM with a spatial
+smooth, or any of the other supported model classes. A model without a
+spatial term cannot reveal spatial variation that is not explained by
+its other predictors, but its predictions can still be integrated.</p>
+<p>This separate simulated example has a density response in kg/km², so
+multiplying by cell areas in km² yields kg. It is not a conversion of
+the lobster pot catches above into biomass. The changing survey
+footprint is deliberately imbalanced.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">710</span><span class="op">)</span></span>
+<span><span class="va">survey</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2011</span><span class="op">:</span><span class="fl">2016</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">survey</span><span class="op">$</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">survey</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">survey</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">survey</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">survey</span><span class="op">$</span><span class="va">depth</span> <span class="op">&lt;-</span> <span class="fl">20</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">survey</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">survey</span><span class="op">$</span><span class="va">y</span></span>
+<span><span class="va">eta</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">+</span> <span class="fl">0.08</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">survey</span><span class="op">$</span><span class="va">year</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0.012</span> <span class="op">*</span> <span class="va">survey</span><span class="op">$</span><span class="va">depth</span> <span class="op">+</span></span>
+<span>  <span class="fl">0.7</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">survey</span><span class="op">$</span><span class="va">x</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">survey</span><span class="op">$</span><span class="va">y</span> <span class="op">/</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">survey</span><span class="op">$</span><span class="va">density</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">survey</span><span class="op">)</span>, shape <span class="op">=</span> <span class="fl">5</span>, scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">eta</span><span class="op">)</span> <span class="op">/</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="va">sampling_centre</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">8</span> <span class="op">*</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">survey</span><span class="op">$</span><span class="va">year</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="fl">5</span></span>
+<span><span class="va">survey</span> <span class="op">&lt;-</span> <span class="va">survey</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">survey</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span></span>
+<span>  <span class="fl">0.35</span> <span class="op">+</span> <span class="fl">0.65</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">survey</span><span class="op">$</span><span class="va">x</span> <span class="op">-</span> <span class="va">sampling_centre</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">/</span> <span class="fl">8</span><span class="op">)</span>, <span class="op">]</span></span>
+<span></span>
+<span><span class="co"># One row per 0.5 x 0.5 km cell: 400 cells over a 100 km² domain.</span></span>
+<span><span class="va">density_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">9.75</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>                           y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">9.75</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">density_grid</span><span class="op">$</span><span class="va">depth</span> <span class="op">&lt;-</span> <span class="fl">20</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">density_grid</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">density_grid</span><span class="op">$</span><span class="va">y</span></span>
+<span><span class="va">density_grid</span><span class="op">$</span><span class="va">area_km2</span> <span class="op">&lt;-</span> <span class="fl">0.25</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gam_density</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam</a></span><span class="op">(</span><span class="va">density</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, k <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">Gamma</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">survey</span>, method <span class="op">=</span> <span class="st">"REML"</span><span class="op">)</span></span>
+<span><span class="va">glm_density</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">density</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">depth</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">Gamma</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">survey</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">gam_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span><span class="va">gam_density</span>, <span class="va">density_grid</span>, area <span class="op">=</span> <span class="st">"area_km2"</span>,</span>
+<span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"kg/km^2"</span>, units <span class="op">=</span> <span class="st">"kg"</span><span class="op">)</span></span>
+<span><span class="va">glm_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span><span class="va">glm_density</span>, <span class="va">density_grid</span>, area <span class="op">=</span> <span class="st">"area_km2"</span>,</span>
+<span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"kg/km^2"</span>, units <span class="op">=</span> <span class="st">"kg"</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">gam_total</span><span class="op">)</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="6%">
+<col width="10%">
+<col width="8%">
+<col width="8%">
+<col width="7%">
+<col width="10%">
+<col width="10%">
+<col width="14%">
+<col width="16%">
+<col width="6%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Mean</th>
+<th align="right">Median</th>
+<th align="right">SD</th>
+<th align="right">CV</th>
+<th align="right">Qlower</th>
+<th align="right">Qupper</th>
+<th align="left">Method</th>
+<th align="left">Distribution</th>
+<th align="left">Link</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2011</td>
+<td align="right">472.599</td>
+<td align="right">NA</td>
+<td align="right">29.482</td>
+<td align="right">0.062</td>
+<td align="right">418.208</td>
+<td align="right">534.065</td>
+<td align="left">integrated</td>
+<td align="left">Gamma</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2012</td>
+<td align="right">548.591</td>
+<td align="right">NA</td>
+<td align="right">30.319</td>
+<td align="right">0.055</td>
+<td align="right">492.273</td>
+<td align="right">611.352</td>
+<td align="left">integrated</td>
+<td align="left">Gamma</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2013</td>
+<td align="right">561.066</td>
+<td align="right">NA</td>
+<td align="right">30.956</td>
+<td align="right">0.055</td>
+<td align="right">503.559</td>
+<td align="right">625.141</td>
+<td align="left">integrated</td>
+<td align="left">Gamma</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2014</td>
+<td align="right">631.213</td>
+<td align="right">NA</td>
+<td align="right">34.297</td>
+<td align="right">0.054</td>
+<td align="right">567.446</td>
+<td align="right">702.144</td>
+<td align="left">integrated</td>
+<td align="left">Gamma</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2015</td>
+<td align="right">635.394</td>
+<td align="right">NA</td>
+<td align="right">38.429</td>
+<td align="right">0.060</td>
+<td align="right">564.368</td>
+<td align="right">715.359</td>
+<td align="left">integrated</td>
+<td align="left">Gamma</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2016</td>
+<td align="right">758.069</td>
+<td align="right">NA</td>
+<td align="right">43.860</td>
+<td align="right">0.058</td>
+<td align="right">676.800</td>
+<td align="right">849.096</td>
+<td align="left">integrated</td>
+<td align="left">Gamma</td>
+<td align="left">log</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_compare.html">plot_compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>`Spatial GAM` <span class="op">=</span> <span class="va">gam_total</span>, `Depth GLM` <span class="op">=</span> <span class="va">glm_total</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="cpue-indices_files/figure-html/area-comparison-1.png" class="r-plt" alt="Area-integrated expected density over the same 100 km² domain, comparing a GAM with a spatial smooth against a GLM with a depth effect but no explicit spatial term. Both return totals in kg under the simulated density units. Pointwise 95% confidence intervals propagate joint coefficient uncertainty; they do not describe new catches or uncertainty in the difference between models." width="768"><p class="caption">
+Area-integrated expected density over the same 100 km² domain, comparing
+a GAM with a spatial smooth against a GLM with a depth effect but no
+explicit spatial term. Both return totals in kg under the simulated
+density units. Pointwise 95% confidence intervals propagate joint
+coefficient uncertainty; they do not describe new catches or uncertainty
+in the difference between models.
+</p>
+</div>
+<p>Replace the fitted model with a glmmTMB or complete brms fit to use
+exactly the same integration call. The <a href="spatial-spatiotemporal.html#response-indices-and-area-totals">spatial
+article</a> executes both index calculations for sdmTMB and tinyVAST,
+including their fields.</p>
+<p>Area integration and area-weighted standardisation are related, but
+not identical: with no catchability conversion, the total is the
+area-weighted mean times total area. Their units differ.
+<code>rescale = 1</code> gives a relative series and includes the shared
+normalising denominator in uncertainty calculations.</p>
+<div class="section level3">
+<h3 id="exposure-catchability-and-repeated-seasons">Exposure, catchability, and repeated seasons<a class="anchor" aria-label="anchor" href="#exposure-catchability-and-repeated-seasons"></a>
+</h3>
+<p>Integrating kg/tow over km² gives an area-weighted CPUE index,
+<strong>not kg of fish</strong>. Either model a density already
+expressed per km² or supply a defensible known <code>catchability</code>
+conversion with compatible units. The package divides predictions by
+that conversion; it does not estimate catchability or its uncertainty.
+It also does not infer cell areas from longitude and latitude: use
+suitable geodesic or equal-area calculations outside this function.</p>
+<p>If each cell appears in several seasonal reference rows, provide
+<code>averaging_weights</code> that sum to one within each cell. For
+example, four equally weighted quarters need
+<code>averaging_weights = 1 / 4</code>. Without this adjustment,
+repeating the full cell area four times computes a sum over four seasons
+rather than an annual mean surface. This is also relevant to
+month-by-area GAM grids: the integration weights must represent the
+intended seasonal and spatial target.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">seasonal_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span><span class="va">seasonal_model</span>, <span class="va">quarter_grid</span>,</span>
+<span>  area <span class="op">=</span> <span class="st">"area_km2"</span>, averaging_weights <span class="op">=</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">4</span>,</span>
+<span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"kg/km^2"</span>, units <span class="op">=</span> <span class="st">"kg"</span><span class="op">)</span></span></code></pre></div>
+<p>Only the compact annual table is retained by default. Spatial and
+brms indices can retain annual draws with <code>retain = "draws"</code>;
+grid-by-draw arrays are not stored. Independent cell standard errors are
+never added together. All area, covariate, and seasonal weights are
+treated as known, and valid units, domain coverage, and extrapolation
+remain scientific decisions for the analyst.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

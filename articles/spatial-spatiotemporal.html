@@ -568,6 +568,342 @@ diagnostic summaries.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="response-indices-and-area-totals">Response indices and area totals<a class="anchor" aria-label="anchor" href="#response-indices-and-area-totals"></a>
+</h2>
+<p>The influence and step plots above answer different questions from a
+standardised expected-response index or an area total. Both new
+calculations work with sdmTMB and tinyVAST, using the same
+<code>influ_index</code> assessment table as GLMs, GAMs, glmmTMB, and
+brms. No refitting is required.</p>
+<div class="section level3">
+<h3 id="sdmtmb-a-common-domain-across-years">sdmTMB: a common domain across years<a class="anchor" aria-label="anchor" href="#sdmtmb-a-common-domain-across-years"></a>
+</h3>
+<p><code>qcs_grid</code> is the package’s 2 × 2 km prediction grid. We
+hold its locations and depth covariates constant across years. The model
+above is binomial, so its standardised response is a mean
+<strong>encounter probability</strong>, not catch density. Its
+area-integrated response is expected encounter-weighted area, not
+biomass or an estimate of the number of fish.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pcod_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">pcod_model</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  reference_data <span class="op">=</span> <span class="va">qcs_grid</span>, uncertainty <span class="op">=</span> <span class="st">"none"</span>, batch_size <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  units <span class="op">=</span> <span class="st">"encounter probability"</span><span class="op">)</span></span>
+<span><span class="va">pcod_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span><span class="va">pcod_model</span>, <span class="va">qcs_grid</span>, area <span class="op">=</span> <span class="fl">4</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"encounter probability"</span>,</span>
+<span>  units <span class="op">=</span> <span class="st">"km^2"</span>,</span>
+<span>  ndraws <span class="op">=</span> <span class="fl">100</span>, batch_size <span class="op">=</span> <span class="fl">2000</span>, draw_batch_size <span class="op">=</span> <span class="fl">25</span>, seed <span class="op">=</span> <span class="fl">71</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">pcod_area</span><span class="op">)</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="6%">
+<col width="10%">
+<col width="8%">
+<col width="9%">
+<col width="7%">
+<col width="10%">
+<col width="10%">
+<col width="13%">
+<col width="15%">
+<col width="7%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Mean</th>
+<th align="right">Median</th>
+<th align="right">SD</th>
+<th align="right">CV</th>
+<th align="right">Qlower</th>
+<th align="right">Qupper</th>
+<th align="left">Method</th>
+<th align="left">Distribution</th>
+<th align="left">Link</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2003</td>
+<td align="right">13197.70</td>
+<td align="right">NA</td>
+<td align="right">580.485</td>
+<td align="right">0.044</td>
+<td align="right">12172.02</td>
+<td align="right">14178.06</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="even">
+<td align="left">2004</td>
+<td align="right">14240.84</td>
+<td align="right">NA</td>
+<td align="right">717.049</td>
+<td align="right">0.050</td>
+<td align="right">12693.36</td>
+<td align="right">15347.26</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="odd">
+<td align="left">2005</td>
+<td align="right">14162.44</td>
+<td align="right">NA</td>
+<td align="right">667.655</td>
+<td align="right">0.047</td>
+<td align="right">13029.30</td>
+<td align="right">15340.46</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="even">
+<td align="left">2007</td>
+<td align="right">11457.21</td>
+<td align="right">NA</td>
+<td align="right">545.560</td>
+<td align="right">0.048</td>
+<td align="right">10508.44</td>
+<td align="right">12832.77</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="odd">
+<td align="left">2009</td>
+<td align="right">12522.68</td>
+<td align="right">NA</td>
+<td align="right">642.885</td>
+<td align="right">0.051</td>
+<td align="right">11109.46</td>
+<td align="right">13546.35</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="even">
+<td align="left">2011</td>
+<td align="right">11371.78</td>
+<td align="right">NA</td>
+<td align="right">604.802</td>
+<td align="right">0.053</td>
+<td align="right">10297.59</td>
+<td align="right">12811.33</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="odd">
+<td align="left">2013</td>
+<td align="right">14951.32</td>
+<td align="right">NA</td>
+<td align="right">619.901</td>
+<td align="right">0.041</td>
+<td align="right">13486.21</td>
+<td align="right">15816.95</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="even">
+<td align="left">2015</td>
+<td align="right">13845.19</td>
+<td align="right">NA</td>
+<td align="right">689.405</td>
+<td align="right">0.050</td>
+<td align="right">12426.42</td>
+<td align="right">15088.89</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+<tr class="odd">
+<td align="left">2017</td>
+<td align="right">11090.37</td>
+<td align="right">NA</td>
+<td align="right">600.302</td>
+<td align="right">0.054</td>
+<td align="right">10035.56</td>
+<td align="right">12444.13</td>
+<td align="left">integrated</td>
+<td align="left">binomial</td>
+<td align="left">logit</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">pcod_area</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="spatial-spatiotemporal_files/figure-html/sdmtmb-area-plot-1.png" class="r-plt" alt="Pacific cod encounter-weighted area over the fixed Queen Charlotte Sound grid. Each cell contributes its 4 km² area times its fitted encounter probability, including persistent and spatiotemporal fields. The pointwise 95% intervals propagate joint Gaussian parameter and field uncertainty; this is not a biomass index or a Laplace bias-corrected estimate." width="768"><p class="caption">
+Pacific cod encounter-weighted area over the fixed Queen Charlotte Sound
+grid. Each cell contributes its 4 km² area times its fitted encounter
+probability, including persistent and spatiotemporal fields. The
+pointwise 95% intervals propagate joint Gaussian parameter and field
+uncertainty; this is not a biomass index or a Laplace bias-corrected
+estimate.
+</p>
+</div>
+<p>For a native density model, exactly the same call integrates the
+combined expected density, including zero and positive components of a
+delta model. The response and area units must be compatible. sdmTMB
+group-level IID effects are set to zero, while the fitted spatial fields
+are included by default. <code>prediction_offset = "log_exposure"</code>
+can supply an explicit link-scale offset column; the default prediction
+offset is zero (unit exposure for a log offset).</p>
+</div>
+<div class="section level3">
+<h3 id="tinyvast-integrating-the-simulated-field">tinyVAST: integrating the simulated field<a class="anchor" aria-label="anchor" href="#tinyvast-integrating-the-simulated-field"></a>
+</h3>
+<p>For this simulation, interpret each grid location as a 1 km² cell and
+its Poisson mean as expected fish per km². That is an explicit
+simulation convention, not a general conversion from raw fishery counts
+to density. The total covers the same 49 cells each year, irrespective
+of which cells were sampled.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tiny_reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">tiny_grid</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"ycoord"</span>, <span class="st">"var"</span>, <span class="st">"dist"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">tiny_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">tiny_model</span>, year <span class="op">=</span> <span class="st">"time"</span>,</span>
+<span>  reference_data <span class="op">=</span> <span class="va">tiny_reference</span>, units <span class="op">=</span> <span class="st">"fish/km^2"</span>,</span>
+<span>  ndraws <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">72</span><span class="op">)</span></span>
+<span><span class="va">tiny_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span><span class="va">tiny_model</span>, <span class="va">tiny_reference</span>, area <span class="op">=</span> <span class="fl">1</span>, year <span class="op">=</span> <span class="st">"time"</span>,</span>
+<span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"fish/km^2"</span>, units <span class="op">=</span> <span class="st">"fish"</span>,</span>
+<span>  ndraws <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">72</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">tiny_total</span><span class="op">)</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="6%">
+<col width="10%">
+<col width="8%">
+<col width="8%">
+<col width="7%">
+<col width="10%">
+<col width="10%">
+<col width="14%">
+<col width="16%">
+<col width="6%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Mean</th>
+<th align="right">Median</th>
+<th align="right">SD</th>
+<th align="right">CV</th>
+<th align="right">Qlower</th>
+<th align="right">Qupper</th>
+<th align="left">Method</th>
+<th align="left">Distribution</th>
+<th align="left">Link</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="right">109.670</td>
+<td align="right">NA</td>
+<td align="right">19.198</td>
+<td align="right">0.175</td>
+<td align="right">85.719</td>
+<td align="right">147.665</td>
+<td align="left">integrated</td>
+<td align="left">poisson</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="right">118.864</td>
+<td align="right">NA</td>
+<td align="right">17.108</td>
+<td align="right">0.144</td>
+<td align="right">96.075</td>
+<td align="right">158.702</td>
+<td align="left">integrated</td>
+<td align="left">poisson</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="right">134.286</td>
+<td align="right">NA</td>
+<td align="right">16.965</td>
+<td align="right">0.126</td>
+<td align="right">115.708</td>
+<td align="right">180.074</td>
+<td align="left">integrated</td>
+<td align="left">poisson</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="right">107.701</td>
+<td align="right">NA</td>
+<td align="right">19.733</td>
+<td align="right">0.183</td>
+<td align="right">88.755</td>
+<td align="right">149.576</td>
+<td align="left">integrated</td>
+<td align="left">poisson</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="right">165.391</td>
+<td align="right">NA</td>
+<td align="right">30.960</td>
+<td align="right">0.187</td>
+<td align="right">139.288</td>
+<td align="right">248.728</td>
+<td align="left">integrated</td>
+<td align="left">poisson</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">6</td>
+<td align="right">157.522</td>
+<td align="right">NA</td>
+<td align="right">36.579</td>
+<td align="right">0.232</td>
+<td align="right">133.220</td>
+<td align="right">229.166</td>
+<td align="left">integrated</td>
+<td align="left">poisson</td>
+<td align="left">log</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">tiny_total</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="spatial-spatiotemporal_files/figure-html/tinyvast-area-plot-1.png" class="r-plt" alt="Expected fish over the fixed 49 km² simulated domain, including the fitted tinyVAST persistent and AR(1) spatiotemporal fields. Pointwise 95% intervals use shared joint Gaussian parameter/field draws. These are plug-in expected-response totals, not Laplace bias-corrected totals or predictive intervals for new counts." width="768"><p class="caption">
+Expected fish over the fixed 49 km² simulated domain, including the
+fitted tinyVAST persistent and AR(1) spatiotemporal fields. Pointwise
+95% intervals use shared joint Gaussian parameter/field draws. These are
+plug-in expected-response totals, not Laplace bias-corrected totals or
+predictive intervals for new counts.
+</p>
+</div>
+<p><code>spatial_fields = "all"</code> is the default.
+<code>"spatial"</code> excludes the spatiotemporal field;
+<code>"spatiotemporal"</code> excludes persistent and spatially varying
+fields; <code>"none"</code> excludes both kinds. Those alternatives
+change the prediction target <strong>without refitting</strong>, and are
+not the refitted step sequence above. Other fitted time effects and
+smooths remain present.</p>
+<p>Spatial uncertainty uses a joint Gaussian approximation to the fitted
+parameters and fields. Every cell and year uses the same parameter-draw
+identities. Predictions are reduced directly to annual summaries in
+blocks; <code>retain = "draws"</code> retains only a draw-by-year
+matrix. Native model calculations can allocate additional memory.
+Increase <code>ndraws</code> and check numerical stability for final
+inference; the small simulation counts here keep documentation builds
+manageable. Native sdmTMB and tinyVAST bias-corrected index routines
+answer a different numerical approximation and should not be expected to
+match these uncorrected point estimates.</p>
+<p>See <a href="cpue-indices.html#area-integration-for-ordinary-and-spatial-models">CPUE
+indices</a> for area integration with a GAM spatial smooth or an
+ordinary GLM, unit and catchability safeguards, and seasonal averaging
+weights. The same fixed-domain interface applies even when the fitted
+model has no spatial terms. Multivariate tinyVAST influence diagnostics
+below remain supported, but their response integration is explicitly
+rejected until separate response/unit targets exist.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="multivariate-tinyvast-responses">Multivariate tinyVAST responses<a class="anchor" aria-label="anchor" href="#multivariate-tinyvast-responses"></a>
 </h2>
 <p><code>tinyVAST</code> can fit multiple responses, including responses
@@ -575,7 +911,7 @@ with different families. <code>influ2</code> keeps the common schema and
 prefixes each component with its response name. This small non-spatial
 example isolates that interface; the same response labels are used when
 spatial and spatiotemporal terms are added.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multivariate_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span></span>
 <span>    <span class="va">tiny_data</span>,</span>

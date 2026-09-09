@@ -1184,6 +1184,16 @@ interactions or more complicated response structures.</p>
 Response standardisation currently supports GLM, GAM, glmmTMB, and
 complete brms fits; the full spatial response adapters remain separate
 work.</p>
+<p><code><a href="../reference/cpue_index.html">cpue_index()</a></code> now provides this expected-response table
+for all six model classes. A separate <code><a href="../reference/integrate_index.html">integrate_index()</a></code>
+sums predictions times explicit cell areas, whether the model is a GLM,
+a GAM with a spatial smooth, a mixed model, or a specialist
+spatiotemporal model. See <a href="cpue-indices.html">CPUE indices</a>
+for an executed GLM/GAM area comparison, and the <a href="spatial-spatiotemporal.html#response-indices-and-area-totals">spatial
+article</a> for sdmTMB and tinyVAST response indices and totals. Area
+integration does not automatically convert CPUE into absolute biomass;
+compatible density units or an explicit catchability conversion are
+required.</p>
 </div>
 <div class="section level2">
 <h2 id="one-interface-and-compact-uncertainty">One interface and compact uncertainty<a class="anchor" aria-label="anchor" href="#one-interface-and-compact-uncertainty"></a>

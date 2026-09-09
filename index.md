@@ -67,8 +67,11 @@ For an assessment-ready expected-response table, use
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
 with an explicit common reference profile or population. Both
 `"standardised"` and `"standardized"` are accepted. GLM, GAM, glmmTMB,
-and complete brms fits are supported for response standardisation;
-spatial response integration remains separate development work.
+complete brms, sdmTMB, and univariate tinyVAST fits are supported for
+response standardisation.
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+separately calculates area-weighted totals for these same six backends,
+whether or not the fitted model includes spatial effects.
 
 ``` r
 
@@ -76,12 +79,20 @@ index <- cpue_index(model, year = "year", reference_data = reference_profile)
 as.data.frame(index)  # Year, Mean, Median, SD, CV, Qlower, Qupper, and metadata.
 plot_index(index)
 geo_mean(c(1, 4, 16))
+
+total <- integrate_index(model, reference_data = prediction_grid,
+  area = "area_km2", year = "year",
+  area_units = "km^2", response_units = "kg/km^2", units = "kg")
+plot_index(total)
 ```
 
 These response indices are distinct from the year-effect contrasts used
 in the step plots. See the [CPUE indices
 article](https://www.quantifish.co.nz/influ2/articles/cpue-indices.html)
 for reference choices, compact uncertainty, and comparison examples.
+Area integration requires a stated domain and compatible response/area
+units; integrating CPUE does not automatically turn it into absolute
+biomass.
 
 ## Residual diagnostics
 

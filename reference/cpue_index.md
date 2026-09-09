@@ -21,7 +21,10 @@ cpue_index(
   draw_batch_size = 100L,
   retain = c("summary", "draws"),
   units = NULL,
-  ...
+  ...,
+  spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
+  seed = 1L,
+  prediction_offset = NULL
 )
 
 # S3 method for class 'influ_index'
@@ -35,15 +38,16 @@ print(x, ...)
 
 - model:
 
-  A fitted GLM, `mgcv` GAM, `glmmTMB`, or complete `brmsfit` for
-  response standardisation. For `method = "year_effect"`, any model
-  supported by
+  A fitted GLM, `mgcv` GAM, `glmmTMB`, complete `brmsfit`, `sdmTMB`, or
+  univariate `tinyVAST` model for response standardisation. For
+  `method = "year_effect"`, any model supported by
   [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) or
   an existing `influ_diag` can be supplied.
 
 - year:
 
-  Name of the year variable. Defaults to the first formula predictor.
+  Name of the year variable. Defaults to the native time variable for
+  spatial backends, otherwise the first formula predictor.
 
 - method:
 
@@ -80,9 +84,9 @@ print(x, ...)
 
 - ndraws:
 
-  Maximum number of existing posterior draws to use for brms.
-  Deterministically spaced draw identities are shared across years and
-  batches.
+  Maximum number of existing posterior draws for brms, or number of
+  joint Gaussian parameter/field draws for spatial backends. The same
+  draw identities are shared across years and prediction batches.
 
 - batch_size:
 
@@ -95,7 +99,8 @@ print(x, ...)
 - retain:
 
   `"summary"` (default) or `"draws"`. Draw retention is available for
-  standardised brms indices and stores only a draw-by-year matrix.
+  standardised brms and spatial indices and stores only a draw-by-year
+  matrix. Spatial draws are a joint Gaussian approximation, not MCMC.
 
 - units:
 
@@ -106,6 +111,27 @@ print(x, ...)
   Arguments passed to
   [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md)
   only for `method = "year_effect"`.
+
+- spatial_fields:
+
+  Spatial-backend prediction target: `"all"` includes persistent,
+  spatially varying, and spatiotemporal fields; `"spatial"` excludes
+  spatiotemporal fields; `"spatiotemporal"` excludes persistent and
+  spatially varying fields; `"none"` excludes all three. This changes
+  only predictions, not the fitted model. Other smooths/time effects
+  remain.
+
+- seed:
+
+  Non-negative integer seed for spatial joint draws. The caller's
+  random-number state is restored; changing batch sizes preserves draws.
+
+- prediction_offset:
+
+  For sdmTMB only, the name of a numeric link-scale offset column in
+  `reference_data`. `NULL` explicitly uses offset zero (one unit of
+  exposure for a log-exposure offset). Other backends obtain offsets
+  from their formula and the supplied reference predictors.
 
 - x:
 
@@ -161,14 +187,24 @@ coefficients.
 Working storage is bounded by reference and draw batches plus a compact
 annual covariance or draw matrix. Native prediction code can allocate
 additional memory. The result does not retain the model or reference
-data. Spatial response standardisation and area integration are separate
-future adapters; `sdmTMB` and `tinyVAST` currently support
-`"year_effect"` here. Year-effect results preserve the original
-diagnostic estimand and cannot be rescaled by this function. These
-indices are not biomass estimates.
+data. Spatial response estimates evaluate the fitted model at the
+reference locations in each observed year. sdmTMB IID group effects are
+set to zero; tinyVAST non-spatial temporal effects and smooths remain as
+fitted. Joint fixed/latent Gaussian draws propagate field and parameter
+uncertainty, with empirical pointwise intervals. `Mean` remains the
+plug-in expected response and `Median` remains unavailable for these
+frequentist models. This is not a Laplace bias-corrected index or
+integration over a new population of random effects. Grid predictions
+are immediately reduced to annual values; a grid-by-draw array is never
+retained. Use
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+for area-weighted totals, which have different units. Year-effect
+results preserve the original diagnostic estimand and cannot be rescaled
+by this function. These indices are not biomass estimates.
 
 ## See also
 
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md),
 [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md),
 [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md),
 [`geo_mean()`](https://www.quantifish.co.nz/influ2/reference/geo_mean.md),

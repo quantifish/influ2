@@ -1085,6 +1085,20 @@ Response standardisation currently supports GLM, GAM, glmmTMB, and
 complete brms fits; the full spatial response adapters remain separate
 work.
 
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+now provides this expected-response table for all six model classes. A
+separate
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+sums predictions times explicit cell areas, whether the model is a GLM,
+a GAM with a spatial smooth, a mixed model, or a specialist
+spatiotemporal model. See [CPUE
+indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md)
+for an executed GLM/GAM area comparison, and the [spatial
+article](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.html#response-indices-and-area-totals)
+for sdmTMB and tinyVAST response indices and totals. Area integration
+does not automatically convert CPUE into absolute biomass; compatible
+density units or an explicit catchability conversion are required.
+
 ## One interface and compact uncertainty
 
 All fitted-model methods return an `influ_diag`:

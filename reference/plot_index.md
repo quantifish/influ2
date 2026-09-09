@@ -38,4 +38,5 @@ A ggplot object.
 ## See also
 
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md),
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md),
 [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
