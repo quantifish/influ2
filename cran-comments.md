@@ -69,7 +69,7 @@ SHA256: `dc378ec5eb89d047e5b734d02a999b83affb7f35c5117a0b7fb79b2be2ac9d76`
 * Executed native checks cover ordinary GLM families, negative-binomial and
   Tweedie GAMs, glmmTMB random effects and binomial/zero-inflated responses,
   sdmTMB spatial/spatiotemporal and delta models, and tinyVAST single-response,
-  spatial/spatiotemporal, and delta models. A separate complete BRMS
+  spatial/spatiotemporal, and delta models. A separate complete brms
   negative-binomial fit exercised posterior prediction (two chains, 1,000
   post-warmup draws in total, no divergences); no Stan object was added to
   the source package or website.
@@ -133,14 +133,14 @@ SHA256: `5c5a93db97cef8c02dd2bac47a09b0b69a52b5b8f1b7a55ed2fd3c1c0805ed4a`
 * A separate full local suite passed 2,562 expectations, including all eight
   visual snapshots, with no failures, warnings, or skips. The new coverage
   includes observation alignment, retained model frames, polynomial roundoff,
-  residual-type boundaries, compact BRMS fixtures, and comparison scales.
+  residual-type boundaries, compact brms fixtures, and comparison scales.
 * Source URL validation passed all 21 URLs, and spelling checks passed. The
   pkgdown site rebuilt; seven new figures, numbering, lightbox operation, and
   the separate residual reference section were inspected.
 * Direct native-method audits covered GLM/NB, GAM, glmmTMB, and selected spatial
   sdmTMB/tinyVAST models. External DHARMa recipes were also exercised for
   sdmTMB single and delta responses, and single-response tinyVAST fields.
-  Complete-fit BRMS residual/R-squared/criterion execution was not rerun:
+  Complete-fit brms residual/R-squared/criterion execution was not rerun:
   compact fixtures intentionally cannot provide those native calculations.
 
 The article distinguishes goodness-of-fit from influence and index
@@ -192,7 +192,7 @@ including the eight visual snapshots, with no failures, warnings, or skips.
 Test coverage is 87.70% overall and 97.37% for the new scientific guard file.
 
 An isolated mandatory-dependency-only library installed and loaded the same
-archive successfully. With BRMS, glmmTMB, sdmTMB, tinyVAST, and their optional
+archive successfully. With brms, glmmTMB, sdmTMB, tinyVAST, and their optional
 stacks unavailable, GLM diagnostics, GLM/negative-binomial step calculations,
 uncertainty summaries, and plots passed. R's base/recommended packages,
 including MASS and mgcv, remained available. This was an installation/core

@@ -1,4 +1,4 @@
-.resid_adapter <- function(model, data, nsim) {
+.resid_adapter <- function(model, data, nsim, trial_counts = NULL, component = "auto") {
   backend <- if (inherits(model, "brmsfit")) "brms" else {
     choices <- c("glmmTMB", "sdmTMB", "tinyVAST", "gam", "glm")
     choices[vapply(choices, inherits, logical(1), x = model)][1L]
@@ -18,12 +18,12 @@
     observed <- stats::model.response(frame)
   } else {
     lhs <- f[[2L]]
-    # BRMS response additions encode censoring, trials, weights, etc. Only
+    # brms response additions encode censoring, trials, weights, etc. Only
     # trials are currently supported; do not interpret censoring limits as y.
     if (backend == "brms" && is.call(lhs) && identical(lhs[[1L]], as.name("|"))) {
       additions <- all.names(lhs[[3L]], functions = TRUE)
       if (any(!additions %in% c("trials", all.vars(lhs[[3L]])))) {
-        stop("Only BRMS `trials()` response additions are supported; censored, ",
+        stop("Only brms `trials()` response additions are supported; censored, ",
           "weighted, and other special responses need a dedicated diagnostic.", call. = FALSE)
       }
       lhs <- lhs[[2L]]
@@ -72,6 +72,15 @@
       if (!is.null(weights) && any(weights != 1)) stop("Weighted factor responses are not supported.", call. = FALSE)
     } else {
       trials <- weights %||% rep(1, length(observed))
+      if (any(trials != 1)) {
+        if (is.null(trial_counts)) {
+          stop("Weighted one-column binomial responses need explicit `trial_counts` (a column in `data`), or use cbind(successes, failures). Arbitrary case weights are not assumed to be trials.", call. = FALSE)
+        }
+        known <- .resid_known_trials(trial_counts, data)
+        if (!isTRUE(all.equal(as.numeric(known), as.numeric(trials)))) {
+          stop("`trial_counts` must match the fitted binomial trial weights.", call. = FALSE)
+        }
+      }
       observed <- observed * trials
     }
     if (any(!is.finite(trials) | trials <= 0 | trials != round(trials)) ||
@@ -87,6 +96,14 @@
     if (!is.null(trials) && any(trials != 1)) {
       stop("Multi-trial sdmTMB residual simulation is not yet validated; ",
         "use its native component-aware residual workflow.", call. = FALSE)
+    }
+  }
+  if (!is.null(trial_counts)) {
+    if (!binomial || !backend %in% c("glm", "gam", "glmmTMB")) {
+      stop("`trial_counts` is an explicit interpretation of GLM/GAM/glmmTMB binomial trial weights only; other backends must supply native trial metadata.", call. = FALSE)
+    }
+    if (!isTRUE(all.equal(as.numeric(.resid_known_trials(trial_counts, data)), as.numeric(trials)))) {
+      stop("`trial_counts` must match the fitted binomial trial counts.", call. = FALSE)
     }
   }
   if (!is.numeric(observed) || !is.null(dim(observed)) ||
@@ -124,7 +141,7 @@
       } else as.matrix(value)
     }
     scheme <- "Native simulations at fitted parameters; random effects resimulated"
-    if (any(stats::predict(model, type = "zprob") > 0)) structure <- "combined zero-inflated response"
+    if (.glmmTMB_has_component(model, "zi")) structure <- "combined zero-inflated response"
   } else if (backend == "brms") {
     available <- brms::ndraws(model)
     if (nsim > available) stop("`nsim` exceeds available posterior draws; reduce it.", call. = FALSE)
@@ -150,6 +167,9 @@
     scheme <- "mle-eb observation simulations conditional on fitted latent effects"
     if (isTRUE(model$internal$family[[1L]]$delta)) structure <- "combined delta response"
   }
-  list(backend = backend, observed = as.numeric(observed), data = data,
-    response = response, simulate = simulate, scheme = scheme, structure = structure)
+  adapter <- list(backend = backend, observed = as.numeric(observed), data = data,
+    response = response, simulate = simulate, scheme = scheme, structure = structure,
+    family = family, trials = trials, response_variables = all.vars(f[[2L]]))
+  .resid_response_adapter(adapter, model, component, nsim,
+    draw_ids = if (backend == "brms") draws else NULL)
 }

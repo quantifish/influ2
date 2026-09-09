@@ -115,7 +115,7 @@ test_that("glmmTMB checks conditional, probability, and dispersion offsets", {
   expect_error(influ(identity_fit, "year"), "log link for the arithmetic mean")
 })
 
-test_that("BRMS offset and sigma guards run before posterior extraction", {
+test_that("brms offset and sigma guards run before posterior extraction", {
   skip_if_not_installed("brms")
   skip_if_not_installed("posterior")
   data <- offset_scale_data()

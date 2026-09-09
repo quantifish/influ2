@@ -2,6 +2,7 @@
   if (!is.null(focus)) return(focus)
   if (inherits(model, "influ_diag")) return(model$focus)
   frm <- tryCatch(stats::formula(model), error = function(e) NULL)
+  if (inherits(frm, "brmsformula")) frm <- frm$formula
   if (is.null(frm)) {
     stop("Supply `year =` when a model's formula cannot be recovered.", call. = FALSE)
   }
@@ -127,7 +128,8 @@
 #' pre-computed [influ_diag] objects. Models are reduced to the same index
 #' schema before plotting.
 #'
-#' @param fits A fitted model, an [influ_diag], or a list of either.
+#' @param fits A fitted model, an [influ_diag], or a list of either. Alternatively,
+#'   supply calculated [cpue_index()] objects, without mixing input types.
 #' @param labels Optional unique, non-empty model labels. Repeated automatically
 #'   generated labels are disambiguated with numeric suffixes.
 #' @param year Optional focus-variable name. It is inferred when omitted.
@@ -143,12 +145,24 @@
 #'   difference and link-scale plots retain negative values. Inputs should
 #'   describe comparable responses and focus effects; matching scales alone
 #'   does not establish that the fitted models answer the same question.
+#'   Fitted-model inputs retain their existing year-effect-contrast meaning.
+#'   To compare expected-response indices, supply `cpue_index()` results with
+#'   comparable reference populations and response definitions. Their stored
+#'   intervals are used; set rescaling during calculation, not during plotting.
 #'
 #' @return A [ggplot2::ggplot()] object.
 #' @export
 plot_compare <- function(fits, labels = NULL, year = NULL,
                          probs = c(0.25, 0.75), show_probs = TRUE,
                          rescale = "raw", rescale_series = NULL, ...) {
+  calculated <- if (inherits(fits, "influ_index")) list(fits) else fits
+  if (is.list(calculated) && any(vapply(calculated, inherits, logical(1), "influ_index"))) {
+    if (!identical(rescale, "raw") || !is.null(rescale_series) || !is.null(year) ||
+        !missing(probs) || length(list(...))) {
+      stop("For calculated CPUE indices, set year, intervals, and rescaling in `cpue_index()`; plots use the stored values.", call. = FALSE)
+    }
+    return(.plot_cpue_indices(calculated, labels, show_probs))
+  }
   data <- .comparison_index_data(
     fits, labels = labels, focus = year, probs = probs, ...
   )
@@ -281,7 +295,7 @@ plot_step <- function(fits, labels = NULL, year = NULL, fill = "purple4",
   invisible(TRUE)
 }
 
-#' Summarise Bayesian R-squared for BRMS models
+#' Summarise Bayesian R-squared for brms models
 #'
 #' @param fits A `brmsfit` or list of `brmsfit` objects.
 #' @param probs Lower and upper interval probabilities.
@@ -325,9 +339,9 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
   out
 }
 
-#' Compare BRMS model criteria
+#' Compare brms model criteria
 #'
-#' Calculates selected public BRMS criteria without inspecting the underlying
+#' Calculates selected public brms criteria without inspecting the underlying
 #' Stan object. This keeps `rstan` out of the package's mandatory dependencies.
 #'
 #' @param fits A `brmsfit` or list of `brmsfit` objects.
@@ -335,7 +349,7 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
 #'   `"log_lik"`.
 #' @param sort Sort models by expected log predictive density, or Bayesian
 #'   R-squared when LOO is not requested.
-#' @param ... Arguments passed to the requested BRMS criterion functions.
+#' @param ... Arguments passed to the requested brms criterion functions.
 #'
 #' @details Requires original complete `brmsfit` objects, not compact
 #'   influence-only fixtures shipped with influ2. The helper evaluates the
@@ -628,7 +642,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = "year",
 #' Plot predicted values against residuals
 #'
 #' Uses native response-scale fitted values and the explicitly requested native
-#' residual type. No residual type is substituted automatically. Complete BRMS
+#' residual type. No residual type is substituted automatically. Complete brms
 #' fits are required; compact influence-only fixtures cannot supply native
 #' predictions. sdmTMB delta models require separate component-specific native
 #' diagnostics, and tinyVAST does not provide Pearson residuals.

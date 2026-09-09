@@ -2,7 +2,7 @@
 % Please edit documentation in R/additional-diagnostics.R
 \name{get_bayes_R2}
 \alias{get_bayes_R2}
-\title{Summarise Bayesian R-squared for BRMS models}
+\title{Summarise Bayesian R-squared for brms models}
 \usage{
 get_bayes_R2(fits, probs = c(0.025, 0.975), ...)
 }
@@ -17,7 +17,7 @@ get_bayes_R2(fits, probs = c(0.025, 0.975), ...)
 A data frame with one row per model.
 }
 \description{
-Summarise Bayesian R-squared for BRMS models
+Summarise Bayesian R-squared for brms models
 }
 \details{
 Requires an original complete `brmsfit`, not a compact influence-only

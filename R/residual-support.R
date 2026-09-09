@@ -6,18 +6,18 @@
   }
   if (inherits(model, "brmsfit")) {
     if (!requireNamespace("brms", quietly = TRUE)) {
-      stop("Package 'brms' is required for BRMS residuals.", call. = FALSE)
+      stop("Package 'brms' is required for brms residuals.", call. = FALSE)
     }
     if (is.null(model$fit) && !is.null(model$influ2_draws)) {
       stop(
-        "Compact BRMS influence fixtures do not contain the native fitted ",
+        "Compact brms influence fixtures do not contain the native fitted ",
         "object required for prediction and residuals. Supply the original ",
         "complete brmsfit; influ() can still use these compact fixtures.",
         call. = FALSE
       )
     }
     if (inherits(model$formula, "mvbrmsformula")) {
-      stop("These residual plots require one response. Use the native BRMS ",
+      stop("These residual plots require one response. Use the native brms ",
         "residual interface with an explicit `resp` for multivariate models.",
         call. = FALSE)
     }

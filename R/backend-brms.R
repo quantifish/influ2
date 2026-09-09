@@ -549,7 +549,7 @@
 #' while calculating the requested diagnostics.
 #' Lognormal models currently require constant `sigma`; varying scale needs a
 #' joint location-and-scale calculation before arithmetic-mean ratios can be
-#' reported. The `mu` link must be identity because BRMS parameterises the
+#' reported. The `mu` link must be identity because brms parameterises the
 #' log-location, not the arithmetic mean. Formula offsets and response `rate()`
 #' additions have the same restrictions as the GLM adapter.
 #'
@@ -582,8 +582,8 @@ influ.brmsfit <- function(model, focus, data = NULL, weights = NULL,
   if (parsed_family$family == "lognormal" &&
       model$family$link != "identity") {
     stop(
-      "BRMS lognormal diagnostics currently require an identity link for mu. ",
-      "BRMS mu is a log-location parameter, so non-identity links do not ",
+      "brms lognormal diagnostics currently require an identity link for mu. ",
+      "brms mu is a log-location parameter, so non-identity links do not ",
       "produce exp(contrast) response ratios.",
       call. = FALSE
     )

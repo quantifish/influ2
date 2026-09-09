@@ -1,4 +1,4 @@
-test_that("BRMS fixed-term labels exclude intervening random and smooth terms", {
+test_that("brms fixed-term labels exclude intervening random and smooth terms", {
   skip_if_not_installed("brms")
   skip_if_not_installed("posterior")
   fit <- readRDS(system.file(
@@ -37,7 +37,7 @@ test_that("BRMS fixed-term labels exclude intervening random and smooth terms", 
   }
 })
 
-test_that("BRMS hurdle dpar labels use their own population-only formulas", {
+test_that("brms hurdle dpar labels use their own population-only formulas", {
   skip_if_not_installed("brms")
   set.seed(308)
   data <- data.frame(year = factor(rep(1:4, each = 20)),
@@ -67,7 +67,7 @@ test_that("BRMS hurdle dpar labels use their own population-only formulas", {
   }
 })
 
-test_that("BRMS invalid population assignment metadata fails rather than mislabelling", {
+test_that("brms invalid population assignment metadata fails rather than mislabelling", {
   skip_if_not_installed("brms")
   model <- list(formula = brms::bf(y ~ year + (1 | month) + x,
     family = stats::gaussian()))

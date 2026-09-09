@@ -2,7 +2,7 @@
 #'
 #' Calculate once, then use [plot.influ_residuals()] for a four-panel overview:
 #' a normal-score rank Q-Q plot, residuals against the predictive mean,
-#' residuals by year, and observed versus simulated response ECDFs.
+#' residuals by year, and a response-adaptive calibration or distribution panel.
 #'
 #' @param model A fitted GLM, `mgcv` GAM, `glmmTMB`, `brmsfit`, `sdmTMB`, or
 #'   single-response `tinyVAST` model. No model is fitted by this function.
@@ -18,6 +18,24 @@
 #' @param grid_size Approximate number of ECDF grid points, at least 20.
 #' @param level Pointwise predictive interval coverage for ECDFs, and nominal
 #'   independent-uniform reference coverage for the Q-Q panel.
+#' @param component Response to diagnose: `"auto"` retains a joint model's
+#'   `"combined"` response; `"encounter"` selects presence in supported hurdle
+#'   models, and `"positive"` selects native sdmTMB component-2 simulations at
+#'   rows with observed positive catch. Separate encounter/positive fits may
+#'   also be labelled explicitly. Unsupported component extraction fails.
+#' @param calibration_bins Requested number of roughly equal-observation-count
+#'   probability bins. Defaults to 10; ties are never split. Near ties within
+#'   `1e-8` are kept together, and under-supported bins are merged.
+#' @param calibration_min_n Minimum observation count per probability bin,
+#'   default 20. Smaller datasets remain a single flagged sparse bin. Scientific
+#'   groups below this size remain visible but have no predictive envelope.
+#' @param calibration_groups Optional character vector of original-data columns
+#'   defining a joint scientific grouping, e.g. `c("year", "target")`. These
+#'   columns must not be defined from the outcome. Supply `data` if necessary.
+#' @param trial_counts For weighted one-column binomial GLM/GAM/glmmTMB fits,
+#'   the name of the known trial-count column in `data`. It must equal the
+#'   fitted trial weights. Arbitrary case weights are not treated as trials.
+#'   Two-column success/failure responses need no override.
 #'
 #' @details Each simulation is a joint response vector, preserving the native
 #'   method's within-draw dependence. For observation \eqn{i}, let \eqn{L_i}
@@ -32,7 +50,7 @@
 #'   GLMs and GAMs simulate observation error at fitted parameters, including
 #'   fitted smooths. `glmmTMB` uses its native simulation of new random effects.
 #'   `sdmTMB` and `tinyVAST` use `type = "mle-eb"`: observation error conditional
-#'   on fitted latent effects. BRMS uses joint posterior predictive draws,
+#'   on fitted latent effects. brms uses joint posterior predictive draws,
 #'   including existing group effects. These are different diagnostic targets,
 #'   not interchangeable uncertainty estimates. The predictive mean on the
 #'   horizontal axis is estimated from these same simulations, so it matches
@@ -43,14 +61,32 @@
 #'   goodness-of-fit test for estimated, hierarchical, spatial, or Bayesian
 #'   models. Posterior predictive ranks reuse the observations and need not be
 #'   uniform. ECDF bands are pointwise simulated-response bands, not simultaneous
-#'   confidence bands. Zero-inflated and delta simulations describe the combined
-#'   response; they do not diagnose each component separately. Censored,
+#'   confidence bands. By default, zero-inflated and delta simulations describe
+#'   the combined response, not either component separately. Censored,
 #'   multivariate, quasi-family, and non-binomial weighted fits are not supported.
 #'   Native simulation failures are reported, not replaced by another family.
+#'   A positive-component check needs its own fitted component and matching
+#'   observations, or an explicit native component diagnostic; do not relabel
+#'   or subset the combined-response overview as a positive-component check.
+#'
+#'   Bernoulli calibration uses native fitted probabilities, including fitted
+#'   effects, separately from the simulation mean used in the first three
+#'   panels. brms averages expected probabilities over the same posterior draw
+#'   identities used for simulation. Bins are fixed before simulation. Whole
+#'   simulated response vectors are reduced to proportions within those bins;
+#'   their pointwise predictive envelopes are not confidence intervals for an
+#'   underlying calibration curve or calibrated goodness-of-fit tests. In
+#'   particular, glmmTMB simulations redraw random effects although binning uses
+#'   fitted conditional probabilities, so the envelope need not centre on the
+#'   identity line. Dependence is only that represented by the native simulator;
+#'   no extra vessel or temporal dependence is added. Fitted-data calibration,
+#'   including grouped checks, is exploratory. Matching overall or annual means
+#'   may follow from fitted intercept/year effects and does not validate a model.
 #'
 #'   The object retains neither the fitted model nor an observation-by-simulation
 #'   matrix. Working storage includes an observation-by-batch matrix and a
-#'   grid-by-simulation matrix. Native backends may allocate additional memory.
+#'   grid-by-simulation matrix, plus compact bin/group simulation summaries.
+#'   Native backends may allocate additional memory.
 #'   The ECDF grid spans observations and the first simulation batch; it is
 #'   deliberately compact, not an exact representation of every simulated jump.
 #'   For binomial GLMs and `glmmTMB`, responses are success counts (including
@@ -73,7 +109,13 @@
 #' @export
 influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             batch_size = 25L, seed = 1L, grid_size = 201L,
-                            level = 0.95) {
+                            level = 0.95,
+                            component = c("auto", "combined", "encounter", "positive"),
+                            calibration_bins = 10L, calibration_min_n = 20L,
+                            calibration_groups = NULL, trial_counts = NULL) {
+  component <- match.arg(component)
+  .resid_integer(calibration_bins, "calibration_bins", 1L)
+  .resid_integer(calibration_min_n, "calibration_min_n", 1L)
   .resid_integer(nsim, "nsim", 20L)
   .resid_integer(batch_size, "batch_size", 1L)
   .resid_integer(grid_size, "grid_size", 20L)
@@ -94,7 +136,7 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   }, add = TRUE)
   set.seed(seed)
 
-  adapter <- .resid_adapter(model, data, nsim)
+  adapter <- .resid_adapter(model, data, nsim, trial_counts, component)
   time <- .resid_year(model, adapter$data, year)
   observed <- adapter$observed
   n <- length(observed)
@@ -103,6 +145,8 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   }
   # Draw randomisers before simulation so they do not depend on batching.
   randomiser <- stats::runif(n)
+  calibration <- .resid_calibration_setup(adapter, calibration_bins,
+    calibration_min_n, calibration_groups, nsim)
   less <- ties <- total <- numeric(n)
   grid <- ecdfs <- NULL
   for (start in seq.int(1L, nsim, by = batch_size)) {
@@ -128,6 +172,7 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
       ties <- ties + (sim == observed)
       total <- total + sim
       ecdfs[, ids[j]] <- findInterval(grid, sort(sim)) / n
+      calibration <- .resid_calibration_update(calibration, sim, ids[j], adapter$trials)
     }
   }
   pit <- (less + randomiser * (ties + 1)) / (nsim + 1)
@@ -138,7 +183,7 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   ecdf_intervals <- t(apply(ecdfs, 1L, stats::quantile,
     probs = c(tail, 0.5, 1 - tail), names = FALSE))
   observed_grid <- sort(unique(c(range(grid), observed)))
-  structure(list(
+  result <- structure(list(
     observations = data.frame(row = rownames(adapter$data), observed = observed,
       predicted = total / nsim, pit = pit, residual = residual,
       year = factor(as.character(adapter$data[[time$name]]), levels = time$levels)),
@@ -150,14 +195,23 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
       median = ecdf_intervals[, 2L], upper = ecdf_intervals[, 3L]),
     observed_ecdf = data.frame(response = observed_grid,
       probability = findInterval(observed_grid, sort(observed)) / n),
-    metadata = list(backend = adapter$backend, scheme = adapter$scheme,
+    calibration = .resid_calibration_finish(calibration, level),
+    metadata = list(schema_version = 2L, backend = adapter$backend, scheme = adapter$scheme,
       response = adapter$response, year = time$name, year_source = time$source,
       nsim = nsim, batch_size = min(batch_size, nsim), seed = seed,
       level = level, grid_size = length(grid),
       response_structure = adapter$structure,
+      response_family = adapter$family, component = adapter$component,
+      response_kind = adapter$response_kind, prediction_type = adapter$prediction_type,
       calibration = "Exploratory ranks; not a calibrated goodness-of-fit test",
       retention = "No model or observation-by-simulation matrix retained")
   ), class = "influ_residuals")
+  if (!is.null(adapter$probability)) {
+    result$observations$probability <- adapter$probability
+    result$observations$trials <- adapter$trials
+    result$observations$calibration_bin <- calibration$bin
+  }
+  result
 }
 
 .resid_integer <- function(x, name, minimum) {

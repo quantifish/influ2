@@ -108,7 +108,7 @@ test_that("brms smooth bases are projected without observation-by-draw arrays", 
   fit_path <- system.file(
     "extdata", "brms-fixtures", "fit2.rds", package = "influ2"
   )
-  skip_if_not(file.exists(fit_path), "development BRMS smooth fixture unavailable")
+  skip_if_not(file.exists(fit_path), "development brms smooth fixture unavailable")
   fit <- readRDS(fit_path)
 
   diagnostic <- influ(fit, focus = "year", ndraws = 40)
@@ -141,7 +141,7 @@ test_that("brms hurdle components are combined draw by draw", {
   fit_path <- system.file(
     "extdata", "brms-fixtures", "m1.rds", package = "influ2"
   )
-  skip_if_not(file.exists(fit_path), "development BRMS hurdle fixture unavailable")
+  skip_if_not(file.exists(fit_path), "development brms hurdle fixture unavailable")
   fit <- readRDS(fit_path)
 
   diagnostic <- influ(

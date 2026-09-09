@@ -150,7 +150,7 @@ test_that("predicted-residual and Q-Q plots support GLMs", {
   expect_error(plot_qq(model, probs = c(0.9, 0.1)), "increasing")
 })
 
-test_that("BRMS comparison helpers validate their inputs", {
+test_that("brms comparison helpers validate their inputs", {
   expect_error(get_bayes_R2(list(stats::lm(mpg ~ wt, mtcars))), "brmsfit")
   expect_error(table_criterion(list(stats::lm(mpg ~ wt, mtcars))), "brmsfit")
   expect_error(
@@ -160,7 +160,7 @@ test_that("BRMS comparison helpers validate their inputs", {
   expect_error(get_bayes_R2(structure(list(), class = "brmsfit"), probs = c(0.8, 0.2)))
 })
 
-test_that("BRMS comparison helpers summarise public criterion interfaces", {
+test_that("brms comparison helpers summarise public criterion interfaces", {
   skip_if_not_installed("brms")
   make_fit <- function(id, predictor) {
     structure(

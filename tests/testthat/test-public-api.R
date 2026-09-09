@@ -17,7 +17,7 @@ test_that("triage preserves the maintained diagnostic and comparison API", {
     "influ", "influ_steps", "influ_effects", "influ_indices",
     "plot_bubble", "plot_data_extent", "plot_compare", "plot_step",
     "plot_implied_residuals", "plot_predicted_residuals", "plot_qq",
-    "get_bayes_R2", "table_criterion"
+    "get_bayes_R2", "table_criterion", "geo_mean", "cpue_index", "plot_index"
   )
 
   expect_true(all(retained %in% getNamespaceExports("influ2")))

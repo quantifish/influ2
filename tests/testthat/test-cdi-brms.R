@@ -26,7 +26,7 @@ brms_cdi_group <- function(fit, weights = NULL, reference_data = NULL,
   )
 }
 
-test_that("BRMS group CDI centres joint draws using positive observation weights", {
+test_that("brms group CDI centres joint draws using positive observation weights", {
   fit <- brms_cdi_fixture()
   levels <- levels(fit$data$month)
   weights <- 1 + seq_len(nrow(fit$data)) %% 3
@@ -66,7 +66,7 @@ test_that("BRMS group CDI centres joint draws using positive observation weights
   expect_null(diagnostic$draws)
 })
 
-test_that("BRMS group CDI uses the explicit weighted influence reference", {
+test_that("brms group CDI uses the explicit weighted influence reference", {
   fit <- brms_cdi_fixture()
   levels <- levels(fit$data$month)
   reference <- fit$data[match(levels, fit$data$month), , drop = FALSE]
@@ -102,7 +102,7 @@ test_that("BRMS group CDI uses the explicit weighted influence reference", {
   expect_null(preview$draws)
 })
 
-test_that("BRMS smooth CDI centres the full posterior basis on its reference", {
+test_that("brms smooth CDI centres the full posterior basis on its reference", {
   fit <- brms_cdi_fixture()
   reference <- fit$data[seq_len(12), , drop = FALSE]
   reference$depth <- seq(10, 40, length.out = nrow(reference))

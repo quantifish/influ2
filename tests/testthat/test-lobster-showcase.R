@@ -94,7 +94,7 @@ test_that("negative-binomial lobster steps visibly correct the known year-effect
   # be correlated. This point-estimate check does not test interval coverage.
 })
 
-test_that("the compact lobster BRMS fixture uses the bundled observations", {
+test_that("the compact lobster brms fixture uses the bundled observations", {
   skip_if_not_installed("brms")
   path <- system.file("extdata", "brms-fixtures", "fit2.rds", package = "influ2")
   expect_true(file.exists(path))
@@ -103,7 +103,7 @@ test_that("the compact lobster BRMS fixture uses the bundled observations", {
   expect_true(all(names(data) %in% names(fit$data)))
   expect_equal(nrow(fit$data), nrow(data))
   # Compare each real data column, ignoring data-frame-level terms and
-  # simulation metadata, plus BRMS's stored factor contrast matrices.
+  # simulation metadata, plus brms's stored factor contrast matrices.
   # The observed values, classes, and factor levels must still be identical.
   for (column in names(data)) {
     observed <- fit$data[[column]]

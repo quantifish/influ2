@@ -11,7 +11,7 @@ is a separate, later step authorised by the maintainer.
   selection, gaps and sample sizes, finite-simulation rank randomisation, and
   the distinction between nominal Q-Q reference bands and predictive ECDF bands.
   Its default spatial simulations condition on fitted fields; unconditional
-  glmmTMB and posterior-predictive BRMS checks answer different questions.
+  glmmTMB and posterior-predictive brms checks answer different questions.
   GitHub issue review and remaining helper triage are deferred until this
   display has been reviewed. No Shiny development is planned at this stage.
 - Review the current Get Started, Bentley validation, hurdle and zero-inflated,
@@ -66,8 +66,8 @@ package. They are not merely historical helpers:
 | `plot_data_extent()` | Confirm the missing-data coverage display and ordering are suitable. |
 | `plot_compare()` | Confirm index selection, common-period rescaling, labels, and interval defaults. |
 | `plot_step()`, `influ_steps()` | Review automatic ordinary-model refits, explicit spatial-process stages, and reuse of compact results or supplied fits. |
-| `get_bayes_R2()` | Retain the BRMS summary; decide whether a worked example is needed. |
-| `table_criterion()` | Retain the BRMS criteria; review interpretation of LOO, R-squared, and log likelihood. |
+| `get_bayes_R2()` | Retain the brms summary; decide whether a worked example is needed. |
+| `table_criterion()` | Retain the brms criteria; review interpretation of LOO, R-squared, and log likelihood. |
 | `plot_implied_residuals()` | Review the fisheries interpretation, strata threshold, residual choice, and one-standard-error bars. |
 | `plot_predicted_residuals()` | Review residual types and smooths for each intended backend. |
 | `plot_qq()` | Retain as normal-quantile screening; review the new residual article's optional DHARMa examples and their limitations. |
@@ -81,11 +81,11 @@ introduced.
 
 | Retired functions | Decision |
 | --- | --- |
-| `plot_hurdle()` | Remove the old BRMS-specific plot. Use the supported component and index displays; their estimands are not necessarily identical to the old reference-covariate predictions. Hurdle, delta, and zero-inflated model support remains. |
+| `plot_hurdle()` | Remove the old brms-specific plot. Use the supported component and index displays; their estimands are not necessarily identical to the old reference-covariate predictions. Hurdle, delta, and zero-inflated model support remains. |
 | `get_coefs()`, `get_coefs_raw()`, `get_marginal()` | Remove: no retained implementation calls them. Current adapters calculate their own effects. The compact coefficient summaries and retained diagnostic draws are not general-purpose raw coefficient or response-curve extractors. |
 | `get_influ()`, `get_influ2()`, `plot_influ()` | Consolidate on `influ()`, `influ_effects()`, and `plot(..., type = "influence")`. |
 | `plot_bayesian_cdi()`, `plot_bayesian_cdi2()` | Consolidate on `plot(..., type = "cdi")`. |
-| `influ_app()` | Remove the old BRMS-only Shiny launcher. A possible new model-neutral viewer is deferred, not commissioned by this decision. |
+| `influ_app()` | Remove the old brms-only Shiny launcher. A possible new model-neutral viewer is deferred, not commissioned by this decision. |
 
 The complete pre-triage source remains recoverable at Git commit `cf12bb6`.
 The frozen Get Started HTML and every accompanying figure remain unchanged.
@@ -100,13 +100,23 @@ workflows are not assumed to reproduce every old argument or output column.
 
 | Frozen function or feature | Proposed destination or decision |
 | --- | --- |
-| `get_index()`, `plot_index()` | Keep for review of assessment-ready tables and plots: year, mean, median, SD, CV, intervals, and metadata. Old reference-covariate response predictions differ from the centred year-effect contrasts in `influ_indices()`. |
+| `get_index()`, `plot_index()` | Assessment functionality retained as `cpue_index()` and a calculated-object `plot_index()`, not a compatibility wrapper. The new table includes year, mean, posterior median where defined, SD, CV, intervals, and metadata. Explicit response references differ from the centred contrasts in `influ_indices()`. Spatial response/integration adapters remain to implement. |
 | `get_unstandarsied()` (original spelling) | Keep for review of geometric-mean CPUE and positive-mean times occurrence summaries versus the current weighted arithmetic nominal mean. Decide definitions and names, including treatment of zero catches. |
 | `rescale_index()` | Check whether `plot_compare(rescale = ..., rescale_series = ...)` is sufficient, or whether users need a public function returning rescaled tables. |
-| Earlier `table_criterion()` and `get_bayes_R2()` | Keep both maintained functions and the frozen reporting examples. Review divergence counts, chain runtime, LOO model differences, and a complete-fit BRMS example. |
+| Earlier `table_criterion()` and `get_bayes_R2()` | Keep both maintained functions and the frozen reporting examples. Review divergence counts, chain runtime, LOO model differences, and a complete-fit brms example. |
 | `glm_term_table()` | Keep the internal source for review of deviance/AIC summaries accompanying step plots. The historical one-percent improvement rule is not an accepted model-selection criterion. |
-| `get_first_term()`, `id_var_type()`, `geo_mean()`, and other internal utilities | Keep internal only when needed by a retained feature; do not restore exports simply because they existed previously. |
+| `geo_mean()` | Explicitly retained by the maintainer on 9 September 2026 and restored as a tested public utility using stable log-scale calculation. |
+| `get_first_term()`, `id_var_type()`, and other internal utilities | Keep internal only when needed by a retained feature; do not restore exports simply because they existed previously. |
 | PPC bars and ECDF overlays in the frozen article | Decide which examples to restore using the original model and `bayesplot`; these are posterior predictive checks, not replacements for CDI. |
+
+Confirmed 9 September: low-use retired helpers and the Shiny launcher remain
+removed. No permanent compatibility layer is required. Active downstream
+projects can be migrated deliberately later; LSD, JMA7, and morphology are
+historical and are not migration targets. `plot_compare()` keeps its existing
+year-effect behaviour and additionally accepts calculated CPUE indices.
+`table_criterion()` and `get_bayes_R2()` remain available; no brms-specific
+report columns are restored without a separate decision. The frozen legacy
+Get Started page and its figures remain intact for the maintainer's review.
 
 Suggested order for the next round: assessment tables and plots; nominal
 definitions and table rescaling; Bayesian predictive examples and reporting
@@ -140,7 +150,7 @@ The 7 September hardening implements these conservative release boundaries:
   cancels. Nonlinear probability and combined hurdle/zero-inflated outputs
   with offsets fail explicitly. Nominal summaries remain observed-response
   means, not response divided by exposure.
-- BRMS lognormal models require constant sigma and an identity location link.
+- brms lognormal models require constant sigma and an identity location link.
   Mean-parameterised lognormal backends require a log link. glmmTMB log-mean
   ratios remain supported with varying data-scale dispersion; dispersion
   effects are not separately decomposed.
@@ -199,3 +209,28 @@ After the last source, documentation, or API change:
    authorises the actual submission.
 
 GitHub issue triage can be handled separately when the maintainer is ready.
+# Response-adaptive calibration increment: 10 September 2026
+
+The default fourth residual panel now uses fixed-bin probability calibration
+for Bernoulli responses. Positive and combined catch distributions retain the
+CDF, as do explicit distribution requests. Grouped-binomial calibration is
+an explicit option with known trial counts. Bins preserve ties and simulation
+summaries retain each draw's dependence without saving observation-by-draw arrays.
+
+Scientific year-by-target/area or vessel/season group checks are optional and
+exploratory; sparse support is labelled. The residual article includes a
+well-specified simulated GAM, deliberately distorted probabilities, and an
+intercept-only pooled pass with substantial grouped discrepancies. No BNS
+files, model fits, or CPUE-index definitions are changed by this increment.
+
+Joint hurdle/delta encounter extraction is component-aware. Native sdmTMB
+positive simulation is supported; other joint positive adapters and
+zero-inflated count-component extraction remain explicit limitations. Older
+saved objects without sufficient metadata retain their CDF or require
+recalculation; uncertainty is never invented. Weighted one-column binomial
+fits must identify their known trial-count column explicitly.
+
+The earlier pending CPUE-index/geo_mean changes, main-vignette Figure 14,
+variable-width year boxplots, and lowercase brms documentation are included
+in this publication batch. Remaining legacy triage and the frozen review
+article remain deferred. Publication is not a CRAN submission.

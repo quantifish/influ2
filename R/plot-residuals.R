@@ -4,14 +4,23 @@
 #'
 #' @param x,object An `influ_residuals` object.
 #' @param type The four-panel `"overview"` (default), or one of `"qq"`,
-#'   `"fitted"`, `"year"`, and `"distribution"`.
+#'   `"fitted"`, `"year"`, `"distribution"`, `"calibration"`, and
+#'   `"calibration_groups"`. Grouped calibration shows observed-minus-predicted
+#'   proportions for the scientific groups chosen during calculation.
 #' @param response_scale Scale for the response ECDF: `"identity"` or
 #'   `"log1p"`, which retains zero catches. The latter requires non-negative
 #'   responses and is labelled explicitly.
+#' @param response_diagnostic Fourth overview panel: `"auto"` chooses
+#'   probability calibration for Bernoulli/encounter responses and the existing
+#'   ECDF for other families (including grouped binomial and combined catch).
+#'   `"distribution"` and `"calibration"` explicitly select a panel. Explicit
+#'   `type` takes precedence. A calibration panel always uses probability axes,
+#'   never `response_scale`. It requires stored fitted-probability summaries.
 #' @param ... Reserved for future methods; currently unused.
 #'
 #' @details The year panel shows a boxplot for each sampled year and its sample
-#'   size. Numeric years retain their spacing, including gaps; other labels are
+#'   size through box widths proportional to the square root of the number of
+#'   observations. Numeric years retain their spacing, including gaps; other labels are
 #'   ordered lexically. Reference lines mark the normal-score median and
 #'   quartiles. No smoother across years conceals changes in spread or tails.
 #'   The fitted panel's horizontal variable is the simulation-based predictive
@@ -22,22 +31,38 @@
 #'   model-specific calibration. The ECDF envelope is a pointwise predictive
 #'   band on a compact grid. Neither envelope provides an automatic pass/fail
 #'   test. Read the calculation metadata and [influ_residuals()] limitations.
+#'   Calibration uses fixed, roughly equal-count bins of original fitted
+#'   probabilities. Grey ranges are pointwise predictive envelopes for observed
+#'   bin proportions, not confidence intervals for a calibration curve. Point
+#'   size represents observation count; crosses identify sparse support.
+#'   Grouped binomial calibration is available explicitly with known trials;
+#'   it pools successes/trials and trial-weights predicted probabilities.
+#'   Set bin/group options in [influ_residuals()], not while plotting: discarded
+#'   simulations cannot be re-binned. Older objects without response metadata
+#'   retain the distribution overview with an informative warning. Explicit
+#'   distribution plots remain unchanged. Missing envelopes are not fabricated.
 #'
 #' @return A ggplot or a four-panel patchwork object, which can be customised.
 #' @export
 plot.influ_residuals <- function(x,
-    type = c("overview", "qq", "fitted", "year", "distribution"),
-    response_scale = c("identity", "log1p"), ...) {
+    type = c("overview", "qq", "fitted", "year", "distribution", "calibration", "calibration_groups"),
+    response_scale = c("identity", "log1p"), ...,
+    response_diagnostic = c("auto", "distribution", "calibration")) {
   type <- match.arg(type)
   response_scale <- match.arg(response_scale)
+  response_diagnostic <- match.arg(response_diagnostic)
   if (type == "overview") {
-    panels <- lapply(c("qq", "fitted", "year", "distribution"), function(p) {
+    fourth <- .resid_response_panel(x, response_diagnostic)
+    panels <- lapply(c("qq", "fitted", "year", fourth), function(p) {
       plot(x, type = p, response_scale = response_scale)
     })
     return(patchwork::wrap_plots(panels, ncol = 2) +
       patchwork::plot_annotation(caption = paste(
         x$metadata$backend, "|", x$metadata$nsim, "simulations |", x$metadata$scheme
       ), tag_levels = "A"))
+  }
+  if (type %in% c("calibration", "calibration_groups")) {
+    return(.plot_residual_calibration(x, grouped = type == "calibration_groups"))
   }
   purple <- "purple4"
   ylabel <- "Normal-score rank residual"
@@ -73,19 +98,19 @@ plot.influ_residuals <- function(x,
       numeric
     } else seq_along(levels)
     d$position <- positions[as.integer(d$year)]
-    counts <- as.integer(table(d$year))
     width <- if (length(positions) > 1L) min(diff(positions)) * 0.65 else 0.65
     return(ggplot2::ggplot(d, ggplot2::aes(x = .data$position,
       y = .data$residual, group = .data$year)) +
       ggplot2::geom_hline(yintercept = stats::qnorm(c(0.25, 0.75)),
         linetype = 3, colour = "grey70") +
       ggplot2::geom_hline(yintercept = 0, linetype = 2, colour = "grey40") +
-      ggplot2::geom_boxplot(width = width, fill = "mediumpurple1", alpha = 0.5,
+      ggplot2::geom_boxplot(width = width, varwidth = TRUE,
+        fill = "mediumpurple1", alpha = 0.5,
         outlier.size = 0.8, outlier.alpha = 0.4) +
       ggplot2::scale_x_continuous(breaks = positions,
-        labels = paste0(levels, "\n(n=", counts, ")")) +
+        labels = levels) +
       ggplot2::labs(title = paste("Residuals by", x$metadata$year),
-        subtitle = "Within-year spread, median, and tails; sample sizes below",
+        subtitle = "Box widths proportional to square root of sample size",
         x = x$metadata$year, y = ylabel) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)))
   }

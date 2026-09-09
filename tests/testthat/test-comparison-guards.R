@@ -62,7 +62,7 @@ test_that("comparison labels do not silently collapse model curves", {
   expect_equal(as.numeric(table(comparison$data$Model)), rep(nlevels(fit$model$year), 2L))
 })
 
-test_that("BRMS criteria explain the compact fixture boundary", {
+test_that("brms criteria explain the compact fixture boundary", {
   skip_if_not_installed("brms")
   fixture <- readRDS(system.file(
     "extdata", "brms-fixtures", "fit2.rds", package = "influ2"

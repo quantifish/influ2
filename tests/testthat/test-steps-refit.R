@@ -113,7 +113,7 @@ test_that("GAM plans retain complete smooth blocks", {
   expect_identical(unqualified$fits[[2L]]$call[[1L]], quote(mgcv::gam))
 })
 
-test_that("BRMS refits clear file caches and permit recompilation", {
+test_that("brms refits clear file caches and permit recompilation", {
   model <- list(file = "cached-fit", stan_args = list(file = "another-cache"),
     influ2_draws = matrix(0, 4, 2))
   locked <- list(data = data.frame(year = 1:3))

@@ -2,7 +2,7 @@
 % Please edit documentation in R/additional-diagnostics.R
 \name{table_criterion}
 \alias{table_criterion}
-\title{Compare BRMS model criteria}
+\title{Compare brms model criteria}
 \usage{
 table_criterion(
   fits,
@@ -20,13 +20,13 @@ table_criterion(
 \item{sort}{Sort models by expected log predictive density, or Bayesian
 R-squared when LOO is not requested.}
 
-\item{...}{Arguments passed to the requested BRMS criterion functions.}
+\item{...}{Arguments passed to the requested brms criterion functions.}
 }
 \value{
 A data frame with one row per model.
 }
 \description{
-Calculates selected public BRMS criteria without inspecting the underlying
+Calculates selected public brms criteria without inspecting the underlying
 Stan object. This keeps `rstan` out of the package's mandatory dependencies.
 }
 \details{

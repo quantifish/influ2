@@ -28,7 +28,7 @@ Initial adapters are available for:
 - `tinyVAST::tinyVAST()`.
 
 The result is a compact `influ_diag` object with consistent tables and plots
-across backends. BRMS posterior coefficients are projected directly into
+across backends. brms posterior coefficients are projected directly into
 focus-by-term diagnostics, avoiding observation-by-draw-by-term arrays.
 
 ```r
@@ -50,11 +50,44 @@ Supported base families in the first implementation are Gaussian, binomial,
 Poisson, negative binomial, lognormal, Gamma, and Tweedie. Hurdle/delta and
 zero-inflated components are kept explicit.
 
-Standardised indices require an unambiguous focus effect. Offset/exposure
+Year-effect indices from `influ()` require an unambiguous focus effect. Offset/exposure
 diagnostics currently support single-component log-link ratios and
 identity-link contrasts, not combined or nonlinear-probability outputs.
 Lognormal support follows each backend's parameterisation; see the main
 vignette for the supported location, scale, and link combinations.
+
+For an assessment-ready expected-response table, use `cpue_index()` with an
+explicit common reference profile or population. Both `"standardised"` and
+`"standardized"` are accepted. GLM, GAM, glmmTMB, and complete brms fits are
+supported for response standardisation; spatial response integration remains
+separate development work.
+
+```r
+index <- cpue_index(model, year = "year", reference_data = reference_profile)
+as.data.frame(index)  # Year, Mean, Median, SD, CV, Qlower, Qupper, and metadata.
+plot_index(index)
+geo_mean(c(1, 4, 16))
+```
+
+These response indices are distinct from the year-effect contrasts used in
+the step plots. See the [CPUE indices article](https://www.quantifish.co.nz/influ2/articles/cpue-indices.html)
+for reference choices, compact uncertainty, and comparison examples.
+
+## Residual diagnostics
+
+Residual overviews also adapt to the response: Bernoulli encounter models use
+fixed-bin probability calibration, while positive and combined catch responses
+retain the observed-versus-simulated CDF. No model is refitted by these calls.
+
+```r
+checks <- influ_residuals(model, year = "year")
+plot(checks)                          # Automatic fourth panel.
+plot(checks, type = "distribution")  # Explicit original CDF.
+```
+
+See [Residual diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#encounter-calibration)
+for predictive-envelope interpretation and grouped checks that can reveal
+missing structure even when pooled encounter calibration looks good.
 
 ## Installation
 

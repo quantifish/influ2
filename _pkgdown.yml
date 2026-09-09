@@ -12,6 +12,8 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: CPUE indices
+        href: articles/cpue-indices.html
       - text: Residual diagnostics
         href: articles/residual-diagnostics.html
       - text: Bentley validation
@@ -31,6 +33,7 @@ articles:
 - title: Validation and response structures
   navbar: ~
   contents:
+  - cpue-indices
   - residual-diagnostics
   - bentley-validation
   - hurdle
@@ -65,6 +68,13 @@ reference:
   - plot_step
   - plot_data_extent
 
+- title: CPUE indices and assessment tables
+  desc: Calculate explicit expected-response indices and plot stored results.
+  contents:
+  - cpue_index
+  - plot_index
+  - geo_mean
+
 - title: Residual diagnostics
   desc: Inspect residual patterns, implied year effects, and quantile comparisons.
   contents:
@@ -75,7 +85,7 @@ reference:
   - plot_qq
 
 - title: Bayesian model comparison
-  desc: Optional summaries for fitted BRMS models.
+  desc: Optional summaries for fitted brms models.
   contents:
   - get_bayes_R2
   - table_criterion

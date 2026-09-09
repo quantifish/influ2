@@ -53,7 +53,7 @@ not the full expected response integrated over space.}
 keep the returned object small. Save expensive fits separately if needed.}
 
 \item{refit_args}{Named arguments passed to the model update at every step,
-such as BRMS sampling controls. Stage-specific arguments take precedence.
+such as brms sampling controls. Stage-specific arguments take precedence.
 Execution-only controls (\code{seed}, \code{cores}, \code{refresh}, \code{silent}, and \code{verbose})
 do not by themselves force an otherwise unchanged original fit to rerun.}
 

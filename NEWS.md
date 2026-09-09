@@ -1,5 +1,28 @@
 # influ2 1.1.0
 
+* Residual overviews now select encounter probability calibration for Bernoulli
+  responses, while retaining ECDFs for positive, combined delta/hurdle, count,
+  and grouped-binomial responses. Fixed fitted-probability bins preserve ties;
+  compact native simulation summaries supply pointwise predictive envelopes.
+  Added explicit calibration and scientific grouped checks, known-trial guards,
+  component-aware hurdle/SDM simulation routing, and informative legacy-object
+  fallbacks. Existing residual values and explicit distribution panels are
+  unchanged. The residual article demonstrates good, distorted, and deceptively
+  pooled calibration. No model fitting or cross-validation is triggered by plotting.
+
+* Restored `geo_mean()` as a stable, documented public utility. Added
+  `cpue_index()` assessment tables and `plot_index()`, with both standardised
+  and standardized spellings accepted. Expected-response indices remain
+  distinct from existing year-effect contrasts. Response standardisation
+  supports GLM, GAM, glmmTMB, and complete brms fits, with joint delta-method
+  or batched posterior uncertainty and explicit reference-population choices.
+  `plot_compare()` now also accepts calculated index objects without changing
+  its existing fitted-model behaviour. The CPUE indices article documents
+  the table schema, uncertainty meaning, and remaining spatial adapters.
+* Year-panel residual box widths now encode the square root of sample size;
+  year labels no longer contain sample counts. Corrected the package name to
+  lowercase brms throughout maintained documentation and messages.
+
 * CDI proportion legends use one column with at most four reference bubbles,
   preserving the composition panel's bubble-size mapping. The spatial article
   hides the mesh-margin setup and restoration while still executing both.
@@ -31,7 +54,7 @@
   lobster examples, optional DHARMa checks, and guidance on PIT, spatial,
   Bayesian, and one-step-ahead residuals.
 * Aligned residual plots with fitted observation rows after omissions, subsets,
-  and reordered data. Ambiguous multivariate, delta, and compact BRMS inputs
+  and reordered data. Ambiguous multivariate, delta, and compact brms inputs
   now fail informatively instead of producing mismatched diagnostics.
 * Preserved negative additive contrasts in model comparisons, rejected mixed
   index scales, and prevented duplicate labels from merging model curves.
@@ -58,7 +81,7 @@
   log-link ratios and identity-link contrasts. Other links and combined
   hurdle/zero-inflated calculations with offsets fail explicitly. Nominal
   summaries remain observed-response means, not exposure-adjusted CPUE.
-* Added backend-specific lognormal guards: BRMS requires constant log-scale
+* Added backend-specific lognormal guards: brms requires constant log-scale
   `sigma` and an identity location link; mean-parameterised backends require
   log links. `glmmTMB` log-mean ratios remain available with varying dispersion.
 * Centred CDI fitted-effect panels on the same weighted reference as influence.
@@ -83,7 +106,7 @@
 * Propagated the joint conditional latent covariance for `glmmTMB` random
   effects instead of treating conditional modes as uncertainty-free.
 * Retained selected comparison, model-criterion, data-extent, residual, Q-Q,
-  and step-plot helpers, while moving their BRMS and `rstan` tooling out of
+  and step-plot helpers, while moving their brms and `rstan` tooling out of
   mandatory dependencies. The remaining historical helper source is frozen
   under `tools/legacy/` for explicit function-by-function triage.
 * Replaced embedded fitted-model test data with compact posterior-draw
@@ -94,9 +117,9 @@
 * Strengthened the simulated lobster teaching scenario with changes in sampled
   season, depth, and soak time. Retained its known annual effects as dataset
   metadata and added a dynamically calculated truth check for the refitted
-  negative-binomial GLM sequence. The BRMS example includes soak time alongside
+  negative-binomial GLM sequence. The brms example includes soak time alongside
   monthly and depth effects. Documentation distinguishes point-estimate
   recovery from interval coverage and explains the model-based intervals.
-* Corrected BRMS population-term mapping when ordinary predictors follow
+* Corrected brms population-term mapping when ordinary predictors follow
   group-level or smooth terms, so their labels and CDI grouping match the
   fixed-effect design matrix.

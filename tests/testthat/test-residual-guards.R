@@ -188,10 +188,10 @@ test_that("glmmTMB residual plots support random effects and zero inflation", {
   expect_s3_class(plot_qq(zi), "ggplot")
 })
 
-test_that("compact BRMS fixtures give an actionable residual error without MCMC", {
+test_that("compact brms fixtures give an actionable residual error without MCMC", {
   skip_if_not_installed("brms")
   fit <- readRDS(system.file("extdata", "brms-fixtures", "fit2.rds", package = "influ2"))
-  expect_error(plot_predicted_residuals(fit), "Compact BRMS influence fixtures")
+  expect_error(plot_predicted_residuals(fit), "Compact brms influence fixtures")
   expect_error(plot_qq(fit), "original complete brmsfit")
   expect_error(plot_implied_residuals(fit, groups = "month"), "native fitted object")
   multivariate <- structure(list(formula = structure(list(), class = "mvbrmsformula")), class = "brmsfit")

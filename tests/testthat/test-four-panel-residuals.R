@@ -6,6 +6,19 @@ four_panel_fixture <- function() {
   d
 }
 
+test_that("year boxes encode sample size without crowding axis labels", {
+  d <- four_panel_fixture()
+  d <- d[d$year != "2011" | d$repeat_id <= 4, ]
+  fit <- glm(catch ~ year + x, poisson(), data = d)
+  result <- influ_residuals(fit, nsim = 20)
+  p <- plot(result, type = "year")
+  expect_identical(p$scales$get_scales("x")$labels, levels(d$year))
+  boxes <- ggplot2::ggplot_build(p)$data[[3]]
+  widths <- boxes$xmax - boxes$xmin
+  expect_equal(widths / max(widths), sqrt(as.numeric(table(d$year)) / max(table(d$year))))
+  expect_false(any(grepl("n=", p$scales$get_scales("x")$labels)))
+})
+
 test_that("compact ranks reproduce the exact simulation calculation", {
   d <- four_panel_fixture()
   fit <- glm(catch ~ year + x, poisson(), data = d)
@@ -89,7 +102,7 @@ test_that("binomial diagnostics consistently use successes", {
   count <- glm(cbind(success, trials - success) ~ year + x, binomial(), data = d)
   prop <- glm(I(success/trials) ~ year + x, weights = trials, binomial(), data = d)
   a <- influ_residuals(count, nsim = 20)
-  b <- influ_residuals(prop, nsim = 20)
+  b <- influ_residuals(prop, data = d, trial_counts = "trials", nsim = 20)
   expect_equal(a$observations, b$observations)
   expect_equal(a$observations$observed, d$success)
   expect_identical(a$metadata$response, "Successes")
@@ -179,7 +192,7 @@ test_that("transformed time, offset, and non-syntactic names retain their meanin
   expect_identical(influ_residuals(fit, nsim = 20)$metadata$year, "Fishing year")
 })
 
-test_that("compact and multivariate BRMS fits fail before simulation", {
+test_that("compact and multivariate brms fits fail before simulation", {
   compact <- structure(list(influ2_draws = matrix(0, 20, 1)), class = "brmsfit")
   skip_if_not_installed("brms")
   expect_error(influ_residuals(compact), "complete brmsfit")

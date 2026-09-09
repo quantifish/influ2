@@ -195,7 +195,7 @@
 #' @param keep_fits Retain fitted models in the result? Defaults to `FALSE` to
 #'   keep the returned object small. Save expensive fits separately if needed.
 #' @param refit_args Named arguments passed to the model update at every step,
-#'   such as BRMS sampling controls. Stage-specific arguments take precedence.
+#'   such as brms sampling controls. Stage-specific arguments take precedence.
 #'   Execution-only controls (`seed`, `cores`, `refresh`, `silent`, and `verbose`)
 #'   do not by themselves force an otherwise unchanged original fit to rerun.
 #' @param ... Arguments passed to [influ()] for fitted-model inputs, such as
