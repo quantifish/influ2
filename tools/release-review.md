@@ -337,6 +337,22 @@ moved PDFs were verified byte-for-byte unchanged. The local README/homepage
 layout was visually checked. The final issue/legacy/median decisions remain
 release gates, and this candidate is not the final submission archive.
 
+The local candidate for commit `8acba31` passed macOS R 4.6.1
+`R CMD check --as-cran --no-manual`: zero errors, zero warnings, and one NOTE
+for the new submission and optional tinyVAST repository. All six vignettes
+rebuilt. The complete optional-dependency library was used after an initial
+default-library attempt could not find DHARMa. Archive details and the
+check boundary are recorded in `cran-comments.md`. GitHub coverage confirmed
+91.10% in run 34415280040. The published GitHub README logo was visually
+checked, and the outdated brms-only About description was brought into line
+with the model-neutral package.
+
+GitHub Ubuntu-release and Windows-release both passed for `8acba31` in run
+34415280059. Coverage (34415280040), pkgdown (34415280055), and final Pages
+deployment (34415852624) passed as well. The published homepage's logo and
+maintainer details were verified. The follow-up validation-record commit
+contains no packaged-source changes and does not need another matrix run.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration

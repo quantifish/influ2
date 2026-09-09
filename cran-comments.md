@@ -1,3 +1,53 @@
+## Repository and coverage review: 10 September 2026
+
+Code revision: `8acba31427fee405e200a800b5b859af0e1b8e15`.
+
+Added 178 expectations for object contracts, family/link transformations,
+bubble proportions, and residual trial/component handling. The full local
+suite passes 3,287 expectations in 194 blocks, with no failures, warnings,
+or skips. Coverage increased from 89.39% to 91.10%, measured both locally
+and by GitHub (coverage run 34415280040). No runtime API or scientific
+calculations were changed, and no coverage exclusions were introduced.
+
+Moved the historical PDFs into `tools/references/` and the logo recipe into
+`tools/branding/`. Development-only `tools/` material is now excluded from
+the source archive. The existing logo is displayed in README and included
+in `man/figures/` for installed package help. The logo, moved PDFs, frozen
+Bentley source, and frozen Get Started page/figures are unchanged.
+
+The MIT licence holder is corrected to Darcy M. Webber. The original BSD
+notice remains with `inst/legacy/influ-proto.R`; `inst/COPYRIGHTS` and the
+Authors@R comments distinguish that artefact's copyright from the new
+package. The maintainer address remains `darcy@quantifish.co.nz`.
+
+All six vignettes rebuilt. The validation archive is
+`/private/tmp/influ2-housekeeping.21P0Vp/influ2_1.1.0.tar.gz`.
+SHA256: `0dc48c593022fec911f7bcf2b7384d7ebe176f7051dba72e7ae052d83a137da5`.
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with
+zero errors, zero warnings, and one NOTE: new submission and optional
+tinyVAST from the declared additional repository. The full optional library
+was used, including DHARMa; an initial default-library attempt stopped at
+missing DHARMa and is not the completed check. CRAN-mode tests passed 3,274
+expectations, with five visual groups skipped that passed in the local suite.
+
+The archive and installed package contents were inspected: the help logo,
+required notices, validation code, and articles are included; development
+scripts, historical PDFs, website output, and Rplots output are excluded.
+GitHub README logo rendering was visually verified. The GitHub About text
+and homepage now describe the model-neutral package and use HTTPS.
+
+GitHub Ubuntu-release and Windows-release checks both passed for this code
+revision (run 34415280059). Coverage passed (34415280040), pkgdown passed
+(34415280055), and Pages deployment passed (34415852624). The deployed home
+page was checked for the loaded logo and corrected maintainer details.
+Only these validation records were updated after checking the archive; they
+are excluded by `.Rbuildignore` and do not alter its packaged source.
+
+All six currently open issues, remaining legacy review, and the Median/NA
+table decision must be resolved before the final submission build. This is
+a validation candidate, not the final submission archive. No CRAN or
+win-builder submission was made.
+
 ## Standardised and integrated indices: 10 September 2026
 
 Code revision: `88e14ff9e49c7adf108c0dca51997d2331c0a95e`.
