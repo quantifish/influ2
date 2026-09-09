@@ -42,7 +42,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/residual-diagnostics.html">Residual diagnostics</a></li>
+<li><a class="dropdown-item" href="articles/cpue-indices.html">CPUE indices</a></li>
+    <li><a class="dropdown-item" href="articles/residual-diagnostics.html">Residual diagnostics</a></li>
     <li><a class="dropdown-item" href="articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -93,7 +94,7 @@
 <li>
 <code><a href="https://vast-lib.github.io/tinyVAST/reference/tinyVAST.html" class="external-link">tinyVAST::tinyVAST()</a></code>.</li>
 </ul>
-<p>The result is a compact <code>influ_diag</code> object with consistent tables and plots across backends. BRMS posterior coefficients are projected directly into focus-by-term diagnostics, avoiding observation-by-draw-by-term arrays.</p>
+<p>The result is a compact <code>influ_diag</code> object with consistent tables and plots across backends. brms posterior coefficients are projected directly into focus-by-term diagnostics, avoiding observation-by-draw-by-term arrays.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Full posterior calculation, compact stored summaries.</span></span>
 <span><span class="va">diagnostic</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ.html">influ</a></span><span class="op">(</span><span class="va">brms_fit</span>, focus <span class="op">=</span> <span class="st">"year"</span>, retain <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span>
@@ -108,11 +109,28 @@
 <span><span class="co"># Fast posterior-mean preview.</span></span>
 <span><span class="va">preview</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ.html">influ</a></span><span class="op">(</span><span class="va">brms_fit</span>, focus <span class="op">=</span> <span class="st">"year"</span>, uncertainty <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 <p>Supported base families in the first implementation are Gaussian, binomial, Poisson, negative binomial, lognormal, Gamma, and Tweedie. Hurdle/delta and zero-inflated components are kept explicit.</p>
-<p>Standardised indices require an unambiguous focus effect. Offset/exposure diagnostics currently support single-component log-link ratios and identity-link contrasts, not combined or nonlinear-probability outputs. Lognormal support follows each backend’s parameterisation; see the main vignette for the supported location, scale, and link combinations.</p>
+<p>Year-effect indices from <code><a href="reference/influ.html">influ()</a></code> require an unambiguous focus effect. Offset/exposure diagnostics currently support single-component log-link ratios and identity-link contrasts, not combined or nonlinear-probability outputs. Lognormal support follows each backend’s parameterisation; see the main vignette for the supported location, scale, and link combinations.</p>
+<p>For an assessment-ready expected-response table, use <code><a href="reference/cpue_index.html">cpue_index()</a></code> with an explicit common reference profile or population. Both <code>"standardised"</code> and <code>"standardized"</code> are accepted. GLM, GAM, glmmTMB, and complete brms fits are supported for response standardisation; spatial response integration remains separate development work.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">index</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span>, reference_data <span class="op">=</span> <span class="va">reference_profile</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">index</span><span class="op">)</span>  <span class="co"># Year, Mean, Median, SD, CV, Qlower, Qupper, and metadata.</span></span>
+<span><span class="fu"><a href="reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">index</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/geo_mean.html">geo_mean</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">16</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>These response indices are distinct from the year-effect contrasts used in the step plots. See the <a href="https://www.quantifish.co.nz/influ2/articles/cpue-indices.html">CPUE indices article</a> for reference choices, compact uncertainty, and comparison examples.</p>
+<div class="section level2">
+<h2 id="residual-diagnostics">Residual diagnostics<a class="anchor" aria-label="anchor" href="#residual-diagnostics"></a>
+</h2>
+<p>Residual overviews also adapt to the response: Bernoulli encounter models use fixed-bin probability calibration, while positive and combined catch responses retain the observed-versus-simulated CDF. No model is refitted by these calls.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span><span class="op">)</span>                          <span class="co"># Automatic fourth panel.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span>  <span class="co"># Explicit original CDF.</span></span></code></pre></div>
+<p>See <a href="https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#encounter-calibration">Residual diagnostics</a> for predictive-envelope interpretation and grouped checks that can reveal missing structure even when pooled encounter calibration looks good.</p>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"quantifish/influ2"</span><span class="op">)</span></span></code></pre></div>
 <p>See <code><a href="articles/influ2.html">vignette("influ2")</a></code> for the framework, memory strategy, and model examples. The separate <code><a href="articles/bentley-validation.html">vignette("bentley-validation")</a></code> documents and plots the frozen agreement check against the original Bentley implementation.</p>
 </div>

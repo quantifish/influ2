@@ -60,6 +60,11 @@ installed. Nothing in this article fits an MCMC model.
 
 ## A four-panel overview
 
+The year panel uses box widths proportional to the square root of the
+number of observations in each year. This shows uneven sampling without
+crowding the year labels with counts; wider boxes represent larger
+samples.
+
 Calculate the residual diagnostic once and reuse it. This does not
 update or refit the model. The four panels cover complementary
 questions, without making the user choose an arbitrary grouping
@@ -76,11 +81,13 @@ variable:
 3.  **Residuals by fishing year:** compare within-year distributions,
     not just mean residuals. A year factor can make those means look
     reassuring by construction. Boxes show medians, quartiles, whiskers,
-    and outlying points; sample sizes are printed below, and numeric
+    and outlying points; widths show relative sample sizes, and numeric
     year gaps remain visible.
-4.  **Observed versus simulated ECDFs:** compare the complete response
-    distribution, including zero catches, with a pointwise predictive
-    band.
+4.  **Response-adaptive check:** Bernoulli encounter models use
+    probability calibration; other models retain the
+    observed-versus-simulated ECDF, including zero catches, with a
+    pointwise predictive band. The examples immediately below are count
+    models, so their fourth panel remains the CDF.
 
 For this overview, use **glmmTMB mixed models** with a monthly random
 intercept, as in the [main
@@ -210,19 +217,27 @@ deliberately no automatic p-values or red/green judgements. The ECDF
 band describes replicated data under the selected simulation scheme, not
 uncertainty in the abundance index, and is not a simultaneous band.
 
+For delta, hurdle, and zero-inflated models, the default overview checks
+the **combined response**, including zeros. It is not a diagnostic of
+the positive component alone. A positive-component check requires that
+component’s fitted model and matching positive observations, or an
+explicitly component-aware native diagnostic. Subsetting or relabelling
+a combined-response overview does not turn it into a positive-component
+check.
+
 | Backend | Default simulation target in [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md) |
 |:---|:---|
 | GLM / GAM | Observation error at fitted parameters, including fitted smooths; parameter uncertainty is not added. |
 | glmmTMB | Native simulation with random effects resimulated from their estimated distribution. |
 | sdmTMB / tinyVAST | `mle-eb`: observation error conditional on fitted spatial, spatiotemporal, and other latent effects. |
-| BRMS | Existing joint posterior draws followed by response simulation, including existing group effects. This requires a complete fit, not a compact influence fixture. |
+| brms | Existing joint posterior draws followed by response simulation, including existing group effects. This requires a complete fit, not a compact influence fixture. |
 
 The native documentation describes the respective
 [glmmTMB](https://glmmtmb.github.io/glmmTMB/reference/simulate.glmmTMB.html),
 [sdmTMB](https://sdmtmb.github.io/sdmTMB/reference/simulate.sdmTMB.html),
 [tinyVAST](https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html),
 and
-[BRMS](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
+[brms](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
 simulation interfaces. The table above states the choices made by this
 wrapper, not a claim that every backend has the same native defaults.
 
@@ -231,12 +246,16 @@ latent structure absorbed by an overly flexible model, and posterior
 predictive ranks need not be uniform. For the alternative sdmTMB
 approximate-latent-draw recipe, spatial correlation checks, or
 specialised OSA/LOO-PIT diagnostics, see the later sections. Delta and
-zero-inflated models use the **combined response**, not
-component-specific residuals. Multivariate, censored, quasi,
-non-binomial weighted, and multi-trial sdmTMB inputs are not supported
-by this initial display. A native simulation failure is reported rather
-than replaced with a different response distribution. Binomial
-GLM/glmmTMB panels use success counts, with integer trials preserved.
+zero-inflated models default to the **combined response**; explicit
+supported component checks are described below. Multivariate, censored,
+quasi, non-binomial weighted, and multi-trial sdmTMB inputs are not
+supported by this initial display. A native simulation failure is
+reported rather than replaced with a different response distribution.
+Binomial GLM/glmmTMB panels use success counts, with integer trials
+preserved. Weighted one-column binomial responses now require
+`trial_counts = "trials_column"` and the original `data`, or a
+two-column success/failure response. Arbitrary fitting weights are not
+assumed to be trial counts.
 
 Calculation retains one residual and predictive mean per observation,
 plus compact ECDF summaries. It does **not** retain the model or the
@@ -253,6 +272,260 @@ The existing helpers below remain available.
 [`plot_qq()`](https://www.quantifish.co.nz/influ2/reference/plot_qq.md)
 deliberately retains its older native-residual interpretation; it has
 not silently changed meaning.
+
+## Encounter calibration
+
+For a Bernoulli encounter model, the pooled binary CDF mainly checks the
+overall proportion of positive catches. A fitted intercept can enforce
+that agreement, and year effects can similarly reproduce annual
+proportions. Neither result establishes that probabilities are correct
+for particular fishing operations. The default fourth panel therefore
+changes to calibration: among observations assigned about 80%
+probability of positive catch, did about 80% actually contain positive
+catch?
+
+The first three panels and their residuals are unchanged. Automatic
+selection uses the response family, component, and known trial counts,
+not whether the sample happens to contain zeros and ones. A Poisson
+sample containing only zeros and ones remains a count diagnostic. An
+all-zero Bernoulli sample remains an encounter diagnostic, although its
+fitted model may have convergence issues. Gamma/lognormal positive
+responses and combined delta catch retain their CDFs.
+
+The following completely simulated teaching example has variable
+encounter probabilities driven by depth and target fishery. Nothing here
+uses BNS data or refits an existing fisheries model. A small GAM
+demonstrates the workflow.
+
+``` r
+
+set.seed(813)
+encounter_data <- data.frame(
+  year = factor(rep(2010:2013, each = 300)),
+  target = factor(rep(c("A", "B"), 600)),
+  depth = runif(1200, 20, 100)
+)
+encounter_data$true_probability <- plogis(
+  -1.6 + 2.4 * (encounter_data$target == "B") +
+    1.2 * sin((encounter_data$depth - 20) / 80 * pi)
+)
+encounter_data$present <- rbinom(
+  nrow(encounter_data), 1, encounter_data$true_probability
+)
+encounter_gam <- mgcv::gam(
+  present ~ year + target + s(depth, k = 5),
+  family = binomial(), data = encounter_data, method = "REML"
+)
+encounter_checks <- influ_residuals(
+  encounter_gam, nsim = 250, seed = 813,
+  calibration_bins = 10, calibration_min_n = 30
+)
+```
+
+``` r
+
+plot(encounter_checks)
+```
+
+![Four-panel encounter diagnostic with probability calibration replacing
+the catch-distribution panel at bottom
+right.](residual-diagnostics_files/figure-html/encounter-calibration-overview-1.png)
+
+Response-adaptive four-panel overview for the simulated encounter GAM.
+The fourth panel compares observed encounter proportions (purple points)
+with original fitted probabilities in fixed bins; grey ranges are
+pointwise 95% predictive envelopes from observation simulations at
+fitted parameters, including fitted smooths. They are not confidence
+intervals for a calibration curve or a calibrated goodness-of-fit test.
+
+### Fixed bins and predictive envelopes
+
+Bins contain roughly equal numbers of observations, with a requested
+default of ten bins and a default minimum of 20 observations. Identical
+and effectively identical probabilities (absolute tolerance `1e-8`) are
+never divided between bins. The number of bins is reduced and small bins
+are merged when necessary. Points sit at the mean fitted probability in
+each bin, point area represents observation count, and the dashed line
+is the 1:1 reference. An effectively constant probability gives one
+point, labelled as an overall-frequency check only. Sparse support is
+disclosed; black crosses flag sparse points.
+
+Bin membership comes from **original fitted probabilities**, not the
+noisy average of simulated binary outcomes. It stays fixed across all
+joint response simulations. Within each batch, influ2 reduces each
+complete simulation to bin proportions before discarding it. Only
+summary tables remain in the result; no observation-by-simulation matrix
+is saved for calibration. Configure bins when calculating, rather than
+when plotting, because discarded simulations cannot subsequently be
+re-binned.
+
+Grey ranges predict variation in the **observed proportions** under the
+recorded simulation scheme. They are not uncertainty intervals for an
+unknown calibration curve. They are pointwise, not simultaneous, and do
+not turn this exploratory fitted-data display into a test. GLM/GAM
+simulations hold fitted parameters and smooths fixed. glmmTMB bins use
+probabilities conditional on fitted random effects, whereas its native
+simulations redraw those effects; the simulated envelope can
+consequently be displaced from the identity line. sdmTMB/tinyVAST use
+their existing `mle-eb` conditioning. brms bins use posterior mean
+expected probabilities over the same draw identities as the posterior
+predictive simulations, including existing group effects.
+
+Whole simulations preserve the dependence represented by those methods.
+They do not add unmodelled vessel or temporal dependence. If such
+dependence matters, interpret the envelope cautiously and use
+scientifically appropriate grouped checks; held-out or blocked
+validation would provide stronger evidence. Nothing in these plotting
+calls automatically refits a model or cross-validates it.
+
+### Deliberately distorted probabilities
+
+For contrast, force an exaggerated probability pattern using an
+offset-only binomial model. This intentionally wrong model specifies its
+probabilities without estimating an intercept. It is a demonstration of
+visible miscalibration, not a recommended candidate fitting procedure.
+
+``` r
+
+encounter_data$distorted_logit <-
+  2 * predict(encounter_gam, type = "link") + 0.8
+distorted_model <- glm(
+  present ~ 0 + offset(distorted_logit),
+  family = binomial(), data = encounter_data
+)
+distorted_checks <- influ_residuals(
+  distorted_model, data = encounter_data, year = "year",
+  nsim = 250, seed = 813, calibration_min_n = 30
+)
+```
+
+``` r
+
+patchwork::wrap_plots(
+  plot(encounter_checks, type = "calibration") + labs(title = "Encounter GAM"),
+  plot(distorted_checks, type = "calibration") + labs(title = "Distorted probabilities"),
+  ncol = 2
+)
+```
+
+![Two calibration panels compare a reasonable GAM with deliberately
+distorted
+probabilities.](residual-diagnostics_files/figure-html/encounter-distorted-comparison-1.png)
+
+Encounter calibration for the simulated-data GAM (left) and deliberately
+exaggerated probabilities (right). Purple points are observed bin
+proportions, the dashed line is identity, and grey ranges are pointwise
+95% predictive envelopes under each model’s fixed probabilities. The
+distorted probabilities show systematic departures, rather than merely a
+different overall encounter rate.
+
+### A pooled pass can conceal missing structure
+
+An intercept-only model estimates one overall encounter probability. Its
+single pooled point lies on the identity line even when target fishery
+is an important omitted predictor. The example below shows that
+limitation and checks the mean raw encounter residual,
+`observed presence - fitted probability`, within each year-by-target
+combination. Groups come from the scientific question, not from the
+observed outcome.
+
+``` r
+
+pooled_model <- glm(present ~ 1, family = binomial(), data = encounter_data)
+pooled_checks <- influ_residuals(
+  pooled_model, data = encounter_data, year = "year",
+  nsim = 250, seed = 813,
+  calibration_groups = c("year", "target")
+)
+```
+
+``` r
+
+patchwork::wrap_plots(
+  plot(pooled_checks, type = "calibration"),
+  plot(pooled_checks, type = "calibration_groups"),
+  ncol = 2
+)
+```
+
+![One pooled calibration point matches identity, while year-by-target
+residual differences show large positive and negative
+departures.](residual-diagnostics_files/figure-html/encounter-pooled-versus-grouped-1.png)
+
+The intercept-only model matches the overall encounter frequency exactly
+(left), yet year-by-target mean raw residuals expose omitted target
+structure (right). Purple points on the right are observed minus fitted
+encounter proportions; grey ranges are pointwise 95% predictive
+envelopes for those differences, conditional on the fixed fitted
+probabilities. A pooled calibration pass is not an all-clear for model
+structure.
+
+Use `calibration_groups = c("year", "area")`, `"vessel"`, or a supported
+season grouping to answer other scientific questions. Supply original
+`data` when grouping columns were not in the model formula. Groups below
+`calibration_min_n` remain visible and flagged, without a predictive
+envelope; they should not be treated as precise estimates. The compact
+tables are available as `checks$calibration$bins` and
+`checks$calibration$groups$table`. Do not define groups using catch
+presence, catch magnitude, or a derived outcome.
+
+### Components, grouped trials, and older objects
+
+`component = "auto"` is deliberately conservative for joint models: it
+keeps the combined catch response and the CDF. For a supported joint
+hurdle/delta model, `component = "encounter"` compares presence with its
+fitted encounter probability. It transforms complete native catch
+simulations to presence, so their within-simulation dependence is
+retained. This is not the same as using a zero-inflation probability as
+an encounter probability in a count mixture. Automatic encounter
+extraction from zero-inflated count mixtures is rejected.
+
+sdmTMB also provides native positive-component simulation. The following
+calls reuse an existing fitted model; they do not fit one here:
+
+``` r
+
+combined_checks <- influ_residuals(delta_fit, component = "combined")
+encounter_checks <- influ_residuals(delta_fit, component = "encounter")
+positive_checks <- influ_residuals(delta_fit, component = "positive")
+```
+
+The positive check uses native component-2 simulations at rows with
+**observed** positive catch. It never filters each simulated combined
+catch vector to its positive outcomes. Native component
+prediction/simulation is documented by
+[sdmTMB](https://sdmtmb.github.io/sdmTMB/reference/simulate.sdmTMB.html).
+Joint positive extraction for other backends is not implemented: use the
+separately fitted positive component with its matching data.
+Standard-link tinyVAST delta encounter extraction is supported; other
+tinyVAST delta parameterisations require a separate encounter fit.
+
+Known multi-trial binomial responses retain the CDF in the default
+overview. Explicit `type = "calibration"` is supported: observed
+proportions are total successes divided by total trials, and fitted
+probabilities are averaged with trial-count weights. Point size still
+represents the number of observation rows, not a claim that all trials
+are independent. Native beta-binomial dependence, where supported, is
+retained in the simulation envelopes. The original multi-trial sdmTMB
+limitation remains explicit.
+
+``` r
+
+plot(checks, type = "overview", response_diagnostic = "auto")
+plot(checks, type = "calibration")
+plot(checks, type = "distribution")
+autoplot(checks, response_diagnostic = "auto")
+```
+
+An explicit distribution request retains the previous CDF, including for
+binary data. Existing callers that manually assemble panels and request
+`type = "distribution"` therefore remain unchanged; opt into the
+automatic fourth panel by using the overview. `response_scale = "log1p"`
+applies only to a CDF, never to calibration axes. Old saved objects
+without response-type metadata retain the distribution overview with a
+warning. Without fitted probabilities, recalculation is required for
+calibration; missing simulation envelopes are not replaced by fabricated
+or unrequested binomial intervals.
 
 ## Residuals against fitted values and predictors
 
@@ -653,7 +926,7 @@ single-draw residual recipe. This article does not claim those
 procedures have identical calibration, or provide an automatic
 multivariate DHARMa adapter.
 
-### GLM, GAM, glmmTMB, and BRMS
+### GLM, GAM, glmmTMB, and brms
 
 The ordinary GLM, GAM, and glmmTMB residual plots use their native
 methods. Current glmmTMB also provides a `"dunn-smyth"` option, but
@@ -665,23 +938,23 @@ and [release notes](https://glmmtmb.r-universe.dev/glmmTMB/NEWS)
 describe the available implementation. Being built on TMB does not
 itself provide an OSA interface.
 
-For BRMS, use the **original complete `brmsfit`**. The compact example
+For brms, use the **original complete `brmsfit`**. The compact example
 fixtures in influ2 retain joint draws for influence calculations but
 omit the Stan state needed by native prediction and residual methods.
 They cannot support these residual helpers,
 [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md),
 or
 [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md).
-Those two comparison helpers remain BRMS-specific; they are not generic
+Those two comparison helpers remain brms-specific; they are not generic
 frequentist model-selection tables.
 
-BRMS’s native residual summaries depend on its prediction method;
+brms’s native residual summaries depend on its prediction method;
 Pearson residuals are based on predictive dispersion, not simply the GLM
 formula. Posterior predictive checks
 ([`brms::pp_check()`](https://mc-stan.org/bayesplot/reference/pp_check.html))
 can retain features obscured by a residual mean. Reusing a full fitted
 model does not rerun MCMC, but prediction across posterior draws can
-still require substantial memory. See the [BRMS residual
+still require substantial memory. See the [brms residual
 reference](https://paulbuerkner.com/brms/reference/residuals.brmsfit.html).
 
 ### OSA is a specialised additional workflow

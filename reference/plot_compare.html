@@ -22,7 +22,8 @@ schema before plotting."><meta property="og:image" content="https://www.quantifi
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -70,7 +71,8 @@ schema before plotting.</p>
 
 
 <dl><dt id="arg-fits">fits<a class="anchor" aria-label="anchor" href="#arg-fits"></a></dt>
-<dd><p>A fitted model, an [influ_diag], or a list of either.</p></dd>
+<dd><p>A fitted model, an [influ_diag], or a list of either. Alternatively,
+supply calculated [cpue_index()] objects, without mixing input types.</p></dd>
 
 
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
@@ -113,7 +115,11 @@ overlapping focus levels.</p></dd>
   response differences, or link-scale contrasts. Ratio plots start at zero;
   difference and link-scale plots retain negative values. Inputs should
   describe comparable responses and focus effects; matching scales alone
-  does not establish that the fitted models answer the same question.</p>
+  does not establish that the fitted models answer the same question.
+  Fitted-model inputs retain their existing year-effect-contrast meaning.
+  To compare expected-response indices, supply `cpue_index()` results with
+  comparable reference populations and response definitions. Their stored
+  intervals are used; set rescaling during calculation, not during plotting.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

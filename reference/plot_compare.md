@@ -23,7 +23,9 @@ plot_compare(
 
 - fits:
 
-  A fitted model, an \[influ_diag\], or a list of either.
+  A fitted model, an \[influ_diag\], or a list of either. Alternatively,
+  supply calculated \[cpue_index()\] objects, without mixing input
+  types.
 
 - labels:
 
@@ -66,3 +68,8 @@ differences, or link-scale contrasts. Ratio plots start at zero;
 difference and link-scale plots retain negative values. Inputs should
 describe comparable responses and focus effects; matching scales alone
 does not establish that the fitted models answer the same question.
+Fitted-model inputs retain their existing year-effect-contrast meaning.
+To compare expected-response indices, supply \`cpue_index()\` results
+with comparable reference populations and response definitions. Their
+stored intervals are used; set rescaling during calculation, not during
+plotting.

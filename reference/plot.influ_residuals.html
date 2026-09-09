@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -50,9 +51,11 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'influ_residuals'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"overview"</span>, <span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"year"</span>, <span class="st">"distribution"</span><span class="op">)</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"overview"</span>, <span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"year"</span>, <span class="st">"distribution"</span>, <span class="st">"calibration"</span>,</span>
+<span>    <span class="st">"calibration_groups"</span><span class="op">)</span>,</span>
 <span>  response_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"identity"</span>, <span class="st">"log1p"</span><span class="op">)</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  response_diagnostic <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"distribution"</span>, <span class="st">"calibration"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_residuals'</span></span>
@@ -69,7 +72,9 @@
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>The four-panel `"overview"` (default), or one of `"qq"`,
-`"fitted"`, `"year"`, and `"distribution"`.</p></dd>
+`"fitted"`, `"year"`, `"distribution"`, `"calibration"`, and
+`"calibration_groups"`. Grouped calibration shows observed-minus-predicted
+proportions for the scientific groups chosen during calculation.</p></dd>
 
 
 <dt id="arg-response-scale">response_scale<a class="anchor" aria-label="anchor" href="#arg-response-scale"></a></dt>
@@ -81,6 +86,15 @@ responses and is labelled explicitly.</p></dd>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Reserved for future methods; currently unused.</p></dd>
 
+
+<dt id="arg-response-diagnostic">response_diagnostic<a class="anchor" aria-label="anchor" href="#arg-response-diagnostic"></a></dt>
+<dd><p>Fourth overview panel: `"auto"` chooses
+probability calibration for Bernoulli/encounter responses and the existing
+ECDF for other families (including grouped binomial and combined catch).
+`"distribution"` and `"calibration"` explicitly select a panel. Explicit
+`type` takes precedence. A calibration panel always uses probability axes,
+never `response_scale`. It requires stored fitted-probability summaries.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -89,7 +103,8 @@ responses and is labelled explicitly.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The year panel shows a boxplot for each sampled year and its sample
-  size. Numeric years retain their spacing, including gaps; other labels are
+  size through box widths proportional to the square root of the number of
+  observations. Numeric years retain their spacing, including gaps; other labels are
   ordered lexically. Reference lines mark the normal-score median and
   quartiles. No smoother across years conceals changes in spread or tails.
   The fitted panel's horizontal variable is the simulation-based predictive
@@ -98,7 +113,17 @@ responses and is labelled explicitly.</p></dd>
 <p>The Q-Q envelope is a pointwise independent-uniform reference, not a
   model-specific calibration. The ECDF envelope is a pointwise predictive
   band on a compact grid. Neither envelope provides an automatic pass/fail
-  test. Read the calculation metadata and [influ_residuals()] limitations.</p>
+  test. Read the calculation metadata and [influ_residuals()] limitations.
+  Calibration uses fixed, roughly equal-count bins of original fitted
+  probabilities. Grey ranges are pointwise predictive envelopes for observed
+  bin proportions, not confidence intervals for a calibration curve. Point
+  size represents observation count; crosses identify sparse support.
+  Grouped binomial calibration is available explicitly with known trials;
+  it pools successes/trials and trial-weights predicted probabilities.
+  Set bin/group options in [influ_residuals()], not while plotting: discarded
+  simulations cannot be re-binned. Older objects without response metadata
+  retain the distribution overview with an informative warning. Explicit
+  distribution plots remain unchanged. Missing envelopes are not fabricated.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

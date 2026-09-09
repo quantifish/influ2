@@ -50,6 +50,21 @@ Compare indices and inspect data coverage.
 - [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
   : Plot the completeness of variables through time
 
+## CPUE indices and assessment tables
+
+Calculate explicit expected-response indices and plot stored results.
+
+- [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+  [`as.data.frame(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+  [`print(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+  : Calculate an assessment-ready CPUE index
+- [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+  [`plot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+  [`autoplot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+  : Plot calculated CPUE indices
+- [`geo_mean()`](https://www.quantifish.co.nz/influ2/reference/geo_mean.md)
+  : Geometric mean
+
 ## Residual diagnostics
 
 Inspect residual patterns, implied year effects, and quantile
@@ -70,12 +85,12 @@ comparisons.
 
 ## Bayesian model comparison
 
-Optional summaries for fitted BRMS models.
+Optional summaries for fitted brms models.
 
 - [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md)
-  : Summarise Bayesian R-squared for BRMS models
+  : Summarise Bayesian R-squared for brms models
 - [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
-  : Compare BRMS model criteria
+  : Compare brms model criteria
 
 ## Data
 

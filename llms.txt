@@ -31,7 +31,7 @@ Initial adapters are available for:
 - [`tinyVAST::tinyVAST()`](https://vast-lib.github.io/tinyVAST/reference/tinyVAST.html).
 
 The result is a compact `influ_diag` object with consistent tables and
-plots across backends. BRMS posterior coefficients are projected
+plots across backends. brms posterior coefficients are projected
 directly into focus-by-term diagnostics, avoiding
 observation-by-draw-by-term arrays.
 
@@ -55,12 +55,53 @@ Supported base families in the first implementation are Gaussian,
 binomial, Poisson, negative binomial, lognormal, Gamma, and Tweedie.
 Hurdle/delta and zero-inflated components are kept explicit.
 
-Standardised indices require an unambiguous focus effect.
-Offset/exposure diagnostics currently support single-component log-link
-ratios and identity-link contrasts, not combined or
-nonlinear-probability outputs. Lognormal support follows each backend’s
-parameterisation; see the main vignette for the supported location,
-scale, and link combinations.
+Year-effect indices from
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md)
+require an unambiguous focus effect. Offset/exposure diagnostics
+currently support single-component log-link ratios and identity-link
+contrasts, not combined or nonlinear-probability outputs. Lognormal
+support follows each backend’s parameterisation; see the main vignette
+for the supported location, scale, and link combinations.
+
+For an assessment-ready expected-response table, use
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+with an explicit common reference profile or population. Both
+`"standardised"` and `"standardized"` are accepted. GLM, GAM, glmmTMB,
+and complete brms fits are supported for response standardisation;
+spatial response integration remains separate development work.
+
+``` r
+
+index <- cpue_index(model, year = "year", reference_data = reference_profile)
+as.data.frame(index)  # Year, Mean, Median, SD, CV, Qlower, Qupper, and metadata.
+plot_index(index)
+geo_mean(c(1, 4, 16))
+```
+
+These response indices are distinct from the year-effect contrasts used
+in the step plots. See the [CPUE indices
+article](https://www.quantifish.co.nz/influ2/articles/cpue-indices.html)
+for reference choices, compact uncertainty, and comparison examples.
+
+## Residual diagnostics
+
+Residual overviews also adapt to the response: Bernoulli encounter
+models use fixed-bin probability calibration, while positive and
+combined catch responses retain the observed-versus-simulated CDF. No
+model is refitted by these calls.
+
+``` r
+
+checks <- influ_residuals(model, year = "year")
+plot(checks)                          # Automatic fourth panel.
+plot(checks, type = "distribution")  # Explicit original CDF.
+```
+
+See [Residual
+diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#encounter-calibration)
+for predictive-envelope interpretation and grouped checks that can
+reveal missing structure even when pooled encounter calibration looks
+good.
 
 ## Installation
 
@@ -128,6 +169,21 @@ Compare indices and inspect data coverage.
 - [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
   : Plot the completeness of variables through time
 
+## CPUE indices and assessment tables
+
+Calculate explicit expected-response indices and plot stored results.
+
+- [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+  [`as.data.frame(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+  [`print(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+  : Calculate an assessment-ready CPUE index
+- [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+  [`plot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+  [`autoplot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+  : Plot calculated CPUE indices
+- [`geo_mean()`](https://www.quantifish.co.nz/influ2/reference/geo_mean.md)
+  : Geometric mean
+
 ## Residual diagnostics
 
 Inspect residual patterns, implied year effects, and quantile
@@ -148,12 +204,12 @@ comparisons.
 
 ## Bayesian model comparison
 
-Optional summaries for fitted BRMS models.
+Optional summaries for fitted brms models.
 
 - [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md)
-  : Summarise Bayesian R-squared for BRMS models
+  : Summarise Bayesian R-squared for brms models
 - [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
-  : Compare BRMS model criteria
+  : Compare brms model criteria
 
 ## Data
 
@@ -176,6 +232,8 @@ Simulated data supplied with the package.
 
 ### Validation and response structures
 
+- [CPUE
+  indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md):
 - [Residual
   diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md):
 - [Bentley

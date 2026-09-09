@@ -2,6 +2,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/404.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/LICENSE-text.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/bentley-validation.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/articles/cpue-indices.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/hurdle.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/influ2.html</loc></url>
@@ -11,6 +12,8 @@
 <url><loc>https://www.quantifish.co.nz/influ2/authors.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/news/index.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/cpue_index.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/geo_mean.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/influ.brmsfit.html</loc></url>
@@ -34,6 +37,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_compare.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_data_extent.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/plot_index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_qq.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_step.html</loc></url>

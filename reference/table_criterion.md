@@ -1,6 +1,6 @@
-# Compare BRMS model criteria
+# Compare brms model criteria
 
-Calculates selected public BRMS criteria without inspecting the
+Calculates selected public brms criteria without inspecting the
 underlying Stan object. This keeps \`rstan\` out of the package's
 mandatory dependencies.
 
@@ -32,7 +32,7 @@ table_criterion(
 
 - ...:
 
-  Arguments passed to the requested BRMS criterion functions.
+  Arguments passed to the requested brms criterion functions.
 
 ## Value
 

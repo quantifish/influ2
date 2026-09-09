@@ -6,7 +6,7 @@ an observation-by-draw-by-term array. Joint posterior dependence is
 preserved while calculating the requested diagnostics. Lognormal models
 currently require constant \`sigma\`; varying scale needs a joint
 location-and-scale calculation before arithmetic-mean ratios can be
-reported. The \`mu\` link must be identity because BRMS parameterises
+reported. The \`mu\` link must be identity because brms parameterises
 the log-location, not the arithmetic mean. Formula offsets and response
 \`rate()\` additions have the same restrictions as the GLM adapter.
 

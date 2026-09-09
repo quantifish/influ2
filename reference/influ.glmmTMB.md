@@ -6,7 +6,7 @@ component. Random-effect modes are included as a compact aggregate term,
 with uncertainty propagated from their joint conditional latent
 covariance. Lognormal models require a log link for their arithmetic
 mean. Dispersion may vary, but its effects are not decomposed: the
-diagnostics describe mean-model terms. Unlike BRMS, glmmTMB does not
+diagnostics describe mean-model terms. Unlike brms, glmmTMB does not
 parameterise log-location. Offsets have the same single-component
 restrictions as the GLM adapter, and nominal summaries are
 observed-response summaries, not automatically exposure-adjusted CPUE.

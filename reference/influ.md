@@ -38,7 +38,7 @@ an unambiguous focus effect.
 Fixed offsets/exposure are supported only for single-component log-link
 ratios and identity-link contrasts; other offset-dependent reference
 calculations fail explicitly. Nominal summaries describe the observed
-response, not response divided by exposure. BRMS lognormal models
+response, not response divided by exposure. brms lognormal models
 require an identity location link and constant \`sigma\`.
 Mean-parameterised lognormal backends require a log link; \`glmmTMB\`
 may have varying dispersion, but its dispersion effects are not

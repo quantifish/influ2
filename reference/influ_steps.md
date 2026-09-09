@@ -78,7 +78,7 @@ summary(object, ...)
 
 - refit_args:
 
-  Named arguments passed to the model update at every step, such as BRMS
+  Named arguments passed to the model update at every step, such as brms
   sampling controls. Stage-specific arguments take precedence.
   Execution-only controls (`seed`, `cores`, `refresh`, `silent`, and
   `verbose`) do not by themselves force an otherwise unchanged original

@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -170,6 +171,36 @@
         </dt>
         <dd>Plot the completeness of variables through time</dd>
       </dl></div><div class="section level2">
+      <h2 id="cpue-indices-and-assessment-tables">CPUE indices and assessment tables<a class="anchor" aria-label="anchor" href="#cpue-indices-and-assessment-tables"></a></h2>
+
+      <div class="section-desc"><p>Calculate explicit expected-response indices and plot stored results.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpue_index.html">cpue_index()</a></code> <code><a href="cpue_index.html">as.data.frame(<i>&lt;influ_index&gt;</i>)</a></code> <code><a href="cpue_index.html">print(<i>&lt;influ_index&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Calculate an assessment-ready CPUE index</dd>
+
+        <dt>
+
+          <code><a href="plot_index.html">plot_index()</a></code> <code><a href="plot_index.html">plot(<i>&lt;influ_index&gt;</i>)</a></code> <code><a href="plot_index.html">autoplot(<i>&lt;influ_index&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot calculated CPUE indices</dd>
+
+        <dt>
+
+          <code><a href="geo_mean.html">geo_mean()</a></code>
+
+        </dt>
+        <dd>Geometric mean</dd>
+      </dl></div><div class="section level2">
       <h2 id="residual-diagnostics">Residual diagnostics<a class="anchor" aria-label="anchor" href="#residual-diagnostics"></a></h2>
 
       <div class="section-desc"><p>Inspect residual patterns, implied year effects, and quantile comparisons.</p></div>
@@ -216,7 +247,7 @@
       </dl></div><div class="section level2">
       <h2 id="bayesian-model-comparison">Bayesian model comparison<a class="anchor" aria-label="anchor" href="#bayesian-model-comparison"></a></h2>
 
-      <div class="section-desc"><p>Optional summaries for fitted BRMS models.</p></div>
+      <div class="section-desc"><p>Optional summaries for fitted brms models.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -228,14 +259,14 @@
           <code><a href="get_bayes_R2.html">get_bayes_R2()</a></code>
 
         </dt>
-        <dd>Summarise Bayesian R-squared for BRMS models</dd>
+        <dd>Summarise Bayesian R-squared for brms models</dd>
 
         <dt>
 
           <code><a href="table_criterion.html">table_criterion()</a></code>
 
         </dt>
-        <dd>Compare BRMS model criteria</dd>
+        <dd>Compare brms model criteria</dd>
       </dl></div><div class="section level2">
       <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h2>
 

@@ -1,6 +1,6 @@
-# Summarise Bayesian R-squared for BRMS models
+# Summarise Bayesian R-squared for brms models
 
-Summarise Bayesian R-squared for BRMS models
+Summarise Bayesian R-squared for brms models
 
 ## Usage
 

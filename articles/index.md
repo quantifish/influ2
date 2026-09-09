@@ -7,6 +7,8 @@
 
 ### Validation and response structures
 
+- [CPUE
+  indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md):
 - [Residual
   diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md):
 - [Bentley

@@ -20,7 +20,7 @@ An influence diagnostic should show both component-specific effects and
 the combined change in expected response. Treating one component as
 though it were the complete CPUE index can obscure why an index changed.
 
-## BRMS hurdle-lognormal example
+## brms hurdle-lognormal example
 
 A hurdle-lognormal model can be fitted with separate formulae for
 positive catch and the probability of a zero:
@@ -94,11 +94,11 @@ summary(hurdle_diagnostic)
 plot(hurdle_diagnostic, type = "components")
 ```
 
-![Positive, occurrence, and unconditional-mean influence from a BRMS
+![Positive, occurrence, and unconditional-mean influence from a brms
 hurdle-lognormal
 model.](hurdle_files/figure-html/brms-hurdle-components-1.png)
 
-Positive, occurrence, and unconditional-mean influence from a BRMS
+Positive, occurrence, and unconditional-mean influence from a brms
 hurdle-lognormal model.
 
 Because this example has `hu ~ 1`, the probability of occurrence has no
@@ -176,7 +176,7 @@ covariance or precision calculation. Multiplying independently
 calculated marginal intervals is invalid because it loses dependence
 between the two linear predictors. `influ2` therefore combines:
 
-- BRMS population-level components draw by draw from the joint
+- brms population-level components draw by draw from the joint
   posterior; and
 - `glmmTMB` fixed components draw by draw from their joint
   maximum-likelihood covariance; and
@@ -186,9 +186,9 @@ between the two linear predictors. `influ2` therefore combines:
 Only derived focus-by-term draws are retained when requested. The much
 larger observation-by-draw arrays are never stored.
 
-For BRMS lognormal models, a constant residual-scale adjustment cancels
+For brms lognormal models, a constant residual-scale adjustment cancels
 from an influence ratio. Models in which `sigma` varies are rejected:
-they need a future joint location-and-scale calculation. BRMS lognormal
+they need a future joint location-and-scale calculation. brms lognormal
 location models also require their usual identity link.
 Mean-parameterised lognormal backends instead require a log link. In
 `glmmTMB`, varying data-scale dispersion does not invalidate log-link

@@ -24,7 +24,8 @@ processes are changed between fits; they are not area-integrated indices."><meta
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -130,7 +131,7 @@ keep the returned object small. Save expensive fits separately if needed.</p></d
 
 <dt id="arg-refit-args">refit_args<a class="anchor" aria-label="anchor" href="#arg-refit-args"></a></dt>
 <dd><p>Named arguments passed to the model update at every step,
-such as BRMS sampling controls. Stage-specific arguments take precedence.
+such as brms sampling controls. Stage-specific arguments take precedence.
 Execution-only controls (<code>seed</code>, <code>cores</code>, <code>refresh</code>, <code>silent</code>, and <code>verbose</code>)
 do not by themselves force an otherwise unchanged original fit to rerun.</p></dd>
 

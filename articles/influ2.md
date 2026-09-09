@@ -489,11 +489,11 @@ summary(brms_diagnostic)
 plot(brms_diagnostic, type = "components")
 ```
 
-![BRMS population-level year and soak-time, month group-level, and
+![brms population-level year and soak-time, month group-level, and
 depth-smooth influence
 ratios.](influ2_files/figure-html/lobster-brms-influence-1.png)
 
-BRMS population-level year and soak-time, month group-level, and
+brms population-level year and soak-time, month group-level, and
 depth-smooth influence ratios.
 
 Population-level, group-level, and smooth contributions all preserve
@@ -666,13 +666,24 @@ observations-by-draws field array. Delta fields use the same joint draw
 for occurrence and positive components before the unconditional mean is
 calculated.
 
-## Comparing standardised indices
+## Comparing year-effect indices
+
+This section compares **year-effect contrasts**: how the fitted year
+term changes between years, expressed here on a relative scale. It does
+not predict lobsters per pot at a specified depth and soak time. That
+expected-response index is calculated in [CPUE indices for stock
+assessment](#cpue-indices-for-stock-assessment) below.
 
 [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
 accepts a list of fitted models from different backends, or their
 already-calculated `influ_diag` objects. Reusing the diagnostics below
 avoids repeating model fitting, posterior sampling, or influence
-calculations.
+calculations. It can also plot a list of
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+results. With `method = "standardised"`, these contain a different,
+explicitly chosen quantity: expected CPUE at a common reference profile
+or population. The function plots whichever kind of result is supplied;
+it does not silently convert one into the other or mix them together.
 
 These four lobster models use the same response, pot records, and years.
 They differ in both their model structure and their distribution: the
@@ -686,7 +697,7 @@ comparison of fitting software.
 lobster_diagnostics <- list(GLM = glm_diagnostic)
 if (has_mgcv) lobster_diagnostics$GAM <- gam_diagnostic
 if (has_glmmTMB) lobster_diagnostics$glmmTMB <- glmmTMB_diagnostic
-if (has_brms) lobster_diagnostics$BRMS <- brms_diagnostic
+if (has_brms) lobster_diagnostics$brms <- brms_diagnostic
 ```
 
 `rescale = 1` gives each series a geometric mean of one over the common
@@ -711,7 +722,7 @@ with separate labelled lines for each fitted
 model.](influ2_files/figure-html/lobster-model-comparison-1.png)
 
 Relative standardised lobster CPUE indices from the available GLM, GAM,
-glmmTMB, and BRMS examples. Each series has a geometric mean of one over
+glmmTMB, and brms examples. Each series has a geometric mean of one over
 2000–2017; differences reflect the models’ distributions and structures
 as well as their estimation methods.
 
@@ -914,7 +925,7 @@ lobster_steps <- influ_steps(
 )
 ```
 
-For expensive models, particularly BRMS fits, supply an ordered list of
+For expensive models, particularly brms fits, supply an ordered list of
 models that have already been fitted. This calculates and plots their
 year contrasts without running MCMC again. The models should use the
 same response, observations, focus levels, and reference distribution.
@@ -946,6 +957,133 @@ models can substantially increase the object’s size. The [spatial
 vignette](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.md)
 shows explicit sequences that add spatial and spatiotemporal structure
 while continuing to compare the fitted year effects.
+
+## CPUE indices for stock assessment
+
+An index table and its plot are routine outputs from CPUE
+standardisation. Use
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+to calculate the table once, then
+[`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+to display it. Here we reuse the negative-binomial glmmTMB model fitted
+above, without refitting it.
+
+The question is now: **what is the expected number of lobsters per pot
+in each year, at the same depth and soak time?** We explicitly choose
+median observed depth and a 24-hour soak. The year column is omitted
+from the reference data because the same profile is used in every
+observed year. The monthly random effect is set to zero: this is a
+zero-month-effect prediction on the link scale, not an average over the
+population of monthly random effects.
+
+``` r
+
+assessment_reference <- data.frame(
+  depth = median(lobsters_per_pot$depth),
+  soak = 24
+)
+
+lobster_cpue <- cpue_index(
+  lobster_glmmTMB,
+  year = "year",
+  method = "standardised",
+  reference_data = assessment_reference,
+  units = "lobsters per pot"
+)
+
+index_table <- as.data.frame(lobster_cpue)
+```
+
+Both `method = "standardised"` and `method = "standardized"` work. The
+calculated result contains the familiar assessment columns, plus method,
+distribution, and link information. The reporting columns are shown
+below. `Mean` is the estimated expected CPUE, `SD` is its standard
+error, and `CV` is `SD / Mean`. `Qlower` and `Qupper` give the pointwise
+95% confidence interval. `Median` is missing for this frequentist fit;
+it is populated with the posterior median when using a complete brms
+fit. None of these uncertainty columns describes the variation among
+individual pot catches.
+
+``` r
+
+knitr::kable(
+  index_table[c("Year", "Mean", "Median", "SD", "CV", "Qlower", "Qupper")],
+  digits = 3,
+  caption = "Standardised lobster CPUE and uncertainty at the common reference profile."
+)
+```
+
+| Year |  Mean | Median |    SD |    CV | Qlower | Qupper |
+|:-----|------:|-------:|------:|------:|-------:|-------:|
+| 2000 | 1.689 |     NA | 0.240 | 0.142 |  1.278 |  2.231 |
+| 2001 | 1.761 |     NA | 0.249 | 0.142 |  1.334 |  2.325 |
+| 2002 | 1.841 |     NA | 0.257 | 0.139 |  1.401 |  2.420 |
+| 2003 | 1.401 |     NA | 0.191 | 0.136 |  1.073 |  1.830 |
+| 2004 | 1.586 |     NA | 0.216 | 0.136 |  1.215 |  2.070 |
+| 2005 | 1.318 |     NA | 0.186 | 0.141 |  0.999 |  1.739 |
+| 2006 | 1.167 |     NA | 0.158 | 0.136 |  0.895 |  1.522 |
+| 2007 | 1.192 |     NA | 0.162 | 0.136 |  0.914 |  1.555 |
+| 2008 | 1.183 |     NA | 0.165 | 0.139 |  0.900 |  1.554 |
+| 2009 | 1.134 |     NA | 0.158 | 0.140 |  0.862 |  1.490 |
+| 2010 | 1.230 |     NA | 0.168 | 0.137 |  0.940 |  1.608 |
+| 2011 | 1.390 |     NA | 0.190 | 0.136 |  1.064 |  1.816 |
+| 2012 | 1.217 |     NA | 0.170 | 0.140 |  0.925 |  1.601 |
+| 2013 | 1.369 |     NA | 0.186 | 0.136 |  1.049 |  1.788 |
+| 2014 | 1.258 |     NA | 0.170 | 0.135 |  0.965 |  1.640 |
+| 2015 | 1.059 |     NA | 0.145 | 0.137 |  0.810 |  1.384 |
+| 2016 | 1.090 |     NA | 0.147 | 0.135 |  0.837 |  1.420 |
+| 2017 | 1.113 |     NA | 0.152 | 0.137 |  0.851 |  1.455 |
+
+Standardised lobster CPUE and uncertainty at the common reference
+profile. {.table}
+
+The plot uses the stored estimates and intervals. It does not fit a
+model or repeat the prediction calculation.
+
+``` r
+
+plot_index(lobster_cpue) +
+  labs(x = "Year")
+```
+
+![Annual expected lobster CPUE at a fixed reference profile, with an
+uncertainty ribbon and a y-axis starting at
+zero.](influ2_files/figure-html/lobster-assessment-plot-1.png)
+
+Standardised expected lobsters per pot from the negative-binomial
+glmmTMB model at median observed depth and a 24-hour soak, with the
+monthly random effect set to zero. The ribbon is a pointwise 95%
+confidence interval for the index, not the spread of individual pot
+catches.
+
+For a relative assessment index, set `rescale = 1` in
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md).
+That also propagates uncertainty in the common normalising denominator.
+For a population rather than one reference profile, supply several
+reference rows and `reference_weights`; predictions are averaged on the
+response scale. The [CPUE indices
+article](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md)
+explains these choices and the compact posterior calculation for brms.
+
+To overlay assessment indices from several models, calculate one
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+result per model using comparable reference populations, units, and
+random-effect targets, then pass the results to
+[`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md).
+That is the multi-model equivalent of
+[`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md).
+Its executable [two-model
+example](https://www.quantifish.co.nz/influ2/articles/cpue-indices.html#comparing-models)
+shows the resulting plot. Passing fitted models or `influ_diag` objects
+instead retains the year-effect comparison shown earlier. In a simple
+additive log-link model the relative trajectories can coincide after
+rescaling, but that should not be assumed for models with year
+interactions or more complicated response structures.
+
+These are CPUE predictions, not area-integrated biomass estimates.
+Response standardisation currently supports GLM, GAM, glmmTMB, and
+complete brms fits; the full spatial response adapters remain separate
+work.
 
 ## One interface and compact uncertainty
 
@@ -1107,7 +1245,7 @@ d4 <- influ(fitted_model, focus = "year", uncertainty = "none")
 
 For GLMs and GAMs, linear diagnostic contrasts use fitted joint
 covariance analytically. Joint coefficient simulation is used when
-derived draws are requested. The BRMS backend reduces joint posterior
+derived draws are requested. The brms backend reduces joint posterior
 draws during calculation, `glmmTMB` jointly simulates fixed components
 for hurdle and zero-inflated means, and the spatial backends reduce
 sparse joint-precision draws to the same compact schema. This separation
@@ -1162,7 +1300,7 @@ models with an effort offset, nominal summaries still report mean
 observed catch, not catch divided by effort; supply an appropriate
 separate nominal CPUE series if needed.
 
-BRMS lognormal models require constant `sigma` and their usual identity
+brms lognormal models require constant `sigma` and their usual identity
 location link. Varying log-scale models are rejected rather than
 treating a log-location ratio as an arithmetic-mean ratio. In contrast,
 `glmmTMB` parameterises the lognormal arithmetic mean directly: its
