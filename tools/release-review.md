@@ -100,7 +100,7 @@ workflows are not assumed to reproduce every old argument or output column.
 
 | Frozen function or feature | Proposed destination or decision |
 | --- | --- |
-| `get_index()`, `plot_index()` | Assessment functionality retained as `cpue_index()` and a calculated-object `plot_index()`, not a compatibility wrapper. The new table includes year, mean, posterior median where defined, SD, CV, intervals, and metadata. Explicit response references differ from the centred contrasts in `influ_indices()`. Spatial response/integration adapters remain to implement. |
+| `get_index()`, `plot_index()` | Assessment functionality retained as `cpue_index()` and a calculated-object `plot_index()`, not a compatibility wrapper. The new table includes year, mean, posterior median where defined, SD, CV, intervals, and metadata. Explicit response references differ from the centred contrasts in `influ_indices()`. Spatial response adapters and separate `integrate_index()` totals are included in the first-release implementation. |
 | `get_unstandarsied()` (original spelling) | Keep for review of geometric-mean CPUE and positive-mean times occurrence summaries versus the current weighted arithmetic nominal mean. Decide definitions and names, including treatment of zero catches. |
 | `rescale_index()` | Check whether `plot_compare(rescale = ..., rescale_series = ...)` is sufficient, or whether users need a public function returning rescaled tables. |
 | Earlier `table_criterion()` and `get_bayes_R2()` | Keep both maintained functions and the frozen reporting examples. Review divergence counts, chain runtime, LOO model differences, and a complete-fit brms example. |
@@ -121,6 +121,48 @@ Get Started page and its figures remain intact for the maintainer's review.
 Suggested order for the next round: assessment tables and plots; nominal
 definitions and table rescaling; Bayesian predictive examples and reporting
 extras; then sequential-fit tables and residual internal utilities.
+
+**Deferred review, 10 September 2026:** review the all-`NA` `Median` column in
+frequentist assessment tables alongside the remaining legacy material. The
+current definition is a posterior median for brms, not a median individual
+catch. Decide whether to omit unavailable columns in displayed tables and add
+a Bayesian table example. Do not change the table schema or its calculation
+as part of the spatial-index and area-integration development.
+
+**First-release scope confirmed, 10 September 2026:** standardised expected-
+response CPUE tables must support all six backends, including sdmTMB and
+tinyVAST. A separate `integrate_index()` interface for area-weighted totals
+across those backends is also required before CRAN submission. These are no
+longer proposed later-release additions. Legacy review remains parked.
+
+### Standardised and area-integrated indices: 10 September 2026
+
+Implemented `cpue_index()` expected-response adapters for sdmTMB and
+univariate tinyVAST, plus separate `integrate_index()` totals for all six
+backends. GLMs/GAMs and mixed models do not need spatial terms to integrate.
+The reference domain is fixed across observed years; areas, exposure, known
+catchability conversions, and within-cell seasonal averaging are explicit.
+Native joint delta responses are combined before aggregation. Field choices
+alter predictions, not model fits. No grid-by-draw arrays are retained.
+
+Numerical checks cover joint covariance, native sdmTMB and tinyVAST uncorrected
+totals, both ordinary and Poisson-link delta families, reference offsets,
+native-time mapping, batch invariance, random-number-state restoration,
+unchanged fitted-model state, and area/season/conversion scaling. A complete
+existing brms fit agrees with native posterior integration to 3.6e-15; no
+new MCMC was required. The full local suite passed 3,104 expectations before
+one additional explicit field/offset assertion was added. The complete site
+and source archive built, and the new figures and numbered lightbox captions
+were reviewed locally. Final archive and GitHub results are recorded separately.
+
+Spatial `Mean` is the plug-in expected response, not a Laplace bias-corrected
+total. Uncertainty uses shared joint Gaussian parameter/field draws, not MCMC.
+Native bias-corrected estimates, forecasting/year-varying environmental grids,
+multivariate response/unit targets, and nonlocal sdmTMB covariate operators
+are not implemented by this adapter. Existing brms and glmmTMB prediction
+guards still apply. These limitations are documented, not silently substituted.
+The median-display and legacy review above remain deferred. No CRAN or
+win-builder submission is part of this increment.
 
 ### Possible future viewer (recommendation only)
 

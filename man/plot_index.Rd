@@ -26,5 +26,5 @@ A ggplot object.
 Display assessment indices without refitting or recalculating predictions.
 }
 \seealso{
-\code{\link[=cpue_index]{cpue_index()}}, \code{\link[=plot_compare]{plot_compare()}}
+\code{\link[=cpue_index]{cpue_index()}}, \code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_compare]{plot_compare()}}
 }

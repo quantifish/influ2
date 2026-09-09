@@ -69,9 +69,10 @@ reference:
   - plot_data_extent
 
 - title: CPUE indices and assessment tables
-  desc: Calculate explicit expected-response indices and plot stored results.
+  desc: Calculate standardised means or area-integrated totals, and plot stored results.
   contents:
   - cpue_index
+  - integrate_index
   - plot_index
   - geo_mean
 

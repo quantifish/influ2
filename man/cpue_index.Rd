@@ -20,7 +20,10 @@ cpue_index(
   draw_batch_size = 100L,
   retain = c("summary", "draws"),
   units = NULL,
-  ...
+  ...,
+  spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
+  seed = 1L,
+  prediction_offset = NULL
 )
 
 \method{as.data.frame}{influ_index}(x, row.names = NULL, optional = FALSE, ...)
@@ -28,11 +31,13 @@ cpue_index(
 \method{print}{influ_index}(x, ...)
 }
 \arguments{
-\item{model}{A fitted GLM, \code{mgcv} GAM, \code{glmmTMB}, or complete \code{brmsfit} for
+\item{model}{A fitted GLM, \code{mgcv} GAM, \code{glmmTMB}, complete \code{brmsfit},
+\code{sdmTMB}, or univariate \code{tinyVAST} model for
 response standardisation. For \code{method = "year_effect"}, any model supported
 by \code{\link[=influ]{influ()}} or an existing \code{influ_diag} can be supplied.}
 
-\item{year}{Name of the year variable. Defaults to the first formula predictor.}
+\item{year}{Name of the year variable. Defaults to the native time variable
+for spatial backends, otherwise the first formula predictor.}
 
 \item{method}{\code{"standardised"} (default), its alias \code{"standardized"}, or
 \code{"year_effect"}. The latter is a contrast, not an expected-response index.}
@@ -54,19 +59,35 @@ a point-estimate preview with missing uncertainty columns.}
 all returned years. A common normalisation is applied to each posterior
 draw; frequentist uncertainty includes the normalising denominator.}
 
-\item{ndraws}{Maximum number of existing posterior draws to use for brms.
-Deterministically spaced draw identities are shared across years and batches.}
+\item{ndraws}{Maximum number of existing posterior draws for brms, or number
+of joint Gaussian parameter/field draws for spatial backends. The same
+draw identities are shared across years and prediction batches.}
 
 \item{batch_size}{Maximum reference rows predicted together.}
 
 \item{draw_batch_size}{Maximum posterior draws predicted together.}
 
 \item{retain}{\code{"summary"} (default) or \code{"draws"}. Draw retention is available
-for standardised brms indices and stores only a draw-by-year matrix.}
+for standardised brms and spatial indices and stores only a draw-by-year
+matrix. Spatial draws are a joint Gaussian approximation, not MCMC.}
 
 \item{units}{Optional response units, such as \code{"lobsters per pot"}.}
 
 \item{...}{Arguments passed to \code{\link[=influ]{influ()}} only for \code{method = "year_effect"}.}
+
+\item{spatial_fields}{Spatial-backend prediction target: \code{"all"} includes
+persistent, spatially varying, and spatiotemporal fields; \code{"spatial"}
+excludes spatiotemporal fields; \code{"spatiotemporal"} excludes persistent and
+spatially varying fields; \code{"none"} excludes all three. This changes only
+predictions, not the fitted model. Other smooths/time effects remain.}
+
+\item{seed}{Non-negative integer seed for spatial joint draws. The caller's
+random-number state is restored; changing batch sizes preserves draws.}
+
+\item{prediction_offset}{For sdmTMB only, the name of a numeric link-scale
+offset column in \code{reference_data}. \code{NULL} explicitly uses offset zero
+(one unit of exposure for a log-exposure offset). Other backends obtain
+offsets from their formula and the supplied reference predictors.}
 
 \item{x}{An `influ_index` object.}
 
@@ -116,8 +137,16 @@ joint predictions with predictions at posterior-mean coefficients.
 Working storage is bounded by reference and draw batches plus a compact
 annual covariance or draw matrix. Native prediction code can allocate
 additional memory. The result does not retain the model or reference data.
-Spatial response standardisation and area integration are separate future
-adapters; \code{sdmTMB} and \code{tinyVAST} currently support \code{"year_effect"} here.
+Spatial response estimates evaluate the fitted model at the reference
+locations in each observed year. sdmTMB IID group effects are set to zero;
+tinyVAST non-spatial temporal effects and smooths remain as fitted. Joint
+fixed/latent Gaussian draws propagate field and parameter uncertainty,
+with empirical pointwise intervals. \code{Mean} remains the plug-in expected
+response and \code{Median} remains unavailable for these frequentist models.
+This is not a Laplace bias-corrected index or integration over a new
+population of random effects. Grid predictions are immediately reduced
+to annual values; a grid-by-draw array is never retained.
+Use \code{\link[=integrate_index]{integrate_index()}} for area-weighted totals, which have different units.
 Year-effect results preserve the original diagnostic estimand and cannot
 be rescaled by this function. These indices are not biomass estimates.
 }
@@ -133,5 +162,5 @@ if (requireNamespace("glmmTMB", quietly = TRUE)) {
 }
 }
 \seealso{
-\code{\link[=plot_index]{plot_index()}}, \code{\link[=plot_compare]{plot_compare()}}, \code{\link[=geo_mean]{geo_mean()}}, \code{\link[=influ_indices]{influ_indices()}}
+\code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_index]{plot_index()}}, \code{\link[=plot_compare]{plot_compare()}}, \code{\link[=geo_mean]{geo_mean()}}, \code{\link[=influ_indices]{influ_indices()}}
 }

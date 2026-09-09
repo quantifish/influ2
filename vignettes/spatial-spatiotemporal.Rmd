@@ -442,6 +442,88 @@ consistent across that list. Set `keep_fits = TRUE` if the intermediate fitted
 objects are needed afterwards; otherwise the step result retains compact
 diagnostic summaries.
 
+## Response indices and area totals
+
+The influence and step plots above answer different questions from a
+standardised expected-response index or an area total. Both new calculations
+work with sdmTMB and tinyVAST, using the same `influ_index` assessment table as
+GLMs, GAMs, glmmTMB, and brms. No refitting is required.
+
+### sdmTMB: a common domain across years
+
+`qcs_grid` is the package's 2 × 2 km prediction grid. We hold its locations
+and depth covariates constant across years. The model above is binomial, so
+its standardised response is a mean **encounter probability**, not catch
+density. Its area-integrated response is expected encounter-weighted area,
+not biomass or an estimate of the number of fish.
+
+```{r sdmtmb-response-index, eval=has_sdmTMB}
+pcod_response <- cpue_index(pcod_model, year = "year",
+  reference_data = qcs_grid, uncertainty = "none", batch_size = 2000,
+  units = "encounter probability")
+pcod_area <- integrate_index(pcod_model, qcs_grid, area = 4, year = "year",
+  area_units = "km^2", response_units = "encounter probability",
+  units = "km^2",
+  ndraws = 100, batch_size = 2000, draw_batch_size = 25, seed = 71)
+knitr::kable(as.data.frame(pcod_area), digits = 3)
+```
+
+```{r sdmtmb-area-plot, eval=has_sdmTMB, fig.cap="Pacific cod encounter-weighted area over the fixed Queen Charlotte Sound grid. Each cell contributes its 4 km² area times its fitted encounter probability, including persistent and spatiotemporal fields. The pointwise 95% intervals propagate joint Gaussian parameter and field uncertainty; this is not a biomass index or a Laplace bias-corrected estimate."}
+plot_index(pcod_area)
+```
+
+For a native density model, exactly the same call integrates the combined
+expected density, including zero and positive components of a delta model.
+The response and area units must be compatible. sdmTMB group-level IID effects
+are set to zero, while the fitted spatial fields are included by default.
+`prediction_offset = "log_exposure"` can supply an explicit link-scale offset
+column; the default prediction offset is zero (unit exposure for a log offset).
+
+### tinyVAST: integrating the simulated field
+
+For this simulation, interpret each grid location as a 1 km² cell and its
+Poisson mean as expected fish per km². That is an explicit simulation convention,
+not a general conversion from raw fishery counts to density. The total covers
+the same 49 cells each year, irrespective of which cells were sampled.
+
+```{r tinyvast-response-index, eval=has_tinyVAST}
+tiny_reference <- unique(tiny_grid[c("x", "ycoord", "var", "dist")])
+tiny_response <- cpue_index(tiny_model, year = "time",
+  reference_data = tiny_reference, units = "fish/km^2",
+  ndraws = 200, seed = 72)
+tiny_total <- integrate_index(tiny_model, tiny_reference, area = 1, year = "time",
+  area_units = "km^2", response_units = "fish/km^2", units = "fish",
+  ndraws = 200, seed = 72)
+knitr::kable(as.data.frame(tiny_total), digits = 3)
+```
+
+```{r tinyvast-area-plot, eval=has_tinyVAST, fig.cap="Expected fish over the fixed 49 km² simulated domain, including the fitted tinyVAST persistent and AR(1) spatiotemporal fields. Pointwise 95% intervals use shared joint Gaussian parameter/field draws. These are plug-in expected-response totals, not Laplace bias-corrected totals or predictive intervals for new counts."}
+plot_index(tiny_total)
+```
+
+`spatial_fields = "all"` is the default. `"spatial"` excludes the
+spatiotemporal field; `"spatiotemporal"` excludes persistent and spatially
+varying fields; `"none"` excludes both kinds. Those alternatives change the
+prediction target **without refitting**, and are not the refitted step sequence
+above. Other fitted time effects and smooths remain present.
+
+Spatial uncertainty uses a joint Gaussian approximation to the fitted
+parameters and fields. Every cell and year uses the same parameter-draw
+identities. Predictions are reduced directly to annual summaries in blocks;
+`retain = "draws"` retains only a draw-by-year matrix. Native model calculations
+can allocate additional memory. Increase `ndraws` and check numerical stability
+for final inference; the small simulation counts here keep documentation builds
+manageable. Native sdmTMB and tinyVAST bias-corrected index routines answer a
+different numerical approximation and should not be expected to match these
+uncorrected point estimates.
+
+See [CPUE indices](cpue-indices.html#area-integration-for-ordinary-and-spatial-models)
+for area integration with a GAM spatial smooth or an ordinary GLM, unit and
+catchability safeguards, and seasonal averaging weights. The same fixed-domain
+interface applies even when the fitted model has no spatial terms. Multivariate
+tinyVAST influence diagnostics below remain supported, but their response
+integration is explicitly rejected until separate response/unit targets exist.
+
 ## Multivariate tinyVAST responses
 
 `tinyVAST` can fit multiple responses, including responses with different

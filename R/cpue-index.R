@@ -5,10 +5,12 @@
 #' No model is fitted or updated by this function.
 #' @md
 #'
-#' @param model A fitted GLM, `mgcv` GAM, `glmmTMB`, or complete `brmsfit` for
+#' @param model A fitted GLM, `mgcv` GAM, `glmmTMB`, complete `brmsfit`,
+#'   `sdmTMB`, or univariate `tinyVAST` model for
 #'   response standardisation. For `method = "year_effect"`, any model supported
 #'   by [influ()] or an existing `influ_diag` can be supplied.
-#' @param year Name of the year variable. Defaults to the first formula predictor.
+#' @param year Name of the year variable. Defaults to the native time variable
+#'   for spatial backends, otherwise the first formula predictor.
 #' @param method `"standardised"` (default), its alias `"standardized"`, or
 #'   `"year_effect"`. The latter is a contrast, not an expected-response index.
 #' @param reference_data A non-empty data frame defining a common covariate
@@ -23,13 +25,26 @@
 #' @param rescale `"raw"` (default), or a positive target geometric mean across
 #'   all returned years. A common normalisation is applied to each posterior
 #'   draw; frequentist uncertainty includes the normalising denominator.
-#' @param ndraws Maximum number of existing posterior draws to use for brms.
-#'   Deterministically spaced draw identities are shared across years and batches.
+#' @param ndraws Maximum number of existing posterior draws for brms, or number
+#'   of joint Gaussian parameter/field draws for spatial backends. The same
+#'   draw identities are shared across years and prediction batches.
 #' @param batch_size Maximum reference rows predicted together.
 #' @param draw_batch_size Maximum posterior draws predicted together.
 #' @param retain `"summary"` (default) or `"draws"`. Draw retention is available
-#'   for standardised brms indices and stores only a draw-by-year matrix.
+#'   for standardised brms and spatial indices and stores only a draw-by-year
+#'   matrix. Spatial draws are a joint Gaussian approximation, not MCMC.
 #' @param units Optional response units, such as `"lobsters per pot"`.
+#' @param spatial_fields Spatial-backend prediction target: `"all"` includes
+#'   persistent, spatially varying, and spatiotemporal fields; `"spatial"`
+#'   excludes spatiotemporal fields; `"spatiotemporal"` excludes persistent and
+#'   spatially varying fields; `"none"` excludes all three. This changes only
+#'   predictions, not the fitted model. Other smooths/time effects remain.
+#' @param seed Non-negative integer seed for spatial joint draws. The caller's
+#'   random-number state is restored; changing batch sizes preserves draws.
+#' @param prediction_offset For sdmTMB only, the name of a numeric link-scale
+#'   offset column in `reference_data`. `NULL` explicitly uses offset zero
+#'   (one unit of exposure for a log-exposure offset). Other backends obtain
+#'   offsets from their formula and the supplied reference predictors.
 #' @param ... Arguments passed to [influ()] only for `method = "year_effect"`.
 #'
 #' @details For standardisation, predictions are averaged on the **response**
@@ -65,15 +80,23 @@
 #'   Working storage is bounded by reference and draw batches plus a compact
 #'   annual covariance or draw matrix. Native prediction code can allocate
 #'   additional memory. The result does not retain the model or reference data.
-#'   Spatial response standardisation and area integration are separate future
-#'   adapters; `sdmTMB` and `tinyVAST` currently support `"year_effect"` here.
+#'   Spatial response estimates evaluate the fitted model at the reference
+#'   locations in each observed year. sdmTMB IID group effects are set to zero;
+#'   tinyVAST non-spatial temporal effects and smooths remain as fitted. Joint
+#'   fixed/latent Gaussian draws propagate field and parameter uncertainty,
+#'   with empirical pointwise intervals. `Mean` remains the plug-in expected
+#'   response and `Median` remains unavailable for these frequentist models.
+#'   This is not a Laplace bias-corrected index or integration over a new
+#'   population of random effects. Grid predictions are immediately reduced
+#'   to annual values; a grid-by-draw array is never retained.
+#'   Use [integrate_index()] for area-weighted totals, which have different units.
 #'   Year-effect results preserve the original diagnostic estimand and cannot
 #'   be rescaled by this function. These indices are not biomass estimates.
 #'
 #' @return An S3 `influ_index` object containing `table`, `metadata`, and optional
 #'   `draws`. `as.data.frame()` returns the assessment table with `Year`, `Mean`,
 #'   `Median`, `SD`, `CV`, `Qlower`, `Qupper`, `Method`, `Distribution`, and `Link`.
-#' @seealso [plot_index()], [plot_compare()], [geo_mean()], [influ_indices()]
+#' @seealso [integrate_index()], [plot_index()], [plot_compare()], [geo_mean()], [influ_indices()]
 #' @examples
 #' if (requireNamespace("glmmTMB", quietly = TRUE)) {
 #'   data(lobsters_per_pot)
@@ -90,11 +113,20 @@ cpue_index <- function(model, year = NULL,
     reference_data = NULL, reference_weights = NULL,
     uncertainty = c("auto", "none"), probs = c(0.025, 0.975),
     rescale = "raw", ndraws = 1000L, batch_size = 250L,
-    draw_batch_size = 100L, retain = c("summary", "draws"), units = NULL, ...) {
+    draw_batch_size = 100L, retain = c("summary", "draws"), units = NULL, ...,
+    spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
+    seed = 1L, prediction_offset = NULL) {
   method <- match.arg(method)
   if (method == "standardized") method <- "standardised"
   uncertainty <- match.arg(uncertainty)
   retain <- match.arg(retain)
+  spatial_fields <- match.arg(spatial_fields)
+  spatial_backend <- if (inherits(model, "sdmTMB")) "sdmTMB" else if (
+    inherits(model, "tinyVAST")) "tinyVAST" else NULL
+  info <- if (!is.null(spatial_backend) && method != "year_effect") {
+    .index_spatial_info(model, spatial_backend, year)
+  } else NULL
+  if (!is.null(info)) year <- info$year
   probs <- .validate_probs(probs)
   batch_size <- .validate_ndraws(batch_size)
   draw_batch_size <- .validate_ndraws(draw_batch_size)
@@ -117,7 +149,7 @@ cpue_index <- function(model, year = NULL,
   }
   if (method == "year_effect") {
     if (!raw || !is.null(reference_data) || !is.null(reference_weights) ||
-        retain != "summary") {
+        retain != "summary" || spatial_fields != "all" || !is.null(prediction_offset)) {
       stop("Year-effect extraction does not accept reference data, rescaling, or draw retention; configure `influ()` first.", call. = FALSE)
     }
     diagnostic <- if (inherits(model, "influ_diag")) model else {
@@ -147,11 +179,21 @@ cpue_index <- function(model, year = NULL,
     "glm"
   } else if (inherits(model, "glmmTMB")) "glmmTMB" else if (inherits(model, "brmsfit")) {
     "brms"
+  } else if (!is.null(spatial_backend)) {
+    spatial_backend
   } else {
-    stop("Response standardisation currently supports GLM, GAM, glmmTMB, and complete brms fits; use `method = 'year_effect'` for spatial diagnostics.", call. = FALSE)
+    stop("Response standardisation supports GLM, GAM, glmmTMB, complete brms, sdmTMB, and univariate tinyVAST fits.", call. = FALSE)
   }
-  if (retain == "draws" && backend != "brms") {
-    stop("Draw retention is currently available only for brms response indices.", call. = FALSE)
+  if (retain == "draws" && !backend %in% c("brms", "sdmTMB", "tinyVAST")) {
+    stop("Draw retention is currently available only for brms and spatial response indices.", call. = FALSE)
+  }
+  if (is.null(spatial_backend) && spatial_fields != "all") {
+    stop("`spatial_fields` is an sdmTMB/tinyVAST prediction option.", call. = FALSE)
+  }
+  if (!is.null(prediction_offset) && (backend != "sdmTMB" ||
+      !is.character(prediction_offset) || length(prediction_offset) != 1L ||
+      is.na(prediction_offset))) {
+    stop("`prediction_offset` must name an sdmTMB reference-data column.", call. = FALSE)
   }
   if (!is.data.frame(reference_data) || !nrow(reference_data) ||
       anyDuplicated(names(reference_data)) ||
@@ -164,32 +206,69 @@ cpue_index <- function(model, year = NULL,
     stop("`reference_weights` must be finite, non-negative, and have positive total weight, with one weight per reference row.", call. = FALSE)
   }
   keep <- weights > 0
-  reference_data <- reference_data[keep, , drop = FALSE]
+  reference_data <- as.data.frame(reference_data[keep, , drop = FALSE])
   weights <- weights[keep] / max(weights[keep])
   weights <- weights / sum(weights)
   if (anyNA(reference_data)) {
     stop("Reference predictors must not contain missing values on positive-weight rows.", call. = FALSE)
   }
-  frame <- .residual_model_frame(model)
+  frame <- if (is.null(info)) .residual_model_frame(model) else info$data
   if (is.null(frame[[year]])) {
     stop("The raw year variable must be present in the stored model data.", call. = FALSE)
   }
   years <- .focus_info(frame, year)$levels
   year_values <- frame[[year]][match(years, as.character(frame[[year]]))]
-  family <- stats::family(model)
+  native_time <- if (!is.null(info)) info$time else NULL
+  time_values <- NULL
+  if (!is.null(native_time) && !identical(native_time, year)) {
+    if (native_time %in% names(reference_data)) {
+      stop("Do not supply a fixed native time column in reference_data; it is mapped from `year`.", call. = FALSE)
+    }
+    by_year <- lapply(years, function(y) unique(frame[[native_time]][as.character(frame[[year]]) == y]))
+    if (any(lengths(by_year) != 1L) || anyNA(unlist(by_year))) {
+      stop("`year` must map to exactly one native model time per year; use the native time variable otherwise.", call. = FALSE)
+    }
+    time_values <- frame[[native_time]][match(years, as.character(frame[[year]]))]
+  }
+  family <- if (is.null(info)) stats::family(model) else info[c("family", "link")]
   if (grepl("^quasi", family$family)) {
     stop("Quasi families are not supported.", call. = FALSE)
   }
-  .index_prediction_guards(model, backend)
-  .index_reference_predictors(model, backend, year, reference_data)
+  if (is.null(info)) {
+    .index_prediction_guards(model, backend)
+    .index_reference_predictors(model, backend, year, reference_data)
+  }
   batches <- split(seq_len(nrow(reference_data)),
     ceiling(seq_len(nrow(reference_data)) / batch_size))
   newdata <- function(i, rows) {
     d <- reference_data[rows, , drop = FALSE]
     d[[year]] <- if (length(i) == 1L) rep(year_values[i], length(rows)) else year_values[i]
+    if (!is.null(time_values)) d[[native_time]] <- if (length(i) == 1L) rep(time_values[i], length(rows)) else time_values[i]
     d
   }
-  if (backend == "brms") {
+  if (!is.null(info)) {
+    result <- .index_spatial(model, backend, info, years, newdata, weights,
+      uncertainty != "none", ndraws, batch_size, draw_batch_size, seed,
+      spatial_fields, prediction_offset)
+    estimate <- result$estimate
+    draws <- result$draws
+    if (!raw) {
+      if (any(estimate <= 0) || (!is.null(draws) && any(draws <= 0))) {
+        stop("Rescaling requires positive indices in every joint draw.", call. = FALSE)
+      }
+      estimate <- estimate * (rescale / geo_mean(estimate))
+      if (!is.null(draws)) draws <- draws * (rescale / exp(rowMeans(log(draws))))
+    }
+    tab <- data.frame(Year = years, Mean = estimate, Median = NA_real_, SD = NA_real_,
+      CV = NA_real_, Qlower = NA_real_, Qupper = NA_real_)
+    if (!is.null(draws)) {
+      tab$SD <- apply(draws, 2L, stats::sd)
+      intervals <- apply(draws, 2L, stats::quantile, probs = probs, names = FALSE)
+      tab$Qlower <- intervals[1L, ]
+      tab$Qupper <- intervals[2L, ]
+    }
+    uncertainty_label <- "joint Gaussian parameter/field simulation"
+  } else if (backend == "brms") {
     result <- .index_brms(model, years, batches, newdata, weights,
       ndraws, draw_batch_size)
     draws <- result$draws
@@ -248,8 +327,16 @@ cpue_index <- function(model, year = NULL,
     reference = "fixed common population; response-scale weighted mean",
     random_effects = if (backend %in% c("brms", "glmmTMB")) {
       "group-level effects set to zero; not population-marginal"
+    } else if (backend == "sdmTMB") {
+      paste0("spatial fields: ", spatial_fields, "; IID effects zero; other fitted terms retained")
+    } else if (backend == "tinyVAST") {
+      paste0("spatial fields: ", spatial_fields, "; fitted temporal effects and smooths retained")
     } else "all fitted terms, including GAM smooths",
-    ndraws = if (backend == "brms") nrow(draws) else NULL,
+    spatial_fields = if (!is.null(info)) spatial_fields else NULL,
+    prediction_offset = prediction_offset,
+    bias_correction = if (!is.null(info)) "none (plug-in expected response)" else NULL,
+    ndraws = if (backend %in% c("brms", "sdmTMB", "tinyVAST")) nrow(draws) else NULL,
+    seed = if (!is.null(info) && uncertainty != "none") seed else NULL,
     draw_ids = if (backend == "brms") result$draw_ids else NULL),
     if (retain == "draws") draws else NULL)
 }

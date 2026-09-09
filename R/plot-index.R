@@ -7,11 +7,11 @@
 #' @param show_probs Show the stored pointwise uncertainty interval.
 #' @param ... Reserved for future use; unused.
 #' @return A ggplot object.
-#' @seealso [cpue_index()], [plot_compare()]
+#' @seealso [cpue_index()], [integrate_index()], [plot_compare()]
 #' @export
 plot_index <- function(x, show_probs = TRUE, ...) {
   if (!inherits(x, "influ_index")) {
-    stop("Calculate an `influ_index` with `cpue_index()` before plotting.", call. = FALSE)
+    stop("Calculate an `influ_index` with `cpue_index()` or `integrate_index()` before plotting.", call. = FALSE)
   }
   .plot_cpue_indices(list(x), labels = "Index", show_probs = show_probs)
 }
@@ -32,6 +32,13 @@ autoplot.influ_index <- function(object, ...) plot_index(object, ...)
   for (field in c("method", "scale", "units", "year", "rescale")) {
     if (!all(vapply(fits, function(x) identical(x$metadata[[field]], reference[[field]]), logical(1)))) {
       stop("Compared CPUE indices must agree on method, scale, units, year, and rescaling target.", call. = FALSE)
+    }
+  }
+  if (identical(reference$method, "integrated")) {
+    for (field in c("area_units", "response_units", "total_area", "catchability")) {
+      if (!all(vapply(fits, function(x) identical(x$metadata[[field]], reference[[field]]), logical(1)))) {
+        stop("Compared integrated indices must agree on area, response units, and catchability convention.", call. = FALSE)
+      }
     }
   }
   if (!all(vapply(fits, function(x) identical(x$metadata$random_effects,
@@ -60,6 +67,10 @@ autoplot.influ_index <- function(object, ...) plot_index(object, ...)
   }
   ylabel <- if (reference$method == "year_effect") {
     paste("Year-effect index (", reference$scale, ")", sep = "")
+  } else if (reference$method == "integrated") {
+    if (reference$scale == "ratio") "Relative area-integrated index" else {
+      paste0("Area-integrated index", if (!is.null(reference$units)) paste0(" (", reference$units, ")"))
+    }
   } else if (reference$scale == "ratio") "Relative standardised CPUE" else {
     paste0("Standardised CPUE", if (!is.null(reference$units)) paste0(" (", reference$units, ")"))
   }
