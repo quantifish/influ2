@@ -2,6 +2,8 @@
 
 [![R-CMD-check](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/R-CMD-check.yaml)
 [![pkgdown](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/quantifish/influ2/actions/workflows/pkgdown.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/quantifish/influ2/graph/badge.svg)](https://app.codecov.io/gh/quantifish/influ2)
 
 `influ2` calculates and visualises how explanatory variables, random
 effects, and spatial fields influence standardised fisheries CPUE
