@@ -32,8 +32,9 @@ terms contain the focus, the diagnostic retains their influence but
 warns and omits the standardised index. A prediction-grid reference
 changes the centring distribution; it does not automatically marginalise
 interactions. Define such indices in a separate model-specific
-prediction workflow. Step plots and implied-residual baselines require
-an unambiguous focus effect.
+prediction workflow. Step plots require an unambiguous focus effect.
+Generalised grouped residual departures do not require a coefficient
+baseline.
 
 Fixed offsets/exposure are supported only for single-component log-link
 ratios and identity-link contrasts; other offset-dependent reference

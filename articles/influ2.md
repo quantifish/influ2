@@ -1303,8 +1303,10 @@ choice.
 [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md)
 retains those influence terms but warns and omits the standardised
 index. Supplying `reference_data` changes the reference distribution; it
-does not automatically perform that marginalisation. Step plots and
-implied-residual baselines need an unambiguous focus effect as well.
+does not automatically perform that marginalisation. Step plots need an
+unambiguous focus effect as well. The grouped generalised residual
+diagnostic does not add residuals to a coefficient and therefore needs
+no such baseline.
 
 Fixed offsets are retained when models are refitted. Single-component
 log-link ratios and identity-link contrasts can be calculated with

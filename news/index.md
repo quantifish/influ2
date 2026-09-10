@@ -2,6 +2,22 @@
 
 ## influ2 1.1.0
 
+- Unified the remaining residual plotting helpers with
+  [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md).
+  [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
+  now uses normal-score rank residuals and the predictive means from the
+  same simulations.
+  [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+  now shows year-by-group mean generalised departures around zero, not
+  residuals added to coefficients on a different scale. Explicit native
+  residual types are rejected with a migration message. Both helpers
+  accept calculated residual objects, preserve response-component
+  metadata, and avoid repeated simulation when restyling. Retain
+  grouping columns with `groups` during calculation. Historical source
+  and frozen review figures are unchanged. The Model comparison article
+  now includes an executed six-backend table including a complete brms
+  fit, without running MCMC during rendering.
+
 - Extended
   [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
   to GLM, GAM, glmmTMB, sdmTMB, tinyVAST, and complete brms fits,

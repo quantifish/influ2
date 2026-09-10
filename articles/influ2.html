@@ -1384,8 +1384,10 @@ several terms involving year, does not define one index without an
 additional marginalisation choice. <code><a href="../reference/influ.html">influ()</a></code> retains those
 influence terms but warns and omits the standardised index. Supplying
 <code>reference_data</code> changes the reference distribution; it does
-not automatically perform that marginalisation. Step plots and
-implied-residual baselines need an unambiguous focus effect as well.</p>
+not automatically perform that marginalisation. Step plots need an
+unambiguous focus effect as well. The grouped generalised residual
+diagnostic does not add residuals to a coefficient and therefore needs
+no such baseline.</p>
 <p>Fixed offsets are retained when models are refitted. Single-component
 log-link ratios and identity-link contrasts can be calculated with
 offsets held unchanged, because the reference offset cancels. An offset

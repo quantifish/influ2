@@ -70,7 +70,7 @@ results.
 
 ## Residual diagnostics
 
-Inspect residual patterns, implied year effects, and quantile
+Inspect generalised residual patterns, grouped departures, and quantile
 comparisons.
 
 - [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
@@ -80,9 +80,9 @@ comparisons.
   [`autoplot(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
   : Plot a four-panel CPUE residual diagnostic
 - [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
-  : Plot implied residual coefficients
+  : Plot generalised residual departures by year and group
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
-  : Plot predicted values against residuals
+  : Plot predictive means against generalised residuals
 
 ## Model comparison
 

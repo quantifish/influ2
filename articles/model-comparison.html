@@ -388,13 +388,19 @@ automatic ranking criterion.</p>
 <span><span class="va">bayesian</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/table_criterion.html">table_criterion</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Base <span class="op">=</span> <span class="va">base_brms</span>, Smooth <span class="op">=</span> <span class="va">smooth_brms</span><span class="op">)</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"loo"</span>, <span class="st">"loo_R2"</span>, <span class="st">"bayes_R2"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">mixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/table_criterion.html">table_criterion</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>GLM <span class="op">=</span> <span class="va">glm_fit</span>, GAM <span class="op">=</span> <span class="va">gam_fit</span>, brms <span class="op">=</span> <span class="va">full_brms</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>The next table was calculated from a complete, previously fitted
-four-chain brms model and a Gaussian GLM fitted to the same 150
-simulated observations. This small continuous-response example is
-separate from the lobster count example. The response follows year
-effects plus a covariate effect and Gaussian noise. Both fits use
-<code>y ~ year + x</code>; their estimation methods differ.</p>
+<span><span class="va">mixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/table_criterion.html">table_criterion</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>GLM <span class="op">=</span> <span class="va">glm_fit</span>, GAM <span class="op">=</span> <span class="va">gam_fit</span>,</span>
+<span>  glmmTMB <span class="op">=</span> <span class="va">tmb_fit</span>, brms <span class="op">=</span> <span class="va">full_brms</span>, sdmTMB <span class="op">=</span> <span class="va">sdm_fit</span>, tinyVAST <span class="op">=</span> <span class="va">tiny_fit</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>The next table was calculated by one call to
+<code><a href="../reference/table_criterion.html">table_criterion()</a></code> containing <strong>all six
+backends</strong>: GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST. Every
+fit uses the same 150 simulated observations, including a complete,
+previously fitted four-chain brms model. This small continuous-response
+example is separate from the lobster count example. The response follows
+year effects plus a covariate effect and Gaussian noise. Fits use
+<code>y ~ year + x</code>, except the GAM, which uses a fitted smooth
+<code>s(x, k = 5)</code>. The sdmTMB and tinyVAST fits have their fields
+switched off here: this example isolates the mixed-backend table, not
+spatial modelling.</p>
 <p>The reproducible preparation script is
 <code>data-raw/model-criteria-example.R</code> in the repository. It can
 reuse the complete fit or explicitly fit it once. The vignette stores
@@ -404,22 +410,22 @@ fit, or observation-by-posterior array is needed during rendering.</p>
 <code class="sourceCode R"><span><span class="va">example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"brms-criteria-example.rds"</span>, package <span class="op">=</span> <span class="st">"influ2"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">example</span><span class="op">$</span><span class="va">table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Model"</span>, <span class="st">"Backend"</span>, <span class="st">"nobs"</span>, <span class="st">"df"</span>, <span class="st">"AIC"</span>,</span>
 <span>  <span class="st">"looic"</span>, <span class="st">"p_loo"</span>, <span class="st">"bayes_R2"</span>, <span class="st">"loo_R2"</span>, <span class="st">"pareto_k_max"</span><span class="op">)</span><span class="op">]</span>, digits <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>  caption <span class="op">=</span> <span class="st">"Table 5. An executed mixed frequentist/Bayesian summary. Missing entries identify different criterion definitions, not worse performance."</span><span class="op">)</span></span></code></pre></div>
+<span>  caption <span class="op">=</span> <span class="st">"Table 5. An executed six-backend frequentist/Bayesian summary on identical observations. Missing entries identify different criterion definitions, not worse performance."</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>Table 5. An executed mixed frequentist/Bayesian summary.
-Missing entries identify different criterion definitions, not worse
-performance.</caption>
+<caption>Table 5. An executed six-backend frequentist/Bayesian summary
+on identical observations. Missing entries identify different criterion
+definitions, not worse performance.</caption>
 <colgroup>
-<col width="8%">
-<col width="10%">
+<col width="11%">
+<col width="11%">
 <col width="6%">
-<col width="4%">
+<col width="7%">
 <col width="10%">
 <col width="10%">
+<col width="7%">
+<col width="11%">
 <col width="8%">
-<col width="12%">
-<col width="9%">
-<col width="17%">
+<col width="16%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Model</th>
@@ -438,7 +444,31 @@ performance.</caption>
 <td align="left">GLM</td>
 <td align="left">GLM</td>
 <td align="right">150</td>
-<td align="right">7</td>
+<td align="right">7.000</td>
+<td align="right">266.885</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">GAM</td>
+<td align="left">GAM</td>
+<td align="right">150</td>
+<td align="right">7.479</td>
+<td align="right">267.241</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">glmmTMB</td>
+<td align="left">glmmTMB</td>
+<td align="right">150</td>
+<td align="right">7.000</td>
 <td align="right">266.885</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
@@ -457,6 +487,30 @@ performance.</caption>
 <td align="right">0.698</td>
 <td align="right">0.676</td>
 <td align="right">0.329</td>
+</tr>
+<tr class="odd">
+<td align="left">sdmTMB</td>
+<td align="left">sdmTMB</td>
+<td align="right">150</td>
+<td align="right">7.000</td>
+<td align="right">266.885</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">tinyVAST</td>
+<td align="left">tinyVAST</td>
+<td align="right">150</td>
+<td align="right">7.000</td>
+<td align="right">266.885</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
 </tr>
 </tbody>
 </table>

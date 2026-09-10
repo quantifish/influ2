@@ -233,15 +233,21 @@ a descriptive fit summary, not the automatic ranking criterion.
 bayesian <- table_criterion(list(Base = base_brms, Smooth = smooth_brms),
   criterion = c("loo", "loo_R2", "bayes_R2"))
 
-mixed <- table_criterion(list(GLM = glm_fit, GAM = gam_fit, brms = full_brms))
+mixed <- table_criterion(list(GLM = glm_fit, GAM = gam_fit,
+  glmmTMB = tmb_fit, brms = full_brms, sdmTMB = sdm_fit, tinyVAST = tiny_fit))
 ```
 
-The next table was calculated from a complete, previously fitted
-four-chain brms model and a Gaussian GLM fitted to the same 150
-simulated observations. This small continuous-response example is
-separate from the lobster count example. The response follows year
-effects plus a covariate effect and Gaussian noise. Both fits use
-`y ~ year + x`; their estimation methods differ.
+The next table was calculated by one call to
+[`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
+containing **all six backends**: GLM, GAM, glmmTMB, brms, sdmTMB, and
+tinyVAST. Every fit uses the same 150 simulated observations, including
+a complete, previously fitted four-chain brms model. This small
+continuous-response example is separate from the lobster count example.
+The response follows year effects plus a covariate effect and Gaussian
+noise. Fits use `y ~ year + x`, except the GAM, which uses a fitted
+smooth `s(x, k = 5)`. The sdmTMB and tinyVAST fits have their fields
+switched off here: this example isolates the mixed-backend table, not
+spatial modelling.
 
 The reproducible preparation script is
 `data-raw/model-criteria-example.R` in the repository. It can reuse the
@@ -254,17 +260,21 @@ observation-by-posterior array is needed during rendering.
 example <- readRDS(system.file("extdata", "brms-criteria-example.rds", package = "influ2"))
 knitr::kable(example$table[c("Model", "Backend", "nobs", "df", "AIC",
   "looic", "p_loo", "bayes_R2", "loo_R2", "pareto_k_max")], digits = 3,
-  caption = "Table 5. An executed mixed frequentist/Bayesian summary. Missing entries identify different criterion definitions, not worse performance.")
+  caption = "Table 5. An executed six-backend frequentist/Bayesian summary on identical observations. Missing entries identify different criterion definitions, not worse performance.")
 ```
 
-| Model | Backend | nobs |  df |     AIC |   looic | p_loo | bayes_R2 | loo_R2 | pareto_k_max |
-|:------|:--------|-----:|----:|--------:|--------:|------:|---------:|-------:|-------------:|
-| GLM   | GLM     |  150 |   7 | 266.885 |      NA |    NA |       NA |     NA |           NA |
-| brms  | brms    |  150 |  NA |      NA | 267.449 | 6.967 |    0.698 |  0.676 |        0.329 |
+| Model    | Backend  | nobs |    df |     AIC |   looic | p_loo | bayes_R2 | loo_R2 | pareto_k_max |
+|:---------|:---------|-----:|------:|--------:|--------:|------:|---------:|-------:|-------------:|
+| GLM      | GLM      |  150 | 7.000 | 266.885 |      NA |    NA |       NA |     NA |           NA |
+| GAM      | GAM      |  150 | 7.479 | 267.241 |      NA |    NA |       NA |     NA |           NA |
+| glmmTMB  | glmmTMB  |  150 | 7.000 | 266.885 |      NA |    NA |       NA |     NA |           NA |
+| brms     | brms     |  150 |    NA |      NA | 267.449 | 6.967 |    0.698 |  0.676 |        0.329 |
+| sdmTMB   | sdmTMB   |  150 | 7.000 | 266.885 |      NA |    NA |       NA |     NA |           NA |
+| tinyVAST | tinyVAST |  150 | 7.000 | 266.885 |      NA |    NA |       NA |     NA |           NA |
 
-Table 5. An executed mixed frequentist/Bayesian summary. Missing entries
-identify different criterion definitions, not worse performance.
-{.table}
+Table 5. An executed six-backend frequentist/Bayesian summary on
+identical observations. Missing entries identify different criterion
+definitions, not worse performance. {.table}
 
 The AIC and LOOIC numbers are not compared to each other. Similarly,
 ordinary, pseudo-, conditional, and Bayesian R² definitions must not be

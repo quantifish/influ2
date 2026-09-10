@@ -68,7 +68,8 @@ residuals by year, and a response-adaptive calibration or distribution panel.</p
 <span>  calibration_bins <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  calibration_min_n <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  calibration_groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  trial_counts <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  trial_counts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  groups <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_residuals'</span></span>
@@ -148,6 +149,12 @@ columns must not be defined from the outcome. Supply <code>data</code> if necess
 the name of the known trial-count column in <code>data</code>. It must equal the
 fitted trial weights. Arbitrary case weights are not treated as trials.
 Two-column success/failure responses need no override.</p></dd>
+
+
+<dt id="arg-groups">groups<a class="anchor" aria-label="anchor" href="#arg-groups"></a></dt>
+<dd><p>Optional names of original-data grouping columns to retain
+for <code><a href="plot_implied_residuals.html">plot_implied_residuals()</a></code>. Specify these independently of the response.
+Only these columns, not the complete model data, are stored.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>

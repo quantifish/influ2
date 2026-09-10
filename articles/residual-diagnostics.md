@@ -20,8 +20,8 @@ plots or p-values into automatic selection rules.
 | influ2 helper | Question it helps answer | Important limitation |
 |:---|:---|:---|
 | [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md) then [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | How do the overall response distribution, fitted-value patterns, and fishing-year residual distributions compare with model simulations? | Simulation conditioning differs between backends; the panels are exploratory, not a calibrated pass/fail test. |
-| [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md) | Does residual behaviour change with the fitted mean? | Uses the fitted model’s native residual definition; it is not a predictive interval plot. |
-| [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | Do groups suggest departures from the common year effect? | An exploratory CPUE display, not a fitted interaction or a distributional goodness-of-fit test. |
+| [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md) | Does residual behaviour change with the predictive mean? | Reuses generalised residuals and matching predictive means; it is not a predictive interval plot. |
+| [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | Do groups show generalised residual departures through time? | Mean normal-score departures, not implied coefficients or a fitted interaction. |
 | `plot(checks, type = "qq")` | How do simulation-based quantile residuals compare with their normal reference? | Uses a precomputed `influ_residuals` object; the ribbon is a nominal reference, not a calibrated model-specific test. |
 
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
@@ -572,119 +572,172 @@ warning. Without fitted probabilities, recalculation is required for
 calibration; missing simulation envelopes are not replaced by fabricated
 or unrequested binomial intervals.
 
-## Residuals against fitted values and predictors
+## Generalised residuals against fitted values and predictors
 
-Pearson residuals divide response errors by the model’s observation
-standard deviation. Look for a changing centre, unusual spread, or
-influential tails, but remember that low fitted counts produce asymmetry
-and discrete bands. The residual axis must retain both negative and
-positive values.
+All maintained influ2 residual plots use the same simulation-based
+normal-score rank residuals. These incorporate the fitted response
+distribution, including its discrete outcomes and supported hurdle/delta
+structure. They are not native Pearson or deviance residuals. Positive
+scores identify observations high in their predictive distributions;
+negative scores identify low observations.
+
+Calculate once, then reuse the stored object for different views. The
+fitted axis is the predictive mean from the **same simulations**, with
+the same response component and random-effect conditioning.
 
 ``` r
 
+reduced_checks <- influ_residuals(lobster_reduced, data = lobsters_per_pot,
+  groups = "month", nsim = 250, seed = 41)
+full_checks <- influ_residuals(lobster_nb, data = lobsters_per_pot,
+  groups = "month", nsim = 250, seed = 41)
 patchwork::wrap_plots(
-  plot_predicted_residuals(lobster_reduced) + labs(title = "Reduced NB"),
-  plot_predicted_residuals(lobster_nb) + labs(title = "Full NB"),
+  plot_predicted_residuals(reduced_checks) + labs(title = "Reduced NB"),
+  plot_predicted_residuals(full_checks) + labs(title = "Full NB"),
   ncol = 2
 )
 ```
 
-![Two residual-versus-fitted panels comparing reduced and full
-negative-binomial
+![Two generalised residual-versus-predictive-mean panels for reduced and
+full
 models.](residual-diagnostics_files/figure-html/residual-fitted-1.png)
 
-Pearson residuals against fitted lobster catch for reduced and full
-negative-binomial models. Blue smooths help reveal changes in the
-residual centre; the dotted line marks zero.
+Generalised residuals against predictive mean lobster catch for reduced
+and full negative-binomial models. Blue smooths describe changes in the
+residual centre; the dashed line marks zero.
 
-A fitted-value plot can hide structure in an omitted covariate. Plotting
-the same residuals against depth and soak time is more direct. Here a
-systematic pattern in the reduced model motivates including those
-relationships, rather than treating extra dispersion alone as a
-solution.
+A fitted-value plot can conceal an omitted covariate. The same residuals
+can be matched back to depth and soak time using their original row
+identifiers. Neither this matching nor redrawing the figures repeats
+simulation.
 
 ``` r
 
 residual_data <- do.call(rbind, lapply(
   c("Reduced NB", "Full NB"), function(label) {
-    fit <- if (label == "Reduced NB") lobster_reduced else lobster_nb
-    r <- residuals(fit, type = "pearson")
+    checks <- if (label == "Reduced NB") reduced_checks else full_checks
+    rows <- match(checks$observations$row, rownames(lobsters_per_pot))
+    r <- checks$observations$residual
     rbind(
       data.frame(model = label, predictor = "Depth (m)",
-                 value = lobsters_per_pot$depth, residual = r),
+        value = lobsters_per_pot$depth[rows], residual = r),
       data.frame(model = label, predictor = "Soak time (hours)",
-                 value = lobsters_per_pot$soak, residual = r)
+        value = lobsters_per_pot$soak[rows], residual = r)
     )
   }
 ))
-residual_data$model <- factor(
-  residual_data$model, levels = c("Reduced NB", "Full NB")
-)
+residual_data$model <- factor(residual_data$model,
+  levels = c("Reduced NB", "Full NB"))
 ggplot(residual_data, aes(value, residual)) +
   geom_hline(yintercept = 0, linetype = 3, colour = "grey45") +
   geom_point(alpha = 0.08, size = 0.5) +
   geom_smooth(method = "loess", formula = y ~ x, se = FALSE) +
   facet_grid(model ~ predictor, scales = "free_x") +
-  labs(x = NULL, y = "Pearson residual")
+  labs(x = NULL, y = "Normal-score rank residual")
 ```
 
-![Four panels compare residual patterns against depth and soak time for
-reduced and full
-models.](residual-diagnostics_files/figure-html/residual-predictors-1.png)
+![Four panels compare generalised residual patterns against depth and
+soak
+time.](residual-diagnostics_files/figure-html/residual-predictors-1.png)
 
-Pearson residuals against depth and soak time. The reduced model omits
-both predictors; the full model includes their polynomial effects.
-Smooth trends reveal structure that a fitted-value plot can conceal.
+The same generalised residuals against depth and soak time. The reduced
+model omits both predictors; the full model includes their polynomial
+effects. Smooth trends are descriptive, not tests.
 
-For real fisheries, repeat this examination against vessel, gear, year,
-season, and location. Sparse regions and changing fleet composition
-deserve particular attention. A smooth is descriptive: these are
-in-sample residuals, not independent validation observations.
+For real fisheries, inspect vessel, gear, year, season, and location.
+Sparse regions and changing fleet composition deserve attention. These
+are in-sample diagnostics, not independent validation observations.
 
-## Implied residual coefficients
+## Grouped departures: revisiting implied coefficients
 
-New Zealand inshore CPUE reports use implied coefficients to explore
-departures from a shared year effect ([Starr and Kendrick
-2019](#ref-StarrKendrick2019); [Middleton 2025](#ref-Middleton2025)).
-For each year-by-group stratum,
+New Zealand inshore CPUE reports use residual-implied coefficients to
+explore departures from a shared year effect. Figure O.9 of Starr and
+Kendrick ([2019](#ref-StarrKendrick2019)) adds a stratum’s mean
+standardised residual to a normalised year coefficient. Figures
+C.19-C.20 of Middleton ([2025](#ref-Middleton2025)) show related
+target-by-year and area-by-year displays for lognormal positive catches,
+omitting strata with fewer than 10 records. These examples motivate the
+grouping and support checks; their captions do not establish a universal
+Pearson-residual definition.
+
+The earlier influ2 helper defaulted to native Pearson residuals and
+added their mean to the link-scale year effect. This was an exploratory
+convention, not a general interaction estimator. Pearson residuals and
+normal-score residuals are dimensionless, whereas the coefficient is on
+the model’s link scale. **Replacing Pearson residuals with quantile
+residuals in that sum would still mix scales.** Ordinary GLM partial
+residuals instead involve working residuals, as described in [R’s GLM
+documentation](https://search.r-project.org/R/refmans/stats/html/glm.summaries.html);
+that does not supply a universal quantile-residual-to-coefficient
+conversion.
+
+The maintained
 [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
-adds its mean residual to the centred link-scale year effect. The common
-year effect is grey; purple points show the implied departures. Here the
-groups are months, but an area, vessel group, or other categorical
-variable could be used.
+therefore now displays **mean generalised residual departures around
+zero**, not adjusted coefficients. The familiar helper name is retained,
+but the axis and returned data explicitly describe the new quantity. A
+positive point means that a group’s catches tend to be high within their
+own fitted predictive distributions. It is not a log-CPUE adjustment,
+biomass multiplier, or fitted interaction coefficient.
 
 ``` r
 
-plot_implied_residuals(
-  lobster_nb,
-  data = lobsters_per_pot,
-  year = "year", groups = "month", min_n = 10
-)
+plot_implied_residuals(full_checks, groups = "month", min_n = 10)
 ```
 
-![Twelve monthly panels compare implied coefficients with the same grey
-annual
-baseline.](residual-diagnostics_files/figure-html/residual-implied-1.png)
+![Twelve monthly panels show mean normal-score residual departures
+around
+zero.](residual-diagnostics_files/figure-html/residual-implied-1.png)
 
-Implied year coefficients by month for the full negative-binomial
-lobster model. Grey lines show the common centred year effect; purple
-values add each stratum’s mean Pearson residual. Bars are plus or minus
-one standard error of that residual mean, and point size represents
-record count. Strata with fewer than 10 records are omitted.
+Generalised year-by-month residual departures for the full
+negative-binomial lobster model. The grey zero line is the common
+normal-score reference, not the annual coefficient. Bars show mean plus
+or minus a descriptive iid standard error (SD/sqrt(n)), and point area
+represents record count. Strata with fewer than 10 records are omitted;
+all panels share the same scale.
 
-The bars exclude uncertainty in the year coefficient and its covariance
-with the residual mean; they are **not** confidence intervals for a
-fitted year-by-month interaction. Adding a Pearson residual to a
-link-scale effect is an interpretive convention, not an exact
-interaction estimator. Native residual scaling also differs between
-model packages. Persistent departures suggest checking sampling support
-and an explicit interaction or other structure, then refitting and
-reassessing the model.
+The bars do not account for within-vessel or spatial dependence,
+parameter estimation, or Monte Carlo variation. They are **not
+confidence intervals for an interaction**. Repeat with more simulations
+or different seeds when a feature matters, and inspect the full residual
+distribution as well as its mean. A zero mean alone cannot rule out
+wrong dispersion or tails. Posterior predictive ranks reuse the fitted
+data and are not guaranteed uniform; conditioning for hierarchical
+models remains important.
 
-Keep the original observation row names when supplying `data`. influ2
-aligns omitted, subsetted, or reordered rows with the fitted model, and
-rejects data whose identity cannot be verified. This prevents residuals
-from being assigned silently to the wrong year or group.
+Actual year effects are still available from
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) and
+the index functions. Estimating a group-specific change in the index
+requires a separate model with the relevant interaction or process,
+followed by model checking. Do not add a normal score back onto a
+coefficient.
+
+For a different grouping, retain it during calculation:
+
+``` r
+
+checks <- influ_residuals(fit, data = original_data,
+  groups = c("area", "gear"), nsim = 1000, seed = 41)
+plot_implied_residuals(checks, groups = "area")
+plot_implied_residuals(checks, groups = "gear")
+plot_predicted_residuals(checks)
+```
+
+Keep original row names. influ2 verifies fitted data before retaining
+the group columns, including after omissions, subsets, or reordering. It
+does not attach arbitrary new data to an already calculated object.
+Choose groups independently of the outcome: selecting high catches as a
+group invalidates the zero reference.
+
+For delta models, `component = "combined"` checks the combined response.
+It does **not** diagnose positive catches separately. Supported explicit
+`component = "positive"` calculations use the native positive component
+and its positive observation rows. The plotting helpers preserve that
+selection. Unsupported component extraction fails instead of
+substituting a different residual type. Existing code requesting
+`type = "pearson"` now receives a migration error; remove that argument
+and recalculate. Old saved figures do not change when the package is
+updated.
 
 ## Simulation-based checks with DHARMa
 
@@ -918,32 +971,21 @@ DHARMa::plotQQunif(
 The [sdmTMB
 bridge](https://sdmtmb.github.io/sdmTMB/reference/dharma_residuals.html)
 can check the combined delta/hurdle response. Its analytical residuals
-instead select a component. influ2’s two native-residual helpers
-currently reject sdmTMB delta fits: pairing occurrence residuals with
-unconditional fitted catch would be misleading. Use the native
-component-specific workflow and matching predictions instead. Native
-Pearson support is also family-specific; influ2 does not silently
-replace it with another residual type.
+instead select a component. influ2’s helpers now reuse the generalised
+engine and preserve its selected component and simulation target.
 
 ### tinyVAST
 
-The tinyVAST 1.6.2 interface provides deviance and response residual
-types, not Pearson residuals or an OSA convenience interface. In checks
-against that version, single-response deviance residuals worked with
-influ2’s predicted- and implied-residual helpers. Its native response
-method returned an empty vector, so influ2 now reports that failure
-clearly rather than drawing an empty diagnostic.
+For supported single-response tinyVAST fits, the plotting helpers use
+simulated normal-score ranks conditional on the fitted fields, not
+native deviance or response residuals.
 
 ``` r
 
-plot_predicted_residuals(tiny_model, type = "deviance")
 tiny_checks <- influ_residuals(tiny_model, nsim = 250, seed = 41)
+plot_predicted_residuals(tiny_checks)
 plot(tiny_checks, type = "qq")
 ```
-
-The Q-Q plot uses simulated-response ranks conditional on the fitted
-fields, not the deviance residuals used by the preceding native-residual
-plot.
 
 The [tinyVAST simulation
 interface](https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html)
@@ -958,7 +1000,8 @@ multivariate DHARMa adapter.
 
 ### GLM, GAM, glmmTMB, and brms
 
-The ordinary GLM, GAM, and glmmTMB residual plots use their native
+All influ2 helpers use the generalised simulation engine for GLMs, GAMs,
+and glmmTMB. Native packages additionally offer their own residual
 methods. Current glmmTMB also provides a `"dunn-smyth"` option, but
 family and version limitations matter, including fixes for multi-trial
 binomial responses. Do not assume it handles every zero-inflated mixture
