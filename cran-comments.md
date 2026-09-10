@@ -1,3 +1,58 @@
+## Shared residual engine and external inputs: 11 September 2026
+
+Source `09971c240d2031aa824d94364bfea8babd650ff1` extracts the existing
+simulation-rank calculation into one shared engine and adds the documented
+`as_influ_residuals()` matrix constructor. Existing fitted-model calculations,
+native conditioning, RNG preparation order, and plotting defaults are unchanged.
+Eighteen frozen pre-refactor cases matched exactly on the Mac; portable tests
+allow only `1e-12` floating-point roundoff. Independent calculations and an
+actual glmmTMB simulation replay test the new route separately.
+
+The full local suite passed 4,378 expectations with no failures, warnings,
+or skips. The final macOS arm64 R 4.6.1 archive check used
+`--as-cran --no-manual` and passed with zero errors, zero warnings, and the
+existing incoming-feasibility NOTE (new submission and optional tinyVAST
+available through its declared repository). All seven vignettes built and
+rebuilt. CRAN-mode tests passed 4,364 expectations, with six intentional
+visual-test groups skipped; those passed in the full suite. Optional DHARMa
+was absent locally, so its article examples were skipped. This is not a
+PDF-manual or full optional-dependency validation.
+
+Checked archive:
+`/private/tmp/influ2-external-final-a8722fd02f42/influ2_1.1.0.tar.gz`.
+SHA256: `023f373b4fd3a49987c8ab67fafdda5f1c5c2617a8ecfa9c864760882bc64cb3`.
+Archive size: 2,641,331 bytes. All 148 tracked package files present alongside
+DESCRIPTION match the committed checkout byte-for-byte. Original DESCRIPTION
+fields match after normalising build whitespace; R added only its normal
+generated fields. Private review material and developer recipes are excluded.
+The exact checked archive is installed in the Mac's usual R library; a fresh
+R session verified the exported constructor, RNG preservation, and overview.
+
+An additional installed-package check reused the existing complete negative-
+binomial brms fit at `/private/tmp/influ2-four-panel.6ZEXTO/brms-native.rds`
+(60 observations, formula `catch ~ year + x`). Twenty-four joint posterior
+predictive response vectors were transposed explicitly and passed through the
+constructor. Independently reconstructed PIT values, predictive means, and
+ECDF quantiles agreed; input/RNG preservation and plotting passed. No MCMC or
+refit was run, and the model was not added to the package archive. This tests
+the bridge, not model adequacy or posterior convergence.
+
+GitHub coverage run 34536328637 passed all 4,378 expectations and reported
+95.90% coverage, including 100% for the external constructor and shared engine.
+Website run 34536328492 passed, including all 71 lightbox figure-caption checks
+across seven articles. Pages run 34536914963 published website revision
+`5b2568801104d45f9771806aeb7490fa89c4a148`. Live browser review confirmed the
+new section, executed lobster example, Figure 18, and its complete expanded
+caption. The existing deployment-action Node-runtime annotation remains
+non-blocking; no workflow or platform expansion was made.
+
+R-CMD-check run 34536328498 passed both Ubuntu release and Windows release.
+Only the excluded validation records were updated after this source revision;
+the checked package contents and published examples are unchanged.
+No CRAN or win-builder submission was made. Simulation counters, spatial
+conditioning changes, further bridges, issue #18, legacy review, and the
+index-median decision remain for later consideration.
+
 ## Optional PIT plots and caption consistency: 11 September 2026
 
 Source `0abbab1` adds `pit_ecdf` and `pit_ecdf_diff` displays of stored residual

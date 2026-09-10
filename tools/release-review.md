@@ -41,10 +41,22 @@ backend, and existing visual regression tests passed.
 
 The executed lobster glmmTMB example in the residual article was rendered and
 visually inspected. All 68 plotted images on seven locally rendered articles
-passed the lightbox caption check. Archive checks, CI, and live publication
-remain to be recorded for this source revision. No CRAN or win-builder
-submission is authorised. N02 counters, N06 conditioning, further bridges,
-regional examples, and the remaining legacy/median reviews remain untouched.
+passed the lightbox caption check. The final archive of source `09971c2`
+passed macOS R 4.6.1 `--as-cran --no-manual` with zero errors, zero warnings,
+and the existing incoming-feasibility NOTE. All seven vignettes rebuilt;
+optional DHARMa examples were skipped locally. The checked archive is installed
+on the Mac. Its checksum and check limits are recorded in `cran-comments.md`.
+An additional check with an existing complete negative-binomial brms fit
+verified the posterior-prediction transposition route, independent ranks/means/
+ECDF intervals, input/RNG preservation, and plotting, without MCMC or a refit.
+
+GitHub coverage passed at 95.90%, with all 4,378 expectations passing. The
+website and Pages deployment passed, including all 71 caption checks across
+seven articles with optional examples present. Live Figure 18 demonstrates
+external glmmTMB simulations and expands with its full caption. Ubuntu release
+and Windows release both passed check 34536328498. No CRAN or win-builder
+submission was made. N02 counters, N06 conditioning, further
+bridges, regional examples, and the remaining legacy/median reviews are untouched.
 
 ## Completed: PIT displays and caption consistency, 11 September 2026
 
