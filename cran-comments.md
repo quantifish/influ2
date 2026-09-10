@@ -1,3 +1,18 @@
+## Issue #13 closure: 10 September 2026
+
+The maintainer approved closing issue #13 after verifying all three original
+legacy-consolidation checklist items. The six listed function names have
+been retired; the public API tests verify absence from both exports and the
+runtime namespace. The remaining legacy-function and median-table review
+is unchanged, and the frozen Get Started article remains available.
+
+Three GitHub issues remain: #12 (additional predictive diagnostics), #18
+(two-region example), and #22 (annual-index output). Issue #12 is the next
+selected review; its LOO-PIT scope has not yet been agreed. These are
+excluded release-record changes only. The checked package source remains
+`aa4120097c3f57e0444475ab7e5daef7d8809dd5`, with its validation results below.
+No CRAN or win-builder submission was made.
+
 ## Unified Q-Q workflow and issue #6: 10 September 2026
 
 Code revision: `aa4120097c3f57e0444475ab7e5daef7d8809dd5`.

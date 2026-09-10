@@ -254,16 +254,40 @@ clear to users and should not silently produce a different estimand.
 **Required by the maintainer, 10 September 2026:** work through all open
 issues before preparing the final CRAN submission archive. Close each with
 a linked implementation/test, or a documented maintainer-approved decision.
-Do not bulk-close issues just to empty the tracker. Four issues remain after
-resolving #6 and #21 on 10 September; refresh this list before the final build to catch
-new issues.
+Do not bulk-close issues just to empty the tracker. Three issues remain after
+resolving #6, #13, and #21 on 10 September; refresh this list before the final
+build to catch new issues.
 
 | Issue | Resolution work before closure |
 | --- | --- |
 | [#12: Add more diagnostics](https://github.com/quantifish/influ2/issues/12) | Review the ECDF/PIT examples and remaining brms predictive examples against the frozen article, then link the accepted replacements. |
-| [#13: Deprecate/consolidate old functions](https://github.com/quantifish/influ2/issues/13) | The specifically listed influence/CDI/coefficient duplicates have been retired. Verify the checked items and close with those commits; the broader remaining legacy review is still a separate release gate. |
 | [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Add or identify an explicit, executed two-region index example, for one shared model or separate fits. Demonstrate comparable reference populations, regional labelling, and uncertainty. General area integration alone does not fulfil this example request. |
 | [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Resolve the assessment-table/lognormal-parameter request together with the deliberately deferred Median/NA decision. Observation dispersion and uncertainty in an annual index are different quantities. |
+
+Issue [#13](https://github.com/quantifish/influ2/issues/13) is closed with the
+maintainer's approval. All three original checklist items are complete:
+`plot_bayesian_cdi()`/`plot_bayesian_cdi2()` are superseded by
+`plot(diagnostic, type = "cdi")`; `get_influ()`/`get_influ2()` are superseded
+by `influ()` and diagnostic result extractors; and
+`get_coefs_raw()`/`get_coefs()` are removed, with model adapters extracting
+their required effects internally. This does not add a replacement public
+raw-coefficient API. Commit `08a03f5` removed the approved legacy sources.
+The public API tests verify absence from both exports and the runtime
+namespace, and preservation of the maintained API (four expectations passed).
+The separate remaining legacy review in section 2 and the frozen Get Started
+article are unchanged by this closure.
+
+**Next issue selected for review: #12.** The current compact predictive ECDF
+envelope is available through `plot(checks, type = "distribution")`, and the
+residual article demonstrates simulation-rank Q-Q, empty-pot proportions,
+and the 95th catch percentile. The latter is an upper-tail check, not a check
+of the exact maximum. The brms simulation adapter uses joint posterior
+predictive draws, but the article still lacks an executed complete-brms-fit
+predictive example. Proposed next work is to demonstrate the standalone ECDF
+and genuine Bayesian predictive workflow, and explicitly distinguish
+fitted-data simulation ranks from LOO-PIT. The latter is not implemented;
+its inclusion or deferral needs a separate decision, not a claim that the
+existing Q-Q panel fulfils it. Issue #12 remains open during this review.
 
 Issue [#6](https://github.com/quantifish/influ2/issues/6) is resolved by the
 maintainer-approved retirement of `plot_qq()` and adoption of the unified
@@ -300,7 +324,7 @@ that the original zero/max/density-bars/LOO-PIT suite was implemented verbatim;
 simulation-rank Q-Q is not LOO-PIT. Targeted predictive checks remain part of
 the separate diagnostics and legacy review.
 
-Finish the deferred legacy and median-table review, resolve the four issues
+Finish the deferred legacy and median-table review, resolve the three issues
 above, then freeze the release API.
 
 ## 6. Validate and compile the final reviewed source
