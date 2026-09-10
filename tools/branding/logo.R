@@ -3,7 +3,7 @@
 # This is never run during installation, checking, or website deployment.
 # Deliberately overwrites the package logo and its website icon derivatives.
 # The original iris bubble motif, blue/orange palette, and hexagon are kept;
-# the miniature axes, labels, plot frame, and dotted grid are removed.
+# a plain plot frame is retained, without miniature axes, labels, or a grid.
 stopifnot(file.exists("DESCRIPTION"), dir.exists("pkgdown/favicon"))
 stopifnot(requireNamespace("ragg", quietly = TRUE),
           requireNamespace("png", quietly = TRUE))
@@ -31,6 +31,10 @@ make_logo <- function() {
   )
   grid::grid.text("influ2", x = 260, y = 474, default.units = "native",
                   gp = grid::gpar(col = orange, fontsize = 72, fontfamily = "sans"))
+  grid::grid.rect(
+    x = 258, y = 270, width = 292, height = 298, default.units = "native",
+    gp = grid::gpar(col = "#333333", fill = NA, lwd = 2)
+  )
   visible <- which(radius > 0)
   grid::grid.circle(
     x = 160 + 98 * (bubbles$width[visible] - 2),

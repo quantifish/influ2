@@ -393,6 +393,32 @@ build or a failed Pages deployment. The next full documentation build remains
 necessary after substantive source/article changes, not solely to recolour
 the badge.
 
+### Plain logo frame and bounded coverage increment: 10 September 2026
+
+Following the next visual review, the logo again has a plain rectangular
+frame around its bubbles, with no axis labels, ticks, or grid. The hexagon,
+bubble composition, and colours remain unchanged. The native recipe produces
+the package/README logo and website icons reproducibly; the 180-pixel version
+was visually inspected. The frozen legacy article remains unchanged.
+
+Added 189 expectations in 21 test blocks covering comparison rescaling and
+overlapping years, stored step contracts, convergence gates, weighted
+references, singular joint draws, missing versus zero catches, and native
+prediction contracts. Local coverage increased from 91.1037% to 92.9085%,
+about 1.8 percentage points, without exclusions or threshold changes. Stop
+at this bounded improvement rather than pursue 95% or 100%.
+
+The added tests exposed a brms distributional-formula bug: `part$re` could
+partially match the character `resp` field when random effects were absent.
+The reference-predictor adapter now uses an exact lookup. Regression tests
+use brms's real formula parser, and check the end-to-end annual reduction
+with posterior predictions mocked at the native boundary. They do not claim
+to run new MCMC fits. The full local suite passed all 3,476 expectations in
+215 blocks, with no failures, warnings, or skips, including visual regression.
+Coverage and test artefacts are in
+`/private/tmp/influ2-framed-coverage.Mizg6S/`. The final release archive must
+still be rebuilt and checked after the deferred release decisions.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration

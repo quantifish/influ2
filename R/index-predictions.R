@@ -67,7 +67,9 @@
     parsed <- brms::brmsterms(model$formula)
     required <- unique(unlist(lapply(parsed$dpars, function(part) {
       # Do not remove a group name also used as a population-level predictor.
-      union(setdiff(all.vars(part$allvars), part$re$group),
+      # Exact lookup: for distributional terms without random effects, $re
+      # can partially match the character-valued $resp field.
+      union(setdiff(all.vars(part$allvars), part[["re"]][["group"]]),
         unlist(lapply(part[c("fe", "sm")], all.vars)))
     })))
     lhs <- model$formula$formula[[2]]

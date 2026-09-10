@@ -12,8 +12,10 @@ copy the checked-in icons rather than regenerating them with a different font.
 
 The 10 September 2026 refinement retains the original blue (`#1881C2`), orange
 (`#FFA500`), hexagon, and iris-based bubble composition. It removes miniature
-axis text, ticks, the plot frame, and the dotted grid to improve small-size
-legibility. The logo is an identifying motif, not an inferential figure.
+axis text, ticks, and the dotted grid to improve small-size legibility.
+Following the maintainer's visual review, a plain rectangular plot frame is
+retained around the bubbles. The logo is an identifying motif, not an
+inferential figure.
 
 The previous logo and generation recipe remain recoverable from Git commit
 `d215b3f`. The frozen legacy Get Started page is a review artefact and must
