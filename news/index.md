@@ -2,6 +2,27 @@
 
 ## influ2 1.1.0
 
+- Added optional standalone PIT ECDF and ECDF-difference panels through
+  bayesplot, reusing stored PIT values without additional response
+  simulation. Their simultaneous iid-uniform reference limits are
+  labelled as exploratory, not calibrated tests for fitted models.
+  `panels` now selects and orders any four supported residual panels;
+  the default layout is unchanged.
+
+- Expanded website figures now display the complete numbered caption
+  from beneath each figure, rather than its shorter accessibility
+  description. Long captions remain accessible, and the website build
+  checks every plotted image for a matching caption. Calibration plots
+  retain their separate grey predictive bars; the residual article
+  clarifies their interpretation.
+
+- Labelled the four-panel overview’s normal-score PIT residuals
+  explicitly in its footer and residual axes. The footer distinguishes
+  panels A-C from the response ECDF or probability-calibration check in
+  panel D. Help and the residual article explain the existing
+  `qnorm(pit)` transformation; residual calculations, simulation
+  schemes, and default panel choices are unchanged.
+
 - Added standalone lobster ECDF and complete-fit brms posterior
   predictive examples to the residual article, with compact saved
   Bayesian results and an individual-replicate overlay. Help and tests

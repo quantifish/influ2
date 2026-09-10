@@ -16,7 +16,9 @@ document.addEventListener("DOMContentLoaded", function () {
     caption.prepend(numberLabel);
 
     figureImages.forEach(function (image) {
-      const description = image.alt || captionText;
+      // The visible caption explains the figure; alt text has a separate
+      // accessibility role and should not replace it in the enlarged view.
+      const description = captionText || image.alt || "";
       image.dataset.influFigureNumber = number;
       image.dataset.influLightboxCaption = number + ". " + description;
     });
@@ -56,6 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
     expanded.src = image.currentSrc || image.src;
     expanded.alt = image.alt || "Expanded figure";
     caption.textContent = figureCaption(image);
+    caption.scrollTop = 0;
     caption.hidden = caption.textContent.length === 0;
   }
 

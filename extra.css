@@ -31,6 +31,10 @@ main img.r-plt:focus-visible {
 }
 
 .influ-lightbox__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
   margin: 0;
   max-height: 100%;
   max-width: 100%;
@@ -38,6 +42,8 @@ main img.r-plt:focus-visible {
 }
 
 .influ-lightbox__image {
+  flex: 1 1 auto;
+  min-height: 0;
   background: white;
   box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.45);
   max-height: calc(100vh - 8rem);
@@ -46,8 +52,11 @@ main img.r-plt:focus-visible {
 }
 
 .influ-lightbox__caption {
+  flex: 0 0 auto;
   color: white;
   margin-top: 0.75rem;
+  max-height: 30vh;
+  overflow-y: auto;
 }
 
 .influ-lightbox__close,
