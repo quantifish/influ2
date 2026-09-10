@@ -480,9 +480,14 @@ Final source `5b28122` is confirmed by GitHub coverage run 34423538830:
 95.56%, all 3,605 expectations passing, and no warnings or skips. The final
 macOS CRAN-style archive check passed with zero errors, zero warnings, and
 the existing NOTE; all six vignettes rebuilt. Archive details are recorded
-in `cran-comments.md`. Remaining Ubuntu/Windows and final documentation
-deployment runs are being followed in a quiet, self-pausing task follow-up.
-No CRAN or win-builder submission was made.
+in `cran-comments.md`. Ubuntu-release and Windows-release both completed with
+Status: OK and all 3,605 expectations passing without warnings or skips in
+run 34423538829. The final pkgdown run 34423538846 and Pages deployment
+34423891385 passed, publishing website commit `903c509`. The live logo matches
+the reviewed asset by SHA-256, and the badge shows 96% (rounded from 95.56%).
+These checks apply to packaged source `5b28122`, not unverified later code;
+subsequent validation-record commits change only excluded bookkeeping files.
+The completed follow-up is paused. No CRAN or win-builder submission was made.
 
 # Response-adaptive calibration increment: 10 September 2026
 

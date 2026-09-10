@@ -26,11 +26,14 @@ tinyVAST repository. All six vignettes rebuilt. The archive contains the new
 tests and the restored original-style logo, with only its axis numbers hidden.
 The frozen legacy article is unchanged.
 
-The initial pkgdown and Pages runs (34422890536 and 34423363142) published
-the restored logo, whose live assets match the reviewed files. The final
-Ubuntu/Windows check (34423538829), pkgdown rerun (34423538846), and subsequent
-Pages deployment remain pending, with a quiet follow-up scheduled. These
-bookkeeping records are excluded from the archive. This is not the final CRAN
+The final Ubuntu-release and Windows-release checks (34423538829) both
+finished with Status: OK and all 3,605 expectations passing without failures,
+warnings, or skips. The pkgdown rerun (34423538846) and subsequent Pages
+deployment (34423891385, website commit `903c509`) passed as well. The live
+logo matches the reviewed file by SHA-256, and the coverage badge shows 96%
+(rounded from 95.56%). These runs validate source `5b28122`; the subsequent
+bookkeeping records are excluded from the archive and do not change its
+packaged source. The completed follow-up is paused. This is not the final CRAN
 submission: issue resolution, deferred legacy review, and the Median/NA
 decision remain release gates. No CRAN or win-builder upload was made.
 
