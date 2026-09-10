@@ -333,6 +333,10 @@
 #'   labels are on the right, with the same level ordering as the composition.
 #'   The proportion legend has one column and at most four reference bubbles.
 #'
+#' @seealso \code{\link{influ_residuals}} and \code{\link{plot.influ_residuals}}
+#'   for the separate residual overview and standalone
+#'   \code{plot(checks, type = "qq")} diagnostic. Residual plots require an
+#'   \code{influ_residuals} object, not an \code{influ_diag}.
 #' @return A `ggplot` or `patchwork` object.
 #' @export
 plot.influ_diag <- function(x, type = c("influence", "index", "cdi", "components"),

@@ -24,7 +24,7 @@ diagnostics:
 
 - `plot_compare()` and `plot_step()`;
 - `plot_data_extent()`;
-- `plot_implied_residuals()`, `plot_predicted_residuals()`, and `plot_qq()`;
+- `plot_implied_residuals()` and `plot_predicted_residuals()`;
 - `get_bayes_R2()` and `table_criterion()`; and
 - `plot_bubble()`.
 
@@ -48,6 +48,14 @@ Their source and help files have been removed. The coefficient helpers had
 no callers outside the retired influence/CDI helpers; no retained function
 requires the old Shiny app. Its use of `get_bayes_R2()` and `plot_compare()`
 does not make those independently useful functions removal candidates.
+
+On 10 September 2026, the maintainer also approved retiring `plot_qq()` and
+its native-residual Q-Q workflow. Use `influ_residuals(fit)` followed by
+`plot(checks, type = "qq")`; the simulation-based diagnostic supersedes the
+old approach rather than reproducing its residuals. The old Q-Q source and
+help are removed, without a compatibility wrapper. Per-point posterior
+intervals are not required for the first release. The frozen article is
+unchanged; the retired source remains recoverable from Git history.
 
 The current `influ()` generic, the Bentley implementation above, the frozen
 Get Started page at `pkgdown/assets/articles/legacy-get-started.html`, and all

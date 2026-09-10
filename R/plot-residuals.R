@@ -42,7 +42,18 @@
 #'   retain the distribution overview with an informative warning. Explicit
 #'   distribution plots remain unchanged. Missing envelopes are not fabricated.
 #'
+#'   Use `plot(x, type = "qq")` to draw exactly the Q-Q panel from the overview
+#'   on its own. Here `x` must be the result of [influ_residuals()], not an
+#'   `influ_diag` influence summary. The returned ggplot reuses stored results;
+#'   no simulations or model fits are repeated. This is the supported Q-Q
+#'   workflow, replacing the retired `plot_qq()` native-residual helper. It is
+#'   a different diagnostic, not a reproduction of that helper's residuals.
+#'   The Q-Q ribbon here is not posterior uncertainty around individual points.
+#'
+#' @seealso [influ_residuals()] for a worked calculation and standalone Q-Q
+#'   example.
 #' @return A ggplot or a four-panel patchwork object, which can be customised.
+#' @md
 #' @export
 plot.influ_residuals <- function(x,
     type = c("overview", "qq", "fitted", "year", "distribution", "calibration", "calibration_groups"),

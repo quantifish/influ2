@@ -1,5 +1,14 @@
 # influ2 1.1.0
 
+* Retired `plot_qq()` without a compatibility wrapper. Calculate
+  `checks <- influ_residuals(fit)`, then use `plot(checks, type = "qq")`
+  for the same simulation-based Q-Q diagnostic as the four-panel overview.
+  The residual article includes a standalone glmmTMB example, and the plotting
+  help cross-references this workflow. Its pointwise reference ribbon is not
+  posterior uncertainty around individual points. Native-residual Q-Q plots
+  and per-point posterior intervals are not part of the first-release API.
+  The frozen legacy article remains available for review.
+
 * Fixed glmmTMB influence diagnostics with explicit reference grids: the
   fitted model-matrix method ignores `newdata`, so fixed-effect designs now
   come from the native prediction setup. Regression tests cover different

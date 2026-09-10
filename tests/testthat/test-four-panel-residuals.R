@@ -44,6 +44,11 @@ test_that("compact ranks reproduce the exact simulation calculation", {
     expect_s3_class(plot(result, type = p), "ggplot")
     expect_s3_class(ggplot2::autoplot(result, type = p), "ggplot")
   }
+  standalone_qq <- plot(result, type = "qq")
+  overview_qq <- plot(result)[[1L]]
+  expect_identical(standalone_qq$data, overview_qq$data)
+  expect_identical(ggplot2::ggplot_build(standalone_qq)$data,
+    ggplot2::ggplot_build(overview_qq)$data)
   expect_identical(plot(result, type = "distribution")$scales$get_scales("y")$limits, c(0, 1))
   expected_ecdf <- apply(sims, 2, function(s) ecdf(s)(result$ecdf$response))
   expect_equal(result$ecdf$median, apply(expected_ecdf, 1, median), ignore_attr = TRUE)

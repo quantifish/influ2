@@ -95,12 +95,12 @@ test_that("saved model calls cannot substitute for retained fitted observations"
     plot_implied_residuals(model, groups = "month", min_n = 1),
     "retained model frame"
   )
-  # Prediction and Q-Q helpers can use native stored values directly; they
+  # Prediction helpers can use native stored values directly; they
   # must not reevaluate the now-mutated data or subset expression.
   actual <- plot_predicted_residuals(model, trend = "none")
   expect_equal(actual$data, expected$data)
   expect_equal(nrow(actual$data), stats::nobs(model))
-  expect_s3_class(plot_qq(model), "ggplot")
+  expect_equal(unname(.residual_estimate(model)), unname(actual$data$residual))
 })
 
 test_that("reconstructing lobster polynomial bases allows only numerical roundoff", {
@@ -150,7 +150,7 @@ test_that("negative-binomial residual plots use response-scale fitted values", {
   plot <- plot_predicted_residuals(model, trend = "none")
   expect_equal(unname(plot$data$predicted), unname(stats::predict(model, type = "response")))
   expect_equal(unname(plot$data$residual), unname(stats::residuals(model, type = "pearson")))
-  expect_s3_class(plot_qq(model), "ggplot")
+  expect_s3_class(plot(influ_residuals(model, nsim = 20), type = "qq"), "ggplot")
   expect_s3_class(plot_implied_residuals(model, groups = "month", min_n = 1), "ggplot")
 })
 
@@ -163,7 +163,7 @@ test_that("GAM residual plots preserve native negative-binomial residuals", {
   plot <- plot_predicted_residuals(model, trend = "none")
   expect_equal(as.numeric(plot$data$predicted), as.numeric(stats::predict(model, type = "response")))
   expect_equal(unname(plot$data$residual), unname(stats::residuals(model, type = "pearson")))
-  expect_s3_class(plot_qq(model), "ggplot")
+  expect_s3_class(plot(influ_residuals(model, nsim = 20), type = "qq"), "ggplot")
   expect_s3_class(plot_implied_residuals(model, data = data, groups = "month", min_n = 1), "ggplot")
 })
 
@@ -176,7 +176,7 @@ test_that("glmmTMB residual plots support random effects and zero inflation", {
   plot <- plot_predicted_residuals(model, trend = "none")
   expect_equal(unname(plot$data$predicted), unname(stats::predict(model, type = "response")))
   expect_equal(unname(plot$data$residual), unname(stats::residuals(model, type = "pearson")))
-  expect_s3_class(plot_qq(model), "ggplot")
+  expect_s3_class(plot(influ_residuals(model, nsim = 20), type = "qq"), "ggplot")
   expect_s3_class(plot_implied_residuals(model, groups = "month", min_n = 1), "ggplot")
   data$catch[seq.int(1L, nrow(data), by = 3L)] <- 0
   zi <- glmmTMB::glmmTMB(
@@ -185,14 +185,14 @@ test_that("glmmTMB residual plots support random effects and zero inflation", {
   plot <- plot_predicted_residuals(zi, trend = "none")
   expect_equal(unname(plot$data$predicted), unname(stats::predict(zi, type = "response")))
   expect_equal(unname(plot$data$residual), unname(stats::residuals(zi, type = "pearson")))
-  expect_s3_class(plot_qq(zi), "ggplot")
+  expect_s3_class(plot(influ_residuals(zi, nsim = 20), type = "qq"), "ggplot")
 })
 
 test_that("compact brms fixtures give an actionable residual error without MCMC", {
   skip_if_not_installed("brms")
   fit <- readRDS(system.file("extdata", "brms-fixtures", "fit2.rds", package = "influ2"))
   expect_error(plot_predicted_residuals(fit), "Compact brms influence fixtures")
-  expect_error(plot_qq(fit), "original complete brmsfit")
+  expect_error(influ_residuals(fit, nsim = 20), "complete brmsfit")
   expect_error(plot_implied_residuals(fit, groups = "month"), "native fitted object")
   multivariate <- structure(list(formula = structure(list(), class = "mvbrmsformula")), class = "brmsfit")
   expect_error(.check_residual_model(multivariate), "one response")
@@ -201,7 +201,6 @@ test_that("compact brms fixtures give an actionable residual error without MCMC"
 test_that("sdmTMB delta residuals cannot be paired with an unconditional mean", {
   model <- structure(list(family = list(delta = TRUE)), class = "sdmTMB")
   expect_error(plot_predicted_residuals(model), "explicit model component")
-  expect_error(plot_qq(model, type = "response"), "explicit model component")
   expect_error(plot_implied_residuals(model), "explicit model component")
 })
 
@@ -217,7 +216,6 @@ test_that("sdmTMB spatial residual plots retain their native response meaning", 
   plot <- plot_predicted_residuals(model, trend = "none")
   expect_equal(unname(plot$data$predicted), unname(stats::fitted(model)))
   expect_equal(unname(plot$data$residual), unname(stats::residuals(model, type = "pearson")))
-  expect_s3_class(plot_qq(model), "ggplot")
   expect_s3_class(plot_implied_residuals(model, groups = "present", min_n = 1), "ggplot")
   raw <- plot_predicted_residuals(model, trend = "none", type = "response")
   expect_equal(unname(raw$data$residual), pcod_2011$present - raw$data$predicted)
@@ -226,6 +224,7 @@ test_that("sdmTMB spatial residual plots retain their native response meaning", 
   expect_match(checks$metadata$scheme, "conditional on fitted latent")
   expect_identical(checks$metadata$year, "year")
   expect_true(all(is.finite(checks$observations$residual)))
+  expect_s3_class(plot(checks, type = "qq"), "ggplot")
 })
 
 test_that("unsupported sdmTMB Pearson residuals retain an explicit native-type boundary", {
@@ -238,7 +237,6 @@ test_that("unsupported sdmTMB Pearson residuals retain an explicit native-type b
   native <- tryCatch(stats::residuals(model, type = "pearson"), error = identity)
   if (inherits(native, "error")) {
     expect_error(plot_predicted_residuals(model), "Pearson residuals are unavailable")
-    expect_error(plot_qq(model), "Choose a supported native residual type explicitly")
   } else {
     expect_equal(.residual_estimate(model), native)
   }
@@ -269,12 +267,12 @@ test_that("tinyVAST residual types are explicit and native failures are visible"
   plot <- plot_predicted_residuals(model, type = "deviance", trend = "none")
   expect_equal(unname(plot$data$predicted), unname(stats::fitted(model)))
   expect_equal(unname(plot$data$residual), unname(stats::residuals(model, type = "deviance")))
-  expect_s3_class(plot_qq(model, type = "deviance"), "ggplot")
   expect_s3_class(plot_implied_residuals(model, groups = "month", type = "deviance", min_n = 1), "ggplot")
   checks <- influ_residuals(model, nsim = 20, batch_size = 1)
   expect_equal(checks$observations$observed, data$catch)
   expect_match(checks$metadata$scheme, "conditional on fitted latent")
   expect_s3_class(plot(checks), "patchwork")
+  expect_s3_class(plot(checks, type = "qq"), "ggplot")
   native_response <- stats::residuals(model, type = "response")
   if (!length(native_response)) {
     expect_error(plot_predicted_residuals(model, type = "response"), "returned no values")

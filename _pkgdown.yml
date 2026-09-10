@@ -83,7 +83,6 @@ reference:
   - plot.influ_residuals
   - plot_implied_residuals
   - plot_predicted_residuals
-  - plot_qq
 
 - title: Bayesian model comparison
   desc: Optional summaries for fitted brms models.

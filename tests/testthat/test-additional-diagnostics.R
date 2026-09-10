@@ -141,13 +141,12 @@ test_that("bubble plots reject inputs that would silently discard groups", {
   )
 })
 
-test_that("predicted-residual and Q-Q plots support GLMs", {
+test_that("predicted-residual plots and simulation-based Q-Q support GLMs", {
   model <- bentley_fixture()$model
   expect_s3_class(plot_predicted_residuals(model, trend = "none"), "ggplot")
   expect_s3_class(plot_predicted_residuals(model, trend = "lm"), "ggplot")
-  expect_s3_class(plot_qq(model), "ggplot")
+  expect_s3_class(plot(influ_residuals(model, nsim = 20), type = "qq"), "ggplot")
   expect_error(plot_predicted_residuals(model, trend = "bad"), "must be")
-  expect_error(plot_qq(model, probs = c(0.9, 0.1)), "increasing")
 })
 
 test_that("brms comparison helpers validate their inputs", {

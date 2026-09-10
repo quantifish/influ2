@@ -71,11 +71,11 @@ package. They are not merely historical helpers:
 | `table_criterion()` | Retain the brms criteria; review interpretation of LOO, R-squared, and log likelihood. |
 | `plot_implied_residuals()` | Review the fisheries interpretation, strata threshold, residual choice, and one-standard-error bars. |
 | `plot_predicted_residuals()` | Review residual types and smooths for each intended backend. |
-| `plot_qq()` | Retain as normal-quantile screening; review the new residual article's optional DHARMa examples and their limitations. |
+| `influ_residuals()`, `plot(..., type = "qq")` | Supported simulation-based Q-Q workflow, including standalone panels. The native-residual `plot_qq()` helper was explicitly retired on 10 September 2026. |
 
 ### Accepted retirements
 
-These ten names are no longer candidates for restoration. Their frozen
+These eleven names are no longer candidates for restoration. Their frozen
 implementations and help files have been removed; they were already outside
 the runtime namespace. No compatibility wrappers or new dependencies are
 introduced.
@@ -87,6 +87,7 @@ introduced.
 | `get_influ()`, `get_influ2()`, `plot_influ()` | Consolidate on `influ()`, `influ_effects()`, and `plot(..., type = "influence")`. |
 | `plot_bayesian_cdi()`, `plot_bayesian_cdi2()` | Consolidate on `plot(..., type = "cdi")`. |
 | `influ_app()` | Remove the old brms-only Shiny launcher. A possible new model-neutral viewer is deferred, not commissioned by this decision. |
+| `plot_qq()` | Retire the native-residual Q-Q helper, without a compatibility wrapper. Use `influ_residuals(fit)` followed by `plot(checks, type = "qq")`. The simulation-based workflow supersedes rather than reproduces it; per-point posterior intervals are not required for the first release. Approved 10 September 2026. |
 
 The complete pre-triage source remains recoverable at Git commit `cf12bb6`.
 The frozen Get Started HTML and every accompanying figure remain unchanged.
@@ -253,17 +254,33 @@ clear to users and should not silently produce a different estimand.
 **Required by the maintainer, 10 September 2026:** work through all open
 issues before preparing the final CRAN submission archive. Close each with
 a linked implementation/test, or a documented maintainer-approved decision.
-Do not bulk-close issues just to empty the tracker. Five issues remain after
-closing #21 on 10 September; refresh this list before the final build to catch
+Do not bulk-close issues just to empty the tracker. Four issues remain after
+resolving #6 and #21 on 10 September; refresh this list before the final build to catch
 new issues.
 
 | Issue | Resolution work before closure |
 | --- | --- |
-| [#6: plot_qq work](https://github.com/quantifish/influ2/issues/6) | Compare the current simulated/PIT Q-Q display and reference envelopes with the original request for posterior uncertainty. Record which question each interval answers; do not equate a nominal Q-Q band with posterior point uncertainty. |
 | [#12: Add more diagnostics](https://github.com/quantifish/influ2/issues/12) | Review the ECDF/PIT examples and remaining brms predictive examples against the frozen article, then link the accepted replacements. |
 | [#13: Deprecate/consolidate old functions](https://github.com/quantifish/influ2/issues/13) | The specifically listed influence/CDI/coefficient duplicates have been retired. Verify the checked items and close with those commits; the broader remaining legacy review is still a separate release gate. |
 | [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Add or identify an explicit, executed two-region index example, for one shared model or separate fits. Demonstrate comparable reference populations, regional labelling, and uncertainty. General area integration alone does not fulfil this example request. |
 | [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Resolve the assessment-table/lognormal-parameter request together with the deliberately deferred Median/NA decision. Observation dispersion and uncertainty in an annual index are different quantities. |
+
+Issue [#6](https://github.com/quantifish/influ2/issues/6) is resolved by the
+maintainer-approved retirement of `plot_qq()` and adoption of the unified
+simulation-based diagnostic. The residual article now executes a standalone
+glmmTMB Q-Q example. The help explains the object type, reuse of stored
+results, and distinction between nominal reference bands and posterior
+intervals. Tests verify that standalone and overview Q-Q coordinates and
+rendered layers are identical, and that the retired function is absent from
+the runtime namespace. Native-residual Q-Q plots and per-point posterior
+intervals are deliberately outside the first-release API, not claimed as
+implemented. The frozen Get Started article and its figures remain unchanged.
+Local validation passed 207 focused expectations and all 3,604 full-suite
+expectations, with no failures, warnings, or skips, including visual regression.
+The residual article and affected help pages rebuilt successfully, and the
+standalone figure was visually inspected. The slight expectation-count change
+reflects removed native-Q-Q-only checks and added unified-panel parity checks,
+not a reduced coverage target.
 
 Issue [#21](https://github.com/quantifish/influ2/issues/21) is closed with the
 maintainer's agreement: the four-panel model-neutral overview supersedes the
@@ -275,7 +292,7 @@ that the original zero/max/density-bars/LOO-PIT suite was implemented verbatim;
 simulation-rank Q-Q is not LOO-PIT. Targeted predictive checks remain part of
 the separate diagnostics and legacy review.
 
-Finish the deferred legacy and median-table review, resolve the five issues
+Finish the deferred legacy and median-table review, resolve the four issues
 above, then freeze the release API.
 
 ## 6. Validate and compile the final reviewed source

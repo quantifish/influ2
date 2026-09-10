@@ -95,7 +95,8 @@
 #' @return An S3 `influ_residuals` object containing observation-level ranks,
 #'   normal scores, predictive means, year labels, Q-Q reference coordinates,
 #'   compact ECDF summaries, and explicit calculation metadata.
-#' @seealso [plot_predicted_residuals()], [plot_implied_residuals()], [plot_qq()]
+#' @seealso [plot.influ_residuals()], [plot_predicted_residuals()],
+#'   [plot_implied_residuals()]
 #' @examples
 #' if (requireNamespace("glmmTMB", quietly = TRUE)) {
 #' data(lobsters_per_pot)
@@ -105,7 +106,9 @@
 #' checks <- influ_residuals(fit, nsim = 50, seed = 42)
 #' checks
 #' plot(checks)
+#' plot(checks, type = "qq")
 #' }
+#' @md
 #' @export
 influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             batch_size = 25L, seed = 1L, grid_size = 201L,

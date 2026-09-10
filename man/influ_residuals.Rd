@@ -24,8 +24,8 @@ influ_residuals(
 \method{print}{influ_residuals}(x, ...)
 }
 \arguments{
-\item{model}{A fitted GLM, `mgcv` GAM, `glmmTMB`, `brmsfit`, `sdmTMB`, or
-single-response `tinyVAST` model. No model is fitted by this function.}
+\item{model}{A fitted GLM, \code{mgcv} GAM, \code{glmmTMB}, \code{brmsfit}, \code{sdmTMB}, or
+single-response \code{tinyVAST} model. No model is fitted by this function.}
 
 \item{data}{Original model data, retaining original row names. Usually not
 needed; supply it if a transformed time term hides the raw year column.}
@@ -46,26 +46,26 @@ choices require an explicit override. No arbitrary grouping is selected.}
 \item{level}{Pointwise predictive interval coverage for ECDFs, and nominal
 independent-uniform reference coverage for the Q-Q panel.}
 
-\item{component}{Response to diagnose: `"auto"` retains a joint model's
-`"combined"` response; `"encounter"` selects presence in supported hurdle
-models, and `"positive"` selects native sdmTMB component-2 simulations at
+\item{component}{Response to diagnose: \code{"auto"} retains a joint model's
+\code{"combined"} response; \code{"encounter"} selects presence in supported hurdle
+models, and \code{"positive"} selects native sdmTMB component-2 simulations at
 rows with observed positive catch. Separate encounter/positive fits may
 also be labelled explicitly. Unsupported component extraction fails.}
 
 \item{calibration_bins}{Requested number of roughly equal-observation-count
 probability bins. Defaults to 10; ties are never split. Near ties within
-`1e-8` are kept together, and under-supported bins are merged.}
+\code{1e-8} are kept together, and under-supported bins are merged.}
 
 \item{calibration_min_n}{Minimum observation count per probability bin,
 default 20. Smaller datasets remain a single flagged sparse bin. Scientific
 groups below this size remain visible but have no predictive envelope.}
 
 \item{calibration_groups}{Optional character vector of original-data columns
-defining a joint scientific grouping, e.g. `c("year", "target")`. These
-columns must not be defined from the outcome. Supply `data` if necessary.}
+defining a joint scientific grouping, e.g. \code{c("year", "target")}. These
+columns must not be defined from the outcome. Supply \code{data} if necessary.}
 
 \item{trial_counts}{For weighted one-column binomial GLM/GAM/glmmTMB fits,
-the name of the known trial-count column in `data`. It must equal the
+the name of the known trial-count column in \code{data}. It must equal the
 fitted trial weights. Arbitrary case weights are not treated as trials.
 Two-column success/failure responses need no override.}
 
@@ -74,70 +74,70 @@ Two-column success/failure responses need no override.}
 \item{...}{Reserved for future methods; currently unused.}
 }
 \value{
-An S3 `influ_residuals` object containing observation-level ranks,
-  normal scores, predictive means, year labels, Q-Q reference coordinates,
-  compact ECDF summaries, and explicit calculation metadata.
+An S3 \code{influ_residuals} object containing observation-level ranks,
+normal scores, predictive means, year labels, Q-Q reference coordinates,
+compact ECDF summaries, and explicit calculation metadata.
 }
 \description{
-Calculate once, then use [plot.influ_residuals()] for a four-panel overview:
+Calculate once, then use \code{\link[=plot.influ_residuals]{plot.influ_residuals()}} for a four-panel overview:
 a normal-score rank Q-Q plot, residuals against the predictive mean,
 residuals by year, and a response-adaptive calibration or distribution panel.
 }
 \details{
 Each simulation is a joint response vector, preserving the native
-  method's within-draw dependence. For observation \eqn{i}, let \eqn{L_i}
-  count simulated responses below the observation and \eqn{E_i} count ties.
-  The randomised finite-simulation rank is
-  \eqn{(L_i + U_i(E_i + 1))/(B + 1)}, with independent uniform \eqn{U_i}.
-  Its normal score is a simulation-based quantile residual, not a Pearson
-  residual or an exact analytic PIT. Randomisation includes zeros and other
-  atoms without adding arbitrary noise to catches. Increase `nsim` and
-  inspect seed sensitivity for important conclusions.
+method's within-draw dependence. For observation \eqn{i}, let \eqn{L_i}
+count simulated responses below the observation and \eqn{E_i} count ties.
+The randomised finite-simulation rank is
+\eqn{(L_i + U_i(E_i + 1))/(B + 1)}, with independent uniform \eqn{U_i}.
+Its normal score is a simulation-based quantile residual, not a Pearson
+residual or an exact analytic PIT. Randomisation includes zeros and other
+atoms without adding arbitrary noise to catches. Increase \code{nsim} and
+inspect seed sensitivity for important conclusions.
 
-  GLMs and GAMs simulate observation error at fitted parameters, including
-  fitted smooths. `glmmTMB` uses its native simulation of new random effects.
-  `sdmTMB` and `tinyVAST` use `type = "mle-eb"`: observation error conditional
-  on fitted latent effects. brms uses joint posterior predictive draws,
-  including existing group effects. These are different diagnostic targets,
-  not interchangeable uncertainty estimates. The predictive mean on the
-  horizontal axis is estimated from these same simulations, so it matches
-  their conditioning rather than mixing in differently conditioned fitted
-  values. No refitting, MCMC, or leave-one-out calculation is performed.
+GLMs and GAMs simulate observation error at fitted parameters, including
+fitted smooths. \code{glmmTMB} uses its native simulation of new random effects.
+\code{sdmTMB} and \code{tinyVAST} use \code{type = "mle-eb"}: observation error conditional
+on fitted latent effects. brms uses joint posterior predictive draws,
+including existing group effects. These are different diagnostic targets,
+not interchangeable uncertainty estimates. The predictive mean on the
+horizontal axis is estimated from these same simulations, so it matches
+their conditioning rather than mixing in differently conditioned fitted
+values. No refitting, MCMC, or leave-one-out calculation is performed.
 
-  The Q-Q band is an independent-uniform reference, not a calibrated
-  goodness-of-fit test for estimated, hierarchical, spatial, or Bayesian
-  models. Posterior predictive ranks reuse the observations and need not be
-  uniform. ECDF bands are pointwise simulated-response bands, not simultaneous
-  confidence bands. By default, zero-inflated and delta simulations describe
-  the combined response, not either component separately. Censored,
-  multivariate, quasi-family, and non-binomial weighted fits are not supported.
-  Native simulation failures are reported, not replaced by another family.
-  A positive-component check needs its own fitted component and matching
-  observations, or an explicit native component diagnostic; do not relabel
-  or subset the combined-response overview as a positive-component check.
+The Q-Q band is an independent-uniform reference, not a calibrated
+goodness-of-fit test for estimated, hierarchical, spatial, or Bayesian
+models. Posterior predictive ranks reuse the observations and need not be
+uniform. ECDF bands are pointwise simulated-response bands, not simultaneous
+confidence bands. By default, zero-inflated and delta simulations describe
+the combined response, not either component separately. Censored,
+multivariate, quasi-family, and non-binomial weighted fits are not supported.
+Native simulation failures are reported, not replaced by another family.
+A positive-component check needs its own fitted component and matching
+observations, or an explicit native component diagnostic; do not relabel
+or subset the combined-response overview as a positive-component check.
 
-  Bernoulli calibration uses native fitted probabilities, including fitted
-  effects, separately from the simulation mean used in the first three
-  panels. brms averages expected probabilities over the same posterior draw
-  identities used for simulation. Bins are fixed before simulation. Whole
-  simulated response vectors are reduced to proportions within those bins;
-  their pointwise predictive envelopes are not confidence intervals for an
-  underlying calibration curve or calibrated goodness-of-fit tests. In
-  particular, glmmTMB simulations redraw random effects although binning uses
-  fitted conditional probabilities, so the envelope need not centre on the
-  identity line. Dependence is only that represented by the native simulator;
-  no extra vessel or temporal dependence is added. Fitted-data calibration,
-  including grouped checks, is exploratory. Matching overall or annual means
-  may follow from fitted intercept/year effects and does not validate a model.
+Bernoulli calibration uses native fitted probabilities, including fitted
+effects, separately from the simulation mean used in the first three
+panels. brms averages expected probabilities over the same posterior draw
+identities used for simulation. Bins are fixed before simulation. Whole
+simulated response vectors are reduced to proportions within those bins;
+their pointwise predictive envelopes are not confidence intervals for an
+underlying calibration curve or calibrated goodness-of-fit tests. In
+particular, glmmTMB simulations redraw random effects although binning uses
+fitted conditional probabilities, so the envelope need not centre on the
+identity line. Dependence is only that represented by the native simulator;
+no extra vessel or temporal dependence is added. Fitted-data calibration,
+including grouped checks, is exploratory. Matching overall or annual means
+may follow from fitted intercept/year effects and does not validate a model.
 
-  The object retains neither the fitted model nor an observation-by-simulation
-  matrix. Working storage includes an observation-by-batch matrix and a
-  grid-by-simulation matrix, plus compact bin/group simulation summaries.
-  Native backends may allocate additional memory.
-  The ECDF grid spans observations and the first simulation batch; it is
-  deliberately compact, not an exact representation of every simulated jump.
-  For binomial GLMs and `glmmTMB`, responses are success counts (including
-  proportion responses with integer trial weights).
+The object retains neither the fitted model nor an observation-by-simulation
+matrix. Working storage includes an observation-by-batch matrix and a
+grid-by-simulation matrix, plus compact bin/group simulation summaries.
+Native backends may allocate additional memory.
+The ECDF grid spans observations and the first simulation batch; it is
+deliberately compact, not an exact representation of every simulated jump.
+For binomial GLMs and \code{glmmTMB}, responses are success counts (including
+proportion responses with integer trial weights).
 }
 \examples{
 if (requireNamespace("glmmTMB", quietly = TRUE)) {
@@ -148,8 +148,10 @@ fit <- glmmTMB::glmmTMB(
 checks <- influ_residuals(fit, nsim = 50, seed = 42)
 checks
 plot(checks)
+plot(checks, type = "qq")
 }
 }
 \seealso{
-[plot_predicted_residuals()], [plot_implied_residuals()], [plot_qq()]
+\code{\link[=plot.influ_residuals]{plot.influ_residuals()}}, \code{\link[=plot_predicted_residuals]{plot_predicted_residuals()}},
+\code{\link[=plot_implied_residuals]{plot_implied_residuals()}}
 }
