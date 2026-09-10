@@ -83,6 +83,7 @@ reference:
   desc: Inspect generalised residual patterns, grouped departures, and quantile comparisons.
   contents:
   - influ_residuals
+  - as_influ_residuals
   - plot.influ_residuals
   - plot_implied_residuals
   - plot_predicted_residuals

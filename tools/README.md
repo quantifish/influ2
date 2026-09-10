@@ -36,3 +36,10 @@ This checks every plotted image in the rendered HTML, including the frozen
 review article, against the shared lightbox script. It requires the website's
 existing xml2/jsonlite dependencies and Node.js; no extra Node packages are
 needed. The pkgdown workflow runs the same check before deployment.
+
+The frozen residual-engine regression results live in
+`tests/testthat/fixtures/residual-engine-baseline.rds`. Their developer recipe,
+`data-raw/residual-engine-baseline.R`, must run against the pre-refactor source
+`6c3d1c9`, not the current implementation. Do not regenerate golden results to
+make a changed calculation pass. The fixed inputs isolate the shared engine;
+native backend integration tests are maintained separately.

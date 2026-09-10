@@ -20,6 +20,32 @@ individual suggestions, potential Ginflu-inspired features, and related parked
 decisions. It separates discussion priorities from optional candidates; adding
 an item there does not approve implementation or make it a CRAN release gate.
 
+## Shared residual engine and external simulations, 11 September 2026
+
+The approved N01/N04/N05 increment freezes the pre-refactor numerical/RNG
+baseline, extracts the existing calculation into one shared engine, and adds
+`as_influ_residuals()` for an already generated response matrix. Its explicit
+contract covers observation IDs/order, complete joint simulation columns,
+response/time columns, components, conditioning, and binomial probabilities/
+trial counts. Predictive means come from the supplied simulations. No models
+are fitted, responses generated, rows automatically realigned, or matrices
+retained. Existing native simulation schemes and defaults are unchanged.
+
+All 4,378 local test expectations passed, with zero failures, warnings, or
+skips. Eighteen frozen engine cases matched the original source `6c3d1c9`
+exactly on the Mac; portable tests allow `1e-12` floating-point roundoff.
+Independent external-input calculations and a real glmmTMB simulation replay
+validate the new route separately from the frozen adapter fixtures. Input
+failure, RNG, component, calibration, batching, compact-retention, native
+backend, and existing visual regression tests passed.
+
+The executed lobster glmmTMB example in the residual article was rendered and
+visually inspected. All 68 plotted images on seven locally rendered articles
+passed the lightbox caption check. Archive checks, CI, and live publication
+remain to be recorded for this source revision. No CRAN or win-builder
+submission is authorised. N02 counters, N06 conditioning, further bridges,
+regional examples, and the remaining legacy/median reviews remain untouched.
+
 ## Completed: PIT displays and caption consistency, 11 September 2026
 
 The normal-score transformation is already implemented, not parked work:

@@ -32,21 +32,21 @@ used influ2 revision `7bb976c`.
 
 | ID | Candidate and status | Next decision or validation needed |
 | --- | --- | --- |
-| N01 | Preserve a numerical and random-number baseline — **Discuss next** | Capture current rank results, seeds, batching, response components, and compact object sizes before refactoring. Separate mathematical-property tests from backend/bridge integration tests. |
+| N01 | Preserve a numerical and random-number baseline — **Completed, 11 September** | Frozen results from `6c3d1c9` cover six response/adapter contracts at three batch sizes (18 cases), RNG preparation order, compact size, and full summaries. These isolate the engine; native backend tests and an actual glmmTMB replay validate integration separately. |
 | N02 | Retain below-observation and tied-value counters — **Discuss next** | Keep the two small vectors and simulation count to enable re-randomisation and simulated-range checks without saving the full response matrix. Agree field names and older-object handling. |
 | N03 | Add a bayesplot PIT plotting bridge — **Completed, 11 September** | `plot(checks, type = "pit_ecdf")` and `"pit_ecdf_diff"` reuse stored PIT values. `panels` selects and orders any four supported panels. Defaults and response checks are unchanged. Optional bayesplot supplies explicitly labelled simultaneous iid-uniform reference limits, not calibrated fitted-model tests. |
-| N04 | Extract a shared simulation-rank engine — **Discuss next** | Reuse one implementation for model adapters and external simulations. Require numerical, RNG, tie-handling, and batch-size regression checks against N01. |
-| N05 | Accept externally generated response simulations — **Discuss next** | Consider an `as_influ_residuals()` constructor for bespoke RTMB models and other simulators. Specify observation IDs/order, matrix orientation, finite values, trial counts, year/groups, response component, fitted means, and conditioning metadata. |
+| N04 | Extract a shared simulation-rank engine — **Completed, 11 September** | Native adapters and external matrices use the same calculation. Native preparation/RNG order, tie handling, sequential sums, first-batch ECDF grid, conditioning defaults, and compact retention remain unchanged against N01. |
+| N05 | Accept externally generated response simulations — **Completed, 11 September** | `as_influ_residuals()` accepts a finite observation-by-simulation matrix with exact row IDs, aligned data, explicit response/year/kind/conditioning, and optional components/groups. Predictive means come from those same simulations; binomial calibration requires original fitted probabilities and known trial counts. No new simulations, automatic realignment, retained matrices, or streaming API. |
 | N06 | Make spatial and mixed-effect conditioning explicit — **Discuss next** | Validate an sdmTMB scheme holding one sampled set of latent effects across all response-simulation batches. Inspect tinyVAST semantics separately; a common `mle-mvn` argument does not establish equivalent draws. Keep means consistent with simulations, and document glmmTMB random-effect conditioning choices. Do not change defaults without agreement. |
 | N07 | Optional response-simulation retention — **Candidate** | Agree summary-only, in-memory, and potentially on-disk modes, draw/row subsetting, and memory warnings. Disk storage does not remove the cost of materialising a full matrix for another package. Keep compact retention as the default. |
 | N08 | DHARMa and response-simulation bayesplot bridges — **Candidate** | Reuse explicit retained or supplied simulations, with response/component metadata. Let `DHARMa::createDHARMa()` calculate its own residuals rather than replacing them with influ2 ranks. Test supported dependency interfaces, make dependencies optional, and warn before large exports. Coordinate with G02. |
 | N09 | Clarify finite-simulation calibration and diagnostic targets — **Discuss next** | Explain that randomised ranks are exactly uniform under exchangeability of the observation and simulations, not automatically for every fitted model. Distinguish analytic PIT, fitted-data simulation ranks, posterior predictive checks, and LOO-PIT. Simultaneous bands alone do not correct fitting effects or spatial dependence. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
-Suggested discussion sequence: N01 baseline; N02 counters;
-N04 shared engine and N05 external inputs; N06 conditioning; then N07 retention
-and N08 remaining bridges. Apply N09 throughout. This is a proposed order, not
-authorisation to start those changes.
+Next suggested discussion: N06 conditioning, applying N09 throughout; then
+consider N07 retention and N08 remaining bridges. N02 counters were passed
+over and remain unimplemented. This is a proposed order, not authorisation to
+start further changes.
 
 Implementation review, 11 September: the maintainer approved N03 and arbitrary
 four-panel selection, retaining `c("qq", "fitted", "year", "auto")` as the
@@ -60,6 +60,20 @@ The article has executed examples. Simulation-counter retention (N02) was
 passed over, not implemented or removed from the candidate list. N09 remains
 a broader documentation/validation consideration; simultaneous bands alone
 do not address fitting effects or spatial dependence.
+
+Shared-engine/external-input review, 11 September: the maintainer approved
+N01, N04, and N05 as the next increment. The 18 frozen results matched exactly
+on the Mac after extraction; portable regression tests allow only a `1e-12`
+floating-point tolerance. The external-input tests independently reconstruct
+ranks, means, response ECDF intervals, and binomial calibration. They cover
+alignment/support failures, combined versus positive components, RNG restoration,
+batch invariance of ranks/means, and non-retention. A recorded actual glmmTMB
+simulation sequence produces identical diagnostic tables via both routes.
+All 4,378 full-suite expectations passed locally, with zero failures, warnings,
+or skips. The residual article has an executed lobster glmmTMB example and a
+separate encounter-calibration recipe. This does not change model-specific
+conditioning defaults or establish universal fitted-model PIT calibration.
+Archive checks, CI, and publication are recorded separately in the release review.
 
 ## Ideas to consider from generalised_influ / Ginflu
 

@@ -158,6 +158,7 @@ plot(checks, type = "distribution", response_scale = "log1p")
 }
 }
 \seealso{
+\code{\link[=as_influ_residuals]{as_influ_residuals()}} for externally generated response simulations;
 \code{\link[=plot.influ_residuals]{plot.influ_residuals()}}, \code{\link[=plot_predicted_residuals]{plot_predicted_residuals()}},
 \code{\link[=plot_implied_residuals]{plot_implied_residuals()}}
 }

@@ -1,5 +1,17 @@
 # influ2 1.1.0
 
+* Added `as_influ_residuals()` for externally generated response simulations.
+  It requires explicit observation alignment, response kind, time column,
+  and simulation conditioning, and returns the same compact diagnostic used
+  by the standard plots and residual helpers. Bernoulli/binomial calibration
+  requires original fitted probabilities and known trial counts. Combined
+  and component inputs are never silently converted or filtered.
+* Extracted one shared residual-summary engine, protected by a frozen
+  pre-refactor numerical/RNG baseline and native replay tests. Existing fitted
+  model defaults and calculations are unchanged. The supplied-matrix route
+  does not simulate, refit, retain the full matrix, or add a streaming interface.
+  The residual article demonstrates it with the fitted lobster glmmTMB model.
+
 * Added optional standalone PIT ECDF and ECDF-difference panels through
   bayesplot, reusing stored PIT values without additional response simulation.
   Their simultaneous iid-uniform reference limits are labelled as exploratory,

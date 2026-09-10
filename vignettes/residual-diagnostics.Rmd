@@ -54,6 +54,8 @@ without turning individual plots or p-values into automatic selection rules.
 an `influ_diag` summary: the latter deliberately does not retain all
 observation-level predictions and residuals. The unified `plot()` method
 then operates on the calculated `influ_residuals` object.
+If you already have response simulations, `as_influ_residuals()` provides a
+second route to that same object; see [Using simulations generated elsewhere](#using-simulations-generated-elsewhere).
 
 ## Fit competing lobster models
 
@@ -1035,6 +1037,110 @@ plot(nb_checks, panels = c("qq", "fitted", "year", "pit_ecdf"))
 That last layout omits the complementary response check, so inspect it
 separately with `plot(nb_checks, type = "distribution")` when needed. Selecting
 panels does not change the fitted model, saved residuals, or simulation scheme.
+
+## Using simulations generated elsewhere
+
+You may already have simulations from a bespoke model, a collaborator's
+workflow, or a native package call. `as_influ_residuals()` calculates the same
+compact residual diagnostic from those supplied responses. It does not fit a
+model, run MCMC, or generate more responses. Both entry points use the same
+rank, predictive-mean, ECDF, and calibration calculation engine.
+
+The matrix must have **one observation per row and one complete joint
+simulation per column**. Supply matching observation data, a response column,
+an explicit year column, a response kind, and a description of the simulation
+conditioning. Matrix row names must exactly match the data's row names, or a
+declared `observation_id` column, in the same order. Missing, duplicated, or
+reordered IDs fail explicitly. Nothing is silently transposed or realigned.
+The labels must come from verified native output order; assigning plausible
+row names cannot establish that the underlying observations really match.
+
+For a worked example, reuse the fitted lobster glmmTMB model from the start of
+this article. The first call below generates 100 whole-response replicates
+using glmmTMB itself. It simulates observation variation and redraws the
+monthly random effects at fitted parameters. The constructor then only
+summarises that existing matrix:
+
+```{r residual-external-inputs, eval=has_glmmTMB}
+set.seed(20260912)
+response_simulations <- as.matrix(simulate(lobster_nb_mixed, nsim = 100))
+fitted_rows <- rownames(model.frame(lobster_nb_mixed))
+data_rows <- match(fitted_rows, rownames(lobsters_per_pot))
+stopifnot(!anyNA(data_rows), nrow(response_simulations) == length(fitted_rows))
+simulation_data <- lobsters_per_pot[data_rows, , drop = FALSE]
+# Native simulate() follows the fitted observation order for this count model.
+rownames(response_simulations) <- fitted_rows
+
+external_checks <- as_influ_residuals(
+  response_simulations, simulation_data,
+  response = "lobsters", year = "year", response_kind = "distribution",
+  conditioning = "Fitted parameters; monthly random effects resimulated",
+  groups = "month", batch_size = 25, seed = 41
+)
+external_checks
+```
+
+```{r residual-external-overview, eval=has_glmmTMB, fig.width=11, fig.height=8, fig.cap="The standard four-panel diagnostic calculated from 100 externally generated whole-response simulations of the fitted lobster glmmTMB model. Each native simulation includes newly simulated monthly random effects and observation variation at fitted parameters. The constructor generates no further responses, and its predictive means come from this same supplied matrix. These are different replicates from the earlier overview, so their ranks and Monte Carlo summaries need not match it exactly. The normal-score PIT panels and response ECDF retain their usual exploratory interpretation; the ribbons are not calibrated mixed-model tests.", fig.alt="Four-panel residual overview using externally supplied glmmTMB lobster simulations."}
+plot(external_checks, response_scale = "log1p")
+```
+
+The returned object also works with the standalone Q-Q/PIT views and the
+existing residual helpers. The grouping columns must be retained during
+calculation, as above:
+
+```{r residual-external-reuse, eval=FALSE}
+plot(external_checks, type = "qq")
+plot(external_checks, type = "pit_ecdf_diff")
+plot_predicted_residuals(external_checks)
+plot_implied_residuals(external_checks, groups = "month")
+```
+
+The constructor processes the supplied matrix in batches and does not retain
+it, the fitted model, or a function capturing either. The matrix you created
+still occupies memory until you release it. This initial interface is not an
+on-disk reader or streaming simulator. For large supported fits, the native
+`influ_residuals()` route can avoid creating the full response matrix in the
+first place. Plotting an existing diagnostic repeats neither calculation.
+
+For a fixed matrix, the seed controls tie randomisation, not response
+simulation. Ranks and predictive means are unchanged by the calculation batch
+size; the compact response ECDF grid can change because it includes the first
+batch's range. A fitted-model call may consume random numbers while selecting
+posterior draws before randomising ranks, so the same seed alone does not
+guarantee the same ranks across the two entry points.
+
+### Response components and encounter probabilities
+
+The declared response kind determines which response check is available; it
+is not guessed from a sample of zeros and ones. Use `"combined"` for a joint
+delta/hurdle/zero-inflated response. To diagnose a positive component, supply
+its own observations and complete component simulations, and declare
+`component = "positive"`. The constructor never filters simulated zeros or
+converts a combined matrix into a positive-component diagnostic. The caller
+must verify that the declared component and simulation target are correct.
+
+Bernoulli and known-trial binomial inputs require an additional column of
+**original fitted success probabilities**, not the average of simulated zero/
+one responses. Record their conditioning separately from the response
+simulations. For example, given already aligned encounter data and simulations:
+
+```{r residual-external-calibration, eval=FALSE}
+encounter_checks <- as_influ_residuals(
+  simulated_presence, matched_data,
+  response = "present", year = "year", response_kind = "bernoulli",
+  component = "encounter", probability = "fitted_probability",
+  conditioning = "Observation error at fitted parameters and smooths",
+  probability_conditioning = "Fitted parameters and smooths",
+  calibration_groups = c("year", "target")
+)
+plot(encounter_checks)
+```
+
+For `response_kind = "grouped_binomial"`, supply integer success counts and a
+`trial_counts` column containing the known numbers of trials. Its default
+response panel remains the ECDF, with calibration available explicitly. No
+case weights or area weights are interpreted as trials. The help page for
+`as_influ_residuals()` sets out the full input and alignment contract.
 
 ## Connect model checks back to the index
 
