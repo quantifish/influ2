@@ -1,3 +1,42 @@
+## Bounded coverage and logo review: 10 September 2026
+
+Code revision: `0c76b4043120a810d3eb75cd1203ddabd60fef2c`.
+
+Restored the logo's plain plot frame, without axes, labels, or a grid.
+Added 189 test expectations across comparison rescaling, step contracts,
+uncertainty, and prediction boundaries. These exposed and now protect a
+brms distributional-formula reference-predictor fix: an absent `re` field
+must not partially match `resp`. No API, dependency, or coverage-exclusion
+changes were needed.
+
+Local and GitHub coverage are both 92.91%, up from 91.10%; Codecov's badge
+rounds this to 93%. All 3,476 expectations in 215 local test blocks passed,
+including visual regression, with no failures, warnings, or skips. GitHub
+coverage run 34420248023 passed the same 3,476 expectations and uploaded
+successfully. Formula-parser tests use brms itself, with posterior prediction
+and convergence summaries mocked only at their native interfaces.
+
+Fresh validation archive:
+`/private/tmp/influ2-framed-coverage.Mizg6S/influ2_1.1.0.tar.gz`.
+SHA256: `6a82dfc1ce50c1b83ffe877a6688fe9c9dda35e5630bc9766b4bd691876743e6`.
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with
+zero errors, zero warnings, and one NOTE for the new submission and optional
+tinyVAST repository. All six vignettes rebuilt. Archive tests passed 3,463
+expectations; five visual groups skipped in CRAN mode passed separately above.
+The archive contains the updated help logo and all four new test files.
+
+The full pkgdown build (34420248014) and Pages deployment (34420762929)
+passed. Live logo/icon checksums match the reviewed assets, and the framed
+logo and 93% badge were visually checked on the published homepage. The
+previous intentionally cancelled pkgdown run is superseded by this success.
+Ubuntu-release and Windows-release both passed for this code revision in
+R-CMD-check run 34420248025. Subsequent validation-record edits are excluded
+from the package archive and do not alter the checked packaged source.
+The frozen legacy article remains unchanged. Five issues, the legacy-helper
+review, and the Median/NA table decision remain release gates. This is a
+validation candidate, not the final submission archive; no CRAN or
+win-builder upload was made.
+
 ## Repository and coverage review: 10 September 2026
 
 Code revision: `8acba31427fee405e200a800b5b859af0e1b8e15`.

@@ -419,6 +419,19 @@ Coverage and test artefacts are in
 `/private/tmp/influ2-framed-coverage.Mizg6S/`. The final release archive must
 still be rebuilt and checked after the deferred release decisions.
 
+Validation for source `0c76b40`: macOS R 4.6.1 `R CMD check --as-cran
+--no-manual` passed with zero errors, zero warnings, and one NOTE for the
+new submission and optional tinyVAST repository. All six vignettes rebuilt.
+The source archive, checksum, and check boundary are recorded in
+`cran-comments.md`. GitHub coverage run 34420248023 confirmed 92.91% and
+all 3,476 expectations passing; the live badge rounds to 93%. Full pkgdown
+run 34420248014 and Pages deployment 34420762929 passed. The live framed
+logo and representative icons match the local assets, and the public homepage
+was visually checked. The earlier cancelled pkgdown run is now superseded.
+Ubuntu-release and Windows-release both passed for the same source in
+R-CMD-check run 34420248025. The follow-up validation-record commit changes
+only excluded development records; no additional matrix run is needed.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration
