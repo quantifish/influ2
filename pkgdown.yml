@@ -6,9 +6,10 @@ articles:
   cpue-indices: cpue-indices.html
   hurdle: hurdle.html
   influ2: influ2.html
+  model-comparison: model-comparison.html
   residual-diagnostics: residual-diagnostics.html
   spatial-spatiotemporal: spatial-spatiotemporal.html
-last_built: 2026-09-10T03:20Z
+last_built: 2026-09-10T05:07Z
 urls:
   reference: https://www.quantifish.co.nz/influ2/reference
   article: https://www.quantifish.co.nz/influ2/articles

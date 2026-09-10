@@ -84,14 +84,15 @@ comparisons.
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
   : Plot predicted values against residuals
 
-## Bayesian model comparison
+## Model comparison
 
-Optional summaries for fitted brms models.
+Model-specific likelihood and Bayesian criteria, with explicit
+comparison safeguards.
 
 - [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md)
   : Summarise Bayesian R-squared for brms models
 - [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
-  : Compare brms model criteria
+  : Summarise criteria across CPUE model types
 
 ## Data
 

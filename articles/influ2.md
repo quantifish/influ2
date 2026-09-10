@@ -26,6 +26,13 @@ diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.m
 article checks that complementary question using the same simulated
 lobster data.
 
+The [Model
+comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.md)
+article summarises native likelihood and Bayesian criteria across model
+types, including conditional AIC where supported. Those scores assess
+fitted/predictive performance, not the robustness of the abundance index
+by themselves.
+
 ## A simulated lobster CPUE example
 
 The main examples use the simulated `lobsters_per_pot` data supplied
@@ -572,9 +579,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10528749
+#>         spatial_field conditional:latent_fields                      0.10520110
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03084851
+#>  spatiotemporal_field conditional:latent_fields                      0.03150923
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -641,11 +648,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                       0.2437404
-#>  spatiotemporal_field conditional:latent_fields                       0.0515625
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.08243912
 #>  level_at_maximum
 #>                 4
-#>                 2
+#>                 4
 ```
 
 ``` r

@@ -973,10 +973,14 @@ fixtures in influ2 retain joint draws for influence calculations but
 omit the Stan state needed by native prediction and residual methods.
 They cannot support these residual helpers,
 [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md),
-or
+or the Bayesian calculations in
 [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md).
-Those two comparison helpers remain brms-specific; they are not generic
-frequentist model-selection tables.
+These require complete brms fits.
+[`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
+also supports model-specific frequentist likelihood criteria, without
+treating those criteria as interchangeable with Bayesian scores; see
+[Model
+comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.md).
 
 brms’s native residual summaries depend on its prediction method;
 Pearson residuals are based on predictive dispersion, not simply the GLM

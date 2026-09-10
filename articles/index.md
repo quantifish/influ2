@@ -11,6 +11,8 @@
   indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md):
 - [Residual
   diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md):
+- [Model
+  comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.md):
 - [Bentley
   validation](https://www.quantifish.co.nz/influ2/articles/bentley-validation.md):
 - [Hurdle and zero-inflated

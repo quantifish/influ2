@@ -41,6 +41,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -1052,10 +1053,11 @@ itself provide an OSA interface.</p>
 <code>brmsfit</code></strong>. The compact example fixtures in influ2
 retain joint draws for influence calculations but omit the Stan state
 needed by native prediction and residual methods. They cannot support
-these residual helpers, <code><a href="../reference/get_bayes_R2.html">get_bayes_R2()</a></code>, or
-<code><a href="../reference/table_criterion.html">table_criterion()</a></code>. Those two comparison helpers remain
-brms-specific; they are not generic frequentist model-selection
-tables.</p>
+these residual helpers, <code><a href="../reference/get_bayes_R2.html">get_bayes_R2()</a></code>, or the Bayesian
+calculations in <code><a href="../reference/table_criterion.html">table_criterion()</a></code>. These require complete
+brms fits. <code><a href="../reference/table_criterion.html">table_criterion()</a></code> also supports model-specific
+frequentist likelihood criteria, without treating those criteria as
+interchangeable with Bayesian scores; see <a href="model-comparison.html">Model comparison</a>.</p>
 <p>brms’s native residual summaries depend on its prediction method;
 Pearson residuals are based on predictive dispersion, not simply the GLM
 formula. Posterior predictive checks (<code><a href="https://mc-stan.org/bayesplot/reference/pp_check.html" class="external-link">brms::pp_check()</a></code>) can
