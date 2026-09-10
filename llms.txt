@@ -213,8 +213,6 @@ comparisons.
   : Plot implied residual coefficients
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
   : Plot predicted values against residuals
-- [`plot_qq()`](https://www.quantifish.co.nz/influ2/reference/plot_qq.md)
-  : Quantile-quantile plot of model residuals
 
 ## Bayesian model comparison
 

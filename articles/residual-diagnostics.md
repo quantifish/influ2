@@ -22,11 +22,14 @@ plots or p-values into automatic selection rules.
 | [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md) then [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | How do the overall response distribution, fitted-value patterns, and fishing-year residual distributions compare with model simulations? | Simulation conditioning differs between backends; the panels are exploratory, not a calibrated pass/fail test. |
 | [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md) | Does residual behaviour change with the fitted mean? | Uses the fitted model’s native residual definition; it is not a predictive interval plot. |
 | [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | Do groups suggest departures from the common year effect? | An exploratory CPUE display, not a fitted interaction or a distributional goodness-of-fit test. |
-| [`plot_qq()`](https://www.quantifish.co.nz/influ2/reference/plot_qq.md) | How does the residual distribution compare with normal quantiles? | Count-model Pearson and deviance residuals need not be normal, even under a suitable model. |
+| `plot(checks, type = "qq")` | How do simulation-based quantile residuals compare with their normal reference? | Uses a precomputed `influ_residuals` object; the ribbon is a nominal reference, not a calibrated model-specific test. |
 
-These functions take a fitted model, not an `influ_diag` summary: the
-latter deliberately does not retain all observation-level predictions
-and residuals.
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+and the native-residual helpers take a fitted model, not an `influ_diag`
+summary: the latter deliberately does not retain all observation-level
+predictions and residuals. The unified
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) method then
+operates on the calculated `influ_residuals` object.
 
 ## Fit competing lobster models
 
@@ -173,6 +176,46 @@ data. Compare all four panels with the preceding model; resimulated
 monthly effects contribute to both displays, and the reference ribbons
 are not automatic model-selection thresholds.
 
+### A standalone Q-Q plot
+
+Each panel can also be drawn separately. Reuse the `influ_residuals`
+object calculated above to show exactly the Q-Q panel from the
+four-panel overview, without refitting the model or repeating its
+simulations:
+
+``` r
+
+plot(nb_checks, type = "qq")
+```
+
+![Standalone normal-score simulation-rank Q-Q plot for the
+negative-binomial glmmTMB lobster model, with a dashed identity line and
+a grey reference
+ribbon.](residual-diagnostics_files/figure-html/residual-standalone-qq-1.png)
+
+Standalone simulation-based Q-Q diagnostic for the negative-binomial
+glmmTMB lobster model. The points and ribbon are identical to the Q-Q
+panel in its four-panel overview. The grey ribbon is a nominal 95%
+pointwise independent-uniform reference, not posterior uncertainty
+around individual points or a calibrated goodness-of-fit threshold.
+
+The result is a ggplot object, so it can be customised and saved in the
+usual way. This method is documented in
+[`?plot.influ_residuals`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md);
+[`?influ_residuals`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+explains the simulation calculation and includes the standalone plotting
+call. It takes an `influ_residuals` result, not an `influ_diag`
+influence summary.
+
+The earlier influ2 `plot_qq()` function has been retired. It compared
+native model residuals, usually Pearson residuals, with normal
+quantiles. The unified simulation-based diagnostic supersedes that
+workflow; it does not reproduce those native residuals. In particular,
+count-model Pearson residuals need not be normal even under a suitable
+model. The grey reference ribbon above is not a posterior credible
+interval for each point; those intervals are not part of this display.
+No compatibility wrapper for `plot_qq()` is retained.
+
 ### Automatic time selection
 
 `year`, `yr`, `fy`, `fishing_year`, `Fishing.Year`, and similar
@@ -268,10 +311,12 @@ spanning the observations and first simulation batch, rather than
 storing every simulated step. Replotting `nb_checks` is immediate and
 performs no new simulations.
 
-The existing helpers below remain available.
-[`plot_qq()`](https://www.quantifish.co.nz/influ2/reference/plot_qq.md)
-deliberately retains its older native-residual interpretation; it has
-not silently changed meaning.
+The native-residual helpers
+[`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
+and
+[`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+remain available for their separate questions. Q-Q plots use the unified
+simulation-based workflow shown above.
 
 ## Encounter calibration
 
@@ -641,29 +686,6 @@ aligns omitted, subsetted, or reordered rows with the fitted model, and
 rejects data whose identity cannot be verified. This prevents residuals
 from being assigned silently to the wrong year or group.
 
-## Normal Q-Q plots: useful, but not universal
-
-``` r
-
-plot_qq(lobster_nb, type = "pearson")
-```
-
-![A normal quantile comparison of the negative-binomial model's Pearson
-residuals, with a quartile reference
-line.](residual-diagnostics_files/figure-html/residual-normal-qq-1.png)
-
-Normal Q-Q plot of Pearson residuals from the full negative-binomial
-model. Curvature is not, by itself, evidence against the count model:
-these residuals are not expected to be normally distributed.
-
-The reference line in
-[`plot_qq()`](https://www.quantifish.co.nz/influ2/reference/plot_qq.md)
-passes through the chosen quantiles (the first and third quartiles by
-default). Its `probs` argument does not define a confidence envelope.
-Normal residual Q-Q plots are most natural for Gaussian errors; for
-counts, zeros, skewed positive responses, and mixtures, use a
-distribution-aware check as well.
-
 ## Simulation-based checks with DHARMa
 
 DHARMa supplies simulation-based quantile residuals and associated
@@ -860,19 +882,22 @@ examples](https://sdmtmb.github.io/sdmTMB/articles/residual-checking.html).
 For a single-response model such as `pcod_model` in [Spatial and
 spatiotemporal
 diagnostics](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.md),
-the native normal-scale PIT residuals can be displayed with influ2:
+influ2’s unified Q-Q workflow is:
 
 ``` r
 
-set.seed(41)
-plot_qq(pcod_model, type = "mle-mvn") +
-  geom_abline(intercept = 0, slope = 1, colour = "purple4") +
-  labs(subtitle = "Purple: standard-normal identity; grey: fitted quartile line")
+pcod_checks <- influ_residuals(pcod_model, nsim = 250, seed = 41)
+plot(pcod_checks, type = "qq")
 ```
 
-Unlike the fitted quartile line, the identity reference also reveals
-location and scale departures from the expected standard-normal PIT
-distribution.
+This simulates responses conditional on the fitted fields (`"mle-eb"`),
+as recorded in `pcod_checks$metadata$scheme`. It is an exploratory
+conditional check, **not** sdmTMB’s native `"mle-mvn"` PIT residual
+calculation or a claim that the two procedures have the same
+calibration. The identity reference preserves location and scale
+departures instead of fitting a quartile line through the points. The
+native alternative remains available through the sdmTMB/DHARMa workflow
+below.
 
 sdmTMB also has a dedicated DHARMa bridge. The following recipe reuses
 an already fitted model; it is not evaluated again in this article.
@@ -893,7 +918,7 @@ DHARMa::plotQQunif(
 The [sdmTMB
 bridge](https://sdmtmb.github.io/sdmTMB/reference/dharma_residuals.html)
 can check the combined delta/hurdle response. Its analytical residuals
-instead select a component. influ2’s three generic residual helpers
+instead select a component. influ2’s two native-residual helpers
 currently reject sdmTMB delta fits: pairing occurrence residuals with
 unconditional fitted catch would be misleading. Use the native
 component-specific workflow and matching predictions instead. Native
@@ -904,16 +929,21 @@ replace it with another residual type.
 
 The tinyVAST 1.6.2 interface provides deviance and response residual
 types, not Pearson residuals or an OSA convenience interface. In checks
-against that version, single-response deviance residuals worked with all
-three influ2 helpers. Its native response method returned an empty
-vector, so influ2 now reports that failure clearly rather than drawing
-an empty diagnostic.
+against that version, single-response deviance residuals worked with
+influ2’s predicted- and implied-residual helpers. Its native response
+method returned an empty vector, so influ2 now reports that failure
+clearly rather than drawing an empty diagnostic.
 
 ``` r
 
 plot_predicted_residuals(tiny_model, type = "deviance")
-plot_qq(tiny_model, type = "deviance")
+tiny_checks <- influ_residuals(tiny_model, nsim = 250, seed = 41)
+plot(tiny_checks, type = "qq")
 ```
+
+The Q-Q plot uses simulated-response ranks conditional on the fitted
+fields, not the deviance residuals used by the preceding native-residual
+plot.
 
 The [tinyVAST simulation
 interface](https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html)

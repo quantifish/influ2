@@ -83,3 +83,12 @@ orientation and are explicitly labelled as such. Short term labels
 the lower composition axis. The influence panel's focus labels are on
 the right, with the same level ordering as the composition. The
 proportion legend has one column and at most four reference bubbles.
+
+## See also
+
+[`influ_residuals`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+and
+[`plot.influ_residuals`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
+for the separate residual overview and standalone
+`plot(checks, type = "qq")` diagnostic. Residual plots require an
+`influ_residuals` object, not an `influ_diag`.

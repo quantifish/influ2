@@ -1,7 +1,8 @@
 # Plot a four-panel CPUE residual diagnostic
 
-Plot a precomputed \[influ_residuals()\] result without simulation or
-refitting.
+Plot a precomputed
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+result without simulation or refitting.
 
 ## Usage
 
@@ -24,21 +25,21 @@ autoplot(object, ...)
 
 - x, object:
 
-  An \`influ_residuals\` object.
+  An `influ_residuals` object.
 
 - type:
 
-  The four-panel \`"overview"\` (default), or one of \`"qq"\`,
-  \`"fitted"\`, \`"year"\`, \`"distribution"\`, \`"calibration"\`, and
-  \`"calibration_groups"\`. Grouped calibration shows
+  The four-panel `"overview"` (default), or one of `"qq"`, `"fitted"`,
+  `"year"`, `"distribution"`, `"calibration"`, and
+  `"calibration_groups"`. Grouped calibration shows
   observed-minus-predicted proportions for the scientific groups chosen
   during calculation.
 
 - response_scale:
 
-  Scale for the response ECDF: \`"identity"\` or \`"log1p"\`, which
-  retains zero catches. The latter requires non-negative responses and
-  is labelled explicitly.
+  Scale for the response ECDF: `"identity"` or `"log1p"`, which retains
+  zero catches. The latter requires non-negative responses and is
+  labelled explicitly.
 
 - ...:
 
@@ -46,13 +47,12 @@ autoplot(object, ...)
 
 - response_diagnostic:
 
-  Fourth overview panel: \`"auto"\` chooses probability calibration for
+  Fourth overview panel: `"auto"` chooses probability calibration for
   Bernoulli/encounter responses and the existing ECDF for other families
-  (including grouped binomial and combined catch). \`"distribution"\`
-  and \`"calibration"\` explicitly select a panel. Explicit \`type\`
-  takes precedence. A calibration panel always uses probability axes,
-  never \`response_scale\`. It requires stored fitted-probability
-  summaries.
+  (including grouped binomial and combined catch). `"distribution"` and
+  `"calibration"` explicitly select a panel. Explicit `type` takes
+  precedence. A calibration panel always uses probability axes, never
+  `response_scale`. It requires stored fitted-probability summaries.
 
 ## Value
 
@@ -73,7 +73,8 @@ distinct fitted means.
 The Q-Q envelope is a pointwise independent-uniform reference, not a
 model-specific calibration. The ECDF envelope is a pointwise predictive
 band on a compact grid. Neither envelope provides an automatic pass/fail
-test. Read the calculation metadata and \[influ_residuals()\]
+test. Read the calculation metadata and
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
 limitations. Calibration uses fixed, roughly equal-count bins of
 original fitted probabilities. Grey ranges are pointwise predictive
 envelopes for observed bin proportions, not confidence intervals for a
@@ -81,7 +82,23 @@ calibration curve. Point size represents observation count; crosses
 identify sparse support. Grouped binomial calibration is available
 explicitly with known trials; it pools successes/trials and
 trial-weights predicted probabilities. Set bin/group options in
-\[influ_residuals()\], not while plotting: discarded simulations cannot
-be re-binned. Older objects without response metadata retain the
-distribution overview with an informative warning. Explicit distribution
-plots remain unchanged. Missing envelopes are not fabricated.
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md),
+not while plotting: discarded simulations cannot be re-binned. Older
+objects without response metadata retain the distribution overview with
+an informative warning. Explicit distribution plots remain unchanged.
+Missing envelopes are not fabricated.
+
+Use `plot(x, type = "qq")` to draw exactly the Q-Q panel from the
+overview on its own. Here `x` must be the result of
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md),
+not an `influ_diag` influence summary. The returned ggplot reuses stored
+results; no simulations or model fits are repeated. This is the
+supported Q-Q workflow, replacing the retired `plot_qq()`
+native-residual helper. It is a different diagnostic, not a reproduction
+of that helper's residuals. The Q-Q ribbon here is not posterior
+uncertainty around individual points.
+
+## See also
+
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+for a worked calculation and standalone Q-Q example.
