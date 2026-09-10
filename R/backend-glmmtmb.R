@@ -13,6 +13,20 @@
   "single"
 }
 
+.glmmTMB_reference_matrix <- function(model, reference_data, component) {
+  # model.matrix.glmmTMB() returns the fitted design and ignores newdata.
+  # Use the native prediction setup to preserve contrasts, polynomial bases,
+  # and row order for both the conditional and zero-probability components.
+  prediction <- stats::predict(model, newdata = reference_data, debug = TRUE)
+  rows <- prediction$data.tmb$whichPredict
+  design <- prediction[[paste0(component, "List")]]$X
+  if (is.null(design) || length(rows) != nrow(reference_data) ||
+      anyNA(rows) || any(rows < 1L | rows > nrow(design))) {
+    stop("Could not construct the glmmTMB fixed-effect reference matrix.", call. = FALSE)
+  }
+  design[rows, , drop = FALSE]
+}
+
 .glmmTMB_component_diag <- function(model, data, focus, component,
                                     family_spec, weights, uncertainty, retain,
                                     probs, ndraws, seed, draws_path,
@@ -38,7 +52,7 @@
   )
   reference_X <- if (is.null(reference_data)) NULL else {
     .align_reference_matrix(
-      stats::model.matrix(model, newdata = reference_data, component = component),
+      .glmmTMB_reference_matrix(model, reference_data, component),
       prepared$X
     )
   }
@@ -88,9 +102,8 @@
   term_columns <- term_columns[lengths(term_columns) > 0L]
   weights <- .resolve_influ_weights(data, weights)
   focus_info <- .focus_info(data, focus)
-  reference_X <- if (is.null(reference_data)) X else stats::model.matrix(
-    model, newdata = reference_data, component = component
-  )
+  reference_X <- if (is.null(reference_data)) X else .align_reference_matrix(
+    .glmmTMB_reference_matrix(model, reference_data, component), X)
   reference_weights <- if (is.null(reference_data)) {
     weights
   } else {

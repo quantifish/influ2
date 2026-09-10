@@ -1,5 +1,12 @@
 # influ2 1.1.0
 
+* Fixed glmmTMB influence diagnostics with explicit reference grids: the
+  fitted model-matrix method ignores `newdata`, so fixed-effect designs now
+  come from the native prediction setup. Regression tests cover different
+  and equal-sized reference grids, polynomial bases, zero-inflation terms,
+  and random-effect alignment. `cpue_index()` uses a separate prediction
+  path and is unchanged.
+
 * Fixed reference-predictor checks for brms distributional terms without
   random effects, where partial field matching could interrupt CPUE-index
   calculations. Added numerical and contract tests for index comparisons,

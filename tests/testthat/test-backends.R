@@ -313,6 +313,21 @@ test_that("sdmTMB exposes fixed and spatiotemporal influence components", {
   diagnostic <- influ(model, focus = "year", ndraws = 30, seed = 1)
 
   expect_s3_class(diagnostic, "influ_diag_sdmtmb")
+  reference <- pcod_2011[as.integer(seq(1, nrow(pcod_2011), length.out = 30)), ]
+  preview <- influ(model, focus = "year", reference_data = reference, uncertainty = "none")
+  observed <- predict(model)
+  projected <- predict(model, newdata = reference)
+  for (term in c("spatial_field", "spatiotemporal_field")) {
+    # Sum the two separately labelled fields and compare their link-scale
+    # contrasts with the native total random-field prediction.
+    expect_true(term %in% preview$influence$term)
+  }
+  fields <- subset(preview$influence, scale == "link" & term %in%
+    c("spatial_field", "spatiotemporal_field"))
+  actual <- tapply(fields$estimate, fields$level, sum)
+  expected <- tapply(observed$est_rf, pcod_2011$year, mean) - mean(projected$est_rf)
+  expect_equal(actual, expected, tolerance = 1e-7)
+  expect_true(all(is.na(fields$std_error)))
   expect_true(any(diagnostic$influence$term == "spatial_field"))
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
   expect_true(all(is.finite(subset(
@@ -420,6 +435,19 @@ test_that("tinyVAST exposes fitted spatial and spatiotemporal components", {
   diagnostic <- influ(model, focus = "year", ndraws = 30, seed = 1)
 
   expect_true(any(diagnostic$influence$term == "spatial_field"))
+  reference <- data[c(3, 17, 42, 61, 79, 99), ]
+  preview <- influ(model, focus = "year", reference_data = reference, uncertainty = "none")
+  for (term in c("spatial_field", "spatiotemporal_field")) {
+    what <- if (term == "spatial_field") "pomega1_g" else "pepsilon1_g"
+    observed <- as.numeric(tinyVAST::project(model, newdata = data, what = what,
+      extra_times = numeric(0), future_var = FALSE, past_var = FALSE, parm_var = FALSE))
+    projected <- as.numeric(tinyVAST::project(model, newdata = reference, what = what,
+      extra_times = numeric(0), future_var = FALSE, past_var = FALSE, parm_var = FALSE))
+    effect <- preview$influence[preview$influence$term == term & preview$influence$scale == "link", ]
+    expected <- tapply(observed, data$year, mean) - mean(projected)
+    expect_equal(effect$estimate, as.numeric(expected[effect$level]), tolerance = 1e-8)
+    expect_true(all(is.na(effect$std_error)))
+  }
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
   expect_true(any(grepl("latent_fields$", diagnostic$influence$component)))
   expect_true(all(is.finite(subset(

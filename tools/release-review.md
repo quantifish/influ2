@@ -432,6 +432,39 @@ Ubuntu-release and Windows-release both passed for the same source in
 R-CMD-check run 34420248025. The follow-up validation-record commit changes
 only excluded development records; no additional matrix run is needed.
 
+### Original logo restoration and 95% coverage target: 10 September 2026
+
+The maintainer increased the coverage target to 95% after the previous tests
+found a brms bug. This supersedes the earlier bounded-coverage stopping point.
+Added 127 expectations in eight new blocks and extended existing spatial
+tests. The complete local suite passes 3,603 expectations in 223 blocks, with
+zero failures, warnings, or skips, including visual regression. Instrumented
+coverage is 95.5641%, up from 92.9085%, without exclusions, threshold changes,
+or runtime dependencies. Stop at this target rather than pursue 100%.
+
+The tests exposed another bug: `model.matrix.glmmTMB()` ignores `newdata`.
+Explicit reference grids for fixed-effect influence could therefore fail
+dimension checks, or silently reuse the observed design when row counts
+matched. Both conditional and zero-component designs now use the native
+prediction setup. Tests compare numerical predictions for reordered,
+equal-sized, and smaller grids, polynomial bases, weighted random-effect
+contrasts, and combined zero-inflated influence. The separate `cpue_index()`
+expected-response prediction path was not affected and is unchanged.
+
+Further checks cover native GAM/spatial preview contrasts, response-specific
+tinyVAST weights, and disk-retained joint draws across backends. brms residual
+tests mock only the native posterior boundary, then verify draw selection,
+known trial counts, batching, calibration, and combined-versus-encounter
+response routing end to end. They do not claim to run MCMC.
+
+The logo again uses its original hexSticker/Aller design, ticks, dotted grid,
+frame, bubbles, and palette. Only numeric axis labels are hidden; rendering
+with and without numbers was compared to confirm that every other pixel is
+unchanged. Current-renderer spacing is explicitly matched to the historical
+layout. Two consecutive logo/icon builds were byte-identical. The frozen
+legacy article is unchanged. Development renderers are not runtime package
+dependencies. Validation artefacts: `/private/tmp/influ2-coverage95.YAMSA3/`.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration
