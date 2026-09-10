@@ -36,6 +36,7 @@ Imports:
     stats,
     utils
 Suggests:
+    bayesplot (>= 1.16.0),
     brms,
     DHARMa,
     fmesher,

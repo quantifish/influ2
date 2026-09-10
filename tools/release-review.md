@@ -15,23 +15,49 @@ priority. Remaining release review, legacy triage, and index-median decisions
 will be revisited afterwards. This prioritisation does not authorise CRAN
 submission or imply that the residual proposal has already been implemented.
 
-## Parked: residual display scale, 11 September 2026
+The [development consideration list](development-backlog.md) tracks Nicholas's
+individual suggestions, potential Ginflu-inspired features, and related parked
+decisions. It separates discussion priorities from optional candidates; adding
+an item there does not approve implementation or make it a CRAN release gate.
 
-The maintainer prefers the familiar standard-normal display of PIT/rank
-residuals for interpretability. Revisit whether normal scores should be the
-default where appropriate, with an explicit option for the uniform scale,
-including the proposed PIT plots and external plotting bridges. This is a
-parked design decision, not an instruction to implement or change defaults now.
+## Completed: PIT displays and caption consistency, 11 September 2026
 
-Current influ2 already retains both `observations$pit` and
-`observations$residual = qnorm(pit)`; its Q-Q, fitted-value, and year residual
-panels use normal scores. Preserve that existing behaviour while the broader
-display choice is reviewed. Any future option should reuse the same ranks,
-label the scale and reference clearly, and keep response ECDF/calibration
-axes distinct from residual-display axes. A normal-score transformation does
-not establish calibration or imply that catches are normally distributed.
-Revisit alongside the other parked items when the maintainer requests it;
-Nicholas's immediate residual-diagnostic collaboration remains the priority.
+The normal-score transformation is already implemented, not parked work:
+`observations$residual = qnorm(pit)` supplies the default Q-Q, fitted-value,
+and year panels. Their axes and overview footer now explicitly identify PIT.
+The maintainer approved optional `pit_ecdf` and `pit_ecdf_diff` views of the
+same stored PIT values, plus arbitrary four-panel selection with `panels`.
+The default remains `c("qq", "fitted", "year", "auto")`; the response ECDF
+and encounter-calibration choices are unchanged. These additions do not
+change simulation conditioning or add refits, MCMC, or response simulations.
+
+Optional bayesplot >= 1.16.0 provides numerically adjusted simultaneous
+iid-uniform reference limits. These are explicitly exploratory references,
+not calibrated fitted-model tests or LOO-PIT. Default plotting does not need
+bayesplot. Normal scores do not establish calibration or imply that the
+modelled response itself is normally distributed.
+
+Validation passed 508 residual-test expectations and all 4,037 full-suite
+expectations, with zero failures, warnings, or skips. Native bayesplot curves
+and limits, RNG/object/global-theme preservation, optional-dependency errors,
+and configurable layouts have numerical and visual regression coverage. The
+residual article and plotting help were rebuilt and the new figures reviewed.
+
+The shared lightbox now uses the full numbered visible caption rather than
+the shorter image-alt description. All 67 plotted images on seven locally
+rendered pages passed the caption check, including the frozen article; the
+pkgdown workflow now runs that check before deployment. Long captions are
+accessible below the image, and the grey calibration bars are unchanged.
+No CRAN or win-builder submission is authorised by this increment. The
+archive-specific checks in `cran-comments.md` must be rerun on the eventual
+release candidate; the earlier archive is not this new source revision.
+
+The new source archive passed macOS R 4.6.1 `--as-cran --no-manual` with
+zero errors, zero warnings, and the existing incoming-feasibility NOTE.
+All seven vignettes rebuilt, with optional DHARMa examples skipped because
+that dependency was absent locally. See `cran-comments.md` for the exact
+archive and checksum; dependency-complete CI and website publication are
+checked separately.
 
 ## Issue #12 completion review and issue #18 planning: 10 September 2026
 

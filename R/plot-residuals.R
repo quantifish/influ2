@@ -4,21 +4,37 @@
 #'
 #' @param x,object An `influ_residuals` object.
 #' @param type The four-panel `"overview"` (default), or one of `"qq"`,
-#'   `"fitted"`, `"year"`, `"distribution"`, `"calibration"`, and
-#'   `"calibration_groups"`. Grouped calibration shows observed-minus-predicted
+#'   `"fitted"`, `"year"`, `"distribution"`, `"calibration"`,
+#'   `"calibration_groups"`, `"pit_ecdf"`, and `"pit_ecdf_diff"`.
+#'   Grouped calibration shows observed-minus-predicted
 #'   proportions for the scientific groups chosen during calculation.
 #' @param response_scale Scale for the response ECDF: `"identity"` or
-#'   `"log1p"`, which retains zero catches. The latter requires non-negative
+#'   `"log1p"`, which retains zero responses. The latter requires non-negative
 #'   responses and is labelled explicitly.
 #' @param response_diagnostic Fourth overview panel: `"auto"` chooses
 #'   probability calibration for Bernoulli/encounter responses and the existing
-#'   ECDF for other families (including grouped binomial and combined catch).
+#'   ECDF for other families (including grouped binomial and combined responses).
 #'   `"distribution"` and `"calibration"` explicitly select a panel. Explicit
 #'   `type` takes precedence. A calibration panel always uses probability axes,
 #'   never `response_scale`. It requires stored fitted-probability summaries.
+#' @param panels Optional character vector of exactly four panel types, in
+#'   row-wise order, used only with `type = "overview"`. Any standalone type
+#'   above is allowed, including repetitions. `"auto"` selects the response
+#'   check using `response_diagnostic`. The default `NULL` is equivalent to
+#'   `c("qq", "fitted", "year", "auto")`. Required summaries must already
+#'   exist in `x`; selecting a panel never recalculates residuals.
+#' @param pit_grid_size Number of evaluation points for the PIT ECDF and its
+#'   simultaneous reference limits, between 2 and 1000 (default 100). Used
+#'   only for PIT-ECDF panels, not for the stored response ECDF grid.
 #' @param ... Reserved for future methods; currently unused.
 #'
-#' @details The year panel shows a boxplot for each sampled year and its sample
+#' @details In the default overview, panels A-C use simulation-based randomised PIT (probability integral
+#'   transform) ranks on the standard-normal scale, `qnorm(pit)`. The overview
+#'   caption identifies the selected panels and distinguishes panel D: a response
+#'   ECDF or probability-calibration check, not a PIT-residual distribution.
+#'   Transforming the ranks does not establish normality or model calibration.
+#'
+#'   The year panel shows a boxplot for each sampled year and its sample
 #'   size through box widths proportional to the square root of the number of
 #'   observations. Numeric years retain their spacing, including gaps; other labels are
 #'   ordered lexically. Reference lines mark the normal-score median and
@@ -56,33 +72,54 @@
 #'   This is not an ECDF of residuals or a LOO-PIT diagnostic. brms results
 #'   summarise existing posterior predictive draws, not new MCMC.
 #'
+#'   `type = "pit_ecdf"` uses the optional package **bayesplot** to plot the
+#'   ECDF of the stored PIT values against a uniform reference. The difference
+#'   version, `"pit_ecdf_diff"`, plots `ECDF(u) - u` against PIT value `u`,
+#'   with zero as the reference. These reuse the same ranks as the normal-score
+#'   Q-Q plot, not new residuals, an analytic PIT, or LOO-PIT. `response_scale`
+#'   does not change their uniform horizontal scale.
+#'
+#'   The PIT plots delegate to `bayesplot::ppc_pit_ecdf()` with
+#'   `method = "independent"`, numerically adjusted simultaneous reference limits, and
+#'   the stored `level`. The limits assume independent uniform PIT values;
+#'   they are not fitted-model-calibrated bands, and do not correct parameter
+#'   estimation, posterior predictive reuse, or latent dependence. bayesplot's
+#'   alternative dependence-aware tests are not automatically applied to these
+#'   fitted-data ranks. No p-value, refit, or further response simulation is
+#'   requested. The bridge does not change bayesplot's global theme or colours.
+#'
 #' @seealso [influ_residuals()] for a worked calculation and standalone Q-Q
 #'   and ECDF examples; `vignette("residual-diagnostics")` for Bayesian examples.
 #' @return A ggplot or a four-panel patchwork object, which can be customised.
 #' @md
 #' @export
 plot.influ_residuals <- function(x,
-    type = c("overview", "qq", "fitted", "year", "distribution", "calibration", "calibration_groups"),
+    type = c("overview", "qq", "fitted", "year", "distribution", "calibration", "calibration_groups", "pit_ecdf", "pit_ecdf_diff"),
     response_scale = c("identity", "log1p"), ...,
-    response_diagnostic = c("auto", "distribution", "calibration")) {
+    response_diagnostic = c("auto", "distribution", "calibration"),
+    panels = NULL, pit_grid_size = 100L) {
   type <- match.arg(type)
   response_scale <- match.arg(response_scale)
   response_diagnostic <- match.arg(response_diagnostic)
+  if (type != "overview" && !is.null(panels)) {
+    stop("`panels` is only used with `type = 'overview'`.", call. = FALSE)
+  }
   if (type == "overview") {
-    fourth <- .resid_response_panel(x, response_diagnostic)
-    panels <- lapply(c("qq", "fitted", "year", fourth), function(p) {
-      plot(x, type = p, response_scale = response_scale)
+    selected <- .resid_select_panels(x, panels, response_diagnostic)
+    plots <- lapply(selected, function(p) {
+      plot(x, type = p, response_scale = response_scale, pit_grid_size = pit_grid_size)
     })
-    return(patchwork::wrap_plots(panels, ncol = 2) +
-      patchwork::plot_annotation(caption = paste(
-        x$metadata$backend, "|", x$metadata$nsim, "simulations |", x$metadata$scheme
-      ), tag_levels = "A"))
+    return(patchwork::wrap_plots(plots, ncol = 2) +
+      patchwork::plot_annotation(caption = .resid_panel_caption(x, selected), tag_levels = "A"))
+  }
+  if (type %in% c("pit_ecdf", "pit_ecdf_diff")) {
+    return(.plot_residual_pit(x, difference = type == "pit_ecdf_diff", grid_size = pit_grid_size))
   }
   if (type %in% c("calibration", "calibration_groups")) {
     return(.plot_residual_calibration(x, grouped = type == "calibration_groups"))
   }
   purple <- "purple4"
-  ylabel <- "Normal-score rank residual"
+  ylabel <- "Normal-score PIT residual"
   coverage <- paste0(format(100 * x$metadata$level, trim = TRUE), "%")
   if (type == "qq") {
     return(ggplot2::ggplot(x$qq,

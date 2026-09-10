@@ -15,6 +15,8 @@
 | `tools/references/` | Historical reference PDFs, moved without modification | No |
 | `tools/legacy/` | Fixture recipe and remaining retired-helper review copies | No |
 | `tools/release-review.md` | Pre-release decisions, issue queue, and checks | No |
+| `tools/development-backlog.md` | Nicholas's proposals, Ginflu-inspired candidates, and parked decisions | No |
+| `tools/check-figure-captions.R`, `tools/tests/` | Site-wide lightbox caption and keyboard regression checks | No |
 | `pkgdown/`, `_pkgdown.yml` | Website configuration, assets, and frozen review article | No |
 | `docs/` | Generated local website; ignored by Git | No |
 | `.github/`, `codecov.yml` | CI, website deployment, and coverage configuration | No |
@@ -28,3 +30,9 @@ Ignored local outputs such as `Rplots.pdf`, `doc/`, `Meta/`, and RStudio state
 are also excluded from the source archive. They have not been deleted.
 The remaining legacy source and frozen Get Started page must stay in Git
 until the maintainer completes their review.
+
+After building the website, run `Rscript tools/check-figure-captions.R`.
+This checks every plotted image in the rendered HTML, including the frozen
+review article, against the shared lightbox script. It requires the website's
+existing xml2/jsonlite dependencies and Node.js; no extra Node packages are
+needed. The pkgdown workflow runs the same check before deployment.

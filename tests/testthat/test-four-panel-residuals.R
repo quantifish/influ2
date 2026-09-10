@@ -56,6 +56,35 @@ test_that("compact ranks reproduce the exact simulation calculation", {
   expect_error(plot(result, type = "wrong"), "arg")
 })
 
+test_that("overview labels distinguish normal-score PIT panels from response checks", {
+  d <- four_panel_fixture()
+  d$present <- as.integer(d$catch > 2)
+  models <- list(
+    distribution = glm(catch ~ year + x, poisson(), data = d),
+    calibration = glm(present ~ year + x, binomial(), data = d)
+  )
+  for (fourth in names(models)) {
+    result <- influ_residuals(models[[fourth]], nsim = 20, seed = 317)
+    before <- result
+    rng <- .Random.seed
+    overview <- plot(result)
+    caption <- overview$patches$annotation$caption
+    expect_match(caption, "Panels A-C: simulation-based PIT residuals", fixed = TRUE)
+    expect_match(caption, "normal scale (qnorm(PIT))", fixed = TRUE)
+    expect_match(caption, if (fourth == "calibration")
+      "Panel D: response probability calibration." else
+      "Panel D: observed versus simulated response ECDF.", fixed = TRUE)
+    expect_match(caption, result$metadata$scheme, fixed = TRUE)
+    expect_match(caption, "20 simulations", fixed = TRUE)
+    for (panel in c("qq", "fitted", "year")) {
+      expect_identical(plot(result, type = panel)$labels$y, "Normal-score PIT residual")
+    }
+    expect_false(grepl("PIT", plot(result, type = fourth)$labels$y, fixed = TRUE))
+    expect_identical(result, before)
+    expect_identical(.Random.seed, rng)
+  }
+})
+
 test_that("time selection recognises aliases, ordering, ambiguity, and overrides", {
   d <- four_panel_fixture()
   names(d)[1] <- "Fishing.Year"

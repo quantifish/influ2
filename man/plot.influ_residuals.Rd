@@ -8,10 +8,12 @@
 \method{plot}{influ_residuals}(
   x,
   type = c("overview", "qq", "fitted", "year", "distribution", "calibration",
-    "calibration_groups"),
+    "calibration_groups", "pit_ecdf", "pit_ecdf_diff"),
   response_scale = c("identity", "log1p"),
   ...,
-  response_diagnostic = c("auto", "distribution", "calibration")
+  response_diagnostic = c("auto", "distribution", "calibration"),
+  panels = NULL,
+  pit_grid_size = 100L
 )
 
 \method{autoplot}{influ_residuals}(object, ...)
@@ -20,22 +22,34 @@
 \item{x, object}{An \code{influ_residuals} object.}
 
 \item{type}{The four-panel \code{"overview"} (default), or one of \code{"qq"},
-\code{"fitted"}, \code{"year"}, \code{"distribution"}, \code{"calibration"}, and
-\code{"calibration_groups"}. Grouped calibration shows observed-minus-predicted
+\code{"fitted"}, \code{"year"}, \code{"distribution"}, \code{"calibration"},
+\code{"calibration_groups"}, \code{"pit_ecdf"}, and \code{"pit_ecdf_diff"}.
+Grouped calibration shows observed-minus-predicted
 proportions for the scientific groups chosen during calculation.}
 
 \item{response_scale}{Scale for the response ECDF: \code{"identity"} or
-\code{"log1p"}, which retains zero catches. The latter requires non-negative
+\code{"log1p"}, which retains zero responses. The latter requires non-negative
 responses and is labelled explicitly.}
 
 \item{...}{Reserved for future methods; currently unused.}
 
 \item{response_diagnostic}{Fourth overview panel: \code{"auto"} chooses
 probability calibration for Bernoulli/encounter responses and the existing
-ECDF for other families (including grouped binomial and combined catch).
+ECDF for other families (including grouped binomial and combined responses).
 \code{"distribution"} and \code{"calibration"} explicitly select a panel. Explicit
 \code{type} takes precedence. A calibration panel always uses probability axes,
 never \code{response_scale}. It requires stored fitted-probability summaries.}
+
+\item{panels}{Optional character vector of exactly four panel types, in
+row-wise order, used only with \code{type = "overview"}. Any standalone type
+above is allowed, including repetitions. \code{"auto"} selects the response
+check using \code{response_diagnostic}. The default \code{NULL} is equivalent to
+\code{c("qq", "fitted", "year", "auto")}. Required summaries must already
+exist in \code{x}; selecting a panel never recalculates residuals.}
+
+\item{pit_grid_size}{Number of evaluation points for the PIT ECDF and its
+simultaneous reference limits, between 2 and 1000 (default 100). Used
+only for PIT-ECDF panels, not for the stored response ECDF grid.}
 }
 \value{
 A ggplot or a four-panel patchwork object, which can be customised.
@@ -44,6 +58,12 @@ A ggplot or a four-panel patchwork object, which can be customised.
 Plot a precomputed \code{\link[=influ_residuals]{influ_residuals()}} result without simulation or refitting.
 }
 \details{
+In the default overview, panels A-C use simulation-based randomised PIT (probability integral
+transform) ranks on the standard-normal scale, \code{qnorm(pit)}. The overview
+caption identifies the selected panels and distinguishes panel D: a response
+ECDF or probability-calibration check, not a PIT-residual distribution.
+Transforming the ranks does not establish normality or model calibration.
+
 The year panel shows a boxplot for each sampled year and its sample
 size through box widths proportional to the square root of the number of
 observations. Numeric years retain their spacing, including gaps; other labels are
@@ -81,6 +101,22 @@ including when a Bernoulli overview defaults to calibration. It reuses
 the stored observed ECDF, simulated median, and pointwise predictive band.
 This is not an ECDF of residuals or a LOO-PIT diagnostic. brms results
 summarise existing posterior predictive draws, not new MCMC.
+
+\code{type = "pit_ecdf"} uses the optional package \strong{bayesplot} to plot the
+ECDF of the stored PIT values against a uniform reference. The difference
+version, \code{"pit_ecdf_diff"}, plots \code{ECDF(u) - u} against PIT value \code{u},
+with zero as the reference. These reuse the same ranks as the normal-score
+Q-Q plot, not new residuals, an analytic PIT, or LOO-PIT. \code{response_scale}
+does not change their uniform horizontal scale.
+
+The PIT plots delegate to \code{bayesplot::ppc_pit_ecdf()} with
+\code{method = "independent"}, numerically adjusted simultaneous reference limits, and
+the stored \code{level}. The limits assume independent uniform PIT values;
+they are not fitted-model-calibrated bands, and do not correct parameter
+estimation, posterior predictive reuse, or latent dependence. bayesplot's
+alternative dependence-aware tests are not automatically applied to these
+fitted-data ranks. No p-value, refit, or further response simulation is
+requested. The bridge does not change bayesplot's global theme or colours.
 }
 \seealso{
 \code{\link[=influ_residuals]{influ_residuals()}} for a worked calculation and standalone Q-Q

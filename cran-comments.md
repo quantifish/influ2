@@ -631,3 +631,27 @@ The result-collection follow-up is complete. No repeat upload or CRAN
 submission was made. This result applies only to the historical pre-residual
 archive, not to the later residual or legacy-triage changes. Changes confined
 to this excluded release record do not alter a checked source archive.
+## Optional PIT plots and caption consistency: 11 September 2026
+
+Added `pit_ecdf` and `pit_ecdf_diff` displays of stored residual PIT values,
+with optional bayesplot >= 1.16.0, and configurable four-panel layouts. Default
+panels, residual calculations, simulation conditioning, and grey calibration
+bars are unchanged. Help and the article distinguish simultaneous iid-uniform
+reference limits from calibrated fitted-model tests. Expanded website figures
+now use their complete numbered visible captions; all 67 locally rendered
+plotted images on seven pages passed the shared-script caption regression.
+
+Local full-suite validation passed 4,037 expectations with zero failures,
+warnings, or skips, including the new PIT numerical/visual tests. macOS arm64
+R 4.6.1 `R CMD check --as-cran --no-manual` passed with zero errors, zero
+warnings, and the existing incoming-feasibility NOTE (new submission and
+optional tinyVAST available from its declared repository). All seven vignettes
+built and rebuilt. Optional DHARMa was absent from this local library, so its
+vignette chunks were skipped; this is not a full optional-dependency or PDF-
+manual validation. GitHub's dependency-complete checks remain a separate gate.
+
+Checked archive:
+`/private/tmp/influ2-pit-check-7fd637c9b3e8/influ2_1.1.0.tar.gz`.
+SHA256: `8394be2b7f5092c5a457bf7aa57cb541ce9a6246613b64684579d3a94ec829c8`.
+No CRAN or win-builder submission was made. Issue #18, legacy review, and
+the index-median decision remain parked.

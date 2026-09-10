@@ -19,6 +19,8 @@ knitr::opts_chunk$set(
   message = FALSE, warning = FALSE, dev.args = list(bg = "white")
 )
 has_MASS <- requireNamespace("MASS", quietly = TRUE)
+has_bayesplot <- requireNamespace("bayesplot", quietly = TRUE) &&
+  packageVersion("bayesplot") >= "1.16.0"
 has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)
 has_DHARMa <- has_MASS && requireNamespace("DHARMa", quietly = TRUE)
 library(influ2)
@@ -83,6 +85,17 @@ installed. Nothing in this article fits an MCMC model.
 
 ## A four-panel overview
 
+Panels A-C already use **simulation-based PIT residuals on the standard-normal
+scale**: the stored randomised PIT/rank values are transformed with
+`qnorm(pit)`. These are the same residuals in the Q-Q, fitted-value, and year
+panels, not three different residual definitions. This transformation provides
+a familiar reference scale; it does not guarantee normally distributed
+residuals from an estimated model.
+
+Panel D is a different, complementary check of the **response**, not an ECDF of
+the PIT values. The response is whatever is modelled: for example, CPUE, catch,
+or encounter. The figure footer identifies both types of check explicitly.
+
 The year panel uses box widths proportional to the square root of the number
 of observations in each year. This shows uneven sampling without crowding
 the year labels with counts; wider boxes represent larger samples.
@@ -91,7 +104,7 @@ Calculate the residual diagnostic once and reuse it. This does not update or
 refit the model. The four panels cover complementary questions, without making
 the user choose an arbitrary grouping variable:
 
-1. **Distributional Q-Q:** normal scores of randomised simulation ranks. Unlike
+1. **Distributional Q-Q:** normal scores of randomised PIT/simulation ranks. Unlike
    a normal Q-Q plot of Pearson residuals, these account for the fitted response
    distribution, including discrete counts and zeros.
 2. **Residuals against fitted values:** check changes in centre, spread, and
@@ -460,6 +473,17 @@ sdmTMB/tinyVAST use their existing `mle-eb` conditioning. brms bins use posterio
 mean expected probabilities over the same draw identities as the posterior
 predictive simulations, including existing group effects.
 
+In particular, **the grey bars are not error bars attached to the purple
+points**. Each purple point is the actual observed proportion; each bar is the
+range of proportions predicted by the model's simulations for that bin. A
+point outside its bar is therefore possible and informative. For the fixed-
+parameter GAM and offset-only examples below, those ranges generally lie near
+the diagonal identity line, rather than around the observed points. They may
+be asymmetric and vary in width between bins. In the grouped difference plot,
+the same simulated ranges are expressed relative to the predicted proportion,
+so their reference is zero instead of the diagonal. We keep separate bars:
+the stored summaries do not define a continuous uncertainty region between bins.
+
 Whole simulations preserve the dependence represented by those methods. They
 do not add unmodelled vessel or temporal dependence. If such dependence matters,
 interpret the envelope cautiously and use scientifically appropriate grouped
@@ -486,7 +510,7 @@ distorted_checks <- influ_residuals(
 )
 ```
 
-```{r encounter-distorted-comparison, eval=has_mgcv, fig.width=10, fig.height=5, fig.cap="Encounter calibration for the simulated-data GAM (left) and deliberately exaggerated probabilities (right). Purple points are observed bin proportions, the dashed line is identity, and grey ranges are pointwise 95% predictive envelopes under each model's fixed probabilities. The distorted probabilities show systematic departures, rather than merely a different overall encounter rate.", fig.alt="Two calibration panels compare a reasonable GAM with deliberately distorted probabilities."}
+```{r encounter-distorted-comparison, eval=has_mgcv, fig.width=10, fig.height=5, fig.cap="Encounter calibration for the simulated-data GAM (left) and deliberately exaggerated probabilities (right). Purple points are observed bin proportions, the dashed line is identity, and grey bars are pointwise 95% ranges of simulated bin proportions under each model's fixed probabilities. The bars are model predictions, not error bars around the purple points: a point outside its bar indicates a discrepancy for that bin. They are not a continuous band between bins or a calibrated pass/fail test. The distorted probabilities show systematic departures, rather than merely a different overall encounter rate.", fig.alt="Two calibration panels compare a reasonable GAM with deliberately distorted probabilities."}
 patchwork::wrap_plots(
   plot(encounter_checks, type = "calibration") + labs(title = "Encounter GAM"),
   plot(distorted_checks, type = "calibration") + labs(title = "Distorted probabilities"),
@@ -512,7 +536,7 @@ pooled_checks <- influ_residuals(
 )
 ```
 
-```{r encounter-pooled-versus-grouped, eval=has_mgcv, fig.width=11, fig.height=5.5, fig.cap="The intercept-only model matches the overall encounter frequency exactly (left), yet year-by-target mean raw residuals expose omitted target structure (right). Purple points on the right are observed minus fitted encounter proportions; grey ranges are pointwise 95% predictive envelopes for those differences, conditional on the fixed fitted probabilities. A pooled calibration pass is not an all-clear for model structure.", fig.alt="One pooled calibration point matches identity, while year-by-target residual differences show large positive and negative departures."}
+```{r encounter-pooled-versus-grouped, eval=has_mgcv, fig.width=11, fig.height=5.5, fig.cap="The intercept-only model matches the overall encounter frequency exactly (left), yet year-by-target mean raw residuals expose omitted target structure (right). Purple points on the right are observed minus fitted encounter proportions; grey bars are pointwise 95% ranges of simulated-minus-fitted proportions, conditional on the fixed fitted probabilities. These are model-predicted ranges around the zero reference, not error bars around the observed purple points, which may lie outside them. A pooled calibration pass is not an all-clear for model structure.", fig.alt="One pooled calibration point matches identity, while year-by-target residual differences show large positive and negative departures."}
 patchwork::wrap_plots(
   plot(pooled_checks, type = "calibration"),
   plot(pooled_checks, type = "calibration_groups"),
@@ -947,6 +971,70 @@ They are not universally available through `residuals()` in glmmTMB, sdmTMB,
 or tinyVAST. influ2 does not yet implement an OSA adapter. Likewise, a
 refitting simulation study is a separate, potentially costly validation
 exercise, not a default action performed by a residual plot.
+
+## Optional PIT ECDFs and choosing the four panels
+
+The normal-score PIT transformation is already implemented; it is not an
+outstanding feature. A PIT ECDF offers a different display of those **same
+stored ranks**. It compares their cumulative distribution with the uniform
+reference. The difference version subtracts the reference, `ECDF(u) - u`,
+making departures visible around a horizontal zero line. Neither is the
+observed-response ECDF from the default fourth panel, a new residual method,
+or a LOO-PIT calculation.
+
+These optional panels use
+[`bayesplot::ppc_pit_ecdf()`](https://mc-stan.org/bayesplot/reference/PPC-distributions.html)
+with supplied PIT values. Install **bayesplot >= 1.16.0** to use them. The
+default overview does not require bayesplot. Nothing below refits a model,
+reruns MCMC, simulates more responses, or retains a response-simulation matrix.
+
+```{r residual-pit-ecdfs, eval=has_glmmTMB && has_bayesplot, fig.width=11, fig.height=5, fig.cap="Two displays of the existing simulation-based PIT values for the negative-binomial glmmTMB model: their ECDF (left) and ECDF minus the uniform reference (right). Dark solid curves show the empirical distribution or its difference; pale dashed curves are bayesplot's numerically adjusted 95% simultaneous reference limits assuming independent uniform PIT values. Grey dotted lines mark identity and zero, respectively. These are exploratory reference limits, not calibrated goodness-of-fit thresholds for this fitted mixed model. No additional response simulations are used.", fig.alt="Side-by-side PIT ECDF and difference plots for the same saved glmmTMB residual object."}
+patchwork::wrap_plots(
+  plot(nb_checks, type = "pit_ecdf"),
+  plot(nb_checks, type = "pit_ecdf_diff"),
+  ncol = 2
+)
+```
+
+The PIT curves contain much the same distributional information as the normal
+Q-Q panel. Their reference limits are **simultaneous under the independent-
+uniform reference**, whereas the existing Q-Q ribbon is pointwise. This does
+not make the PIT plots automatically calibrated for estimated parameters,
+posterior predictive reuse of observations, or latent dependence. We explicitly
+choose bayesplot's independent-reference method and do not apply its alternative
+dependence-aware tests or report p-values for these fitted-data ranks. bayesplot
+may print a message about its newer correlated method; that is not evidence
+that those tests validate this residual calculation.
+
+`pit_grid_size` controls the number of evaluation points (default 100, maximum
+1000), not the number of response simulations. More points can resolve finer
+departures but take longer to calculate the reference limits. `response_scale`
+affects only the response ECDF; PIT ECDFs retain their uniform horizontal scale.
+
+To change any of the four panels, supply their names in row-wise order. The
+unchanged default is `c("qq", "fitted", "year", "auto")`; `"auto"` chooses
+response calibration or a response ECDF using the original response metadata.
+For example, retain the response ECDF and replace the year panel with a PIT
+ECDF difference:
+
+```{r residual-select-panels, eval=has_glmmTMB && has_bayesplot, fig.width=11, fig.height=8, fig.cap="A customised four-panel diagnostic retaining the Q-Q, fitted-value, and response-distribution checks, with a PIT ECDF difference in the lower-left position. Panels A and B use normal-score PIT residuals, panel C uses the original PIT values on a uniform horizontal scale, and panel D compares response distributions. The footer follows the selected panel order. This is an optional layout; the default still includes the year panel.", fig.alt="Custom four-panel overview with a PIT ECDF difference replacing the year boxplots."}
+plot(nb_checks, panels = c("qq", "fitted", "pit_ecdf_diff", "distribution"),
+  response_scale = "log1p")
+```
+
+All standalone types are available in `panels`, including `"calibration"` and
+`"calibration_groups"` when the needed summaries were calculated. There must
+be exactly four names; their order and repetition are allowed. Missing summaries
+produce an informative error rather than silently substituting a different
+diagnostic. For an optional PIT plot in the fourth position, use:
+
+```{r residual-pit-fourth, eval=FALSE}
+plot(nb_checks, panels = c("qq", "fitted", "year", "pit_ecdf"))
+```
+
+That last layout omits the complementary response check, so inspect it
+separately with `plot(nb_checks, type = "distribution")` when needed. Selecting
+panels does not change the fitted model, saved residuals, or simulation scheme.
 
 ## Connect model checks back to the index
 
