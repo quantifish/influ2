@@ -76,6 +76,8 @@ comparisons.
 - [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
   [`print(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
   : Calculate compact simulation-based residual diagnostics
+- [`as_influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/as_influ_residuals.md)
+  : Diagnose externally simulated responses
 - [`plot(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
   [`autoplot(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
   : Plot a four-panel CPUE residual diagnostic

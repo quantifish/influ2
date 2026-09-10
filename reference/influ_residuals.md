@@ -188,6 +188,8 @@ integer trial weights).
 
 ## See also
 
+[`as_influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/as_influ_residuals.md)
+for externally generated response simulations;
 [`plot.influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md),
 [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md),
 [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)

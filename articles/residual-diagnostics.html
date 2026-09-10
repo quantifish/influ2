@@ -143,7 +143,10 @@ test.</td>
 <code>influ_diag</code> summary: the latter deliberately does not retain
 all observation-level predictions and residuals. The unified
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method then operates on the calculated
-<code>influ_residuals</code> object.</p>
+<code>influ_residuals</code> object. If you already have response
+simulations, <code><a href="../reference/as_influ_residuals.html">as_influ_residuals()</a></code> provides a second route
+to that same object; see <a href="#using-simulations-generated-elsewhere">Using simulations
+generated elsewhere</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="fit-competing-lobster-models">Fit competing lobster models<a class="anchor" aria-label="anchor" href="#fit-competing-lobster-models"></a>
@@ -1362,6 +1365,126 @@ diagnostic. For an optional PIT plot in the fourth position, use:</p>
 it separately with <code>plot(nb_checks, type = "distribution")</code>
 when needed. Selecting panels does not change the fitted model, saved
 residuals, or simulation scheme.</p>
+</div>
+<div class="section level2">
+<h2 id="using-simulations-generated-elsewhere">Using simulations generated elsewhere<a class="anchor" aria-label="anchor" href="#using-simulations-generated-elsewhere"></a>
+</h2>
+<p>You may already have simulations from a bespoke model, a
+collaborator’s workflow, or a native package call.
+<code><a href="../reference/as_influ_residuals.html">as_influ_residuals()</a></code> calculates the same compact residual
+diagnostic from those supplied responses. It does not fit a model, run
+MCMC, or generate more responses. Both entry points use the same rank,
+predictive-mean, ECDF, and calibration calculation engine.</p>
+<p>The matrix must have <strong>one observation per row and one complete
+joint simulation per column</strong>. Supply matching observation data,
+a response column, an explicit year column, a response kind, and a
+description of the simulation conditioning. Matrix row names must
+exactly match the data’s row names, or a declared
+<code>observation_id</code> column, in the same order. Missing,
+duplicated, or reordered IDs fail explicitly. Nothing is silently
+transposed or realigned. The labels must come from verified native
+output order; assigning plausible row names cannot establish that the
+underlying observations really match.</p>
+<p>For a worked example, reuse the fitted lobster glmmTMB model from the
+start of this article. The first call below generates 100 whole-response
+replicates using glmmTMB itself. It simulates observation variation and
+redraws the monthly random effects at fitted parameters. The constructor
+then only summarises that existing matrix:</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20260912</span><span class="op">)</span></span>
+<span><span class="va">response_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fitted_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">data_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">fitted_rows</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">anyNA</a></span><span class="op">(</span><span class="va">data_rows</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">response_simulations</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">fitted_rows</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">simulation_data</span> <span class="op">&lt;-</span> <span class="va">lobsters_per_pot</span><span class="op">[</span><span class="va">data_rows</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span><span class="co"># Native simulate() follows the fitted observation order for this count model.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">response_simulations</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">fitted_rows</span></span>
+<span></span>
+<span><span class="va">external_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_influ_residuals.html">as_influ_residuals</a></span><span class="op">(</span></span>
+<span>  <span class="va">response_simulations</span>, <span class="va">simulation_data</span>,</span>
+<span>  response <span class="op">=</span> <span class="st">"lobsters"</span>, year <span class="op">=</span> <span class="st">"year"</span>, response_kind <span class="op">=</span> <span class="st">"distribution"</span>,</span>
+<span>  conditioning <span class="op">=</span> <span class="st">"Fitted parameters; monthly random effects resimulated"</span>,</span>
+<span>  groups <span class="op">=</span> <span class="st">"month"</span>, batch_size <span class="op">=</span> <span class="fl">25</span>, seed <span class="op">=</span> <span class="fl">41</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">external_checks</span></span>
+<span><span class="co">#&gt; Simulation-based residual diagnostics (external)</span></span>
+<span><span class="co">#&gt; 5049 observations; 100 simulations</span></span>
+<span><span class="co">#&gt; Time: year [ explicit external column ]</span></span>
+<span><span class="co">#&gt; Fitted parameters; monthly random effects resimulated</span></span>
+<span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="residual-diagnostics_files/figure-html/residual-external-overview-1.png" class="r-plt" alt="Four-panel residual overview using externally supplied glmmTMB lobster simulations." width="1056"><p class="caption">
+The standard four-panel diagnostic calculated from 100 externally
+generated whole-response simulations of the fitted lobster glmmTMB
+model. Each native simulation includes newly simulated monthly random
+effects and observation variation at fitted parameters. The constructor
+generates no further responses, and its predictive means come from this
+same supplied matrix. These are different replicates from the earlier
+overview, so their ranks and Monte Carlo summaries need not match it
+exactly. The normal-score PIT panels and response ECDF retain their
+usual exploratory interpretation; the ribbons are not calibrated
+mixed-model tests.
+</p>
+</div>
+<p>The returned object also works with the standalone Q-Q/PIT views and
+the existing residual helpers. The grouping columns must be retained
+during calculation, as above:</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">external_checks</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">external_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span></code></pre></div>
+<p>The constructor processes the supplied matrix in batches and does not
+retain it, the fitted model, or a function capturing either. The matrix
+you created still occupies memory until you release it. This initial
+interface is not an on-disk reader or streaming simulator. For large
+supported fits, the native <code><a href="../reference/influ_residuals.html">influ_residuals()</a></code> route can
+avoid creating the full response matrix in the first place. Plotting an
+existing diagnostic repeats neither calculation.</p>
+<p>For a fixed matrix, the seed controls tie randomisation, not response
+simulation. Ranks and predictive means are unchanged by the calculation
+batch size; the compact response ECDF grid can change because it
+includes the first batch’s range. A fitted-model call may consume random
+numbers while selecting posterior draws before randomising ranks, so the
+same seed alone does not guarantee the same ranks across the two entry
+points.</p>
+<div class="section level3">
+<h3 id="response-components-and-encounter-probabilities">Response components and encounter probabilities<a class="anchor" aria-label="anchor" href="#response-components-and-encounter-probabilities"></a>
+</h3>
+<p>The declared response kind determines which response check is
+available; it is not guessed from a sample of zeros and ones. Use
+<code>"combined"</code> for a joint delta/hurdle/zero-inflated response.
+To diagnose a positive component, supply its own observations and
+complete component simulations, and declare
+<code>component = "positive"</code>. The constructor never filters
+simulated zeros or converts a combined matrix into a positive-component
+diagnostic. The caller must verify that the declared component and
+simulation target are correct.</p>
+<p>Bernoulli and known-trial binomial inputs require an additional
+column of <strong>original fitted success probabilities</strong>, not
+the average of simulated zero/ one responses. Record their conditioning
+separately from the response simulations. For example, given already
+aligned encounter data and simulations:</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">encounter_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_influ_residuals.html">as_influ_residuals</a></span><span class="op">(</span></span>
+<span>  <span class="va">simulated_presence</span>, <span class="va">matched_data</span>,</span>
+<span>  response <span class="op">=</span> <span class="st">"present"</span>, year <span class="op">=</span> <span class="st">"year"</span>, response_kind <span class="op">=</span> <span class="st">"bernoulli"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"encounter"</span>, probability <span class="op">=</span> <span class="st">"fitted_probability"</span>,</span>
+<span>  conditioning <span class="op">=</span> <span class="st">"Observation error at fitted parameters and smooths"</span>,</span>
+<span>  probability_conditioning <span class="op">=</span> <span class="st">"Fitted parameters and smooths"</span>,</span>
+<span>  calibration_groups <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"target"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">encounter_checks</span><span class="op">)</span></span></code></pre></div>
+<p>For <code>response_kind = "grouped_binomial"</code>, supply integer
+success counts and a <code>trial_counts</code> column containing the
+known numbers of trials. Its default response panel remains the ECDF,
+with calibration available explicitly. No case weights or area weights
+are interpreted as trials. The help page for
+<code><a href="../reference/as_influ_residuals.html">as_influ_residuals()</a></code> sets out the full input and alignment
+contract.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="connect-model-checks-back-to-the-index">Connect model checks back to the index<a class="anchor" aria-label="anchor" href="#connect-model-checks-back-to-the-index"></a>
