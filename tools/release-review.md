@@ -23,8 +23,12 @@ replay verified all saved ECDF quantiles, predictive means, ranks, and twenty
 overlay curves. The native pp_check recipe also executed on the complete fit.
 The three rendered figures were visually inspected, and browser inspection
 confirmed captions, sequential numbering, and larger-view controls. No
-runtime calculation or public API is changed by this increment. Final archive,
-GitHub publication, and issue-closure outcomes will be recorded below.
+runtime calculation or public API is changed by this increment. Source
+225871b passed the local archive check with zero errors/warnings and the
+existing NOTE. Ubuntu release, Windows release, coverage (95.72%), pkgdown,
+and Pages all passed. All fifteen live captions match the reviewed article.
+Issue #12 is closed with the scope and evidence in comment 5615100852.
+The exact archive and checksum are recorded in `cran-comments.md`.
 
 Issue #18 is planning only at the maintainer's request. The proposed separate
 Regional CPUE indices vignette uses one four-area model, aggregating areas
@@ -347,14 +351,13 @@ clear to users and should not silently produce a different estimand.
 **Required by the maintainer, 10 September 2026:** work through all open
 issues before preparing the final CRAN submission archive. Close each with
 a linked implementation/test, or a documented maintainer-approved decision.
-Do not bulk-close issues just to empty the tracker. Three issues remain after
-resolving #6, #13, and #21 on 10 September; refresh this list before the final
+Do not bulk-close issues just to empty the tracker. Two issues remain after
+resolving #6, #12, #13, and #21 on 10 September; refresh this list before the final
 build to catch new issues.
 
 | Issue | Resolution work before closure |
 | --- | --- |
-| [#12: Add more diagnostics](https://github.com/quantifish/influ2/issues/12) | Review the ECDF/PIT examples and remaining brms predictive examples against the frozen article, then link the accepted replacements. |
-| [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Add or identify an explicit, executed two-region index example, for one shared model or separate fits. Demonstrate comparable reference populations, regional labelling, and uncertainty. General area integration alone does not fulfil this example request. |
+| [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Planning only for now: one four-area model, with areas 1+2 and 3+4 forming two regional indices. See tools/two-region-plan.md. The future separate vignette must demonstrate fixed reference weights, regional labelling, uncertainty, and distinct trends supported by the model. |
 | [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Resolve the assessment-table/lognormal-parameter request together with the deliberately deferred Median/NA decision. Observation dispersion and uncertainty in an annual index are different quantities. |
 
 Issue [#13](https://github.com/quantifish/influ2/issues/13) is closed with the
@@ -370,17 +373,15 @@ namespace, and preservation of the maintained API (four expectations passed).
 The separate remaining legacy review in section 2 and the frozen Get Started
 article are unchanged by this closure.
 
-**Next issue selected for review: #12.** The current compact predictive ECDF
-envelope is available through `plot(checks, type = "distribution")`, and the
-residual article demonstrates simulation-rank Q-Q, empty-pot proportions,
-and the 95th catch percentile. The latter is an upper-tail check, not a check
-of the exact maximum. The brms simulation adapter uses joint posterior
-predictive draws, but the article still lacks an executed complete-brms-fit
-predictive example. Proposed next work is to demonstrate the standalone ECDF
-and genuine Bayesian predictive workflow, and explicitly distinguish
-fitted-data simulation ranks from LOO-PIT. The latter is not implemented;
-its inclusion or deferral needs a separate decision, not a claim that the
-existing Q-Q panel fulfils it. Issue #12 remains open during this review.
+Issue [#12](https://github.com/quantifish/influ2/issues/12) is closed following
+the commissioned completion and review. The residual article now executes a
+standalone ECDF, a complete-fit Bayesian predictive band, and individual
+posterior predictive ECDF overlays using compact saved results. Existing
+examples also show empty-pot proportions and the 95th catch percentile (not
+the exact maximum). Fitted-data ranks, response ECDFs, LOO-PIT, and LOOIC have
+distinct explanations. Universal LOO-PIT and automatic cross-validation
+refits remain outside the agreed scope. The frozen article and other legacy
+predictive examples remain for later triage; closing #12 does not remove them.
 
 Issue [#6](https://github.com/quantifish/influ2/issues/6) is resolved by the
 maintainer-approved retirement of `plot_qq()` and adoption of the unified
@@ -417,7 +418,7 @@ that the original zero/max/density-bars/LOO-PIT suite was implemented verbatim;
 simulation-rank Q-Q is not LOO-PIT. Targeted predictive checks remain part of
 the separate diagnostics and legacy review.
 
-Finish the deferred legacy and median-table review, resolve the three issues
+Finish the deferred legacy and median-table review, resolve the two issues
 above, then freeze the release API.
 
 ## 6. Validate and compile the final reviewed source

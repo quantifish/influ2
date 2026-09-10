@@ -1,3 +1,52 @@
+## Standalone and Bayesian ECDF examples: 10 September 2026
+
+Source `225871b65925e2ef3de6ca8188d28015b21fdab6` adds the documented
+standalone glmmTMB response ECDF, a complete-fit brms posterior predictive
+band, and twenty individual posterior predictive ECDF curves. These are
+Figures 4-6 in the residual article. The reproducible preparation script uses
+the existing converged Gaussian fit from the mixed-model comparison. The
+13,836-byte result contains compact diagnostic/curve summaries, not a Stan
+model or an observation-by-draw matrix. No MCMC runs during preparation or
+rendering. LOO-PIT is distinguished from fitted-data ranks and LOOIC, and is
+not claimed as an implemented universal diagnostic.
+
+All 3,934 full-suite expectations passed locally and in the GitHub coverage
+job, without failures, warnings, or skips; 111 cover the new examples and
+standalone/overview ECDF parity. Coverage remains 95.72%. Independent native
+brms replay verified the saved ECDF quantiles, ranks, predictive means, and
+twenty curves; the pp_check recipe executes on the same complete fit. The
+tracked generator reproduces the stored result exactly. All three new
+rendered figures were visually reviewed, with numbered captions and
+larger-view controls confirmed in the browser.
+
+Checked archive:
+`/private/tmp/influ2-ecdf.FJccuJ/final/influ2_1.1.0.tar.gz`.
+SHA256: `e799514d7f681ba0b7e66ea93a744c4e7a4b8240bac0657cb67f4581c457c0c7`.
+Archive size: 2,580,953 bytes. All 134 source code, help, test, vignette, and
+installed-data files match the checkout byte-for-byte; generated inst/doc
+outputs were checked separately. macOS arm64 R 4.6.1
+`R CMD check --as-cran --no-manual` passed with zero errors, zero warnings,
+and the existing incoming-feasibility NOTE (new submission and optional
+tinyVAST from the declared repository). All seven vignettes rebuilt, including
+the optional DHARMa examples. CRAN-mode tests passed 3,921 expectations with
+five intentional visual groups skipped; those passed in the full suite.
+The exact checked archive is installed in the Mac's usual R user library.
+The separate PDF-manual validation remains deferred; it was not run here.
+
+GitHub coverage run 34450598898 and pkgdown run 34450598822 passed.
+Pages run 34451210154 published website source
+`683dcf3a59af7740e00ad3bbd168f5d4060cb1dc`. All fifteen live residual-article
+captions match the reviewed local figures, and the new sections are present.
+R-CMD-check run 34450598790 passed both Ubuntu release and Windows release.
+Issue #12 is closed as completed, with the agreed scope and validation linked
+in comment 5615100852. No further validation follow-up is running.
+
+Issue #18 is planning only: `tools/two-region-plan.md` records one model for
+four statistical areas, aggregated into two regional reference populations.
+No new regional vignette or API is implemented. The remaining legacy source,
+frozen article, Median/NA definition, BNS files, DESCRIPTION, and namespace
+are unchanged. No CRAN or win-builder submission was made.
+
 ## Generalised residual helpers: 10 September 2026
 
 Source `3837b0ba362d26c04c997dc2160036e9081b59b3` replaces the maintained native
