@@ -15,6 +15,24 @@ priority. Remaining release review, legacy triage, and index-median decisions
 will be revisited afterwards. This prioritisation does not authorise CRAN
 submission or imply that the residual proposal has already been implemented.
 
+## Parked: residual display scale, 11 September 2026
+
+The maintainer prefers the familiar standard-normal display of PIT/rank
+residuals for interpretability. Revisit whether normal scores should be the
+default where appropriate, with an explicit option for the uniform scale,
+including the proposed PIT plots and external plotting bridges. This is a
+parked design decision, not an instruction to implement or change defaults now.
+
+Current influ2 already retains both `observations$pit` and
+`observations$residual = qnorm(pit)`; its Q-Q, fitted-value, and year residual
+panels use normal scores. Preserve that existing behaviour while the broader
+display choice is reviewed. Any future option should reuse the same ranks,
+label the scale and reference clearly, and keep response ECDF/calibration
+axes distinct from residual-display axes. A normal-score transformation does
+not establish calibration or imply that catches are normally distributed.
+Revisit alongside the other parked items when the maintainer requests it;
+Nicholas's immediate residual-diagnostic collaboration remains the priority.
+
 ## Issue #12 completion review and issue #18 planning: 10 September 2026
 
 The residual article now contains a standalone glmmTMB lobster ECDF (Figure 4),
