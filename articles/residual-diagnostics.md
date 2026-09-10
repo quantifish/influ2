@@ -25,9 +25,9 @@ plots or p-values into automatic selection rules.
 | `plot(checks, type = "qq")` | How do simulation-based quantile residuals compare with their normal reference? | Uses a precomputed `influ_residuals` object; the ribbon is a nominal reference, not a calibrated model-specific test. |
 
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
-and the native-residual helpers take a fitted model, not an `influ_diag`
-summary: the latter deliberately does not retain all observation-level
-predictions and residuals. The unified
+takes a fitted model, not an `influ_diag` summary: the latter
+deliberately does not retain all observation-level predictions and
+residuals. The unified
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method then
 operates on the calculated `influ_residuals` object.
 
@@ -118,9 +118,9 @@ simulations resimulate monthly random effects from their estimated
 distribution, rather than holding the twelve fitted monthly effects
 fixed. Thus the ECDF band also reflects between-month variation in
 replicated data. These are model checks, not a test of whether
-particular observed months must follow a realised curve. The existing
-native-residual and DHARMa examples below remain separate fixed-effect
-comparisons.
+particular observed months must follow a realised curve. The
+generalised-residual helper and DHARMa examples below remain separate
+fixed-effect comparisons.
 
 ``` r
 
@@ -215,6 +215,172 @@ count-model Pearson residuals need not be normal even under a suitable
 model. The grey reference ribbon above is not a posterior credible
 interval for each point; those intervals are not part of this display.
 No compatibility wrapper for `plot_qq()` is retained.
+
+### A standalone ECDF plot
+
+An empirical cumulative distribution function (ECDF) reports the
+proportion of observations at or below each response value. At zero, it
+shows the empty-pot proportion; further along the curve, it describes
+the body and upper tail of the catch distribution. This is a
+response-distribution check, not an ECDF of residuals or a standardised
+CPUE index.
+
+Reuse the same calculated lobster diagnostic to display its fourth
+panel:
+
+``` r
+
+plot(nb_checks, type = "distribution", response_scale = "log1p")
+```
+
+![Standalone lobster-catch ECDF comparison with observed and
+simulated-median step curves and a grey predictive
+band.](residual-diagnostics_files/figure-html/residual-standalone-ecdf-1.png)
+
+Standalone observed and simulated catch ECDFs for the negative-binomial
+glmmTMB lobster model. The purple line is the observed ECDF, the blue
+line is the pointwise median of 250 simulated ECDFs, and the grey ribbon
+is their 95% pointwise predictive band. These are exactly the
+distribution-panel results from the first overview, with monthly random
+effects resimulated. The log1p axis retains zero catches.
+
+This call performs no new simulations. A curve above the predictive band
+at a catch threshold means that more observed pots fall at or below that
+threshold than the model commonly generates. Agreement in the pooled
+ECDF does not establish that depth, year, or spatial patterns are
+correct. The band is pointwise, not simultaneous, and crossing it is not
+an automatic rejection test. The plotted simulated curves use a compact
+grid rather than every simulated jump. For a Bernoulli model, an
+explicit `type = "distribution"` still draws an ECDF, although the
+default overview uses the more informative probability-calibration
+panel.
+
+### Posterior predictive ECDFs with brms
+
+For a complete brms fit, the same interface draws from the posterior
+predictive distribution: it includes response variation and posterior
+parameter uncertainty. It does not refit the model or run MCMC. For
+example, after fitting your model once:
+
+``` r
+
+bayesian_checks <- influ_residuals(full_brms, nsim = 500,
+  batch_size = 25, seed = 20260910)
+plot(bayesian_checks, type = "distribution")
+```
+
+The executed example below reuses the **same complete, previously fitted
+brms model** as the [six-backend
+comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.html#bayesian-models-and-a-mixed-summary-table):
+150 simulated continuous responses over five years, with `y ~ year + x`
+and a Gaussian observation distribution. This small example demonstrates
+the Bayesian workflow; it is not a Gaussian model for lobster counts.
+Negative responses are possible here, so the response axis is
+untransformed.
+
+The preparation script
+[`data-raw/brms-residual-example.R`](https://github.com/quantifish/influ2/blob/master/data-raw/brms-residual-example.R)
+was run on that complete fit. It calculates 500 posterior predictive
+replicates in batches of 25 and saves only the compact diagnostic and
+ECDF curves. The article renders those saved results, not a fabricated
+compact `brmsfit`, and does not require Stan or MCMC to rebuild the
+figures.
+
+``` r
+
+bayesian_example <- readRDS(system.file("extdata",
+  "brms-residual-example.rds", package = "influ2"))
+bayesian_checks <- bayesian_example$checks
+```
+
+The original four-chain fit retained 4000 post-warmup draws, had maximum
+R-hat 1.0048, and no divergent transitions. These sampler checks do not
+establish observation-model adequacy.
+
+``` r
+
+plot(bayesian_checks, type = "distribution")
+```
+
+![Bayesian observed and posterior predictive response ECDFs with a 95%
+pointwise band on an untransformed continuous-response
+axis.](residual-diagnostics_files/figure-html/brms-predictive-ecdf-1.png)
+
+Posterior predictive response ECDF for the previously fitted Gaussian
+brms example. The grey ribbon and blue median summarise 500 joint
+posterior predictive replicates, including parameter uncertainty and
+observation noise. The purple line is the observed ECDF. This is a
+fitted-data predictive check, not LOO-PIT or a confidence interval for a
+CPUE index.
+
+An overlay shows individual replicated ECDFs instead of a predictive
+ribbon. For a complete fit, the native brms alternative is:
+
+``` r
+
+set.seed(20260911)
+brms::pp_check(full_brms, type = "ecdf_overlay", ndraws = 20)
+```
+
+The next figure uses 20 separately generated whole-response replicates
+from
+[`brms::posterior_predict()`](https://mc-stan.org/rstantools/reference/posterior_predict.html)
+on the same fit. Each curve is evaluated on the stored grid. These are
+actual posterior predictive replicates, not draws from a posterior-mean
+coefficient vector. Saving their ECDF curves lets us render an overlay
+without retaining an observation-by-draw matrix.
+
+``` r
+
+ggplot(bayesian_example$overlay, aes(response, probability)) +
+  geom_step(aes(group = replicate), colour = "grey65", alpha = 0.6) +
+  geom_step(data = bayesian_checks$observed_ecdf,
+    colour = "purple4", linewidth = 0.9) +
+  scale_y_continuous(limits = c(0, 1), expand = expansion(mult = 0)) +
+  labs(x = "y", y = "Cumulative probability")
+```
+
+![Twenty grey posterior predictive ECDF step curves overlaid with the
+purple observed-response
+ECDF.](residual-diagnostics_files/figure-html/brms-predictive-overlay-1.png)
+
+Twenty individual posterior predictive ECDFs (grey) and the observed
+ECDF (purple) for the same Gaussian brms model. Each grey step curve
+comes from one whole posterior predictive replicate, evaluated on the
+compact grid. This smaller, separately generated set illustrates
+replicate-to-replicate variation; it is not the 500-replicate ribbon
+shown above.
+
+See the native [posterior
+prediction](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
+and [ECDF
+overlay](https://mc-stan.org/bayesplot/reference/PPC-distributions.html)
+documentation. Use a limited number of overlay draws for readability and
+memory; the influ2 ribbon can summarise more replicates in batches. An
+`influ_residuals` summary cannot regenerate discarded replicates or run
+a new native `pp_check()`; keep the original fit separately for that
+purpose.
+
+### These checks are not LOO-PIT
+
+The response ECDF above compares whole observed and replicated datasets.
+The normal-score rank residuals in the Q-Q panel instead locate each
+observation within its own fitted predictive distribution. Both use the
+data that fitted the model. Posterior predictive ranks need not be
+uniformly distributed even when the model is appropriate.
+
+LOO-PIT uses a predictive distribution that leaves the observation out.
+It is a distinct predictive-calibration diagnostic, **not a
+model-comparison score** and not supplied merely by calculating LOOIC in
+[`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md).
+Native LOO-PIT workflows need aligned predictive draws and leave-one-out
+calculations, including checks on any importance-sampling approximation.
+For dependent fisheries observations, the held-out unit must also match
+the intended prediction question. See the [loo model-checking
+example](https://mc-stan.org/loo/articles/loo2-example.html#marginal-posterior-predictive-checks).
+influ2 does not implement universal LOO-PIT or automatic
+cross-validation refits. Those remain outside this release’s residual
+interface.
 
 ### Automatic time selection
 
@@ -311,7 +477,7 @@ spanning the observations and first simulation batch, rather than
 storing every simulated step. Replotting `nb_checks` is immediate and
 performs no new simulations.
 
-The native-residual helpers
+The generalised-residual helpers
 [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
 and
 [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
@@ -1060,10 +1226,17 @@ article](https://www.quantifish.co.nz/influ2/articles/influ2.md)
 demonstrates both.
 
 Keep the same observations, years, response component, and index scale
-when comparing models. influ2’s current comparisons are centred
-year-effect contrasts, **not area-weighted abundance indices**.
-Prediction-grid coverage, area expansion, and extrapolation are
-additional downstream checks.
+when comparing models. The main article’s step plots compare centred
+year-effect contrasts.
+[`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
+also accepts calculated expected-response indices from
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+and area-integrated results from
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md);
+these are different quantities and must be labelled accordingly.
+Prediction-grid coverage, area expansion, and extrapolation need their
+own checks; see [CPUE
+indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md).
 
 The practical sequence is to identify a residual pattern, consider
 plausible data or model explanations, fit defensible alternatives, and

@@ -132,11 +132,16 @@ no simulations or model fits are repeated. This is the supported Q-Q
 workflow, replacing the retired <code>plot_qq()</code> native-residual helper. It is
 a different diagnostic, not a reproduction of that helper's residuals.
 The Q-Q ribbon here is not posterior uncertainty around individual points.</p>
+<p>Use <code>plot(x, type = "distribution")</code> for the standalone response ECDF,
+including when a Bernoulli overview defaults to calibration. It reuses
+the stored observed ECDF, simulated median, and pointwise predictive band.
+This is not an ECDF of residuals or a LOO-PIT diagnostic. brms results
+summarise existing posterior predictive draws, not new MCMC.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="influ_residuals.html">influ_residuals()</a></code> for a worked calculation and standalone Q-Q
-example.</p></div>
+and ECDF examples; <code><a href="../articles/residual-diagnostics.html">vignette("residual-diagnostics")</a></code> for Bayesian examples.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -98,7 +98,15 @@ native-residual helper. It is a different diagnostic, not a reproduction
 of that helper's residuals. The Q-Q ribbon here is not posterior
 uncertainty around individual points.
 
+Use `plot(x, type = "distribution")` for the standalone response ECDF,
+including when a Bernoulli overview defaults to calibration. It reuses
+the stored observed ECDF, simulated median, and pointwise predictive
+band. This is not an ECDF of residuals or a LOO-PIT diagnostic. brms
+results summarise existing posterior predictive draws, not new MCMC.
+
 ## See also
 
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
-for a worked calculation and standalone Q-Q example.
+for a worked calculation and standalone Q-Q and ECDF examples;
+[`vignette("residual-diagnostics")`](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md)
+for Bayesian examples.

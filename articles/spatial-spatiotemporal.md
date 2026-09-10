@@ -364,12 +364,12 @@ summary(tiny_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>          factor(time)               conditional                      0.24617106
-#>  spatiotemporal_field conditional:latent_fields                      0.04604271
-#>         spatial_field conditional:latent_fields                      0.02606292
+#>  spatiotemporal_field conditional:latent_fields                      0.04755167
+#>         spatial_field conditional:latent_fields                      0.02375193
 #>  level_at_maximum
 #>                 5
 #>                 6
-#>                 6
+#>                 3
 ```
 
 ``` r
@@ -617,12 +617,12 @@ knitr::kable(as.data.frame(tiny_total), digits = 3)
 
 | Year |    Mean | Median |     SD |    CV |  Qlower |  Qupper | Method     | Distribution | Link |
 |:-----|--------:|-------:|-------:|------:|--------:|--------:|:-----------|:-------------|:-----|
-| 1    | 109.670 |     NA | 19.198 | 0.175 |  85.719 | 147.665 | integrated | poisson      | log  |
-| 2    | 118.864 |     NA | 17.108 | 0.144 |  96.075 | 158.702 | integrated | poisson      | log  |
-| 3    | 134.286 |     NA | 16.965 | 0.126 | 115.708 | 180.074 | integrated | poisson      | log  |
-| 4    | 107.701 |     NA | 19.733 | 0.183 |  88.755 | 149.576 | integrated | poisson      | log  |
-| 5    | 165.391 |     NA | 30.960 | 0.187 | 139.288 | 248.728 | integrated | poisson      | log  |
-| 6    | 157.522 |     NA | 36.579 | 0.232 | 133.220 | 229.166 | integrated | poisson      | log  |
+| 1    | 109.670 |     NA | 15.891 | 0.145 |  87.869 | 145.526 | integrated | poisson      | log  |
+| 2    | 118.864 |     NA | 17.833 | 0.150 |  94.835 | 163.914 | integrated | poisson      | log  |
+| 3    | 134.286 |     NA | 21.023 | 0.157 | 116.277 | 198.878 | integrated | poisson      | log  |
+| 4    | 107.701 |     NA | 17.826 | 0.166 |  86.808 | 152.142 | integrated | poisson      | log  |
+| 5    | 165.391 |     NA | 25.270 | 0.153 | 140.278 | 229.895 | integrated | poisson      | log  |
+| 6    | 157.522 |     NA | 28.085 | 0.178 | 129.309 | 219.751 | integrated | poisson      | log  |
 
 ``` r
 
