@@ -4,6 +4,11 @@ Planning only for issue #18, commissioned 10 September 2026. No regional
 model, new vignette, or regional API is implemented by this plan. Keep #18
 open until an executed example is approved and validated.
 
+**Parked by the maintainer on 11 September 2026.** Retain this plan for a
+later review; do not start the regional example or close #18. The immediate
+priority is collaboration with Nicholas Ducharme-Barth on his proposed
+residual-diagnostic work. Resume this item only when the maintainer asks.
+
 ## Scientific question
 
 Fit one model to four statistical areas. Report Region A from areas 1 and 2,

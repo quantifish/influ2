@@ -5,6 +5,16 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Priority update: 11 September 2026
+
+The maintainer has explicitly parked issue #18 and its
+[two-region plan](two-region-plan.md). Preserve the plan and leave the issue
+open; no regional example or API work is to begin yet. Collaboration with
+Nicholas Ducharme-Barth on his proposed residual-diagnostic extensions takes
+priority. Remaining release review, legacy triage, and index-median decisions
+will be revisited afterwards. This prioritisation does not authorise CRAN
+submission or imply that the residual proposal has already been implemented.
+
 ## Issue #12 completion review and issue #18 planning: 10 September 2026
 
 The residual article now contains a standalone glmmTMB lobster ECDF (Figure 4),
