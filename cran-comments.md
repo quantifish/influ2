@@ -1,3 +1,39 @@
+## 95% coverage target and reference-grid fix: 10 September 2026
+
+Code revision: `5b28122d8f4a806d0d3a571788b653f716101013`.
+
+Local and GitHub coverage are 95.56%, up from 92.91%, with no coverage
+exclusions or threshold changes. GitHub run 34423538830 confirms all 3,605
+expectations passing without failures, warnings, or skips, including visual
+regression. The added numerical tests found and protect a glmmTMB fixed-effect
+reference-grid bug: the fitted model-matrix method ignores newdata. Native
+prediction setup now supplies the conditional and zero-component designs.
+Expected-response `cpue_index()` calculations are unchanged.
+
+An older residual test generated Poisson data but fitted a zero-inflated NB
+mixed model, producing a platform-dependent boundary/Hessian warning. Its
+replacement simulates the intended grouped, zero-inflated NB structure and
+asserts optimiser convergence and a positive-definite Hessian. No warning is
+suppressed. Further tests check posterior residual draw identities, trials,
+component routing, response-specific weights, and disk retention.
+
+Final validation archive:
+`/private/tmp/influ2-coverage95.YAMSA3/final/influ2_1.1.0.tar.gz`.
+SHA256: `9cff7549e9d4383c91d05ae02f7890071c9e38ac70f1b2be0e9925f9cb61d359`.
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` passed with zero
+errors, zero warnings, and one NOTE for the new submission and optional
+tinyVAST repository. All six vignettes rebuilt. The archive contains the new
+tests and the restored original-style logo, with only its axis numbers hidden.
+The frozen legacy article is unchanged.
+
+The initial pkgdown and Pages runs (34422890536 and 34423363142) published
+the restored logo, whose live assets match the reviewed files. The final
+Ubuntu/Windows check (34423538829), pkgdown rerun (34423538846), and subsequent
+Pages deployment remain pending, with a quiet follow-up scheduled. These
+bookkeeping records are excluded from the archive. This is not the final CRAN
+submission: issue resolution, deferred legacy review, and the Median/NA
+decision remain release gates. No CRAN or win-builder upload was made.
+
 ## Bounded coverage and logo review: 10 September 2026
 
 Code revision: `0c76b4043120a810d3eb75cd1203ddabd60fef2c`.

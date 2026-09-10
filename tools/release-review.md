@@ -476,6 +476,14 @@ retain 95.5641% coverage. The first full site build (34422890536) and Pages
 deployment (34423363142) passed; the live logo, reference logo, and touch icon
 match the reviewed files by SHA-256.
 
+Final source `5b28122` is confirmed by GitHub coverage run 34423538830:
+95.56%, all 3,605 expectations passing, and no warnings or skips. The final
+macOS CRAN-style archive check passed with zero errors, zero warnings, and
+the existing NOTE; all six vignettes rebuilt. Archive details are recorded
+in `cran-comments.md`. Remaining Ubuntu/Windows and final documentation
+deployment runs are being followed in a quiet, self-pausing task follow-up.
+No CRAN or win-builder submission was made.
+
 # Response-adaptive calibration increment: 10 September 2026
 
 The default fourth residual panel now uses fixed-bin probability calibration
