@@ -2,6 +2,12 @@
 
 ## influ2 1.1.0
 
+- Fixed reference-predictor checks for brms distributional terms without
+  random effects, where partial field matching could interrupt
+  CPUE-index calculations. Added numerical and contract tests for index
+  comparisons, joint uncertainty, prediction inputs, and refitted step
+  sequences.
+
 - Standardised expected-response CPUE tables now include sdmTMB and
   univariate tinyVAST, alongside GLM, GAM, glmmTMB, and complete brms
   fits. Spatial indices use native combined response predictions and
