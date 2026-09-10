@@ -59,6 +59,16 @@ that dependency was absent locally. See `cran-comments.md` for the exact
 archive and checksum; dependency-complete CI and website publication are
 checked separately.
 
+Website publication and browser review are complete for source `0abbab1`.
+The CI caption check and live browser audit cover all 70 plotted images on
+seven articles, including optional DHARMa examples and the frozen article.
+Coverage passed at 95.75%. Ubuntu release and Windows release both passed
+R-CMD-check run 34529978869. The checked archive is installed on the Mac.
+There is a non-blocking Actions annotation about the pinned deployment action's
+old Node runtime; it ran successfully under GitHub's Node 24 override. Review
+that action version during routine CI maintenance, not as a change to this
+increment's numerical or plotting behaviour.
+
 ## Issue #12 completion review and issue #18 planning: 10 September 2026
 
 The residual article now contains a standalone glmmTMB lobster ECDF (Figure 4),
