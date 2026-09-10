@@ -1,3 +1,45 @@
+## Unified Q-Q workflow and issue #6: 10 September 2026
+
+Code revision: `aa4120097c3f57e0444475ab7e5daef7d8809dd5`.
+
+The maintainer approved retirement of the native-residual `plot_qq()` helper,
+without a compatibility wrapper. `influ_residuals(fit)` followed by
+`plot(checks, type = "qq")` is the supported replacement diagnostic. Issue #6
+is closed with the agreed scope recorded: nominal Q-Q reference bands are not
+per-point posterior intervals, and those intervals are not required for the
+first release. Four GitHub issues and the remaining legacy/median review
+remain pre-submission gates. The frozen legacy article is unchanged.
+
+All 3,604 local expectations passed without failures, warnings, or skips,
+including visual regression. The 207 focused expectations include identical
+standalone/overview Q-Q data and rendered layers, and absence of the retired
+function from the namespace. GitHub coverage run 34432837232 passed the same
+3,604 expectations and reports 95.57% coverage. No exclusions or thresholds
+were changed.
+
+Checked archive:
+`/private/tmp/influ2-qq-retirement.ABvVhs/final/influ2_1.1.0.tar.gz`.
+SHA256: `fc3b2aa9db13d96ff251c5fba90e5e895803477c98223ff1c5ee9a5880f4b9f6`.
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with zero
+errors, zero warnings, and one NOTE (new submission and optional tinyVAST
+available from its declared repository). All six vignettes rebuilt, including
+optional DHARMa examples. An initial check using the default library stopped
+at missing DHARMa; the completed check uses the existing optional libraries.
+The archive matches 116 source, help, test, and vignette files byte-for-byte,
+excluding generated DESCRIPTION metadata. CRAN-mode tests passed 3,591
+expectations; its five skipped visual groups passed in the full local suite.
+The checked archive was installed in the Mac's normal user library.
+
+The pkgdown build (34432837168) and Pages deployment (34433206914) succeeded.
+R-CMD-check run 34432837161 also completed successfully on Ubuntu-release and
+Windows-release. All results apply to source `aa41200`; subsequent changes to
+this excluded validation record do not change the checked package. No active
+follow-up is needed now that every workflow has completed.
+The published standalone Q-Q example is Figure 3, with verified numbering and
+working lightbox zoom. Retired help is absent from the reference index, and
+its former URL returns 404. This is still a validation candidate, not an
+approved CRAN submission. No CRAN or win-builder upload was made.
+
 ## 95% coverage target and reference-grid fix: 10 September 2026
 
 Code revision: `5b28122d8f4a806d0d3a571788b653f716101013`.

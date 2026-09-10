@@ -281,6 +281,14 @@ The residual article and affected help pages rebuilt successfully, and the
 standalone figure was visually inspected. The slight expectation-count change
 reflects removed native-Q-Q-only checks and added unified-panel parity checks,
 not a reduced coverage target.
+The exact `aa41200` archive passed macOS CRAN-style checking with zero errors,
+zero warnings, and the existing new-submission/optional-tinyVAST NOTE. The
+archive path and SHA256 are recorded in `cran-comments.md`. GitHub Ubuntu- and
+Windows-release checks (34432837161), coverage (34432837232; 95.57%), pkgdown
+(34432837168), and Pages deployment (34433206914) all succeeded. The live
+standalone Figure 3, its numbering, and lightbox zoom were verified. The
+checked archive is also installed in the Mac's normal user library. No CRAN
+or win-builder submission was made.
 
 Issue [#21](https://github.com/quantifish/influ2/issues/21) is closed with the
 maintainer's agreement: the four-panel model-neutral overview supersedes the
