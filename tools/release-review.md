@@ -22,10 +22,13 @@ helpers without MCMC. The grouped visual baseline was inspected and updated.
 Final archive checks passed `--as-cran --no-manual` with zero errors, zero
 warnings, and the existing new-submission/optional-tinyVAST NOTE. The source
 archive and checksum are recorded in `cran-comments.md`, along with the
-manual-enabled attempt's TeX PATH limitation. GitHub coverage passed for source
-3837b0b; platform checks and Pages publication remain under the scoped
-follow-up until independently verified. No CRAN or win-builder submission
-has been made.
+manual-enabled attempt's TeX PATH limitation. For source 3837b0b, GitHub Ubuntu
+release and Windows release both passed with Status: OK and 3,823 passing
+expectations, without failures, warnings, or skips. Coverage, pkgdown, and Pages
+publication also passed. The five live comparison tables and twelve residual
+captions match the reviewed local pages, including the six-backend table and
+the grouped normal-score interpretation. The scoped follow-up is complete and
+paused. No CRAN or win-builder submission has been made.
 
 ## Model-comparison increment: 10 September 2026
 

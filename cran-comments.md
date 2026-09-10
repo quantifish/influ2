@@ -32,11 +32,18 @@ for unqualified utility functions was corrected and is absent from the final
 check. No test or coverage exclusion was added to obtain a passing result.
 
 GitHub coverage run 34444319123 passed for the stated source. R-CMD-check
-34444319165 and pkgdown 34444319146, followed by Pages publication, remain
-under the scoped validation follow-up until completion is verified. The three
-earlier f432d95 runs were deliberately cancelled after the namespace fix to
-avoid duplicate Actions usage. No issues, BNS assessment files, or frozen
-legacy figures were changed. No CRAN or win-builder submission was made.
+34444319165 passed both Ubuntu release and Windows release with Status: OK;
+each platform passed 3,823 expectations without failures, warnings, or skips.
+The pkgdown run 34444319146 and Pages deployment 34444849221 also passed,
+publishing website commit `b57d6c10328cff7158b6d14c25898a556797e3eb`.
+All five live model-comparison tables and all twelve residual-article captions
+match the reviewed local pages. Table 5 includes all six backends, and the
+grouped residual text explicitly describes departures, not adjusted coefficients.
+The scoped follow-up is complete and paused. These excluded bookkeeping changes
+do not change the checked source. The three earlier f432d95 runs were deliberately
+cancelled after the namespace fix to avoid duplicate Actions usage. No issues,
+BNS assessment files, or frozen legacy figures were changed. No CRAN or
+win-builder submission was made.
 
 ## Model-specific comparisons: 10 September 2026
 
