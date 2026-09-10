@@ -146,8 +146,20 @@ test_that("Gaussian, Gamma, NB, GAM NB, and GAM Tweedie simulations work", {
 test_that("glmmTMB native joint and binomial simulations are retained", {
   skip_if_not_installed("glmmTMB")
   d <- four_panel_fixture()
+  # Give every model component genuine support. Fitting NB dispersion,
+  # zero inflation, and random effects to the original small Poisson sample
+  # put estimates on boundaries and gave platform-dependent Hessian warnings.
+  d <- d[rep(seq_len(nrow(d)), each = 4), ]
+  set.seed(1759)
+  group_effect <- rnorm(25, sd = 0.7)
+  mu <- exp(1.1 + 0.12 * as.numeric(d$year) + 0.4 * d$x +
+    group_effect[d$repeat_id])
+  d$catch <- ifelse(rbinom(nrow(d), 1, 0.25), 0,
+    rnbinom(nrow(d), mu = mu, size = 2))
   fit <- glmmTMB::glmmTMB(catch ~ year + x + (1 | repeat_id),
     ziformula = ~1, family = glmmTMB::nbinom2(), data = d)
+  expect_identical(fit$fit$convergence, 0L)
+  expect_true(fit$sdr$pdHess)
   result <- influ_residuals(fit, nsim = 20, batch_size = 3)
   expect_match(result$metadata$scheme, "random effects resimulated")
   expect_true(all(is.finite(result$observations$pit)))
