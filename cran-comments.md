@@ -8,7 +8,7 @@ prevent inappropriate differences and rankings. The ordinary-model case is
 tested against both conditional and marginal targets without bridging them.
 The new Model comparison article contains five numbered tables. The executed
 Bayesian example reuses a complete four-chain fit (4,000 retained draws,
-maximum R-hat 1.00485) and stores only a 1,276-byte table/metadata fixture.
+maximum R-hat 1.00484) and stores only a 1,276-byte table/metadata fixture.
 No MCMC is run by the reporting function or during vignette rendering.
 
 All 3,788 local expectations pass without failures, warnings, or skips,
@@ -39,6 +39,17 @@ Issue #12 is parked at the maintainer's request. Issues #18/#22, remaining
 legacy helpers, the index-median question, and frozen-article review remain
 pre-submission decisions. No GitHub issues were changed, and no CRAN or
 win-builder submission was made by this increment.
+
+Source commit: `3abad0c872d5e513118d624ea22f06cc366db5be`. GitHub coverage run
+34439577567 passed all 3,788 expectations and confirmed 95.71% coverage.
+The pkgdown run 34439577595 and Pages deployment 34440184902 passed, publishing
+website commit `d56691dd47393737c6800b8b3f4299826050fe20`. All five live model-
+comparison tables match the reviewed local tables. The checked archive is
+installed in the Mac's normal R user library, and its public interface was
+smoke-tested after installation. In R-CMD-check run 34439577572, Ubuntu release
+has passed; Windows release was still running at this checkpoint. The existing
+validation follow-up is watching that last job and will record its final
+result. These excluded bookkeeping changes do not change the checked source.
 
 ## Issue #13 closure: 10 September 2026
 
