@@ -7,6 +7,21 @@ is a separate, later step authorised by the maintainer.
 
 ## Model-comparison increment: 10 September 2026
 
+Follow-up: the mixed comparison example now includes all six backends in one
+executed table on 150 common simulated observations. The residual helper audit
+and migration are recorded in [residual-audit.md](residual-audit.md).
+Both maintained helpers now use generalised simulation ranks. The old implied
+coefficient arithmetic is replaced by grouped mean departures around zero;
+this changed interpretation needs visual review. BNS source and saved outputs
+were deliberately not changed. Its explicit native-residual calls and downstream
+`$implied` assumptions require a separately reviewed migration.
+
+Local validation of this increment: 3,823 passing expectations, no failures,
+warnings, or skips; coverage 95.72%. A complete existing brms fit passed both
+helpers without MCMC. The grouped visual baseline was inspected and updated.
+The code changes have not been submitted to CRAN or win-builder. Final source
+archive and GitHub checks are recorded separately when complete.
+
 The maintainer commissioned model-specific `table_criterion()` methods for
 GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST, including mixed lists. The new
 Model comparison article demonstrates native likelihood summaries and a

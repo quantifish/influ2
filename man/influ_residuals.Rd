@@ -18,7 +18,8 @@ influ_residuals(
   calibration_bins = 10L,
   calibration_min_n = 20L,
   calibration_groups = NULL,
-  trial_counts = NULL
+  trial_counts = NULL,
+  groups = NULL
 )
 
 \method{print}{influ_residuals}(x, ...)
@@ -68,6 +69,10 @@ columns must not be defined from the outcome. Supply \code{data} if necessary.}
 the name of the known trial-count column in \code{data}. It must equal the
 fitted trial weights. Arbitrary case weights are not treated as trials.
 Two-column success/failure responses need no override.}
+
+\item{groups}{Optional names of original-data grouping columns to retain
+for \code{\link[=plot_implied_residuals]{plot_implied_residuals()}}. Specify these independently of the response.
+Only these columns, not the complete model data, are stored.}
 
 \item{x}{An `influ_residuals` object.}
 

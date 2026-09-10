@@ -36,6 +36,9 @@
 #'   the name of the known trial-count column in `data`. It must equal the
 #'   fitted trial weights. Arbitrary case weights are not treated as trials.
 #'   Two-column success/failure responses need no override.
+#' @param groups Optional names of original-data grouping columns to retain
+#'   for [plot_implied_residuals()]. Specify these independently of the response.
+#'   Only these columns, not the complete model data, are stored.
 #'
 #' @details Each simulation is a joint response vector, preserving the native
 #'   method's within-draw dependence. For observation \eqn{i}, let \eqn{L_i}
@@ -115,7 +118,8 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             level = 0.95,
                             component = c("auto", "combined", "encounter", "positive"),
                             calibration_bins = 10L, calibration_min_n = 20L,
-                            calibration_groups = NULL, trial_counts = NULL) {
+                            calibration_groups = NULL, trial_counts = NULL,
+                            groups = NULL) {
   component <- match.arg(component)
   .resid_integer(calibration_bins, "calibration_bins", 1L)
   .resid_integer(calibration_min_n, "calibration_min_n", 1L)
@@ -139,7 +143,29 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   }, add = TRUE)
   set.seed(seed)
 
+  if (!is.null(groups)) {
+    if (!is.character(groups) || !length(groups) || anyNA(groups) ||
+        any(!nzchar(groups)) || anyDuplicated(groups)) {
+      stop("`groups` must contain unique original-data column names.", call. = FALSE)
+    }
+    if (is.null(data) && !all(groups %in% names(.residual_model_frame(model)))) {
+      data <- .resolve_influ_data(model, NULL)
+    }
+  }
   adapter <- .resid_adapter(model, data, nsim, trial_counts, component)
+  if (!all(groups %in% names(adapter$data))) {
+    stop("`groups` must name columns in the model data; supply original `data`.", call. = FALSE)
+  }
+  group_data <- adapter$data[groups %||% character()]
+  if (anyNA(group_data) || any(!vapply(group_data, function(x) {
+    is.atomic(x) && is.null(dim(x)) &&
+      (!is.numeric(x) || all(is.finite(x)))
+  }, logical(1)))) {
+    stop("Grouping columns must be finite categorical values without missing values.", call. = FALSE)
+  }
+  if (any(groups %in% adapter$response_variables)) {
+    stop("Residual groups must not be defined from the model response.", call. = FALSE)
+  }
   time <- .resid_year(model, adapter$data, year)
   observed <- adapter$observed
   n <- length(observed)
@@ -199,6 +225,7 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
     observed_ecdf = data.frame(response = observed_grid,
       probability = findInterval(observed_grid, sort(observed)) / n),
     calibration = .resid_calibration_finish(calibration, level),
+    groups = group_data,
     metadata = list(schema_version = 2L, backend = adapter$backend, scheme = adapter$scheme,
       response = adapter$response, year = time$name, year_source = time$source,
       nsim = nsim, batch_size = min(batch_size, nsim), seed = seed,

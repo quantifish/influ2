@@ -1,5 +1,17 @@
 # influ2 1.1.0
 
+* Unified the remaining residual plotting helpers with `influ_residuals()`.
+  `plot_predicted_residuals()` now uses normal-score rank residuals and the
+  predictive means from the same simulations. `plot_implied_residuals()` now
+  shows year-by-group mean generalised departures around zero, not residuals
+  added to coefficients on a different scale. Explicit native residual types
+  are rejected with a migration message. Both helpers accept calculated
+  residual objects, preserve response-component metadata, and avoid repeated
+  simulation when restyling. Retain grouping columns with `groups` during
+  calculation. Historical source and frozen review figures are unchanged.
+  The Model comparison article now includes an executed six-backend table
+  including a complete brms fit, without running MCMC during rendering.
+
 * Extended `table_criterion()` to GLM, GAM, glmmTMB, sdmTMB, tinyVAST, and
   complete brms fits, including mixed-backend lists. Native AIC, BIC,
   deviance, degrees of freedom, and Bayesian summaries use separate columns.

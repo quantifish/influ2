@@ -80,7 +80,7 @@ reference:
   - geo_mean
 
 - title: Residual diagnostics
-  desc: Inspect residual patterns, implied year effects, and quantile comparisons.
+  desc: Inspect generalised residual patterns, grouped departures, and quantile comparisons.
   contents:
   - influ_residuals
   - plot.influ_residuals

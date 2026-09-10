@@ -65,65 +65,19 @@ test_that("data extent reports the observed proportion by focus level", {
   )
 })
 
-test_that("implied residual coefficients follow the fisheries definition", {
+test_that("grouped residual means retain the generalised scale", {
   fixture <- bentley_fixture()
-  plot <- plot_implied_residuals(
-    fixture$model,
-    data = fixture$data,
-    year = "year",
-    groups = "area",
-    min_n = 1
-  )
-  expect_s3_class(plot, "ggplot")
-
-  first <- plot$data[1, ]
-  residual <- stats::residuals(fixture$model, type = "pearson")
-  keep <- as.character(fixture$data$year) == first$level &
-    as.character(fixture$data$area) == first$group
-  year_effect <- influ(
-    fixture$model,
-    focus = "year",
-    uncertainty = "none"
-  )$influence
-  year_effect <- subset(
-    year_effect,
-    term == "year" & scale == "link" & level == first$level
-  )$estimate
-
-  expect_equal(
-    first$implied,
-    year_effect + mean(residual[keep]),
-    tolerance = 1e-12
-  )
-  expect_equal(
-    first$std_error,
-    stats::sd(residual[keep]) / sqrt(sum(keep)),
-    tolerance = 1e-12
-  )
-})
-
-test_that("implied residuals reject ambiguous focus interactions", {
-  data <- expand.grid(
-    year = factor(1:3),
-    area = factor(letters[1:2]),
-    replicate = 1:8
-  )
-  data$catch <- stats::rpois(nrow(data), 2)
-  model <- stats::glm(
-    catch ~ year * area,
-    family = stats::poisson(),
-    data = data
-  )
-  expect_error(
-    suppressWarnings(
-      plot_implied_residuals(model, year = "year", groups = "area", min_n = 1)
-    ),
-    "ambiguous"
-  )
-  expect_error(
-    plot_implied_residuals(model, year = "year", groups = "area", min_n = 0),
-    "positive whole number"
-  )
+  checks <- influ_residuals(fixture$model, data = fixture$data, groups = "area", nsim = 50)
+  p <- plot_implied_residuals(checks, groups = "area", min_n = 1)
+  first <- p$data[1, ]
+  keep <- as.character(checks$observations$year) == first$level &
+    as.character(checks$groups$area) == first$group
+  r <- checks$observations$residual[keep]
+  expect_equal(first$residual, mean(r))
+  expect_equal(first$std_error, sd(r) / sqrt(length(r)))
+  expect_equal(first$lower, mean(r) - sd(r) / sqrt(length(r)))
+  expect_equal(first$upper, mean(r) + sd(r) / sqrt(length(r)))
+  expect_error(plot_implied_residuals(checks, groups = "area", min_n = 0), "integer of at least")
 })
 
 test_that("bubble plots reject inputs that would silently discard groups", {
@@ -146,7 +100,7 @@ test_that("predicted-residual plots and simulation-based Q-Q support GLMs", {
   expect_s3_class(plot_predicted_residuals(model, trend = "none"), "ggplot")
   expect_s3_class(plot_predicted_residuals(model, trend = "lm"), "ggplot")
   expect_s3_class(plot(influ_residuals(model, nsim = 20), type = "qq"), "ggplot")
-  expect_error(plot_predicted_residuals(model, trend = "bad"), "must be")
+  expect_error(plot_predicted_residuals(model, trend = "bad"), "should be one of")
 })
 
 test_that("brms comparison helpers validate their inputs", {

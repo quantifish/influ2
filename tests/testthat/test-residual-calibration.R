@@ -226,7 +226,7 @@ test_that("sdmTMB joint delta components route and simulate natively", {
     spatial = "off", family = sdmTMB::delta_gamma(), silent = TRUE)
   a <- influ_residuals(fit, component = "combined", nsim = 20)
   b <- influ_residuals(fit, component = "encounter", nsim = 20)
-  c <- influ_residuals(fit, component = "positive", nsim = 20)
+  c <- influ_residuals(fit, component = "positive", nsim = 20, groups = "year")
   expect_identical(.resid_response_panel(a, "auto"), "distribution")
   expect_identical(.resid_response_panel(b, "auto"), "calibration")
   expect_identical(.resid_response_panel(c, "auto"), "distribution")
@@ -234,6 +234,12 @@ test_that("sdmTMB joint delta components route and simulate natively", {
   expect_equal(c$observations$observed, d$catch[d$catch > 0])
   expect_identical(c$observations$row, rownames(d)[d$catch > 0])
   expect_true(all(c$observations$observed > 0))
+  expect_equal(plot_predicted_residuals(c)$data, c$observations)
+  grouped <- plot_implied_residuals(c, groups = "year", min_n = 1)
+  expect_equal(sum(grouped$data$n), sum(d$catch > 0))
+  expect_identical(attr(grouped, "residual_metadata")$component, "positive")
+  expect_equal(rownames(c$groups), c$observations$row)
+  expect_identical(attr(plot_predicted_residuals(a), "residual_metadata")$component, "combined")
 })
 
 test_that("an intercept-only pooled pass does not hide a grouped discrepancy", {

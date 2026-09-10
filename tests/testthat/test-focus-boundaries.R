@@ -11,8 +11,6 @@ test_that("a sole interaction is not mistaken for an additive focus index", {
   expect_warning(grid <- influ(model, focus = "year",
     reference_data = fixture$data), "reference_data alone is insufficient")
   expect_false(any(grid$indices$series == "standardised"))
-  expect_error(.focus_link_effect(diagnostic, fixture$data, "year"),
-    "does not depend on another variable")
   expect_error(influ_steps(list(Interaction = diagnostic), year = "year"),
     "standardised year-effect index")
 })

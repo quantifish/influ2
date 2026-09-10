@@ -193,14 +193,19 @@ ranking criterion.
 bayesian <- table_criterion(list(Base = base_brms, Smooth = smooth_brms),
   criterion = c("loo", "loo_R2", "bayes_R2"))
 
-mixed <- table_criterion(list(GLM = glm_fit, GAM = gam_fit, brms = full_brms))
+mixed <- table_criterion(list(GLM = glm_fit, GAM = gam_fit,
+  glmmTMB = tmb_fit, brms = full_brms, sdmTMB = sdm_fit, tinyVAST = tiny_fit))
 ```
 
-The next table was calculated from a complete, previously fitted four-chain
-brms model and a Gaussian GLM fitted to the same 150 simulated observations.
+The next table was calculated by one call to `table_criterion()` containing
+**all six backends**: GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST. Every fit
+uses the same 150 simulated observations, including a complete, previously
+fitted four-chain brms model.
 This small continuous-response example is separate from the lobster count
 example. The response follows year effects plus a covariate effect and
-Gaussian noise. Both fits use `y ~ year + x`; their estimation methods differ.
+Gaussian noise. Fits use `y ~ year + x`, except the GAM, which uses a fitted
+smooth `s(x, k = 5)`. The sdmTMB and tinyVAST fits have their fields switched
+off here: this example isolates the mixed-backend table, not spatial modelling.
 
 The reproducible preparation script is `data-raw/model-criteria-example.R` in
 the repository. It can reuse the complete fit or explicitly fit it once.
@@ -211,7 +216,7 @@ complete Stan fit, or observation-by-posterior array is needed during rendering.
 example <- readRDS(system.file("extdata", "brms-criteria-example.rds", package = "influ2"))
 knitr::kable(example$table[c("Model", "Backend", "nobs", "df", "AIC",
   "looic", "p_loo", "bayes_R2", "loo_R2", "pareto_k_max")], digits = 3,
-  caption = "Table 5. An executed mixed frequentist/Bayesian summary. Missing entries identify different criterion definitions, not worse performance.")
+  caption = "Table 5. An executed six-backend frequentist/Bayesian summary on identical observations. Missing entries identify different criterion definitions, not worse performance.")
 ```
 
 The AIC and LOOIC numbers are not compared to each other. Similarly, ordinary,
