@@ -46,10 +46,10 @@ The pkgdown run 34439577595 and Pages deployment 34440184902 passed, publishing
 website commit `d56691dd47393737c6800b8b3f4299826050fe20`. All five live model-
 comparison tables match the reviewed local tables. The checked archive is
 installed in the Mac's normal R user library, and its public interface was
-smoke-tested after installation. In R-CMD-check run 34439577572, Ubuntu release
-has passed; Windows release was still running at this checkpoint. The existing
-validation follow-up is watching that last job and will record its final
-result. These excluded bookkeeping changes do not change the checked source.
+smoke-tested after installation. R-CMD-check run 34439577572 passed both
+Ubuntu release and Windows release. The temporary validation follow-up has
+been paused because all checks and website deployment have completed. These
+excluded bookkeeping changes do not change the checked source.
 
 ## Issue #13 closure: 10 September 2026
 

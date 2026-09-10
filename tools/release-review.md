@@ -39,9 +39,9 @@ the index-median question, and frozen-article review remain open decisions.
 Implementation source `3abad0c` is committed and pushed. All 3,788 local tests
 pass, GitHub confirms 95.71% coverage, the seven-vignette local CRAN-style
 check has zero errors/warnings and the existing NOTE, and the new article is
-live with all five tables verified. Ubuntu release passed; Windows release
-was still running when the validation follow-up was scheduled. The exact
-archive checksum, workflow IDs, and eventual platform outcome belong in the
+live with all five tables verified. Ubuntu release and Windows release both
+passed, and the temporary validation follow-up is paused. The exact
+archive checksum, workflow IDs, and completed platform outcome are in the
 matching `cran-comments.md` section. No issue closure or submission is implied.
 
 ## 1. Scientific and visual review
