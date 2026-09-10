@@ -1,5 +1,17 @@
 # influ2 1.1.0
 
+* Extended `table_criterion()` to GLM, GAM, glmmTMB, sdmTMB, tinyVAST, and
+  complete brms fits, including mixed-backend lists. Native AIC, BIC,
+  deviance, degrees of freedom, and Bayesian summaries use separate columns.
+  Explicit conditional AIC uses mgcv, sdmTMB, and tinyVAST native methods;
+  unsupported glmmTMB mixed-model cAIC stays missing with a reason.
+  Input order is now preserved by default. Optional differences and sorting
+  require compatible fitted observations and likelihood targets; REML,
+  penalised, failed, and unreliable-LOO cases are not automatically ranked.
+  Paired LOO differences support both older matrix and newer data-frame
+  outputs from loo. The new Model comparison article includes an executed
+  compact Bayesian/frequentist table; no MCMC is run during rendering.
+
 * Retired `plot_qq()` without a compatibility wrapper. Calculate
   `checks <- influ_residuals(fit)`, then use `plot(checks, type = "qq")`
   for the same simulation-based Q-Q diagnostic as the four-panel overview.

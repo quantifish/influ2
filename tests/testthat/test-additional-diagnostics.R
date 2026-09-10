@@ -216,11 +216,12 @@ test_that("brms comparison helpers summarise public criterion interfaces", {
     fits,
     criterion = c("loo", "loo_R2", "bayes_R2", "log_lik")
   )
-  expect_equal(criteria$id, c(2, 1))
+  # Summary tables preserve input order, without ranking unverified fits.
+  expect_equal(criteria$id, c(1, 2))
   expect_true(all(c(
     "elpd_loo", "loo_R2", "bayes_R2", "log_lik"
   ) %in% names(criteria)))
-  expect_equal(criteria$log_lik, c(-8, -4))
+  expect_equal(criteria$log_lik, c(-4, -8))
 })
 
 test_that("comparison rescaling rejects invalid and non-overlapping scales", {

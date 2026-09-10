@@ -1,3 +1,45 @@
+## Model-specific comparisons: 10 September 2026
+
+`table_criterion()` now supports GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST,
+including mixed lists. Native likelihood criteria, deviance, sample size,
+penalty degrees of freedom, conditional-AIC methods, and Bayesian predictive
+criteria have distinct definitions and columns. Observation/target checks
+prevent inappropriate differences and rankings. The ordinary-model case is
+tested against both conditional and marginal targets without bridging them.
+The new Model comparison article contains five numbered tables. The executed
+Bayesian example reuses a complete four-chain fit (4,000 retained draws,
+maximum R-hat 1.00485) and stores only a 1,276-byte table/metadata fixture.
+No MCMC is run by the reporting function or during vignette rendering.
+
+All 3,788 local expectations pass without failures, warnings, or skips,
+including visual regression; 184 specifically test the new comparison
+methods. Instrumented package coverage is 95.71%, without changing exclusions
+or thresholds. Tests cover native values/df across all six backends, a real
+tinyVAST random-field cAIC example, cached LOO, paired ELPD differences,
+old/new loo result formats, reversed/interleaved model order, data mismatches,
+failed/REML/prior fits, and explicit unsupported-statistic boundaries.
+
+Checked archive:
+`/private/tmp/influ2-model-comparison.e7ymTb/final/influ2_1.1.0.tar.gz`.
+SHA256: `023b93c1fe9b4787154628f0d83bb482a5c44a7c19cf8a92cf4b25203d7ff5e1`.
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with zero
+errors, zero warnings, and the existing incoming-feasibility NOTE: new
+submission and optional tinyVAST available from its declared repository.
+All seven vignettes rebuilt with the existing optional libraries, including
+DHARMa. CRAN-mode tests passed 3,775 expectations; five visual groups skipped
+in CRAN mode passed in the full local suite. The archive matches 126 source,
+help, test, vignette, and example files byte-for-byte. The pkgdown site also
+rebuilt successfully, and the new tables and captions were inspected.
+
+Limitations remain explicit: no mixed-glmmTMB native cAIC, no unvalidated
+profiled-spatial conditional penalties, no invented tinyVAST cAIC df, and
+no universal LOO-PIT or refitted cross-validation workflow. Bare TMB objectives
+are not treated as fitted model classes with known likelihood conventions.
+Issue #12 is parked at the maintainer's request. Issues #18/#22, remaining
+legacy helpers, the index-median question, and frozen-article review remain
+pre-submission decisions. No GitHub issues were changed, and no CRAN or
+win-builder submission was made by this increment.
+
 ## Issue #13 closure: 10 September 2026
 
 The maintainer approved closing issue #13 after verifying all three original

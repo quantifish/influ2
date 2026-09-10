@@ -1,0 +1,248 @@
+criteria_data <- function() {
+  set.seed(219)
+  d <- data.frame(year = factor(rep(1:4, each = 60)), x = runif(240, -1, 1),
+    vessel = factor(rep(1:12, 20)))
+  d$y <- rpois(nrow(d), exp(0.5 + d$x + rep(rnorm(12, 0, 0.5), 20)))
+  d
+}
+
+test_that("GLM criteria reproduce native values and distinguish degrees of freedom", {
+  d <- criteria_data()
+  fits <- list(Base = glm(y ~ year, d, family = poisson()),
+    Depth = glm(y ~ year + x, d, family = poisson()))
+  x <- table_criterion(fits, c("auto", "cAIC"))
+  expect_identical(x$Model, names(fits))
+  expect_equal(x$AIC, vapply(fits, AIC, numeric(1)), ignore_attr = TRUE)
+  expect_equal(x$BIC, vapply(fits, BIC, numeric(1)), ignore_attr = TRUE)
+  expect_equal(x$df, vapply(fits, function(m) attr(logLik(m), "df"), numeric(1)), ignore_attr = TRUE)
+  expect_equal(x$df_residual, vapply(fits, df.residual, numeric(1)), ignore_attr = TRUE)
+  expect_equal(x$deviance, vapply(fits, deviance, numeric(1)), ignore_attr = TRUE)
+  expect_equal(x$cAIC, x$AIC)
+  expect_equal(x$cAIC_df, x$df)
+  expect_equal(x$delta_AIC, x$AIC - min(x$AIC))
+  expect_length(unique(x$AIC_group), 1)
+  expect_identical(table_criterion(fits, sort = "AIC")$Model, rev(names(fits)))
+  expect_identical(table_criterion(fits, sort = TRUE)$Model, rev(names(fits)))
+  expect_s3_class(attr(x, "criteria_notes"), "data.frame")
+  expect_match(attr(x, "comparison_note"), "provenance|Row names")
+  expect_false(any(vapply(attributes(x), inherits, logical(1), "glm")))
+  gaussian <- glm(y ~ x, d, family = gaussian())
+  g <- table_criterion(gaussian)
+  expect_equal(g$df, gaussian$rank + 1)
+  expect_equal(g$df_residual, gaussian$df.residual)
+  expect_equal(g$logLik, as.numeric(logLik(gaussian)))
+})
+
+test_that("GAMs dispatch before GLMs and retain corrected native effective df", {
+  skip_if_not_installed("mgcv")
+  d <- criteria_data()
+  a <- glm(y ~ year + x, d, family = poisson())
+  b <- mgcv::gam(y ~ year + s(x, k = 5), data = d, family = poisson(), method = "REML")
+  x <- table_criterion(list(Linear = a, Smooth = b), c("auto", "caic"))
+  expect_identical(x$Backend, c("GLM", "GAM"))
+  expect_equal(x$AIC[2], AIC(b))
+  expect_equal(x$BIC[2], BIC(b))
+  expect_equal(x$df[2], attr(logLik(b), "df"))
+  expect_equal(x$cAIC, x$AIC)
+  expect_match(x$df_type[2], "effective")
+  expect_match(x$notes[2], "correction available")
+  expect_equal(x$AIC_group[1], x$AIC_group[2])
+  expect_true(all(is.finite(x$delta_AIC)))
+  b$edf2 <- NULL
+  expect_match(table_criterion(b)$notes, "not available")
+})
+
+test_that("glmmTMB uses marginal likelihood without inventing conditional AIC", {
+  skip_if_not_installed("glmmTMB")
+  d <- criteria_data()
+  a <- glmmTMB::glmmTMB(y ~ year + x, d, family = poisson())
+  b <- glmmTMB::glmmTMB(y ~ year + x + (1 | vessel), d, family = poisson())
+  x <- table_criterion(list(Fixed = a, Mixed = b), c("auto", "caic", "bayes_R2"))
+  expect_equal(x$AIC, c(AIC(a), AIC(b)))
+  expect_equal(x$BIC, c(BIC(a), BIC(b)))
+  expect_equal(x$df, c(attr(logLik(a), "df"), attr(logLik(b), "df")))
+  expect_equal(x$df_residual, c(df.residual(a), df.residual(b)))
+  expect_equal(x$deviance, c(deviance(a), deviance(b)))
+  expect_identical(x$AIC_type, c("ordinary", "marginal"))
+  expect_equal(x$cAIC[1], AIC(a))
+  expect_true(is.na(x$cAIC[2]))
+  expect_match(x$notes[2], "No supported native conditional-AIC")
+  expect_true(all(is.na(x$bayes_R2)))
+  expect_match(x$notes[1], "not applicable")
+  expect_true(all(is.finite(table_criterion(list(a, b), sort = TRUE)$delta_AIC)))
+  g <- glm(y ~ year + x, d, family = poisson())
+  ordinary_mixed <- table_criterion(list(GLM = g, Mixed = b))
+  expect_equal(ordinary_mixed$AIC_group[1], ordinary_mixed$AIC_group[2])
+  expect_equal(ordinary_mixed$delta_AIC, ordinary_mixed$AIC - min(ordinary_mixed$AIC))
+  if (requireNamespace("mgcv", quietly = TRUE)) {
+    smooth <- mgcv::gam(y ~ year + s(x, k = 5), data = d, family = poisson(), method = "REML")
+    both <- table_criterion(list(GLM = g, GAM = smooth, Mixed = b))
+    expect_equal(both$AIC_group[1], both$AIC_group[2])
+    expect_false(both$AIC_group[2] == both$AIC_group[3])
+    reversed <- table_criterion(list(Mixed = b, GLM = g, GAM = smooth))
+    expect_equal(reversed$AIC_group[1], reversed$AIC_group[2])
+    expect_false(reversed$AIC_group[1] == reversed$AIC_group[3])
+    expect_warning(table_criterion(list(g, smooth, b), sort = "AIC"), "not sorted")
+  }
+  b$sdr$pdHess <- FALSE
+  bad <- table_criterion(b, c("auto", "caic"))
+  expect_false(bad$pdHess)
+  expect_true(is.na(bad$AIC))
+  expect_true(is.na(bad$AIC_group))
+})
+
+test_that("comparison checks more than matching sample sizes", {
+  d <- criteria_data()
+  a <- glm(y ~ year + x, d, family = poisson())
+  changed <- d; changed$y[1] <- changed$y[1] + 1
+  b <- glm(y ~ year + x, changed, family = poisson())
+  c <- glm(y ~ year + x, d[-1, ], family = poisson())
+  e <- glm(y ~ year + x, d[nrow(d):1, ], family = poisson())
+  f <- glm(y ~ year + x, d, weights = rep(2, nrow(d)), family = poisson())
+  g <- glm(y ~ year + x, d, family = gaussian())
+  changed <- d; changed$x <- -changed$x
+  h <- glm(y ~ year + x, changed, family = poisson())
+  x <- table_criterion(list(a, b, c, e, f, g, h))
+  expect_length(unique(x$AIC_group), 7)
+  expect_true(all(is.na(x$delta_AIC)))
+  expect_warning(table_criterion(list(a, b), sort = "AIC"), "not sorted")
+  rownames(b$model) <- rownames(a$model)
+  expect_true(all(is.na(table_criterion(list(a, b))$delta_AIC)))
+})
+
+test_that("REML, quasi, and failed fits are not ranked", {
+  d <- criteria_data()
+  a <- glm(y ~ x, d, family = quasipoisson())
+  x <- table_criterion(a, c("auto", "caic"))
+  expect_true(is.na(x$AIC))
+  expect_true(is.na(x$cAIC))
+  expect_match(x$notes, "Quasi")
+  expect_true(is.finite(x$deviance))
+  b <- glm(y ~ x, d, family = poisson()); b$converged <- FALSE
+  expect_true(is.na(table_criterion(b)$AIC_group))
+  skip_if_not_installed("glmmTMB")
+  c <- glmmTMB::glmmTMB(y ~ x + (1 | vessel), d, REML = TRUE)
+  x <- table_criterion(list(c, c), c("auto", "caic"))
+  expect_identical(x$AIC_type, rep("restricted", 2))
+  expect_true(all(is.na(x$delta_AIC)))
+  expect_match(x$notes[1], "REML")
+  p <- glmmTMB::glmmTMB(y ~ x, d, family = poisson(),
+    priors = data.frame(prior = "normal(0,2)", class = "fixef", coef = "x"))
+  x <- table_criterion(p)
+  expect_true(is.finite(x$AIC))
+  expect_true(is.na(x$AIC_group))
+  expect_match(x$notes, "Parameter priors")
+})
+
+test_that("unavailable native deviance stays missing, including combined zero inflation", {
+  skip_if_not_installed("glmmTMB")
+  set.seed(871)
+  d <- criteria_data(); d$y <- rbinom(nrow(d), 1, 0.6) * rpois(nrow(d), 4)
+  m <- glmmTMB::glmmTMB(y ~ x, ziformula = ~1, data = d, family = poisson())
+  x <- table_criterion(m)
+  expect_true(is.na(x$deviance))
+  expect_true(is.finite(x$AIC))
+  expect_match(x$notes, "combined zero-inflated")
+  expect_match(x$Distribution, "zero_inflated")
+})
+
+test_that("criteria arguments have deliberate unsupported and refitting boundaries", {
+  a <- glm(mpg ~ wt, mtcars, family = gaussian())
+  for (bad in list(NULL, character(), NA_character_, "unknown", 1)) {
+    expect_error(table_criterion(a, bad), "Unknown")
+  }
+  for (bad in list(list(), NULL, lm(mpg ~ wt, mtcars), list(a, "x"))) {
+    expect_error(table_criterion(bad), "supported")
+  }
+  for (bad in list(NA, 1, "bayes_R2", c(TRUE, FALSE))) expect_error(table_criterion(a, sort = bad), "sort")
+  for (bad in list("", NA_character_, c("a", "b"), 1)) expect_error(table_criterion(a, labels = bad), "label")
+  expect_error(table_criterion(list(a, a), labels = c("same", " same ")), "label")
+  expect_error(table_criterion(a, newdata = mtcars), "refitting")
+  expect_error(table_criterion(a, reloo = TRUE), "refitting")
+  expect_error(table_criterion(a, cores = 2), "no brms")
+  expect_error(table_criterion(a, "loo", FALSE, NULL, 3), "named brms")
+  x <- table_criterion(a, c("loo", "bayes_R2", "loo_R2", "log_lik"))
+  expect_true(all(is.na(x$looic)))
+  expect_true(is.na(x$bayes_R2))
+  expect_true(is.na(x$log_lik))
+  expect_true(all(attr(x, "criteria_notes")$status == "not applicable"))
+  expect_identical(table_criterion(list(First = a, Second = a))$Model, c("First", "Second"))
+  expect_identical(table_criterion(list(a, a))$Model, c("Model 1", "Model 2"))
+  expect_warning(table_criterion(a, criterion = "deviance", sort = "AIC"), "not sorted")
+})
+
+test_that("spatial backends use native likelihood, cAIC, and degrees of freedom", {
+  skip_if_not_installed("sdmTMB")
+  d <- criteria_data()
+  m <- sdmTMB::sdmTMB(y ~ year + s(x, k = 5), data = d,
+    family = poisson(), spatial = "off", silent = TRUE)
+  before <- m$tmb_obj$env$last.par.best
+  x <- table_criterion(m, c("auto", "caic"))
+  expect_equal(x$AIC, AIC(m))
+  expect_equal(x$BIC, BIC(m))
+  expect_equal(x$df, attr(logLik(m), "df"))
+  expect_equal(x$cAIC, sdmTMB::cAIC(m))
+  expect_equal(x$EDF_random, sum(sdmTMB::cAIC(m, what = "EDF")))
+  expect_equal(x$cAIC_df, length(m$model$par) + x$EDF_random)
+  expect_equal(x$deviance, deviance(m))
+  expect_identical(m$tmb_obj$env$last.par.best, before)
+  expect_false(grepl("Parameter priors", x$notes))
+  profiled <- m; profiled$control$profile <- "b_j"
+  p <- table_criterion(profiled, c("AIC", "cAIC"))
+  expect_equal(p$AIC, AIC(m))
+  expect_true(is.na(p$cAIC))
+  expect_match(p$notes, "profiled sdmTMB")
+  m0 <- sdmTMB::sdmTMB(y ~ year + x, data = d,
+    family = poisson(), spatial = "off", silent = TRUE)
+  expect_equal(table_criterion(m0, "cAIC")$cAIC, AIC(m0))
+  skip_if_not_installed("tinyVAST")
+  t <- tinyVAST::tinyVAST(y ~ year + x, data = d, family = poisson(), spatial_domain = NULL,
+    control = tinyVAST::tinyVASTcontrol(calculate_deviance_explained = FALSE))
+  y <- table_criterion(t, c("auto", "caic"))
+  expect_equal(y$AIC, AIC(t))
+  expect_equal(y$logLik, as.numeric(logLik(t)))
+  expect_equal(y$df, attr(logLik(t), "df"))
+  expect_equal(y$nobs, nrow(d))
+  expect_equal(y$BIC, -2 * as.numeric(logLik(t)) + log(nrow(d)) * attr(logLik(t), "df"))
+  expect_equal(y$deviance, t$rep$deviance)
+  expect_equal(y$cAIC, AIC(t))
+  # Fixed-effect likelihoods agree across the three native implementations.
+  g <- glm(y ~ year + x, d, family = poisson())
+  z <- table_criterion(list(g, m0, t))
+  expect_equal(z$AIC, rep(z$AIC[1], 3), tolerance = 1e-6)
+  expect_true(all(is.finite(z$delta_AIC)))
+})
+
+test_that("tinyVAST random-field cAIC matches its native approximation", {
+  skip_if_not_installed("tinyVAST")
+  skip_if_not_installed("fmesher")
+  set.seed(670)
+  d <- expand.grid(x = 1:5, ycoord = 1:5, rep = 1:6)
+  d$year <- factor(d$rep); d$var <- "density"
+  d$y <- 2 + rep(rnorm(25, 0, 0.8), 6) + rnorm(nrow(d), sd = 0.3)
+  mesh <- fmesher::fm_mesh_2d(d[c("x", "ycoord")], cutoff = 0.5)
+  m <- tinyVAST::tinyVAST(y ~ year, data = d, family = gaussian(),
+    spatial_domain = mesh, space_term = "density <-> density, sd_space",
+    space_columns = c("x", "ycoord"),
+    control = tinyVAST::tinyVASTcontrol(calculate_deviance_explained = FALSE))
+  before <- m$obj$env$last.par.best
+  x <- table_criterion(m, c("auto", "cAIC"))
+  expect_equal(x$cAIC, tinyVAST::cAIC(m))
+  expect_equal(x$AIC, AIC(m))
+  expect_equal(x$df, attr(logLik(m), "df"))
+  expect_true(x$converged)
+  expect_true(x$pdHess)
+  expect_true(is.na(x$cAIC_df))
+  expect_match(x$notes, "does not expose")
+  expect_identical(m$obj$env$last.par.best, before)
+  profiled <- m
+  profiled$internal$control$profile <- "beta"
+  p <- table_criterion(profiled, c("AIC", "cAIC"))
+  expect_equal(p$AIC, AIC(m))
+  expect_true(is.na(p$cAIC))
+  expect_match(p$notes, "profiled tinyVAST")
+  m$internal$variables <- c("density", "other")
+  x <- table_criterion(m)
+  expect_match(x$notes, "Multivariate")
+  expect_true(is.na(x$AIC_group))
+})

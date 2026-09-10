@@ -16,6 +16,8 @@ navbar:
         href: articles/cpue-indices.html
       - text: Residual diagnostics
         href: articles/residual-diagnostics.html
+      - text: Model comparison
+        href: articles/model-comparison.html
       - text: Bentley validation
         href: articles/bentley-validation.html
       - text: Hurdle, delta, and zero-inflated models
@@ -35,6 +37,7 @@ articles:
   contents:
   - cpue-indices
   - residual-diagnostics
+  - model-comparison
   - bentley-validation
   - hurdle
   - spatial-spatiotemporal
@@ -84,8 +87,8 @@ reference:
   - plot_implied_residuals
   - plot_predicted_residuals
 
-- title: Bayesian model comparison
-  desc: Optional summaries for fitted brms models.
+- title: Model comparison
+  desc: Model-specific likelihood and Bayesian criteria, with explicit comparison safeguards.
   contents:
   - get_bayes_R2
   - table_criterion

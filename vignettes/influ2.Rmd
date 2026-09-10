@@ -55,6 +55,11 @@ Influence explains what drives an index; it does not establish that the model
 fits the observations adequately. The [Residual diagnostics](residual-diagnostics.html)
 article checks that complementary question using the same simulated lobster data.
 
+The [Model comparison](model-comparison.html) article summarises native
+likelihood and Bayesian criteria across model types, including conditional
+AIC where supported. Those scores assess fitted/predictive performance, not
+the robustness of the abundance index by themselves.
+
 ## A simulated lobster CPUE example
 
 The main examples use the simulated `lobsters_per_pot` data supplied with the

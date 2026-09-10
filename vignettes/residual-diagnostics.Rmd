@@ -770,9 +770,11 @@ interface.
 For brms, use the **original complete `brmsfit`**. The compact example fixtures
 in influ2 retain joint draws for influence calculations but omit the Stan
 state needed by native prediction and residual methods. They cannot support
-these residual helpers, `get_bayes_R2()`, or `table_criterion()`. Those two
-comparison helpers remain brms-specific; they are not generic frequentist
-model-selection tables.
+these residual helpers, `get_bayes_R2()`, or the Bayesian calculations in
+`table_criterion()`. These require complete brms fits. `table_criterion()` also
+supports model-specific frequentist likelihood criteria, without treating
+those criteria as interchangeable with Bayesian scores; see
+[Model comparison](model-comparison.html).
 
 brms's native residual summaries depend on its prediction method; Pearson
 residuals are based on predictive dispersion, not simply the GLM formula.

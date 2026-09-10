@@ -5,6 +5,37 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Model-comparison increment: 10 September 2026
+
+The maintainer commissioned model-specific `table_criterion()` methods for
+GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST, including mixed lists. The new
+Model comparison article demonstrates native likelihood summaries and a
+compact, executed complete-brms-fit example. Issue #12 is explicitly parked
+while this increment is reviewed; no ECDF/LOO-PIT issue closure is implied.
+
+- Native AIC, BIC, log likelihood, response deviance, sample size, and penalty
+  degrees of freedom are reported where appropriate. Bayesian LOOIC, paired
+  ELPD differences/standard errors, Pareto-k, and R-squared remain distinct.
+- Conditional AIC is opt-in. mgcv uses its native conditional AIC and corrected
+  effective penalty where available. sdmTMB/tinyVAST use their native
+  approximations. Mixed glmmTMB cAIC is unavailable; no conversion or guessed
+  penalty is substituted. Profiled spatial cAIC remains unvalidated and
+  unavailable, and tinyVAST does not expose its conditional penalty df.
+- Comparisons check observation alignment, weights, response support, common
+  covariates, and likelihood targets. An ordinary model may join either
+  target, but cannot bridge conditional and marginal groups. Groups are
+  constructed in input order; subsets can be compared separately. REML,
+  parameter-prior, failed-fit, and unreliable-LOO rankings are withheld.
+- Default input order replaces the old automatic brms sorting. Unsupported
+  values have explicit notes. No MCMC, null-model fits, or cross-validation
+  refits are launched by the reporting function, and only summaries persist.
+
+Review the table definitions and article before release, especially which
+prediction target is relevant to the intended CPUE comparison. Shared
+vessel/temporal/spatial-fold predictive scoring remains a separate workflow,
+not a claimed feature. Issue #12, issues #18/#22, remaining legacy helpers,
+the index-median question, and frozen-article review remain open decisions.
+
 ## 1. Scientific and visual review
 
 - Review the new four-panel residual display, especially automatic fishing-year
@@ -68,7 +99,7 @@ package. They are not merely historical helpers:
 | `plot_compare()` | Confirm index selection, common-period rescaling, labels, and interval defaults. |
 | `plot_step()`, `influ_steps()` | Review automatic ordinary-model refits, explicit spatial-process stages, and reuse of compact results or supplied fits. |
 | `get_bayes_R2()` | Retain the brms summary; decide whether a worked example is needed. |
-| `table_criterion()` | Retain the brms criteria; review interpretation of LOO, R-squared, and log likelihood. |
+| `table_criterion()` | Extended to six backends and mixed lists; review native likelihood targets, conditional AIC limits, paired LOO differences, and the new model-comparison article. |
 | `plot_implied_residuals()` | Review the fisheries interpretation, strata threshold, residual choice, and one-standard-error bars. |
 | `plot_predicted_residuals()` | Review residual types and smooths for each intended backend. |
 | `influ_residuals()`, `plot(..., type = "qq")` | Supported simulation-based Q-Q workflow, including standalone panels. The native-residual `plot_qq()` helper was explicitly retired on 10 September 2026. |
