@@ -368,6 +368,65 @@ and [brms](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.htm
 simulation interfaces. The table above states the choices made by this wrapper,
 not a claim that every backend has the same native defaults.
 
+### Choosing the conditioning
+
+`conditioning = "backend_default"` preserves the table above. The same plotting
+interface does not make different predictive targets interchangeable. Choose
+an explicit target when comparing models, and check the recorded scheme:
+
+| Model | Supported `conditioning` values, besides `"backend_default"` |
+|:--|:--|
+| GLM / GAM | `"fitted"` |
+| glmmTMB | `"new_effects"`, `"fitted"` |
+| sdmTMB | `"fitted"`, `"conditional_draw"`, `"new_effects"` |
+| tinyVAST | `"fitted"`, `"conditional_draw"` |
+| brms | `"posterior_predictive"` |
+
+For example, keep the fitted monthly effects while generating new observations
+from the already fitted lobster model:
+
+```{r residual-conditioning-mixed, eval=has_glmmTMB}
+lobster_conditional <- influ_residuals(
+  lobster_nb_mixed, nsim = 250, seed = 42, conditioning = "fitted"
+)
+lobster_conditional$metadata$scheme
+```
+
+`"fitted"` fixes estimated parameters, smooths, and random effects. It asks
+about response variation conditional on that estimated structure. In contrast,
+`"new_effects"` regenerates random effects at fitted distribution parameters.
+For sdmTMB it follows native `re_form = NA`: fitted smooths remain fixed.
+
+`"conditional_draw"` holds fixed parameters at their estimates and takes
+**one joint approximate conditional draw of the latent effects**. That vector
+is shared across all response simulations, preserving its spatial and temporal
+dependence. It is not a fresh field per simulation, full Bayesian parameter
+uncertainty, or MCMC. See the executed comparisons in
+[Spatial and spatiotemporal diagnostics](spatial-spatiotemporal.html#residual-conditioning).
+
+New spatial schemes and glmmTMB `"fitted"` prepare an independent native
+objective and per-replicate seeds. Changing `batch_size` therefore changes
+neither their latent draw nor their observation-level results. The compact
+response-ECDF grid still uses the first batch and can differ. Neither the
+objective, latent vector, nor full response matrix is retained in the result.
+Backend setup and sparse factorisation can still use substantial memory.
+The existing default routes keep their previous random-number behaviour.
+
+Unsupported combinations fail explicitly. In particular, this interface does
+not silently turn brms posterior predictive checks into fixed-parameter checks,
+sample GAM coefficient uncertainty, or regenerate tinyVAST processes. The
+external-simulation constructor can describe additional explicitly generated
+schemes. A shared name does not guarantee equally calibrated diagnostics:
+estimated parameters, approximate latent distributions, and fitted-data reuse
+still affect the reference distribution. Do not select a seed because its
+residuals look best, or treat a conditional check as full validation of the
+spatial covariance structure.
+
+The shared conditional-draw option requires a converged ML fit with a
+positive-definite Hessian, not a REML or profiled fit. Some native REML latent
+vectors also contain fixed coefficients; sampling them would contradict the
+promise to hold those coefficients fixed, so that case is rejected explicitly.
+
 These targets differ. In particular, conditional checks can conceal latent
 structure absorbed by an overly flexible model, and posterior predictive
 ranks need not be uniform. For the alternative sdmTMB approximate-latent-draw
@@ -471,7 +530,11 @@ exploratory fitted-data display into a test. GLM/GAM simulations hold fitted
 parameters and smooths fixed. glmmTMB bins use probabilities conditional on
 fitted random effects, whereas its native simulations redraw those effects;
 the simulated envelope can consequently be displaced from the identity line.
-sdmTMB/tinyVAST use their existing `mle-eb` conditioning. brms bins use posterior
+By default, sdmTMB/tinyVAST use their existing `mle-eb` conditioning. With
+`conditioning = "conditional_draw"`, their bins instead use expected
+probabilities at the **same sampled latent vector**, not noisy binary-simulation
+averages. With `"new_effects"`, fitted conditional bins remain distinct from
+the process-varying simulation envelope. brms bins use posterior
 mean expected probabilities over the same draw identities as the posterior
 predictive simulations, including existing group effects.
 
@@ -882,17 +945,20 @@ For a single-response model such as `pcod_model` in
 unified Q-Q workflow is:
 
 ```{r residual-sdmtmb-recipe, eval=FALSE}
-pcod_checks <- influ_residuals(pcod_model, nsim = 250, seed = 41)
+pcod_checks <- influ_residuals(
+  pcod_model, nsim = 250, seed = 41, conditioning = "conditional_draw"
+)
 plot(pcod_checks, type = "qq")
 ```
 
-This simulates responses conditional on the fitted fields (`"mle-eb"`), as
-recorded in `pcod_checks$metadata$scheme`. It is an exploratory conditional
-check, **not** sdmTMB's native `"mle-mvn"` PIT residual calculation or a claim
-that the two procedures have the same calibration. The identity reference
+This fixes one native approximate conditional latent draw across all response
+simulations and batches, as recorded in `pcod_checks$metadata$scheme`. It uses
+finite-simulation randomised ranks rather than sdmTMB's analytic quantile CDF,
+so the two results are not numerically identical. Omit `conditioning` or choose
+`"fitted"` to retain the previous fitted-field route; use `"new_effects"` for
+native process simulations with fitted smooths fixed. The identity reference
 preserves location and scale departures instead of fitting a quartile line
-through the points. The native alternative remains available through the
-sdmTMB/DHARMa workflow below.
+through the points. These remain exploratory fitted-model diagnostics.
 
 sdmTMB also has a dedicated DHARMa bridge. The following recipe reuses an
 already fitted model; it is not evaluated again in this article.
@@ -917,11 +983,13 @@ preserve its selected component and simulation target.
 ### tinyVAST
 
 For supported single-response tinyVAST fits, the plotting helpers use simulated
-normal-score ranks conditional on the fitted fields, not native deviance or
-response residuals.
+normal-score ranks. Fitted-field conditioning remains the default, with one
+shared conditional latent draw now available explicitly:
 
 ```{r residual-tinyvast-recipe, eval=FALSE}
-tiny_checks <- influ_residuals(tiny_model, nsim = 250, seed = 41)
+tiny_checks <- influ_residuals(
+  tiny_model, nsim = 250, seed = 41, conditioning = "conditional_draw"
+)
 plot_predicted_residuals(tiny_checks)
 plot(tiny_checks, type = "qq")
 ```
@@ -930,9 +998,11 @@ The [tinyVAST simulation interface](https://vast-lib.github.io/tinyVAST/referenc
 can support an external `DHARMa::createDHARMa()` workflow, but it needs careful
 response selection and observation alignment for multivariate models. Its
 `"mle-mvn"` simulation draws a new approximate random-effect vector for each
-replicate, unlike sdmTMB's single-draw residual recipe. This article does not
-claim those procedures have identical calibration, or provide an automatic
-multivariate DHARMa adapter.
+replicate, unlike sdmTMB's single-draw residual recipe. influ2's new
+`"conditional_draw"` option deliberately prepares one native TMB draw and
+reuses it, rather than calling tinyVAST `"mle-mvn"` separately for each batch.
+This does not provide an automatic multivariate DHARMa adapter or establish
+universal fitted-model calibration.
 
 ### GLM, GAM, glmmTMB, and brms
 

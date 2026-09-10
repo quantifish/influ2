@@ -45,6 +45,10 @@ test_that("brms residuals preserve joint draw identities, known trials, and batc
     expect_identical(result$metadata$response_kind,
       if (trials == 1) "bernoulli" else "grouped_binomial")
     whole <- influ_residuals(model, nsim = 20, seed = 51, batch_size = 20)
+    explicit <- influ_residuals(model, nsim = 20, seed = 51, batch_size = 7,
+      conditioning = "posterior_predictive")
+    expect_identical(result$observations, explicit$observations)
+    expect_identical(explicit$metadata$conditioning, "posterior_predictive")
     expect_identical(result$observations, whole$observations)
     expect_identical(result$calibration, whole$calibration)
     expect_null(result$draws)

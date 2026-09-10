@@ -1,5 +1,16 @@
 # influ2 1.1.0
 
+* Added explicit residual `conditioning` options. Existing defaults remain:
+  fitted effects for GLM/GAM/sdmTMB/tinyVAST, new random effects for glmmTMB,
+  and posterior predictive draws for brms. New options hold glmmTMB effects
+  fixed, reuse one joint conditional latent-effect draw for sdmTMB/tinyVAST,
+  or simulate new sdmTMB processes. Unsupported combinations fail explicitly.
+  Independent native objectives protect the supplied fit. Shared draws and
+  per-replicate seeds preserve the new schemes across response batches;
+  sampled-field encounter probabilities and delta components stay aligned.
+  The spatial article compares schemes on the same fitted models. These are
+  exploratory diagnostic targets, not interchangeable calibrated tests.
+
 * Added `as_influ_residuals()` for externally generated response simulations.
   It requires explicit observation alignment, response kind, time column,
   and simulation conditioning, and returns the same compact diagnostic used
