@@ -114,7 +114,7 @@ plot_implied_residuals <- function(fit, data = NULL, year = NULL,
   strata$position <- match(strata$level, levels)
   strata <- strata[order(strata$group, strata$position), , drop = FALSE]
   strata$segment <- cumsum(c(TRUE, diff(strata$position) != 1L |
-    head(strata$group, -1L) != tail(strata$group, -1L)))
+    utils::head(strata$group, -1L) != utils::tail(strata$group, -1L)))
   numeric_levels <- suppressWarnings(as.numeric(levels))
   positions <- if (all(is.finite(numeric_levels)) && !anyDuplicated(numeric_levels)) {
     numeric_levels
