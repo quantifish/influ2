@@ -1,3 +1,43 @@
+## Generalised residual helpers: 10 September 2026
+
+Source `3837b0ba362d26c04c997dc2160036e9081b59b3` replaces the maintained native
+residual helpers with the shared simulation-based rank engine. Grouped means
+are no longer added to link-scale coefficients. The residual article explains
+the changed interpretation, fisheries-report context, dependence caveats,
+component selection, and BNS migration boundary. The model-comparison article
+now contains one executed table spanning all six supported backends, using a
+complete existing brms fit without MCMC during rendering.
+
+Final archive: `/private/tmp/influ2-general-residuals.DHp8R1/final/influ2_1.1.0.tar.gz`.
+SHA256: `fc1bb03baabbad888103bc0b9eb35f09706897609a85244d07aecca9fb5533f6`.
+The archive matches 124 code, help, test, vignette, namespace, and example files
+byte-for-byte; original DESCRIPTION values match after build whitespace
+normalisation. It is installed in the Mac's usual user R library.
+
+macOS arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with zero
+errors, zero warnings, and one NOTE (new submission and optional tinyVAST
+available from its declared additional repository). CRAN-mode tests passed
+3,810 expectations with five intentional visual groups skipped. The full
+local suite and GitHub coverage run passed 3,823 expectations with no failures,
+warnings, or skips. Local and GitHub coverage are 95.72%. The redesigned visual
+baseline and rendered article figures were inspected, and a complete existing
+brms model passed both helper workflows. Native sdmTMB positive-component
+tests verify that combined residuals are not substituted.
+
+A preliminary manual-enabled local attempt failed because pdflatex was absent
+from the process PATH, not because a LaTeX compilation error was established.
+The final check uses the same documented --no-manual convention as earlier
+increments; no PDF-manual validation is claimed. An initial namespace NOTE
+for unqualified utility functions was corrected and is absent from the final
+check. No test or coverage exclusion was added to obtain a passing result.
+
+GitHub coverage run 34444319123 passed for the stated source. R-CMD-check
+34444319165 and pkgdown 34444319146, followed by Pages publication, remain
+under the scoped validation follow-up until completion is verified. The three
+earlier f432d95 runs were deliberately cancelled after the namespace fix to
+avoid duplicate Actions usage. No issues, BNS assessment files, or frozen
+legacy figures were changed. No CRAN or win-builder submission was made.
+
 ## Model-specific comparisons: 10 September 2026
 
 `table_criterion()` now supports GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST,

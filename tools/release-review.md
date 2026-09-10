@@ -5,7 +5,7 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
-## Model-comparison increment: 10 September 2026
+## Generalised residual follow-up: 10 September 2026
 
 Follow-up: the mixed comparison example now includes all six backends in one
 executed table on 150 common simulated observations. The residual helper audit
@@ -19,8 +19,15 @@ were deliberately not changed. Its explicit native-residual calls and downstream
 Local validation of this increment: 3,823 passing expectations, no failures,
 warnings, or skips; coverage 95.72%. A complete existing brms fit passed both
 helpers without MCMC. The grouped visual baseline was inspected and updated.
-The code changes have not been submitted to CRAN or win-builder. Final source
-archive and GitHub checks are recorded separately when complete.
+Final archive checks passed `--as-cran --no-manual` with zero errors, zero
+warnings, and the existing new-submission/optional-tinyVAST NOTE. The source
+archive and checksum are recorded in `cran-comments.md`, along with the
+manual-enabled attempt's TeX PATH limitation. GitHub coverage passed for source
+3837b0b; platform checks and Pages publication remain under the scoped
+follow-up until independently verified. No CRAN or win-builder submission
+has been made.
+
+## Model-comparison increment: 10 September 2026
 
 The maintainer commissioned model-specific `table_criterion()` methods for
 GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST, including mixed lists. The new
