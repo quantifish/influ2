@@ -1,5 +1,12 @@
 # influ2 1.1.0
 
+* Added standalone lobster ECDF and complete-fit brms posterior predictive
+  examples to the residual article, with compact saved Bayesian results and
+  an individual-replicate overlay. Help and tests cover standalone/overview
+  ECDF agreement and calculation reuse. Fitted-data ranks, response ECDFs,
+  LOO-PIT, and LOOIC are explicitly distinguished; no universal LOO-PIT or
+  MCMC-on-render workflow is introduced.
+
 * Unified the remaining residual plotting helpers with `influ_residuals()`.
   `plot_predicted_residuals()` now uses normal-score rank residuals and the
   predictive means from the same simulations. `plot_implied_residuals()` now

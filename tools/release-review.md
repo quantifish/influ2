@@ -5,6 +5,35 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Issue #12 completion review and issue #18 planning: 10 September 2026
+
+The residual article now contains a standalone glmmTMB lobster ECDF (Figure 4),
+an executed complete-fit brms posterior predictive ECDF (Figure 5), and twenty
+individual predictive ECDF curves (Figure 6). Bayesian preparation reuses the
+previously fitted Gaussian model from the six-backend comparison. Rendering
+loads a 13,836-byte compact result; no model fit or observation-by-draw matrix
+is shipped. Preparation and native pp_check recipes are documented, along
+with the differences between response ECDFs, fitted-data ranks, LOO-PIT, and
+LOOIC. A universal LOO-PIT interface and automatic refits remain outside the
+agreed scope, not features claimed to be fulfilled by the Q-Q plot.
+
+Local review passed 111 new focused expectations and all 3,934 full-suite
+expectations, with zero failures, warnings, or skips. Independent native brms
+replay verified all saved ECDF quantiles, predictive means, ranks, and twenty
+overlay curves. The native pp_check recipe also executed on the complete fit.
+The three rendered figures were visually inspected, and browser inspection
+confirmed captions, sequential numbering, and larger-view controls. No
+runtime calculation or public API is changed by this increment. Final archive,
+GitHub publication, and issue-closure outcomes will be recorded below.
+
+Issue #18 is planning only at the maintainer's request. The proposed separate
+Regional CPUE indices vignette uses one four-area model, aggregating areas
+1+2 and 3+4 with fixed regional reference weights. See
+[two-region-plan.md](two-region-plan.md) for interaction requirements, response-
+scale averaging, regional uncertainty, tests, and scope. No regional example
+or API has been implemented, and #18 remains open. Median/NA, remaining legacy
+triage, BNS migration, and submission are untouched.
+
 ## Generalised residual follow-up: 10 September 2026
 
 Follow-up: the mixed comparison example now includes all six backends in one

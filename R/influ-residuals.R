@@ -110,6 +110,7 @@
 #' checks
 #' plot(checks)
 #' plot(checks, type = "qq")
+#' plot(checks, type = "distribution", response_scale = "log1p")
 #' }
 #' @md
 #' @export

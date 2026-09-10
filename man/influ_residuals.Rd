@@ -154,6 +154,7 @@ checks <- influ_residuals(fit, nsim = 50, seed = 42)
 checks
 plot(checks)
 plot(checks, type = "qq")
+plot(checks, type = "distribution", response_scale = "log1p")
 }
 }
 \seealso{
