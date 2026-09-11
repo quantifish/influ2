@@ -50,7 +50,25 @@ addresses the recurring old-runtime annotation. Upstream metadata confirms
 support for the existing `clean`, `branch`, and `folder` inputs. Permissions,
 deployment target, clean behaviour, workflow triggers, and the two-platform
 R-check matrix are unchanged. See the [upstream release](https://github.com/JamesIves/github-pages-deploy-action/releases/tag/v4.9.0).
-Live deployment verification is recorded separately after publication.
+
+Publication is verified for source `6f47bfce1d1c6838d60b4b96c6550e8c5a0799ee`.
+Coverage run 34562564878 passed all 4,530 expectations, with no warnings or
+skips, and retained 95.98% coverage. Website run 34562564747 passed, including
+all 75 plotted-image/lightbox checks across seven articles with optional
+examples present. Its deployment step completed with the updated action, and
+the job has zero annotations: the old-runtime warning is gone. Pages run
+34563053123 published website revision
+`7772f6ee984f2b3363fd9dbb0baa8c385bb12183`.
+
+Direct public-page checks verified the new main-article section, its first
+figure and full caption, and the worked help example. All 54 local
+year-variable completeness proportions were independently checked against
+the demonstration data; the original dataset and zero responses were
+unchanged. The updated package is installed in the usual Mac R library.
+Workflow YAML comparison confirmed that only the action revision changed.
+Ubuntu-release and Windows-release checks in run 34562564813 were still
+running at this publication review. This validation record is excluded from
+the package archive and does not change the checked source.
 
 ## CDI label and website organisation, 11 September 2026
 
