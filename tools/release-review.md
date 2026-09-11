@@ -20,6 +20,52 @@ individual suggestions, potential Ginflu-inspired features, and related parked
 decisions. It separates discussion priorities from optional candidates; adding
 an item there does not approve implementation or make it a CRAN release gate.
 
+## Explicit residual conditioning, 11 September 2026
+
+PR #26 (source `02573236c77ec700a42d9d99da11640f3ade3a04`) adds the approved
+N06 options while preserving all existing backend defaults. glmmTMB now
+offers fitted or new random effects; sdmTMB offers fitted effects, one shared
+conditional latent draw, or new effects; tinyVAST offers fitted effects or
+one shared conditional draw. GLM/GAM and brms retain their respective fitted
+and posterior-predictive targets. Unsupported combinations fail explicitly.
+Shared conditional draws require converged, unprofiled ML fits, not REML.
+
+The [conditioning audit](residual-conditioning-audit.md) records the native
+interfaces, safeguards, implementation limits, and numerical evidence. All
+4,525 local expectations passed without failures, warnings, or skips,
+including the frozen pre-refactor baselines. Local and GitHub coverage are
+95.98%. The final checked archive passed macOS `--as-cran --no-manual` with
+zero errors, zero warnings, and the existing incoming-feasibility NOTE; its
+checksum, optional-dependency limits, and installation are in
+`../cran-comments.md`.
+
+Spatial Figures 9–11 demonstrate the alternatives with the existing sdmTMB
+and tinyVAST examples. They were rendered and visually inspected. All 71
+local and 74 GitHub plotted-image/lightbox checks passed across seven pages.
+PR coverage run 34543811615 and website run 34543811639 passed. Ubuntu release
+and Windows release both passed run 34543811601. PR #26 was merged as
+`d230d6861e40996c2a53419bedcd7c07833f7b54`, whose source tree is identical
+to the checked source. Post-merge coverage run 34545318736 and website run
+34545318608 passed. Pages run 34545915567 published website revision
+`459ea2a96e93a1965eb544d51dabf01aead926a2`. Direct public-site checks verified
+the new spatial examples, conditioning support table, and help, including the
+ML/non-REML guard. The three plotted comparisons were visually reviewed
+locally before publication; automated caption checks passed on the deployed
+build. The existing deployment-action Node-runtime annotation remains
+non-blocking; the action succeeded using GitHub's Node 24 override.
+
+The automatic post-merge R-CMD-check rerun 34545318590 was still running at
+the publication review. Both platforms had passed the identical source in
+PR run 34543811601; do not conflate those results with completion of the
+later rerun. These final records are excluded from the package archive and
+do not alter the checked source or published examples.
+
+Next discuss N09 calibration and interpretation before changing defaults.
+A common layout does not make diagnostic targets interchangeable or establish
+calibrated tests. N02 counters, N07 retention, N08 further bridges, issue #18,
+legacy triage, and the index-median review remain untouched. No CRAN or
+win-builder submission was made.
+
 ## Shared residual engine and external simulations, 11 September 2026
 
 The approved N01/N04/N05 increment freezes the pre-refactor numerical/RNG

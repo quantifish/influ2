@@ -1,3 +1,43 @@
+## Explicit residual conditioning: 11 September 2026
+
+Source `02573236c77ec700a42d9d99da11640f3ade3a04` adds explicit supported
+conditioning targets to `influ_residuals()`. All existing backend defaults
+remain unchanged. New independent native objectives protect the original
+fits. A single joint approximate conditional latent draw can be shared across
+sdmTMB/tinyVAST response simulations; matching probability calculations,
+delta components, reproducible batching, and ML/non-REML guards are tested.
+This is not a universal fitted-model calibration claim or a change to defaults.
+
+The full local suite passed 4,525 expectations with no failures, warnings,
+or skips. The macOS arm64 R 4.6.1 source archive passed
+`--as-cran --no-manual` with zero errors, zero warnings, and the existing
+incoming-feasibility NOTE (new submission and optional tinyVAST available
+through its declared repository). All seven vignettes built and rebuilt.
+CRAN-mode tests passed 4,511 expectations with six intentional visual-test
+groups skipped; those passed in the full suite. Optional DHARMa was absent
+locally, so its article branches were skipped. The PDF manual was not checked.
+
+Checked archive:
+`/private/tmp/influ2-conditioning-check.4hllQr/influ2_1.1.0.tar.gz`.
+SHA256: `8458bee96eecb42751b9b70e75ab1f9251bdcddbc154dc640829e4f7b06ddbba`.
+The checked archive is installed in the usual Mac R library. Local and GitHub
+coverage are 95.98%; the new conditioning file has 95.92% coverage. The three
+new spatial examples were visually inspected, and all 71 local plotted-image
+caption checks on seven pages passed. GitHub's optional-dependency-complete
+website build passed all 74 plotted-image checks across those seven pages.
+
+Ubuntu release and Windows release both passed PR run 34543811601. PR #26
+was merged as `d230d6861e40996c2a53419bedcd7c07833f7b54`, with an identical
+source tree. Post-merge coverage run 34545318736 and website run 34545318608
+passed; Pages run 34545915567 published the new examples. Direct public-site
+checks verified the spatial comparisons, support table, and updated help.
+The automatic post-merge package-check rerun 34545318590 remained in progress
+at that review; the passing release-platform evidence is the identical-source
+PR run. Detailed validation and publication records are in
+`tools/release-review.md`. No CRAN or win-builder submission was made.
+N09 calibration review, issue #18, the remaining legacy review, and the
+index-median decision remain separate from this increment.
+
 ## Shared residual engine and external inputs: 11 September 2026
 
 Source `09971c240d2031aa824d94364bfea8babd650ff1` extracts the existing
