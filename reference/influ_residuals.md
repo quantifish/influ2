@@ -23,7 +23,8 @@ influ_residuals(
   calibration_min_n = 20L,
   calibration_groups = NULL,
   trial_counts = NULL,
-  groups = NULL
+  groups = NULL,
+  conditioning = "backend_default"
 )
 
 # S3 method for class 'influ_residuals'
@@ -111,6 +112,16 @@ print(x, ...)
   Specify these independently of the response. Only these columns, not
   the complete model data, are stored.
 
+- conditioning:
+
+  Simulation target. `"backend_default"` preserves existing behaviour:
+  `"fitted"` for GLM/GAM/sdmTMB/tinyVAST, `"new_effects"` for glmmTMB,
+  and `"posterior_predictive"` for brms. Explicit alternatives are
+  `"fitted"` for glmmTMB, `"conditional_draw"` for sdmTMB/tinyVAST, and
+  `"new_effects"` for sdmTMB. Unsupported combinations fail, not fall
+  back. See the conditioning section below before comparing model
+  diagnostics.
+
 - x:
 
   An \`influ_residuals\` object.
@@ -185,6 +196,40 @@ simulation batch; it is deliberately compact, not an exact
 representation of every simulated jump. For binomial GLMs and `glmmTMB`,
 responses are success counts (including proportion responses with
 integer trial weights).
+
+## Conditioning
+
+`"fitted"` holds fitted parameters and latent effects fixed while
+simulating observation variation. `"conditional_draw"` holds fixed
+parameters at their estimates, draws one joint latent-effect vector from
+the native TMB Gaussian conditional approximation, and reuses it for
+every response simulation and batch. It requires a converged, unprofiled
+ML (not REML) fit with latent effects and a positive-definite Hessian.
+The sparse factorisation and one parameter vector are prepared once;
+neither the draw nor the response matrix is retained. This is not MCMC
+or integration over fixed-parameter uncertainty.
+
+`"new_effects"` regenerates latent processes at fitted distribution
+parameters: glmmTMB uses its native random-effect simulation, and sdmTMB
+uses the same controls as `simulate(..., re_form = NA)` (fitted smooths
+remain fixed). `"posterior_predictive"` retains brms joint posterior
+uncertainty, including existing group effects. These are different
+questions, not interchangeable ways to obtain uniformly distributed
+fitted-data ranks.
+
+Explicit glmmTMB `"fitted"` and the new spatial schemes use an
+independent native objective; the user's fitted object is not altered.
+For these schemes, per-replicate seeds and a shared latent draw make
+observation-level results invariant to `batch_size`. The compact
+response-ECDF grid still depends on the first batch. Existing default
+simulation/RNG behaviour is unchanged. Sampled-field binomial/encounter
+probabilities use the same latent vector. New-effect calibration retains
+fitted conditional probability bins, so the predictive envelope need not
+centre on the identity line. Check `metadata$scheme`,
+`metadata$conditioning`, and `metadata$prediction_type`. Native versions
+and support can differ; no term-by-term conditioning control or
+automatic MCMC, marginal integration, or new-group brms prediction is
+added.
 
 ## See also
 

@@ -527,6 +527,155 @@ reference distribution consistent across that list. Set
 afterwards; otherwise the step result retains compact diagnostic
 summaries.
 
+## Residual conditioning
+
+The following checks reuse the fitted models above. They do not refit
+models, run MCMC, or change an index. They ask what varies when we
+simulate a new response: only observation variation, or latent processes
+as well?
+
+### sdmTMB: three different questions
+
+`"fitted"` holds estimated latent effects fixed. `"conditional_draw"`
+holds fixed parameters at their estimates, takes one joint approximate
+conditional draw of **all** latent effects, and shares it across every
+simulation batch. `"new_effects"` instead generates new processes at
+fitted distribution parameters, following native `re_form = NA` (fitted
+smooths remain fixed). These are diagnostic targets, not competing
+estimates of the CPUE index.
+
+``` r
+
+pcod_residuals <- lapply(
+  c("fitted", "conditional_draw", "new_effects"),
+  function(scheme) influ_residuals(
+    pcod_model, nsim = 250, batch_size = 25, seed = 41,
+    conditioning = scheme
+  )
+)
+names(pcod_residuals) <- c("fitted", "conditional_draw", "new_effects")
+```
+
+``` r
+
+patchwork::wrap_plots(
+  plot(pcod_residuals$fitted, type = "qq") + labs(title = "Fitted effects"),
+  plot(pcod_residuals$conditional_draw, type = "qq") +
+    labs(title = "One conditional draw"),
+  plot(pcod_residuals$new_effects, type = "qq") + labs(title = "New processes"),
+  nrow = 1
+)
+```
+
+![Three Q-Q plots comparing fitted effects, one shared conditional
+latent draw, and new latent processes for a single Pacific cod
+model.](spatial-spatiotemporal_files/figure-html/sdmtmb-conditioning-qq-1.png)
+
+Normal-score PIT Q-Q checks for the same Pacific cod sdmTMB model under
+three simulation targets: fitted latent effects (left), one shared joint
+approximate conditional latent draw (centre), and newly simulated
+processes (right). All use 250 response simulations. These are
+finite-simulation ranks, not the native analytic quantile residuals. The
+grey bands are pointwise independent-uniform references, not calibrated
+tests for this fitted spatial model. Different appearances do not rank
+these conditioning schemes or identify the best model.
+
+The [sdmTMB residual
+documentation](https://sdmtmb.github.io/sdmTMB/reference/residuals.sdmTMB.html)
+recommends the approximate conditional-draw approach over fitted latent
+modes for goodness-of-fit checks ([Waagepetersen
+2006](#ref-Waagepetersen2006); [Thygesen et al.
+2017](#ref-Thygesen2017)). influ2 uses that latent-draw construction
+with simulated-response ranks. Its existing default remains `"fitted"`
+so this addition does not silently change previous results. Neither
+sampling nor the `qnorm(PIT)` transformation makes these fitted-data
+checks universally calibrated. Inspect sensitivity to a preselected set
+of seeds; do not keep only the most favourable draw.
+
+``` r
+
+plot(pcod_residuals$conditional_draw)
+```
+
+![Four-panel residual overview for Pacific cod, using one shared
+conditional spatial and spatiotemporal draw and matching encounter
+probabilities.](spatial-spatiotemporal_files/figure-html/sdmtmb-conditioning-overview-1.png)
+
+Four-panel Pacific cod residual overview conditional on one shared joint
+latent-effect draw, with fixed parameters at their fitted values. Panels
+A-C use normal-score PIT ranks; panel D checks encounter calibration.
+The binning probabilities use the same sampled latent predictor, and the
+predictive means come from the same response simulations. Year box
+widths are proportional to the square root of observation count. Grey
+references and predictive bars remain exploratory, not confidence
+intervals around observed proportions or calibrated spatial
+goodness-of-fit tests.
+
+The complete latent vector is drawn once, not once per location, year,
+or response batch. The new schemes prepare their response seeds once
+too, so changing `batch_size` does not change their observation-level
+ranks, means, or calibration summaries. The compact response-ECDF grid
+can still differ because its range uses the first batch. The result
+retains neither the latent draw nor the full response matrix, although
+native sparse factorisation and model setup still require working
+memory.
+
+For a joint delta model, `component = "combined"` retains the full
+response; `"encounter"` checks presence, and supported sdmTMB
+`"positive"` checks native component-2 simulations at the original
+positive-response rows. All three routes honour the requested
+conditioning. They are not interchangeable views of a positive-only
+diagnostic.
+
+### tinyVAST: match the target, not the argument name
+
+The same two conditional choices work for the simulated spatial and
+AR(1) spatiotemporal model above:
+
+``` r
+
+tiny_fitted_checks <- influ_residuals(
+  tiny_model, nsim = 250, seed = 41, conditioning = "fitted"
+)
+tiny_draw_checks <- influ_residuals(
+  tiny_model, nsim = 250, seed = 41, conditioning = "conditional_draw"
+)
+```
+
+``` r
+
+patchwork::wrap_plots(
+  plot(tiny_fitted_checks, type = "qq") + labs(title = "Fitted effects"),
+  plot(tiny_draw_checks, type = "qq") + labs(title = "One conditional draw"),
+  nrow = 1
+)
+```
+
+![Two tinyVAST Q-Q plots comparing fitted latent effects with one shared
+approximate conditional latent
+draw.](spatial-spatiotemporal_files/figure-html/tinyvast-conditioning-qq-1.png)
+
+Normal-score PIT Q-Q checks for the same simulated tinyVAST model with
+persistent spatial and AR(1) spatiotemporal fields. The left plot fixes
+fitted latent effects; the right holds one joint approximate conditional
+latent draw across all 250 response simulations. The grey bands are
+independent-uniform references only. This comparison changes the
+simulation target, not the model, and does not establish which scheme is
+best calibrated.
+
+Native tinyVAST `simulate(type = "mle-mvn")` draws a new latent vector
+for each replicate. influ2’s `"conditional_draw"` instead prepares one
+native TMB draw and reuses it. The common target is therefore
+intentional, not inferred from a shared native argument name.
+Unconditional `"new_effects"` is not offered for tinyVAST here;
+unsupported choices fail explicitly. See [Residual
+diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#choosing-the-conditioning)
+for the full backend support table, including glmmTMB and brms.
+
+These plots do not replace maps of residuals, temporal-dependence
+checks, validation of field covariance assumptions, or out-of-sample
+assessment.
+
 ## Response indices and area totals
 
 The influence and step plots above answer different questions from a
@@ -752,3 +901,14 @@ Rooper. 2025. “tinyVAST: R Package with an Expressive Interface to
 Specify Lagged and Simultaneous Effects in Multivariate Spatio-Temporal
 Models.” *Global Ecology and Biogeography* 34 (4): e70035.
 <https://doi.org/10.1111/geb.70035>.
+
+Thygesen, Uffe Høgsbro, Christoffer Moesgaard Albertsen, Casper
+Willestofte Berg, Kasper Kristensen, and Anders Nielsen. 2017.
+“Validation of Ecological State Space Models Using the Laplace
+Approximation.” *Environmental and Ecological Statistics* 24 (2):
+317–39. <https://doi.org/10.1007/s10651-017-0372-4>.
+
+Waagepetersen, Rasmus. 2006. “A Simulation-Based Goodness-of-Fit Test
+for Random Effects in Generalized Linear Mixed Models.” *Scandinavian
+Journal of Statistics* 33 (4): 721–31.
+<https://doi.org/10.1111/j.1467-9469.2006.00504.x>.

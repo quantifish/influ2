@@ -69,7 +69,8 @@ residuals by year, and a response-adaptive calibration or distribution panel.</p
 <span>  calibration_min_n <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  calibration_groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  trial_counts <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  groups <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conditioning <span class="op">=</span> <span class="st">"backend_default"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_residuals'</span></span>
@@ -157,6 +158,15 @@ for <code><a href="plot_implied_residuals.html">plot_implied_residuals()</a></co
 Only these columns, not the complete model data, are stored.</p></dd>
 
 
+<dt id="arg-conditioning">conditioning<a class="anchor" aria-label="anchor" href="#arg-conditioning"></a></dt>
+<dd><p>Simulation target. <code>"backend_default"</code> preserves existing
+behaviour: <code>"fitted"</code> for GLM/GAM/sdmTMB/tinyVAST, <code>"new_effects"</code> for
+glmmTMB, and <code>"posterior_predictive"</code> for brms. Explicit alternatives are
+<code>"fitted"</code> for glmmTMB, <code>"conditional_draw"</code> for sdmTMB/tinyVAST, and
+<code>"new_effects"</code> for sdmTMB. Unsupported combinations fail, not fall back.
+See the conditioning section below before comparing model diagnostics.</p></dd>
+
+
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>An `influ_residuals` object.</p></dd>
 
@@ -223,6 +233,36 @@ The ECDF grid spans observations and the first simulation batch; it is
 deliberately compact, not an exact representation of every simulated jump.
 For binomial GLMs and <code>glmmTMB</code>, responses are success counts (including
 proportion responses with integer trial weights).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="conditioning">Conditioning<a class="anchor" aria-label="anchor" href="#conditioning"></a></h2>
+
+
+<p><code>"fitted"</code> holds fitted parameters and latent effects fixed while simulating
+observation variation. <code>"conditional_draw"</code> holds fixed parameters at their
+estimates, draws one joint latent-effect vector from the native TMB Gaussian
+conditional approximation, and reuses it for every response simulation and
+batch. It requires a converged, unprofiled ML (not REML) fit with latent effects and a
+positive-definite Hessian. The sparse factorisation and one parameter vector
+are prepared once; neither the draw nor the response matrix is retained.
+This is not MCMC or integration over fixed-parameter uncertainty.</p>
+<p><code>"new_effects"</code> regenerates latent processes at fitted distribution parameters:
+glmmTMB uses its native random-effect simulation, and sdmTMB uses the same
+controls as <code>simulate(..., re_form = NA)</code> (fitted smooths remain fixed).
+<code>"posterior_predictive"</code> retains brms joint posterior uncertainty, including
+existing group effects. These are different questions, not interchangeable
+ways to obtain uniformly distributed fitted-data ranks.</p>
+<p>Explicit glmmTMB <code>"fitted"</code> and the new spatial schemes use an independent
+native objective; the user's fitted object is not altered. For these schemes,
+per-replicate seeds and a shared latent draw make observation-level results
+invariant to <code>batch_size</code>. The compact response-ECDF grid still depends on
+the first batch. Existing default simulation/RNG behaviour is unchanged.
+Sampled-field binomial/encounter probabilities use the same latent vector.
+New-effect calibration retains fitted conditional probability bins, so the
+predictive envelope need not centre on the identity line. Check
+<code>metadata$scheme</code>, <code>metadata$conditioning</code>, and <code>metadata$prediction_type</code>.
+Native versions and support can differ; no term-by-term conditioning control
+or automatic MCMC, marginal integration, or new-group brms prediction is added.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

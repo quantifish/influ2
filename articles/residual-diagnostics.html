@@ -547,6 +547,95 @@ and <a href="https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.h
 simulation interfaces. The table above states the choices made by this
 wrapper, not a claim that every backend has the same native
 defaults.</p>
+</div>
+<div class="section level3">
+<h3 id="choosing-the-conditioning">Choosing the conditioning<a class="anchor" aria-label="anchor" href="#choosing-the-conditioning"></a>
+</h3>
+<p><code>conditioning = "backend_default"</code> preserves the table
+above. The same plotting interface does not make different predictive
+targets interchangeable. Choose an explicit target when comparing
+models, and check the recorded scheme:</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Model</th>
+<th align="left">Supported <code>conditioning</code> values, besides
+<code>"backend_default"</code>
+</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">GLM / GAM</td>
+<td align="left"><code>"fitted"</code></td>
+</tr>
+<tr class="even">
+<td align="left">glmmTMB</td>
+<td align="left">
+<code>"new_effects"</code>, <code>"fitted"</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left">sdmTMB</td>
+<td align="left">
+<code>"fitted"</code>, <code>"conditional_draw"</code>,
+<code>"new_effects"</code>
+</td>
+</tr>
+<tr class="even">
+<td align="left">tinyVAST</td>
+<td align="left">
+<code>"fitted"</code>,
+<code>"conditional_draw"</code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left">brms</td>
+<td align="left"><code>"posterior_predictive"</code></td>
+</tr>
+</tbody>
+</table>
+<p>For example, keep the fitted monthly effects while generating new
+observations from the already fitted lobster model:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lobster_conditional</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">42</span>, conditioning <span class="op">=</span> <span class="st">"fitted"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lobster_conditional</span><span class="op">$</span><span class="va">metadata</span><span class="op">$</span><span class="va">scheme</span></span>
+<span><span class="co">#&gt; [1] "Observation simulations conditional on fitted random effects and parameters"</span></span></code></pre></div>
+<p><code>"fitted"</code> fixes estimated parameters, smooths, and random
+effects. It asks about response variation conditional on that estimated
+structure. In contrast, <code>"new_effects"</code> regenerates random
+effects at fitted distribution parameters. For sdmTMB it follows native
+<code>re_form = NA</code>: fitted smooths remain fixed.</p>
+<p><code>"conditional_draw"</code> holds fixed parameters at their
+estimates and takes <strong>one joint approximate conditional draw of
+the latent effects</strong>. That vector is shared across all response
+simulations, preserving its spatial and temporal dependence. It is not a
+fresh field per simulation, full Bayesian parameter uncertainty, or
+MCMC. See the executed comparisons in <a href="spatial-spatiotemporal.html#residual-conditioning">Spatial and
+spatiotemporal diagnostics</a>.</p>
+<p>New spatial schemes and glmmTMB <code>"fitted"</code> prepare an
+independent native objective and per-replicate seeds. Changing
+<code>batch_size</code> therefore changes neither their latent draw nor
+their observation-level results. The compact response-ECDF grid still
+uses the first batch and can differ. Neither the objective, latent
+vector, nor full response matrix is retained in the result. Backend
+setup and sparse factorisation can still use substantial memory. The
+existing default routes keep their previous random-number behaviour.</p>
+<p>Unsupported combinations fail explicitly. In particular, this
+interface does not silently turn brms posterior predictive checks into
+fixed-parameter checks, sample GAM coefficient uncertainty, or
+regenerate tinyVAST processes. The external-simulation constructor can
+describe additional explicitly generated schemes. A shared name does not
+guarantee equally calibrated diagnostics: estimated parameters,
+approximate latent distributions, and fitted-data reuse still affect the
+reference distribution. Do not select a seed because its residuals look
+best, or treat a conditional check as full validation of the spatial
+covariance structure.</p>
+<p>The shared conditional-draw option requires a converged ML fit with a
+positive-definite Hessian, not a REML or profiled fit. Some native REML
+latent vectors also contain fixed coefficients; sampling them would
+contradict the promise to hold those coefficients fixed, so that case is
+rejected explicitly.</p>
 <p>These targets differ. In particular, conditional checks can conceal
 latent structure absorbed by an overly flexible model, and posterior
 predictive ranks need not be uniform. For the alternative sdmTMB
@@ -601,7 +690,7 @@ responses and combined delta catch retain their CDFs.</p>
 encounter probabilities driven by depth and target fishery. Nothing here
 uses BNS data or refits an existing fisheries model. A small GAM
 demonstrates the workflow.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">813</span><span class="op">)</span></span>
 <span><span class="va">encounter_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2010</span><span class="op">:</span><span class="fl">2013</span>, each <span class="op">=</span> <span class="fl">300</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -623,7 +712,7 @@ demonstrates the workflow.</p>
 <span>  <span class="va">encounter_gam</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">813</span>,</span>
 <span>  calibration_bins <span class="op">=</span> <span class="fl">10</span>, calibration_min_n <span class="op">=</span> <span class="fl">30</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">encounter_checks</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/encounter-calibration-overview-1.png" class="r-plt" alt="Four-panel encounter diagnostic with probability calibration replacing the catch-distribution panel at bottom right." width="1056"><p class="caption">
@@ -663,10 +752,15 @@ fitted-data display into a test. GLM/GAM simulations hold fitted
 parameters and smooths fixed. glmmTMB bins use probabilities conditional
 on fitted random effects, whereas its native simulations redraw those
 effects; the simulated envelope can consequently be displaced from the
-identity line. sdmTMB/tinyVAST use their existing <code>mle-eb</code>
-conditioning. brms bins use posterior mean expected probabilities over
-the same draw identities as the posterior predictive simulations,
-including existing group effects.</p>
+identity line. By default, sdmTMB/tinyVAST use their existing
+<code>mle-eb</code> conditioning. With
+<code>conditioning = "conditional_draw"</code>, their bins instead use
+expected probabilities at the <strong>same sampled latent
+vector</strong>, not noisy binary-simulation averages. With
+<code>"new_effects"</code>, fitted conditional bins remain distinct from
+the process-varying simulation envelope. brms bins use posterior mean
+expected probabilities over the same draw identities as the posterior
+predictive simulations, including existing group effects.</p>
 <p>In particular, <strong>the grey bars are not error bars attached to
 the purple points</strong>. Each purple point is the actual observed
 proportion; each bar is the range of proportions predicted by the
@@ -694,7 +788,7 @@ offset-only binomial model. This intentionally wrong model specifies its
 probabilities without estimating an intercept. It is a demonstration of
 visible miscalibration, not a recommended candidate fitting
 procedure.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">encounter_data</span><span class="op">$</span><span class="va">distorted_logit</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">encounter_gam</span>, type <span class="op">=</span> <span class="st">"link"</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.8</span></span>
 <span><span class="va">distorted_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
@@ -705,7 +799,7 @@ procedure.</p>
 <span>  <span class="va">distorted_model</span>, data <span class="op">=</span> <span class="va">encounter_data</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">813</span>, calibration_min_n <span class="op">=</span> <span class="fl">30</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">encounter_checks</span>, type <span class="op">=</span> <span class="st">"calibration"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Encounter GAM"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">distorted_checks</span>, type <span class="op">=</span> <span class="st">"calibration"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Distorted probabilities"</span><span class="op">)</span>,</span>
@@ -735,14 +829,14 @@ limitation and checks the mean raw encounter residual,
 <code>observed presence - fitted probability</code>, within each
 year-by-target combination. Groups come from the scientific question,
 not from the observed outcome.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pooled_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">present</span> <span class="op">~</span> <span class="fl">1</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">encounter_data</span><span class="op">)</span></span>
 <span><span class="va">pooled_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">pooled_model</span>, data <span class="op">=</span> <span class="va">encounter_data</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">813</span>,</span>
 <span>  calibration_groups <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"target"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pooled_checks</span>, type <span class="op">=</span> <span class="st">"calibration"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pooled_checks</span>, type <span class="op">=</span> <span class="st">"calibration_groups"</span><span class="op">)</span>,</span>
@@ -786,7 +880,7 @@ mixtures is rejected.</p>
 <p>sdmTMB also provides native positive-component simulation. The
 following calls reuse an existing fitted model; they do not fit one
 here:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">combined_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">delta_fit</span>, component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span>
 <span><span class="va">encounter_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">delta_fit</span>, component <span class="op">=</span> <span class="st">"encounter"</span><span class="op">)</span></span>
 <span><span class="va">positive_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">delta_fit</span>, component <span class="op">=</span> <span class="st">"positive"</span><span class="op">)</span></span></code></pre></div>
@@ -806,7 +900,7 @@ still represents the number of observation rows, not a claim that all
 trials are independent. Native beta-binomial dependence, where
 supported, is retained in the simulation envelopes. The original
 multi-trial sdmTMB limitation remains explicit.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span>, type <span class="op">=</span> <span class="st">"overview"</span>, response_diagnostic <span class="op">=</span> <span class="st">"auto"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span>, type <span class="op">=</span> <span class="st">"calibration"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span></span>
@@ -836,7 +930,7 @@ negative scores identify low observations.</p>
 fitted axis is the predictive mean from the <strong>same
 simulations</strong>, with the same response component and random-effect
 conditioning.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reduced_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_reduced</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"month"</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span><span class="op">)</span></span>
 <span><span class="va">full_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_nb</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span>,</span>
@@ -857,7 +951,7 @@ residual centre; the dashed line marks zero.
 residuals can be matched back to depth and soak time using their
 original row identifiers. Neither this matching nor redrawing the
 figures repeats simulation.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">residual_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Reduced NB"</span>, <span class="st">"Full NB"</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">label</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">checks</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">label</span> <span class="op">==</span> <span class="st">"Reduced NB"</span><span class="op">)</span> <span class="va">reduced_checks</span> <span class="kw">else</span> <span class="va">full_checks</span></span>
@@ -918,7 +1012,7 @@ retained, but the axis and returned data explicitly describe the new
 quantity. A positive point means that a group’s catches tend to be high
 within their own fitted predictive distributions. It is not a log-CPUE
 adjustment, biomass multiplier, or fitted interaction coefficient.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">full_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span>, min_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-implied-1.png" class="r-plt" alt="Twelve monthly panels show mean normal-score residual departures around zero." width="768"><p class="caption">
@@ -944,7 +1038,7 @@ requires a separate model with the relevant interaction or process,
 followed by model checking. Do not add a normal score back onto a
 coefficient.</p>
 <p>For a different grouping, retain it during calculation:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">fit</span>, data <span class="op">=</span> <span class="va">original_data</span>,</span>
 <span>  groups <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"area"</span>, <span class="st">"gear"</span><span class="op">)</span>, nsim <span class="op">=</span> <span class="fl">1000</span>, seed <span class="op">=</span> <span class="fl">41</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">checks</span>, groups <span class="op">=</span> <span class="st">"area"</span><span class="op">)</span></span>
@@ -975,7 +1069,7 @@ diagnostics <span class="citation">(<a href="#ref-DHARMa2026">Hartig
 the compact influence calculation. The following example contrasts
 Poisson and negative-binomial variation while holding the mean formula
 fixed.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dharma_poisson</span> <span class="op">&lt;-</span> <span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/simulateResiduals.html" class="external-link">simulateResiduals</a></span><span class="op">(</span></span>
 <span>  fittedModel <span class="op">=</span> <span class="va">lobster_poisson</span>, n <span class="op">=</span> <span class="fl">250</span>, refit <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">20260907</span></span>
 <span><span class="op">)</span></span>
@@ -989,7 +1083,7 @@ example uses 250 simulations. For substantive work, increase that number
 and check stability. Simulation storage still scales with observations
 times simulations, independently of influ2’s compact
 uncertainty-retention settings.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/plotQQunif.html" class="external-link">plotQQunif</a></span><span class="op">(</span></span>
 <span>  <span class="va">dharma_poisson</span>, testUniformity <span class="op">=</span> <span class="cn">FALSE</span>, testOutliers <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -1007,14 +1101,14 @@ accommodate the simulated overdispersion. Formal tests are suppressed
 here so interpretation starts with the diagnostic pattern.
 </p>
 </div>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>DHARMa residuals are approximately <strong>uniform on zero to
 one</strong> under an adequate simulation model, not normally
 distributed. Do not feed them into a normal Q-Q plot without a
 deliberate transformation. Distributional agreement does not rule out
 remaining covariate patterns:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/plotResiduals.html" class="external-link">plotResiduals</a></span><span class="op">(</span></span>
 <span>  <span class="va">dharma_poisson</span>, form <span class="op">=</span> <span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">depth</span>, quantreg <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -1032,14 +1126,14 @@ lobster models. The thin black dashed line marks the uniform median of
 rank-scaled. These are not independent validation tests.
 </p>
 </div>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The simulated responses can also check quantities of direct fisheries
 interest. Compare the observed proportion of empty pots and the upper
 catch quantile with the same quantities calculated from each simulated
 dataset. These are predictive checks at fitted parameters, not posterior
 predictive checks or confidence intervals for an index.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">statistics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Empty-pot proportion"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  <span class="st">"95th catch percentile"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.95</span><span class="op">)</span><span class="op">)</span></span>
@@ -1187,22 +1281,25 @@ residual reference</a> and <a href="https://sdmtmb.github.io/sdmTMB/articles/res
 residual examples</a>.</p>
 <p>For a single-response model such as <code>pcod_model</code> in <a href="spatial-spatiotemporal.html">Spatial and spatiotemporal
 diagnostics</a>, influ2’s unified Q-Q workflow is:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pcod_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pcod_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
+<span>  <span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pcod_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span></code></pre></div>
-<p>This simulates responses conditional on the fitted fields
-(<code>"mle-eb"</code>), as recorded in
-<code>pcod_checks$metadata$scheme</code>. It is an exploratory
-conditional check, <strong>not</strong> sdmTMB’s native
-<code>"mle-mvn"</code> PIT residual calculation or a claim that the two
-procedures have the same calibration. The identity reference preserves
-location and scale departures instead of fitting a quartile line through
-the points. The native alternative remains available through the
-sdmTMB/DHARMa workflow below.</p>
+<p>This fixes one native approximate conditional latent draw across all
+response simulations and batches, as recorded in
+<code>pcod_checks$metadata$scheme</code>. It uses finite-simulation
+randomised ranks rather than sdmTMB’s analytic quantile CDF, so the two
+results are not numerically identical. Omit <code>conditioning</code> or
+choose <code>"fitted"</code> to retain the previous fitted-field route;
+use <code>"new_effects"</code> for native process simulations with
+fitted smooths fixed. The identity reference preserves location and
+scale departures instead of fitting a quartile line through the points.
+These remain exploratory fitted-model diagnostics.</p>
 <p>sdmTMB also has a dedicated DHARMa bridge. The following recipe
 reuses an already fitted model; it is not evaluated again in this
 article.</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">41</span><span class="op">)</span></span>
 <span><span class="va">pcod_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, type <span class="op">=</span> <span class="st">"mle-mvn"</span><span class="op">)</span></span>
 <span><span class="va">pcod_dharma</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/dharma_residuals.html" class="external-link">dharma_residuals</a></span><span class="op">(</span></span>
@@ -1222,10 +1319,13 @@ target.</p>
 <h3 id="tinyvast">tinyVAST<a class="anchor" aria-label="anchor" href="#tinyvast"></a>
 </h3>
 <p>For supported single-response tinyVAST fits, the plotting helpers use
-simulated normal-score ranks conditional on the fitted fields, not
-native deviance or response residuals.</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tiny_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">tiny_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span><span class="op">)</span></span>
+simulated normal-score ranks. Fitted-field conditioning remains the
+default, with one shared conditional latent draw now available
+explicitly:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tiny_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
+<span>  <span class="va">tiny_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">tiny_checks</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tiny_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span></code></pre></div>
 <p>The <a href="https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html" class="external-link">tinyVAST
@@ -1234,9 +1334,11 @@ simulation interface</a> can support an external
 response selection and observation alignment for multivariate models.
 Its <code>"mle-mvn"</code> simulation draws a new approximate
 random-effect vector for each replicate, unlike sdmTMB’s single-draw
-residual recipe. This article does not claim those procedures have
-identical calibration, or provide an automatic multivariate DHARMa
-adapter.</p>
+residual recipe. influ2’s new <code>"conditional_draw"</code> option
+deliberately prepares one native TMB draw and reuses it, rather than
+calling tinyVAST <code>"mle-mvn"</code> separately for each batch. This
+does not provide an automatic multivariate DHARMa adapter or establish
+universal fitted-model calibration.</p>
 </div>
 <div class="section level3">
 <h3 id="glm-gam-glmmtmb-and-brms">GLM, GAM, glmmTMB, and brms<a class="anchor" aria-label="anchor" href="#glm-gam-glmmtmb-and-brms"></a>
@@ -1299,7 +1401,7 @@ with supplied PIT values. Install <strong>bayesplot &gt;=
 1.16.0</strong> to use them. The default overview does not require
 bayesplot. Nothing below refits a model, reruns MCMC, simulates more
 responses, or retains a response-simulation matrix.</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span>,</span>
@@ -1339,7 +1441,7 @@ order. The unchanged default is
 chooses response calibration or a response ECDF using the original
 response metadata. For example, retain the response ECDF and replace the
 year panel with a PIT ECDF difference:</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, panels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"pit_ecdf_diff"</span>, <span class="st">"distribution"</span><span class="op">)</span>,</span>
 <span>  response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1359,7 +1461,7 @@ the needed summaries were calculated. There must be exactly four names;
 their order and repetition are allowed. Missing summaries produce an
 informative error rather than silently substituting a different
 diagnostic. For an optional PIT plot in the fourth position, use:</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, panels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"year"</span>, <span class="st">"pit_ecdf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>That last layout omits the complementary response check, so inspect
 it separately with <code>plot(nb_checks, type = "distribution")</code>
@@ -1390,7 +1492,7 @@ start of this article. The first call below generates 100 whole-response
 replicates using glmmTMB itself. It simulates observation variation and
 redraws the monthly random effects at fitted parameters. The constructor
 then only summarises that existing matrix:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20260912</span><span class="op">)</span></span>
 <span><span class="va">response_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fitted_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span><span class="op">)</span><span class="op">)</span></span>
@@ -1412,7 +1514,7 @@ then only summarises that existing matrix:</p>
 <span><span class="co">#&gt; Time: year [ explicit external column ]</span></span>
 <span><span class="co">#&gt; Fitted parameters; monthly random effects resimulated</span></span>
 <span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span></code></pre></div>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-external-overview-1.png" class="r-plt" alt="Four-panel residual overview using externally supplied glmmTMB lobster simulations." width="1056"><p class="caption">
@@ -1431,7 +1533,7 @@ mixed-model tests.
 <p>The returned object also works with the standalone Q-Q/PIT views and
 the existing residual helpers. The grouping columns must be retained
 during calculation, as above:</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">external_checks</span><span class="op">)</span></span>
@@ -1467,7 +1569,7 @@ column of <strong>original fitted success probabilities</strong>, not
 the average of simulated zero/ one responses. Record their conditioning
 separately from the response simulations. For example, given already
 aligned encounter data and simulations:</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">encounter_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_influ_residuals.html">as_influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">simulated_presence</span>, <span class="va">matched_data</span>,</span>
 <span>  response <span class="op">=</span> <span class="st">"present"</span>, year <span class="op">=</span> <span class="st">"year"</span>, response_kind <span class="op">=</span> <span class="st">"bernoulli"</span>,</span>
