@@ -43,6 +43,17 @@ passed. The tested package is installed in the usual Mac R library. These
 presentation changes do not constitute a new CRAN archive check or submission.
 The N09 calibration study and interpretation review are explicitly parked.
 
+Source `1df6de87776064d1aea93ee89cd58600260745b9` is published. Coverage run
+34560235613 passed all 4,526 expectations and retained 95.98% coverage.
+Website run 34560235574 passed all 74 figure-caption checks across seven
+articles; Pages run 34560740242 deployed website revision
+`30d2ec823228e16bac9a60c62959ba9c03c769f5`. Public verification passed on ten
+page menus, the article index, all plotting reference groupings, and the new
+CDI help. Local checks additionally covered all 44 generated page menus.
+Platform check run 34560235596 was still running at this publication review.
+The existing deployment-action Node-runtime annotation remains non-blocking.
+This final publication record is excluded from the package archive.
+
 ## Explicit residual conditioning, 11 September 2026
 
 PR #26 (source `02573236c77ec700a42d9d99da11640f3ade3a04`) adds the approved
