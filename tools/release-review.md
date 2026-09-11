@@ -77,6 +77,19 @@ CRAN or win-builder submission was made.
 The preceding restart increment's R-CMD-check run 34564362595 has now completed
 successfully on both Ubuntu release and Windows release.
 
+Source `6d3b93b` passed GitHub coverage run 34644847655: 96.00% coverage and
+4,634 passing expectations, with no warnings or skips. The first Ubuntu smoke
+step failed before installation because the driver unnecessarily required
+`cpp11`, a build-time header dependency of an already compiled binary. The
+driver now stages the transitive Depends/Imports closure, plus any build-time
+dependencies declared by influ2 itself. Its corrected local run passes all
+checks (`/private/tmp/influ2-minimal-runtime-closure.log`). This correction
+changes only excluded developer files, not the covered package code.
+
+The initial website run 34644847533 failed before article execution on an
+external CDN SSL error while downloading bootstrap-toc. Only that failed
+workflow was retried; this is not a statistical or vignette regression.
+
 ## Compact-result restart checks, 11 September 2026
 
 The approved increment tests saving and reopening the four compact result

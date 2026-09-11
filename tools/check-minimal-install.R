@@ -16,8 +16,11 @@ local({
   direct <- dependency_names(description[c("Depends", "Imports", "LinkingTo")])
   missing <- setdiff(direct, installed[, "Package"])
   if (length(missing)) stop("Install required dependencies first: ", paste(missing, collapse = ", "))
+  # Dependencies are already installed binaries: their LinkingTo headers were
+  # needed when they were built, not to run them (e.g. cpp11 for isoband).
+  # influ2's own build-time requirements, if any, are included in direct above.
   required <- unique(c(direct, unlist(tools::package_dependencies(direct,
-    db = installed, which = c("Depends", "Imports", "LinkingTo"), recursive = TRUE))))
+    db = installed, which = c("Depends", "Imports"), recursive = TRUE))))
   missing <- setdiff(required, installed[, "Package"])
   if (length(missing)) stop("Missing required dependencies: ", paste(missing, collapse = ", "))
 

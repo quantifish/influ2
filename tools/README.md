@@ -54,13 +54,15 @@ compatibility or portable fitted-model/external-draw-file storage.
 Run `Rscript --vanilla tools/check-minimal-install.R` from the repository root
 to repeat the minimal-installation check. The existing Ubuntu-release check
 job runs it automatically; no additional job or platform is added. It copies
-only the installed mandatory dependency closure into a temporary library,
+only the installed mandatory runtime dependency closure into a temporary library,
 builds the current source without rebuilding vignettes, and installs that
 archive with user and site libraries excluded. No existing library is changed,
 no packages are downloaded, and no MCMC is run. R's default base/recommended
 library remains available; unexpected extra packages there cause an explicit
 failure rather than a silently weakened test. The driver follows R's documented
 [library-path isolation](https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html).
+Build-time header packages of already compiled dependencies are not runtime
+requirements; any build-time requirements declared by influ2 itself are staged.
 
 A separate producer with glmmTMB, brms, and posterior available generates
 compact numerical/plot baselines using that exact installed influ2 version.
