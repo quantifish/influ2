@@ -2,7 +2,10 @@
 
 ## Model-neutral diagnostics
 
-Calculate, inspect, and plot influence diagnostics.
+Calculate and inspect influence diagnostics. The [plot() and
+autoplot()](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
+methods here display `influ_diag` objects, including influence and CDI
+plots.
 
 - [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) :
   Calculate CPUE influence diagnostics
@@ -29,13 +32,16 @@ Calculate, inspect, and plot influence diagnostics.
 - [`plot(`*`<influ_diag>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
   [`autoplot(`*`<influ_diag>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
   : Plot a model-neutral influence diagnostic
-- [`plot_bubble()`](https://www.quantifish.co.nz/influ2/reference/plot_bubble.md)
-  : Bubble plot of sampling composition
 
 ## Additional diagnostics and comparisons
 
-Compare indices and inspect data coverage.
+Compare indices and model steps, and inspect sampling composition and
+data coverage. The [plot() and
+autoplot()](https://www.quantifish.co.nz/influ2/reference/plot.influ_steps.md)
+methods here display `influ_steps` objects.
 
+- [`plot_bubble()`](https://www.quantifish.co.nz/influ2/reference/plot_bubble.md)
+  : Bubble plot of sampling composition
 - [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
   : Compare standardised CPUE indices
 - [`influ_steps()`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
@@ -52,8 +58,10 @@ Compare indices and inspect data coverage.
 
 ## CPUE indices and assessment tables
 
-Calculate standardised means or area-integrated totals, and plot stored
-results.
+Calculate standardised means or area-integrated totals. Use
+[plot_index(), plot(), or
+autoplot()](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
+to display the resulting `influ_index` objects.
 
 - [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
   [`as.data.frame(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
@@ -71,7 +79,9 @@ results.
 ## Residual diagnostics
 
 Inspect generalised residual patterns, grouped departures, and quantile
-comparisons.
+comparisons. The [plot() and
+autoplot()](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
+methods here display `influ_residuals` objects.
 
 - [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
   [`print(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)

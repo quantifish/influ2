@@ -2,6 +2,11 @@
 
 ## influ2 1.1.0
 
+- Shortened the ratio-scale CDI y-axis label to “Relative Effect” for
+  all terms. Reorganised the website reference and article lists, with
+  residual diagnostics first and Bentley validation last. Calculations
+  are unchanged.
+
 - Added explicit residual `conditioning` options. Existing defaults
   remain: fitted effects for GLM/GAM/sdmTMB/tinyVAST, new random effects
   for glmmTMB, and posterior predictive draws for brms. New options hold

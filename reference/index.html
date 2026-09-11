@@ -18,13 +18,13 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
-    <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
+    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -44,7 +44,7 @@
     <div class="section level2">
       <h2 id="model-neutral-diagnostics">Model-neutral diagnostics<a class="anchor" aria-label="anchor" href="#model-neutral-diagnostics"></a></h2>
 
-      <div class="section-desc"><p>Calculate, inspect, and plot influence diagnostics.</p></div>
+      <div class="section-desc"><p>Calculate and inspect influence diagnostics. The <a href="plot.influ_diag.html">plot() and autoplot()</a> methods here display <code>influ_diag</code> objects, including influence and CDI plots.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -120,17 +120,10 @@
 
         </dt>
         <dd>Plot a model-neutral influence diagnostic</dd>
-
-        <dt>
-
-          <code><a href="plot_bubble.html">plot_bubble()</a></code>
-
-        </dt>
-        <dd>Bubble plot of sampling composition</dd>
       </dl></div><div class="section level2">
       <h2 id="additional-diagnostics-and-comparisons">Additional diagnostics and comparisons<a class="anchor" aria-label="anchor" href="#additional-diagnostics-and-comparisons"></a></h2>
 
-      <div class="section-desc"><p>Compare indices and inspect data coverage.</p></div>
+      <div class="section-desc"><p>Compare indices and model steps, and inspect sampling composition and data coverage. The <a href="plot.influ_steps.html">plot() and autoplot()</a> methods here display <code>influ_steps</code> objects.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -138,6 +131,13 @@
 
 
       <dl><dt>
+
+          <code><a href="plot_bubble.html">plot_bubble()</a></code>
+
+        </dt>
+        <dd>Bubble plot of sampling composition</dd>
+
+        <dt>
 
           <code><a href="plot_compare.html">plot_compare()</a></code>
 
@@ -174,7 +174,7 @@
       </dl></div><div class="section level2">
       <h2 id="cpue-indices-and-assessment-tables">CPUE indices and assessment tables<a class="anchor" aria-label="anchor" href="#cpue-indices-and-assessment-tables"></a></h2>
 
-      <div class="section-desc"><p>Calculate standardised means or area-integrated totals, and plot stored results.</p></div>
+      <div class="section-desc"><p>Calculate standardised means or area-integrated totals. Use <a href="plot_index.html">plot_index(), plot(), or autoplot()</a> to display the resulting <code>influ_index</code> objects.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -211,7 +211,7 @@
       </dl></div><div class="section level2">
       <h2 id="residual-diagnostics">Residual diagnostics<a class="anchor" aria-label="anchor" href="#residual-diagnostics"></a></h2>
 
-      <div class="section-desc"><p>Inspect generalised residual patterns, grouped departures, and quantile comparisons.</p></div>
+      <div class="section-desc"><p>Inspect generalised residual patterns, grouped departures, and quantile comparisons. The <a href="plot.influ_residuals.html">plot() and autoplot()</a> methods here display <code>influ_residuals</code> objects.</p></div>
 
       <dl></dl></div><div class="section level2">
 

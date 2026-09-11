@@ -18,13 +18,13 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/influ2.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
-    <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
+    <li><a class="dropdown-item" href="../articles/bentley-validation.html">Bentley validation</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -44,7 +44,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="influ2-110">influ2 1.1.0<a class="anchor" aria-label="anchor" href="#influ2-110"></a></h2>
-<ul><li><p>Added explicit residual <code>conditioning</code> options. Existing defaults remain: fitted effects for GLM/GAM/sdmTMB/tinyVAST, new random effects for glmmTMB, and posterior predictive draws for brms. New options hold glmmTMB effects fixed, reuse one joint conditional latent-effect draw for sdmTMB/tinyVAST, or simulate new sdmTMB processes. Unsupported combinations fail explicitly. Independent native objectives protect the supplied fit. Shared draws and per-replicate seeds preserve the new schemes across response batches; sampled-field encounter probabilities and delta components stay aligned. The spatial article compares schemes on the same fitted models. These are exploratory diagnostic targets, not interchangeable calibrated tests.</p></li>
+<ul><li><p>Shortened the ratio-scale CDI y-axis label to “Relative Effect” for all terms. Reorganised the website reference and article lists, with residual diagnostics first and Bentley validation last. Calculations are unchanged.</p></li>
+<li><p>Added explicit residual <code>conditioning</code> options. Existing defaults remain: fitted effects for GLM/GAM/sdmTMB/tinyVAST, new random effects for glmmTMB, and posterior predictive draws for brms. New options hold glmmTMB effects fixed, reuse one joint conditional latent-effect draw for sdmTMB/tinyVAST, or simulate new sdmTMB processes. Unsupported combinations fail explicitly. Independent native objectives protect the supplied fit. Shared draws and per-replicate seeds preserve the new schemes across response batches; sampled-field encounter probabilities and delta components stay aligned. The spatial article compares schemes on the same fitted models. These are exploratory diagnostic targets, not interchangeable calibrated tests.</p></li>
 <li><p>Added <code><a href="../reference/as_influ_residuals.html">as_influ_residuals()</a></code> for externally generated response simulations. It requires explicit observation alignment, response kind, time column, and simulation conditioning, and returns the same compact diagnostic used by the standard plots and residual helpers. Bernoulli/binomial calibration requires original fitted probabilities and known trial counts. Combined and component inputs are never silently converted or filtered.</p></li>
 <li><p>Extracted one shared residual-summary engine, protected by a frozen pre-refactor numerical/RNG baseline and native replay tests. Existing fitted model defaults and calculations are unchanged. The supplied-matrix route does not simulate, refit, retain the full matrix, or add a streaming interface. The residual article demonstrates it with the fitted lobster glmmTMB model.</p></li>
 <li><p>Added optional standalone PIT ECDF and ECDF-difference panels through bayesplot, reusing stored PIT values without additional response simulation. Their simultaneous iid-uniform reference limits are labelled as exploratory, not calibrated tests for fitted models. <code>panels</code> now selects and orders any four supported residual panels; the default layout is unchanged.</p></li>
