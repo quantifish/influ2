@@ -116,6 +116,7 @@ cpue_index <- function(model, year = NULL,
     draw_batch_size = 100L, retain = c("summary", "draws"), units = NULL, ...,
     spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
     seed = 1L, prediction_offset = NULL) {
+  .require_model_backend(model)
   method <- match.arg(method)
   if (method == "standardized") method <- "standardised"
   uncertainty <- match.arg(uncertainty)

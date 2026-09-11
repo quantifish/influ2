@@ -41,6 +41,10 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      - name: Check minimal installation and saved results
+        if: matrix.config.os == 'ubuntu-latest'
+        run: Rscript --vanilla tools/check-minimal-install.R
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           args: 'c("--no-manual", "--as-cran")'

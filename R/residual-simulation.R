@@ -5,6 +5,7 @@
     choices[vapply(choices, inherits, logical(1), x = model)][1L]
   }
   if (is.na(backend)) stop("No residual simulation adapter for this model class.", call. = FALSE)
+  .require_model_backend(model)
   requested_conditioning <- conditioning
   conditioning <- .resid_conditioning(backend, conditioning)
   if (backend %in% c("brms", "tinyVAST")) .check_residual_model(model)

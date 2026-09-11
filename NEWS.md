@@ -1,5 +1,10 @@
 # influ2 1.1.0
 
+* Residual and index calculations now name a missing optional model backend
+  before trying to extract its formula or family. Saved compact results remain
+  usable without those backends. An isolated minimal-installation smoke check
+  now runs within the existing Ubuntu-release CI job.
+
 * Added clean-session save/reload regression tests for compact influence,
   residual, CPUE-index, and step-comparison results, including mixed-model
   and Bayesian examples. The main vignette shows how to save the results

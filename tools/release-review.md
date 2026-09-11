@@ -29,6 +29,54 @@ individual suggestions, potential Ginflu-inspired features, and related parked
 decisions. It separates discussion priorities from optional candidates; adding
 an item there does not approve implementation or make it a CRAN release gate.
 
+## Automated minimal-installation check, 12 September 2026
+
+The maintainer approved repeating the earlier one-off minimal-library check
+automatically within the existing Ubuntu-release job. The Windows-release job
+is unchanged; no jobs or platforms are added. Run
+`Rscript --vanilla tools/check-minimal-install.R` from the repository root.
+
+The driver stages only the mandatory dependency closure, builds the current
+source without rebuilding vignettes, and installs it with user/site libraries
+excluded. R's default base/recommended packages remain available. Unexpected
+extra packages in the default library fail explicitly; existing libraries are
+never edited or uninstalled. A negative control confirmed that the worker
+rejects the ordinary, non-isolated user/site library paths.
+
+With optional packages available, a separate producer creates 12 compact
+result baselines from the small GLM/glmmTMB fixtures and stored brms draws or
+residual summaries. No MCMC is run. The isolated process then confirms that
+21 optional packages, including brms, rstan, glmmTMB, sdmTMB, tinyVAST,
+posterior, bayesplot, TMB, and testthat, cannot be found or loaded. It reproduces
+the tables, printed summaries, plot coordinates, labels, and panel layouts
+without fits or posterior arrays, preserves saved objects and the RNG state,
+and draws the plots. Fresh GLM influence, preview, PIT residuals, standardised
+indices, area integration, and steps also agree with the full-library results.
+
+The expanded smoke test exposed unclear missing-backend errors in residual
+and index entry points: model-frame/formula extraction could happen before
+checking that native backend methods were available. An early guard now names
+the required package and explains that saved compact results remain usable.
+All 19 isolated missing-package checks pass, including optional PIT ECDF
+panels. Ordinary regression tests additionally cover GAM requirements and
+confirm that GLMs and compact diagnostics do not acquire backend dependencies.
+No numerical method, prediction convention, default panel, or public API has
+changed. Local smoke-test evidence is in
+`/private/tmp/influ2-minimal-install-verified.log`.
+
+The complete local regression suite passed 4,634 expectations with no failures,
+warnings, or skips, including the 24 new guard expectations and existing visual
+snapshots. The run uses a null PDF device to avoid creating `Rplots.pdf` in the
+checkout. Evidence: `/private/tmp/influ2-minimal-regression-verified.log`.
+
+This is an installation/core reliability check, not a full no-Suggests
+vignette build, six-backend calibration study, or final CRAN archive check.
+N09, N02, #18, #22, and the legacy/frozen-article review remain parked. No
+CRAN or win-builder submission was made.
+
+The preceding restart increment's R-CMD-check run 34564362595 has now completed
+successfully on both Ubuntu release and Windows release.
+
 ## Compact-result restart checks, 11 September 2026
 
 The approved increment tests saving and reopening the four compact result

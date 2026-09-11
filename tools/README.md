@@ -17,6 +17,7 @@
 | `tools/release-review.md` | Pre-release decisions, issue queue, and checks | No |
 | `tools/development-backlog.md` | Nicholas's proposals, Ginflu-inspired candidates, and parked decisions | No |
 | `tools/check-figure-captions.R`, `tools/tests/` | Site-wide lightbox caption and keyboard regression checks | No |
+| `tools/check-minimal-install.R`, `tools/tests/minimal-install-worker.R` | Isolated installation, core, saved-result, and missing-dependency smoke checks | No |
 | `pkgdown/`, `_pkgdown.yml` | Website configuration, assets, and frozen review article | No |
 | `docs/` | Generated local website; ignored by Git | No |
 | `.github/`, `codecov.yml` | CI, website deployment, and coverage configuration | No |
@@ -49,6 +50,29 @@ also reject hidden environments, functions, and external pointers, and check
 that plotting neither changes the results nor advances the random-number state.
 This is a same-version restart check, not a promise of indefinite format
 compatibility or portable fitted-model/external-draw-file storage.
+
+Run `Rscript --vanilla tools/check-minimal-install.R` from the repository root
+to repeat the minimal-installation check. The existing Ubuntu-release check
+job runs it automatically; no additional job or platform is added. It copies
+only the installed mandatory dependency closure into a temporary library,
+builds the current source without rebuilding vignettes, and installs that
+archive with user and site libraries excluded. No existing library is changed,
+no packages are downloaded, and no MCMC is run. R's default base/recommended
+library remains available; unexpected extra packages there cause an explicit
+failure rather than a silently weakened test. The driver follows R's documented
+[library-path isolation](https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html).
+
+A separate producer with glmmTMB, brms, and posterior available generates
+compact numerical/plot baselines using that exact installed influ2 version.
+The minimal worker confirms that the optional backends and development tools
+cannot be found or loaded, then recalculates core GLM diagnostics, uncertainty,
+indices, area integration, and steps. It also reopens all four mixed-model
+result types and stored Bayesian influence/residual summaries, reproduces
+tables and plots, and checks explicit missing-package errors for influence,
+residual, and index calculations, and optional PIT ECDF panels. These are developer smoke checks,
+not a full no-Suggests vignette build, statistical calibration study, or final
+CRAN archive check. The general restart regression tests above remain part of
+the package's ordinary test suite.
 
 The frozen residual-engine regression results live in
 `tests/testthat/fixtures/residual-engine-baseline.rds`. Their developer recipe,
