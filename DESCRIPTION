@@ -38,6 +38,7 @@ Imports:
 Suggests:
     bayesplot (>= 1.16.0),
     brms,
+    callr,
     DHARMa,
     fmesher,
     glmmTMB,
@@ -46,6 +47,7 @@ Suggests:
     MASS,
     Matrix,
     mgcv,
+    pkgload,
     posterior,
     proto,
     rmarkdown,

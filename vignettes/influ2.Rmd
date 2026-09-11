@@ -894,6 +894,75 @@ compact schema. This separation draws on the posterior-processing approach used 
 CPUETools [@CPUETools], while the S3 design and GAM implementation were also
 informed by `gamInflu` [@Dunn2025].
 
+### Save today, reopen tomorrow
+
+Save the calculated result objects to reuse their tables and plots in a later
+R session. They retain the estimates, interval summaries, and diagnostic
+metadata without retaining the fitted models by default. The same workflow
+applies to influence diagnostics, residual diagnostics, CPUE indices, and
+step comparisons.
+
+Here we reuse the influence, index, and step results calculated above. Only
+the residual diagnostic is calculated for the first time; it uses 100 response
+simulations from the existing glmmTMB fit, not a model refit or MCMC run. This
+example requires glmmTMB and MASS, as did the preceding index and step examples.
+
+```{r save-lobster-results, eval=has_glmmTMB && has_MASS}
+lobster_results <- list(
+  influence = glmmTMB_diagnostic,
+  residuals = influ_residuals(lobster_glmmTMB, nsim = 100, seed = 281),
+  index = lobster_cpue,
+  steps = lobster_steps
+)
+
+# The vignette uses a temporary file; choose a persistent path in your analysis.
+# For example: result_file <- "lobster-results.rds"
+result_file <- tempfile(fileext = ".rds")
+saveRDS(lobster_results, result_file)
+```
+
+In the later session, load `influ2` and read that file. The vignette reads it
+back immediately; the package tests additionally check this workflow in a
+separate, clean R session with no original fitted models. Reopening and
+plotting the summaries do not repeat the response simulations, CPUE prediction
+calculation, or step-model refits.
+
+```{r reopen-lobster-results, eval=has_glmmTMB && has_MASS}
+library(influ2)
+# After restarting R, set result_file to the persistent path used above:
+# result_file <- "lobster-results.rds"
+restored_results <- readRDS(result_file)
+
+head(as.data.frame(restored_results$index))
+
+# Recreate the plots without repeating the calculations.
+restored_plots <- list(
+  influence = plot(restored_results$influence),
+  residuals = plot(restored_results$residuals),
+  index = plot_index(restored_results$index),
+  steps = plot_step(restored_results$steps)
+)
+```
+
+Print an element, such as `restored_plots$residuals`, to display it. Saving the
+result objects, rather than only their figures, allows later changes to labels
+and layout using the stored results. Keep a record of the R and package versions,
+for example with `sessionInfo()`: these tests check reuse with the same package
+version, not indefinite compatibility with future releases.
+
+This compact save does **not** replace the original fits and analysis code when
+new predictions, simulations, or refits are needed. It also does not package
+separate draw files created with `retain = "disk"`; keep those files separately
+if they are needed. The restart checks cover the default summary-only objects,
+not optional retained fitted models or external draw-file relocation. Retained
+residual objects include observation-level responses and diagnostic summaries,
+so check data-sharing permissions before sending them to someone else.
+
+```{r clean-up-lobster-save, include=FALSE, eval=has_glmmTMB && has_MASS}
+stopifnot(identical(restored_results, lobster_results))
+unlink(result_file)
+```
+
 ## Families and response structures
 
 The initial family set is:

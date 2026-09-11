@@ -37,6 +37,19 @@ review article, against the shared lightbox script. It requires the website's
 existing xml2/jsonlite dependencies and Node.js; no extra Node packages are
 needed. The pkgdown workflow runs the same check before deployment.
 
+The saved-result regression tests in `tests/testthat/test-saved-results.R`
+write compact objects to temporary RDS files, then reopen and render them in
+a separate R session using the test-only `callr` dependency. Only file paths
+are passed to the child, not fitted models or the parent workspace. During
+source-tree tests, the test-only `pkgload` dependency loads that exact source
+without test helpers; installed-package checks load the exact tested library.
+The tests compare complete objects, public summaries, plot-layer coordinates,
+axis labels/ranges, and panel layouts, and draw the composite figures. They
+also reject hidden environments, functions, and external pointers, and check
+that plotting neither changes the results nor advances the random-number state.
+This is a same-version restart check, not a promise of indefinite format
+compatibility or portable fitted-model/external-draw-file storage.
+
 The frozen residual-engine regression results live in
 `tests/testthat/fixtures/residual-engine-baseline.rds`. Their developer recipe,
 `data-raw/residual-engine-baseline.R`, must run against the pre-refactor source

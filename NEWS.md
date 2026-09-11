@@ -1,5 +1,10 @@
 # influ2 1.1.0
 
+* Added clean-session save/reload regression tests for compact influence,
+  residual, CPUE-index, and step-comparison results, including mixed-model
+  and Bayesian examples. The main vignette shows how to save the results
+  and reopen their tables and plots without repeating model calculations.
+
 * Added a worked `plot_data_extent()` example near the start of the main
   vignette and in the helper's documentation. A separate lobster-data copy
   illustrates missing measurements without changing any fitted examples;

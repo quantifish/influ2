@@ -12,7 +12,9 @@ explicitly parked. Preserve its proposed scope for later review with Nicholas;
 do not start simulation studies or change conditioning defaults. The current
 work is limited to small presentation improvements, including the worked
 `plot_data_extent()` example, and the website-deployment action update selected
-as the second small task. The calibration study is not being started.
+as the second small task. The maintainer subsequently approved a contained
+save/reload reliability check and a short worked example. The calibration
+study is not being started.
 
 The maintainer has explicitly parked issue #18 and its
 [two-region plan](two-region-plan.md). Preserve the plan and leave the issue
@@ -26,6 +28,39 @@ The [development consideration list](development-backlog.md) tracks Nicholas's
 individual suggestions, potential Ginflu-inspired features, and related parked
 decisions. It separates discussion priorities from optional candidates; adding
 an item there does not approve implementation or make it a CRAN release gate.
+
+## Compact-result restart checks, 11 September 2026
+
+The approved increment tests saving and reopening the four compact result
+types: influence diagnostics, residual diagnostics, CPUE indices, and step
+comparisons. Baselines are generated from the existing small GLM fixture and
+a mixed-effect glmmTMB version; stored brms fixtures additionally exercise
+Bayesian influence and posterior-predictive residual summaries. No MCMC is
+run. These are representative backend tests, not a new six-backend calibration
+study. Default numerical methods, retained data, and public APIs are unchanged.
+
+A separate R process receives only saved-result file paths and test-code paths.
+It loads the same source or installed package under test, without the original
+fits, then checks full-object identity, summary/print output, plot coordinates,
+axis labels/ranges, and panel layouts. Composite plots are actually drawn.
+Checks reject hidden live state and verify unchanged objects and RNG state;
+glmmTMB, brms, and spatial modelling namespaces are not loaded in the child.
+The new `callr` and `pkgload` declarations are test-only Suggests, not runtime
+imports. Tests with an installed package use that installation rather than a
+possibly stale copy from another library.
+
+The main vignette adds a save/reopen example using the existing lobster fits
+and results. It distinguishes the temporary vignette file from a persistent
+analysis path and documents same-version, external-draw-file, retained-fit,
+and observation-data-sharing limits. All 4,610 full-suite expectations passed
+locally, without failures, warnings, or skips. The 80 new expectations also
+passed against an isolated installed package. Coverage instrumentation passed
+and reports 95.99%. The executed main-vignette example and news rebuilt, its
+rendered instructions were checked, and all 72 local plotted-image/lightbox
+checks passed across seven articles. No plotting or calculation function body,
+export, or existing visual snapshot changed. These are not a new CRAN archive
+check; no CRAN or win-builder submission was made. Publication results follow
+after deployment.
 
 ## Data-completeness example and deployment maintenance, 11 September 2026
 
