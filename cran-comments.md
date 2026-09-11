@@ -1,3 +1,52 @@
+## Residual-implied effects and first N09 study: 12 September 2026
+
+Source `e9ed7f279055c5cf75f6dd4e33016ee82bc1dd03` restores an effect-scale
+residual-implied diagnostic, separates the unchanged grouped PIT display as
+`plot_grouped_residuals()`, and adds worked historical/new comparisons.
+The first N09 study is a compact frozen NB2 glmmTMB/sdmTMB validation artefact;
+its model fits are not rerun during checks or vignette builds. Unsupported
+implied-effect cases fail explicitly; no PIT calculation or conditioning
+default changed.
+
+Checked archive: `/private/tmp/influ2_1.1.0.tar.gz`.
+SHA256: `645dfd53317b5b743a8640931b9d85d765cb845436dc185fbd32e9cfb95c21b9`.
+Verify this hash before reusing the temporary path. All 165 repository files
+shipped alongside R's normal DESCRIPTION metadata match the source checkout.
+Private review attachments and developer study scripts are excluded. The
+checked archive is installed in the usual Mac R library; a fresh-session
+implied-effect calculation and plot passed.
+
+The local macOS arm64 R 4.6.1 source check used `--as-cran --no-manual` and
+`_R_CHECK_FORCE_SUGGESTS_=false`. It finished with zero errors, zero warnings,
+and one incoming-feasibility NOTE: new submission, optional tinyVAST through
+its declared additional repository, and a study-source URL temporarily 404
+before the source was pushed. The URL now resolves, independently verified
+after publication; the check log has not been altered. The first strict
+attempt stopped on absent optional DHARMa. No full local optional-dependency
+or PDF-manual check is claimed. All nine vignettes built and rebuilt.
+CRAN-mode tests passed 5,218 assertions, with seven intentional visual-test
+groups skipped; the full local suite passed 5,234 assertions with zero
+failures, warnings, or skips. Local coverage is 95.95%. The existing isolated
+minimal-installation/core/saved-result check passed.
+
+Ubuntu release and Windows release both passed R-CMD-check run 34651733821:
+each reported `Status: OK` and 5,234 passing assertions without failures,
+warnings, or skips. Coverage run 34651733817 passed and uploaded 95.95%.
+Website run 34651733809 passed all 84 plotted-image/lightbox caption checks
+across nine articles. Pages run 34652395977 published website revision
+`1afeba237957299dd9a735cc8470122a10921a26`. Live browser inspection verified
+the three new comparison figures and their ordered seasonal facets, all six
+N09 figures, and the updated residual article. All 27 expanded captions on
+these three pages match their complete numbered visible captions.
+
+Detailed evidence and limitations are in `tools/release-review.md` and
+`/private/tmp/influ2-implied-check.WPyb0h/influ2.Rcheck/00check.log`.
+Only excluded validation records change after this source revision. These
+checks do not establish universal implied-effect interval calibration or
+validate later package changes. No CRAN or win-builder submission was made.
+Scientific interpretation, additional adapters, and the parked regional,
+median-column, and legacy reviews remain separate decisions.
+
 ## Explicit residual conditioning: 11 September 2026
 
 Source `02573236c77ec700a42d9d99da11640f3ade3a04` adds explicit supported

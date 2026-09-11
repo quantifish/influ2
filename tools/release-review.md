@@ -49,7 +49,7 @@ warnings, or skips, including the two new visual baselines. The three new
 implied-effect figures and six N09 figures were visually inspected. All 81
 plotted-image/lightbox-caption checks across nine locally rendered articles
 passed. All nine source vignettes built into a fresh archive. Source-archive
-checks and publication evidence will be recorded below once verified.
+checks and publication are now verified, as recorded below.
 Local coverage is 95.95%, above the agreed 95% target. The minimal-installation
 check also passes its 12 saved-result, fresh-core, and 19 missing-package
 contracts; those existing contracts do not yet include a separate fresh-process
@@ -58,6 +58,54 @@ compact RDS round trips, plotting, ordering, RNG preservation, and explicit guar
 No CRAN or win-builder submission was made.
 Issue #18, #22, the median-column decision, and legacy/frozen-article review
 remain parked; no GitHub issues were closed.
+
+### Verified checks and publication: 12 September 2026
+
+These results apply to source
+`e9ed7f279055c5cf75f6dd4e33016ee82bc1dd03`, not to a later package revision.
+The checked source archive is `/private/tmp/influ2_1.1.0.tar.gz`, SHA256
+`645dfd53317b5b743a8640931b9d85d765cb845436dc185fbd32e9cfb95c21b9`.
+All 165 repository files shipped alongside the normal generated DESCRIPTION
+metadata match the source checkout byte-for-byte; developer files and private
+review material are excluded. Verify the hash before reusing this temporary
+archive path. The archive is installed in the usual Mac R library, and a fresh
+R session successfully calculated and plotted the new implied-effect object.
+
+Local macOS arm64 R 4.6.1 `--as-cran --no-manual` checking finished with zero
+errors, zero warnings, and one incoming-feasibility NOTE. That NOTE records
+the new submission, optional tinyVAST's declared additional repository, and a
+study-source URL that returned 404 before the new source was pushed. The URL
+now resolves and lists all six `tools/n09` source files; the completed check
+log itself has not been rewritten or described as a clean incoming check.
+The first strict attempt stopped because optional DHARMa was unavailable.
+The completed local check used `_R_CHECK_FORCE_SUGGESTS_=false`; it is not a
+complete local optional-dependency or PDF-manual check. All nine vignettes
+rebuilt successfully. CRAN-mode tests passed 5,218 assertions with seven
+intentional visual-test groups skipped; the full run passed those as well.
+Evidence: `/private/tmp/influ2-implied-check-optional.log` and
+`/private/tmp/influ2-implied-check.WPyb0h/influ2.Rcheck/00check.log`.
+
+[R-CMD-check run 34651733821](https://github.com/quantifish/influ2/actions/runs/34651733821)
+passed on both Ubuntu release and Windows release. Each reported `Status: OK`
+and 5,234 passing assertions with no failures, warnings, or skips. The existing
+Ubuntu minimal-installation smoke check passed; no CI platforms were added.
+[Coverage run 34651733817](https://github.com/quantifish/influ2/actions/runs/34651733817)
+passed and uploaded 95.95% coverage, matching the local result.
+
+[Website run 34651733809](https://github.com/quantifish/influ2/actions/runs/34651733809)
+passed all 84 plotted-image/lightbox caption checks across nine articles.
+[Pages run 34652395977](https://github.com/quantifish/influ2/actions/runs/34652395977)
+published website revision `1afeba237957299dd9a735cc8470122a10921a26`.
+Live browser inspection verified the three implied-effect comparisons and
+their full numbered lightbox captions, with seasonal facets ordered Early
+season, Mid-season, and Late season. The six N09 captions and all 18 residual
+article captions also match their expanded versions. The deployed residual
+article uses `plot_grouped_residuals()` for PIT departures and links the new
+effect-scale calculation; the N09 article reports all 500 eligible fits.
+
+Only the excluded validation records change after this checked revision.
+No scientific defaults, issues, or parked review decisions were changed, and
+no CRAN or win-builder submission was made. The completed follow-up is paused.
 
 ## Earlier priority update: 11 September 2026 (superseded above)
 
