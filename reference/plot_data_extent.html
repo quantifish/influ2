@@ -72,7 +72,36 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A [ggplot2::ggplot()] object.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For each variable and observed time level, bubble area represents
+  the proportion of records whose value is not `NA`. A zero response is an
+  observed value, not missing data. Fixed-size red markers sit underneath
+  the dark completeness bubbles; a red marker alone indicates all values
+  are missing. Records with a missing `xvar` are excluded.
+  Completeness is calculated separately for each variable among the records
+  supplied; it is not sampling intensity, measurement accuracy, or the
+  proportion of joint complete cases across all selected variables.</p>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">coverage_example</span> <span class="op">&lt;-</span> <span class="va">lobsters_per_pot</span></span></span>
+<span class="r-in"><span><span class="va">example_year</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">coverage_example</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">record_number</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">coverage_example</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">coverage_example</span><span class="op">$</span><span class="va">soak</span><span class="op">[</span><span class="va">example_year</span> <span class="op">&lt;</span> <span class="fl">2005</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span></span>
+<span class="r-in"><span><span class="va">coverage_example</span><span class="op">$</span><span class="va">soak</span><span class="op">[</span></span></span>
+<span class="r-in"><span>  <span class="va">example_year</span> <span class="op">&gt;=</span> <span class="fl">2005</span> <span class="op">&amp;</span> <span class="va">example_year</span> <span class="op">&lt;</span> <span class="fl">2010</span> <span class="op">&amp;</span> <span class="va">record_number</span> <span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%%</a></span> <span class="fl">2</span> <span class="op">==</span> <span class="fl">0</span></span></span>
+<span class="r-in"><span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span></span>
+<span class="r-in"><span><span class="va">coverage_example</span><span class="op">$</span><span class="va">depth</span><span class="op">[</span></span></span>
+<span class="r-in"><span>  <span class="va">example_year</span> <span class="op">&lt;</span> <span class="fl">2010</span> <span class="op">&amp;</span> <span class="va">record_number</span> <span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%%</a></span> <span class="fl">4</span> <span class="op">==</span> <span class="fl">0</span></span></span>
+<span class="r-in"><span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span></span>
+<span class="r-in"><span><span class="fu">plot_data_extent</span><span class="op">(</span><span class="va">coverage_example</span>, <span class="st">"year"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lobsters"</span>, <span class="st">"depth"</span>, <span class="st">"soak"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="plot_data_extent-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

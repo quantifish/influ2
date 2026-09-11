@@ -2,6 +2,13 @@
 
 ## influ2 1.1.0
 
+- Added a worked
+  [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
+  example near the start of the main vignette and in the helper’s
+  documentation. A separate lobster-data copy illustrates missing
+  measurements without changing any fitted examples; zero responses
+  remain observed values, not missing data.
+
 - Shortened the ratio-scale CDI y-axis label to “Relative Effect” for
   all terms. Reorganised the website reference and article lists, with
   residual diagnostics first and Bentley validation last. Calculations
