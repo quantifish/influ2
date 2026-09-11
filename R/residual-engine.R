@@ -69,6 +69,10 @@
       calibration = "Exploratory ranks; not a calibrated goodness-of-fit test",
       retention = "No model or observation-by-simulation matrix retained")
   ), class = "influ_residuals")
+  if (!is.null(adapter$conditioning)) {
+    result$metadata$conditioning <- adapter$conditioning
+    result$metadata$conditioning_requested <- adapter$conditioning_requested
+  }
   if (!is.null(adapter$probability)) {
     result$observations$probability <- adapter$probability
     result$observations$trials <- adapter$trials

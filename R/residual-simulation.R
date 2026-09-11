@@ -1,9 +1,12 @@
-.resid_adapter <- function(model, data, nsim, trial_counts = NULL, component = "auto") {
+.resid_adapter <- function(model, data, nsim, trial_counts = NULL, component = "auto",
+    conditioning = "backend_default") {
   backend <- if (inherits(model, "brmsfit")) "brms" else {
     choices <- c("glmmTMB", "sdmTMB", "tinyVAST", "gam", "glm")
     choices[vapply(choices, inherits, logical(1), x = model)][1L]
   }
   if (is.na(backend)) stop("No residual simulation adapter for this model class.", call. = FALSE)
+  requested_conditioning <- conditioning
+  conditioning <- .resid_conditioning(backend, conditioning)
   if (backend %in% c("brms", "tinyVAST")) .check_residual_model(model)
   frame <- .residual_model_frame(model)
   if (is.null(frame)) stop("A retained model frame is required for residual diagnostics.", call. = FALSE)
@@ -129,6 +132,13 @@
     }
     scheme <- "Observation simulations at fitted parameters (including fitted smooths)"
   } else if (backend == "glmmTMB") {
+    codes <- unlist(lapply(model$obj$env$data[c("terms", "termszi", "termsdisp")],
+      function(terms) lapply(terms, `[[`, "simCode")), use.names = FALSE)
+    if (conditioning == "new_effects" && any(codes != 2)) {
+      # Other packages can change native simulation controls in place. Honour
+      # our explicit target without changing or resetting the supplied fit.
+      model$obj <- .resid_tmb_object(model, backend, conditioning)$obj
+    }
     simulate <- function(ids) {
       value <- stats::simulate(model, nsim = length(ids))
       if (binomial) {
@@ -170,6 +180,21 @@
   adapter <- list(backend = backend, observed = as.numeric(observed), data = data,
     response = response, simulate = simulate, scheme = scheme, structure = structure,
     family = family, trials = trials, response_variables = all.vars(f[[2L]]))
+  adapter$conditioning <- conditioning
+  adapter$conditioning_requested <- requested_conditioning
+  if ((backend == "glmmTMB" && conditioning == "fitted") ||
+      (backend %in% c("sdmTMB", "tinyVAST") && conditioning != "fitted")) {
+    prepared <- .resid_conditioned_simulator(model, backend, conditioning, nsim)
+    adapter$simulate <- prepared$simulate
+    if (backend == "sdmTMB") adapter$simulate_component <- prepared$simulate
+    if (conditioning == "conditional_draw") {
+      adapter$conditional_probability <- prepared$probability
+    }
+    adapter$scheme <- switch(conditioning,
+      fitted = "Observation simulations conditional on fitted random effects and parameters",
+      conditional_draw = "Fitted parameters; one shared joint conditional latent draw (Gaussian approximation)",
+      new_effects = "Fitted parameters; latent processes resimulated, fitted smooths held fixed")
+  }
   .resid_response_adapter(adapter, model, component, nsim,
     draw_ids = if (backend == "brms") draws else NULL)
 }

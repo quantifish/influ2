@@ -9,7 +9,9 @@
 .resid_fitted_probability <- function(model, adapter, draw_ids = NULL, hurdle = FALSE) {
   backend <- adapter$backend
   n <- nrow(adapter$data)
-  if (backend %in% c("glm", "gam")) {
+  if (is.function(adapter$conditional_probability)) {
+    probability <- adapter$conditional_probability(hurdle)
+  } else if (backend %in% c("glm", "gam")) {
     probability <- model$fitted.values
   } else if (backend == "glmmTMB") {
     probability <- if (hurdle) 1 - stats::predict(model, type = "zprob") else {
@@ -78,9 +80,14 @@
       # Native component 2 simulates a positive amount at each row, including
       # rows whose combined simulated outcome would be zero. Select rows by
       # the ORIGINAL observation, never by each simulated outcome.
-      adapter$simulate <- function(ids) stats::simulate(model,
-        nsim = length(ids), type = "mle-eb", model = 2,
-        seed = sample.int(.Machine$integer.max, 1L), silent = TRUE)[keep, , drop = FALSE]
+      if (is.function(adapter$simulate_component)) {
+        simulate_component <- adapter$simulate_component
+        adapter$simulate <- function(ids) simulate_component(ids, component = 2L)[keep, , drop = FALSE]
+      } else {
+        adapter$simulate <- function(ids) stats::simulate(model,
+          nsim = length(ids), type = "mle-eb", model = 2,
+          seed = sample.int(.Machine$integer.max, 1L), silent = TRUE)[keep, , drop = FALSE]
+      }
       adapter$data <- adapter$data[keep, , drop = FALSE]
       adapter$observed <- adapter$observed[keep]
       adapter$family <- model$family[[2L]]$family
@@ -124,7 +131,9 @@
   }
   adapter$component <- component
   if (!is.null(adapter$probability)) {
-    adapter$prediction_type <- if (backend == "brms") {
+    adapter$prediction_type <- if (identical(adapter$conditioning, "conditional_draw")) {
+      "Encounter/success probabilities conditional on the same single joint latent-effect draw"
+    } else if (backend == "brms") {
       "Posterior mean encounter/success probabilities including existing group effects"
     } else "Fitted encounter/success probabilities conditional on fitted effects"
   }

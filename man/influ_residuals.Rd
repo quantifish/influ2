@@ -19,7 +19,8 @@ influ_residuals(
   calibration_min_n = 20L,
   calibration_groups = NULL,
   trial_counts = NULL,
-  groups = NULL
+  groups = NULL,
+  conditioning = "backend_default"
 )
 
 \method{print}{influ_residuals}(x, ...)
@@ -73,6 +74,13 @@ Two-column success/failure responses need no override.}
 \item{groups}{Optional names of original-data grouping columns to retain
 for \code{\link[=plot_implied_residuals]{plot_implied_residuals()}}. Specify these independently of the response.
 Only these columns, not the complete model data, are stored.}
+
+\item{conditioning}{Simulation target. \code{"backend_default"} preserves existing
+behaviour: \code{"fitted"} for GLM/GAM/sdmTMB/tinyVAST, \code{"new_effects"} for
+glmmTMB, and \code{"posterior_predictive"} for brms. Explicit alternatives are
+\code{"fitted"} for glmmTMB, \code{"conditional_draw"} for sdmTMB/tinyVAST, and
+\code{"new_effects"} for sdmTMB. Unsupported combinations fail, not fall back.
+See the conditioning section below before comparing model diagnostics.}
 
 \item{x}{An `influ_residuals` object.}
 
@@ -144,6 +152,37 @@ deliberately compact, not an exact representation of every simulated jump.
 For binomial GLMs and \code{glmmTMB}, responses are success counts (including
 proportion responses with integer trial weights).
 }
+\section{Conditioning}{
+
+\code{"fitted"} holds fitted parameters and latent effects fixed while simulating
+observation variation. \code{"conditional_draw"} holds fixed parameters at their
+estimates, draws one joint latent-effect vector from the native TMB Gaussian
+conditional approximation, and reuses it for every response simulation and
+batch. It requires a converged, unprofiled ML (not REML) fit with latent effects and a
+positive-definite Hessian. The sparse factorisation and one parameter vector
+are prepared once; neither the draw nor the response matrix is retained.
+This is not MCMC or integration over fixed-parameter uncertainty.
+
+\code{"new_effects"} regenerates latent processes at fitted distribution parameters:
+glmmTMB uses its native random-effect simulation, and sdmTMB uses the same
+controls as \code{simulate(..., re_form = NA)} (fitted smooths remain fixed).
+\code{"posterior_predictive"} retains brms joint posterior uncertainty, including
+existing group effects. These are different questions, not interchangeable
+ways to obtain uniformly distributed fitted-data ranks.
+
+Explicit glmmTMB \code{"fitted"} and the new spatial schemes use an independent
+native objective; the user's fitted object is not altered. For these schemes,
+per-replicate seeds and a shared latent draw make observation-level results
+invariant to \code{batch_size}. The compact response-ECDF grid still depends on
+the first batch. Existing default simulation/RNG behaviour is unchanged.
+Sampled-field binomial/encounter probabilities use the same latent vector.
+New-effect calibration retains fitted conditional probability bins, so the
+predictive envelope need not centre on the identity line. Check
+\code{metadata$scheme}, \code{metadata$conditioning}, and \code{metadata$prediction_type}.
+Native versions and support can differ; no term-by-term conditioning control
+or automatic MCMC, marginal integration, or new-group brms prediction is added.
+}
+
 \examples{
 if (requireNamespace("glmmTMB", quietly = TRUE)) {
 data(lobsters_per_pot)
