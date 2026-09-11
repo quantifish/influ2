@@ -7,6 +7,11 @@ is a separate, later step authorised by the maintainer.
 
 ## Priority update: 11 September 2026
 
+The subsequent N09 calibration-study and interpretation discussion is now
+explicitly parked. Preserve its proposed scope for later review with Nicholas;
+do not start simulation studies or change conditioning defaults. The current
+request is limited to the CDI axis wording and website reference/article order.
+
 The maintainer has explicitly parked issue #18 and its
 [two-region plan](two-region-plan.md). Preserve the plan and leave the issue
 open; no regional example or API work is to begin yet. Collaboration with
@@ -19,6 +24,24 @@ The [development consideration list](development-backlog.md) tracks Nicholas's
 individual suggestions, potential Ginflu-inspired features, and related parked
 decisions. It separates discussion priorities from optional candidates; adding
 an item there does not approve implementation or make it a CRAN release gate.
+
+## CDI label and website organisation, 11 September 2026
+
+The ratio-scale CDI axis now reads "Relative Effect", independent of the term
+name. The two changed visual snapshots differ only in that text and its width;
+all numerical calculations, other labels, and layouts remain unchanged. The
+reference index moves `plot_bubble()` to Additional diagnostics and comparisons,
+while retaining class-specific `plot()`/`autoplot()` methods with their own
+topics and clarifying their descriptions and help links. Residual diagnostics
+is first and Bentley validation last in the menu and article index; other
+articles retain their relative order. The frozen legacy article is preserved.
+
+All 4,526 full-suite expectations passed, with no failures, warnings, or skips.
+The full website rebuilt, its revised Bayesian CDI was visually inspected,
+and navigation/reference grouping and all 71 local figure-caption checks
+passed. The tested package is installed in the usual Mac R library. These
+presentation changes do not constitute a new CRAN archive check or submission.
+The N09 calibration study and interpretation review are explicitly parked.
 
 ## Explicit residual conditioning, 11 September 2026
 
@@ -54,11 +77,10 @@ locally before publication; automated caption checks passed on the deployed
 build. The existing deployment-action Node-runtime annotation remains
 non-blocking; the action succeeded using GitHub's Node 24 override.
 
-The automatic post-merge R-CMD-check rerun 34545318590 was still running at
-the publication review. Both platforms had passed the identical source in
-PR run 34543811601; do not conflate those results with completion of the
-later rerun. These final records are excluded from the package archive and
-do not alter the checked source or published examples.
+The automatic post-merge R-CMD-check rerun 34545318590 subsequently passed
+both release platforms, verified during the later website tidy-up. Both had
+also passed the identical source in PR run 34543811601. The excluded
+validation records do not alter the package source checked in those runs.
 
 Next discuss N09 calibration and interpretation before changing defaults.
 A common layout does not make diagnostic targets interchangeable or establish

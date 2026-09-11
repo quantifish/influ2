@@ -12,39 +12,38 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: CPUE indices
-        href: articles/cpue-indices.html
       - text: Residual diagnostics
         href: articles/residual-diagnostics.html
+      - text: CPUE indices
+        href: articles/cpue-indices.html
       - text: Model comparison
         href: articles/model-comparison.html
-      - text: Bentley validation
-        href: articles/bentley-validation.html
       - text: Hurdle, delta, and zero-inflated models
         href: articles/hurdle.html
       - text: Spatial and spatiotemporal diagnostics
         href: articles/spatial-spatiotemporal.html
       - text: Legacy Get Started (frozen)
         href: articles/legacy-get-started.html
+      - text: Bentley validation
+        href: articles/bentley-validation.html
 
 articles:
-- title: Get started
+- title: Vignettes
   navbar: ~
   contents:
-  - influ2
-- title: Validation and response structures
-  navbar: ~
-  contents:
-  - cpue-indices
   - residual-diagnostics
+  - influ2
+  - cpue-indices
   - model-comparison
-  - bentley-validation
   - hurdle
   - spatial-spatiotemporal
+  - bentley-validation
 
 reference:
 - title: Model-neutral diagnostics
-  desc: Calculate, inspect, and plot influence diagnostics.
+  desc: >
+    Calculate and inspect influence diagnostics. The [plot() and autoplot()](plot.influ_diag.html)
+    methods here display `influ_diag` objects, including influence and CDI plots.
   contents:
   - influ
   - influ.brmsfit
@@ -60,11 +59,13 @@ reference:
   - influ_metrics
   - influ_families
   - plot.influ_diag
-  - plot_bubble
 
 - title: Additional diagnostics and comparisons
-  desc: Compare indices and inspect data coverage.
+  desc: >
+    Compare indices and model steps, and inspect sampling composition and data
+    coverage. The [plot() and autoplot()](plot.influ_steps.html) methods here display `influ_steps` objects.
   contents:
+  - plot_bubble
   - plot_compare
   - influ_steps
   - plot.influ_steps
@@ -72,7 +73,10 @@ reference:
   - plot_data_extent
 
 - title: CPUE indices and assessment tables
-  desc: Calculate standardised means or area-integrated totals, and plot stored results.
+  desc: >
+    Calculate standardised means or area-integrated totals. Use
+    [plot_index(), plot(), or autoplot()](plot_index.html) to display the
+    resulting `influ_index` objects.
   contents:
   - cpue_index
   - integrate_index
@@ -80,7 +84,10 @@ reference:
   - geo_mean
 
 - title: Residual diagnostics
-  desc: Inspect generalised residual patterns, grouped departures, and quantile comparisons.
+  desc: >
+    Inspect generalised residual patterns, grouped departures, and quantile
+    comparisons. The [plot() and autoplot()](plot.influ_residuals.html) methods here display
+    `influ_residuals` objects.
   contents:
   - influ_residuals
   - as_influ_residuals

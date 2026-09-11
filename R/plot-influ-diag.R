@@ -103,7 +103,7 @@
     if (any(values <= 0 | is.infinite(values), na.rm = TRUE)) {
       stop("CDI ratios exceed the plotting range; use coefficient_scale = 'link'.", call. = FALSE)
     }
-    label <- paste("Relative", term, "effect")
+    label <- "Relative Effect"
   } else {
     link <- unique(coefficients$link)
     zero_probability <- all(coefficients$complement) ||
@@ -328,6 +328,8 @@
 #'   component at a time; select `component` when a term occurs in several
 #'   model components. Zero-probability components retain their fitted link
 #'   orientation and are explicitly labelled as such.
+#'   Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
+#'   name remains on the horizontal axis rather than lengthening the y label.
 #'   Short term labels (including months) are horizontal on the upper fitted-
 #'   effect axis and the lower composition axis. The influence panel's focus
 #'   labels are on the right, with the same level ordering as the composition.

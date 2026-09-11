@@ -116,7 +116,10 @@ test_that("CDI plotting defaults and model-coded option use their stated scale",
   coefficients <- subset(diagnostic$coefficients, term == "area")
   centred <- .cdi_plot_coefficients(coefficients, "area", "centred", "auto")
   expect_true(centred$ratio)
-  expect_identical(centred$label, "Relative area effect")
+  expect_identical(centred$label, "Relative Effect")
+  expect_identical(.cdi_plot_coefficients(coefficients,
+    "a_very_long_fishing_method_name", "centred", "auto")$label,
+    "Relative Effect")
   expect_equal(centred$data$estimate, coefficients$relative_estimate)
   old <- .cdi_plot_coefficients(coefficients, "area", "model", "auto")
   expect_false(old$ratio)

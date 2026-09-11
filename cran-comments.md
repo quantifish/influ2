@@ -31,9 +31,11 @@ was merged as `d230d6861e40996c2a53419bedcd7c07833f7b54`, with an identical
 source tree. Post-merge coverage run 34545318736 and website run 34545318608
 passed; Pages run 34545915567 published the new examples. Direct public-site
 checks verified the spatial comparisons, support table, and updated help.
-The automatic post-merge package-check rerun 34545318590 remained in progress
-at that review; the passing release-platform evidence is the identical-source
-PR run. Detailed validation and publication records are in
+The automatic post-merge package-check rerun 34545318590 subsequently passed
+both release platforms, verified during the later website tidy-up. These
+archive/check results predate the subsequent CDI-label-only presentation
+change; the eventual release candidate needs its own final archive check.
+Detailed validation and publication records are in
 `tools/release-review.md`. No CRAN or win-builder submission was made.
 N09 calibration review, issue #18, the remaining legacy review, and the
 index-median decision remain separate from this increment.

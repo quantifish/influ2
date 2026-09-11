@@ -5,8 +5,9 @@ Last reviewed: 11 September 2026.
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records
 an idea, not approval to implement it, a completed feature, or an additional
-requirement for the first CRAN release. Nicholas's residual work is the current
-discussion priority; Ginflu-inspired extensions are candidates for later review.
+requirement for the first CRAN release. The maintainer has parked the N09
+calibration study and interpretation review for now, preferring small plotting
+and website improvements. Ginflu-inspired extensions remain later candidates.
 
 Use [release-review.md](release-review.md) for the separate release checklist,
 existing issue decisions, legacy triage, and final-check evidence. This list
@@ -40,14 +41,13 @@ used influ2 revision `7bb976c`.
 | N06 | Make spatial and mixed-effect conditioning explicit — **Completed, 11 September** | `conditioning` exposes backend defaults and supported fitted, single conditional-draw, new-effect, and posterior-predictive targets. Independent native objectives protect fits; sdmTMB/tinyVAST share one joint draw across all response batches, with matching probabilities and explicit delta components. glmmTMB supports fitted effects and new effects, including protection against externally changed simulation controls. Native replay, batching, RNG, field/component, and guard tests pass. Shared draws require converged, unprofiled ML fits, not REML. Worked spatial comparisons are rendered. PR #26 passed both release platforms, coverage, and website checks and was merged; see the [audit](residual-conditioning-audit.md). Existing defaults remain; broader calibration validation is N09. |
 | N07 | Optional response-simulation retention — **Candidate** | Agree summary-only, in-memory, and potentially on-disk modes, draw/row subsetting, and memory warnings. Disk storage does not remove the cost of materialising a full matrix for another package. Keep compact retention as the default. |
 | N08 | DHARMa and response-simulation bayesplot bridges — **Candidate** | Reuse explicit retained or supplied simulations, with response/component metadata. Let `DHARMa::createDHARMa()` calculate its own residuals rather than replacing them with influ2 ranks. Test supported dependency interfaces, make dependencies optional, and warn before large exports. Coordinate with G02. |
-| N09 | Clarify finite-simulation calibration and diagnostic targets — **Discuss next** | Explain that randomised ranks are exactly uniform under exchangeability of the observation and simulations, not automatically for every fitted model. Distinguish analytic PIT, fitted-data simulation ranks, posterior predictive checks, and LOO-PIT. Simultaneous bands alone do not correct fitting effects or spatial dependence. |
+| N09 | Clarify finite-simulation calibration and diagnostic targets — **Parked, 11 September** | Retain the proposed simulation-based calibration and interpretation review with Nicholas for later discussion. Start with representative negative-binomial glmmTMB and spatial/spatiotemporal sdmTMB scenarios only if approved, then consider other backends. Compare correct and misspecified models, conditioning options, seed sensitivity, and reference-band behaviour. Distinguish analytic PIT, fitted-data ranks, posterior predictive checks, and LOO-PIT; fitting and spatial dependence affect interpretation. No study or default change is currently authorised. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
-Next suggested discussion: N09 calibration and interpretation before any
-conditioning default changes; then
-consider N07 retention and N08 remaining bridges. N02 counters were passed
-over and remain unimplemented. This is a proposed order, not authorisation to
-start further changes.
+Current priority: the requested small plotting and website improvements.
+N09 remains parked, and existing conditioning defaults remain unchanged.
+N07 retention and N08 bridges are still candidates; N02 counters were passed
+over and remain unimplemented. Resume these only after further discussion.
 
 Implementation review, 11 September: the maintainer approved N03 and arbitrary
 four-panel selection, retaining `c("qq", "fitted", "year", "auto")` as the
