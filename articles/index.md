@@ -4,6 +4,10 @@
 
 - [Residual
   diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md):
+- [Residual-implied
+  effects](https://www.quantifish.co.nz/influ2/articles/implied-effects.md):
+- [Residual
+  validation](https://www.quantifish.co.nz/influ2/articles/residual-validation.md):
 - [Influence
   diagnostics](https://www.quantifish.co.nz/influ2/articles/influ2.md):
 - [CPUE

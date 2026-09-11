@@ -40,6 +40,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/implied-effects.html">Residual-implied effects</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-validation.html">Residual validation</a></li>
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
@@ -86,6 +88,11 @@ standardised index, and how robust that index is to modelling choices.
 Residual checks address the first question; influence, CDI, and step
 plots primarily address the second. Comparing credible candidate models
 helps address the third. None is a substitute for the others.</p>
+<p>For repeated simulations of known negative-binomial mixed and spatial
+models, see <a href="residual-validation.html">Residual validation</a>.
+That study distinguishes conditioning effects, omitted structure, and
+finite-simulation behaviour; it does not change the defaults used
+here.</p>
 <p>This article uses the same <strong>simulated lobster CPUE</strong>
 example as <a href="influ2.html">Influence diagnostics</a>. It includes
 deliberately incomplete and poorly fitting candidates, not just the
@@ -123,13 +130,23 @@ mean?</td>
 means; it is not a predictive interval plot.</td>
 </tr>
 <tr class="odd">
-<td align="left"><code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code></td>
+<td align="left"><code><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals()</a></code></td>
 <td align="left">Do groups show generalised residual departures through
 time?</td>
 <td align="left">Mean normal-score departures, not implied coefficients
 or a fitted interaction.</td>
 </tr>
 <tr class="even">
+<td align="left">
+<code><a href="../reference/implied_effects.html">implied_effects()</a></code> then
+<code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code>
+</td>
+<td align="left">What local annual effect adjustment is suggested by
+each group?</td>
+<td align="left">Holds the original model fixed; initial
+Gaussian/log-response, Poisson, and NB2 support only.</td>
+</tr>
+<tr class="odd">
 <td align="left"><code>plot(checks, type = "qq")</code></td>
 <td align="left">How do simulation-based quantile residuals compare with
 their normal reference?</td>
@@ -663,7 +680,7 @@ storing every simulated step. Replotting <code>nb_checks</code> is
 immediate and performs no new simulations.</p>
 <p>The generalised-residual helpers
 <code><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals()</a></code> and
-<code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code> remain available for their
+<code><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals()</a></code> remain available for their
 separate questions. Q-Q plots use the unified simulation-based workflow
 shown above.</p>
 </div>
@@ -985,7 +1002,7 @@ Sparse regions and changing fleet composition deserve attention. These
 are in-sample diagnostics, not independent validation observations.</p>
 </div>
 <div class="section level2">
-<h2 id="grouped-departures-revisiting-implied-coefficients">Grouped departures: revisiting implied coefficients<a class="anchor" aria-label="anchor" href="#grouped-departures-revisiting-implied-coefficients"></a>
+<h2 id="grouped-pit-departures-and-residual-implied-effects">Grouped PIT departures and residual-implied effects<a class="anchor" aria-label="anchor" href="#grouped-pit-departures-and-residual-implied-effects"></a>
 </h2>
 <p>New Zealand inshore CPUE reports use residual-implied coefficients to
 explore departures from a shared year effect. Figure O.9 of <span class="citation">Starr and Kendrick (<a href="#ref-StarrKendrick2019">2019</a>)</span> adds a stratum’s mean
@@ -995,25 +1012,24 @@ and area-by-year displays for lognormal positive catches, omitting
 strata with fewer than 10 records. These examples motivate the grouping
 and support checks; their captions do not establish a universal
 Pearson-residual definition.</p>
-<p>The earlier influ2 helper defaulted to native Pearson residuals and
-added their mean to the link-scale year effect. This was an exploratory
-convention, not a general interaction estimator. Pearson residuals and
-normal-score residuals are dimensionless, whereas the coefficient is on
-the model’s link scale. <strong>Replacing Pearson residuals with
-quantile residuals in that sum would still mix scales.</strong> Ordinary
-GLM partial residuals instead involve working residuals, as described in
-<a href="https://search.r-project.org/R/refmans/stats/html/glm.summaries.html" class="external-link">R’s
-GLM documentation</a>; that does not supply a universal
-quantile-residual-to-coefficient conversion.</p>
-<p>The maintained <code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code> therefore now
-displays <strong>mean generalised residual departures around
-zero</strong>, not adjusted coefficients. The familiar helper name is
-retained, but the axis and returned data explicitly describe the new
-quantity. A positive point means that a group’s catches tend to be high
-within their own fitted predictive distributions. It is not a log-CPUE
-adjustment, biomass multiplier, or fitted interaction coefficient.</p>
+<p>There are now two deliberately distinct functions.
+<code><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals()</a></code> displays <strong>mean generalised
+residual departures around zero</strong>. A positive point means that a
+group’s responses tend to be high within their own predictive
+distributions; it is not a log-CPUE adjustment or biomass
+multiplier.</p>
+<p><code><a href="../reference/implied_effects.html">implied_effects()</a></code> and
+<code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code> restore the <strong>effect-scale
+question</strong>: how would a group’s annual trajectory depart from the
+fitted baseline if a small local adjustment were allowed? The new
+default estimates that adjustment using the fitted response likelihood.
+The separate <a href="implied-effects.html">Residual-implied effects
+article</a> demonstrates agreement with ordinary log-residual
+arithmetic, compares the actual historical standardised-residual GLM
+convention, and shows a negative-binomial mixed model. PIT scores are
+not added to coefficients. Neither display fits a full interaction.</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">full_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span>, min_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals</a></span><span class="op">(</span><span class="va">full_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span>, min_n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-implied-1.png" class="r-plt" alt="Twelve monthly panels show mean normal-score residual departures around zero." width="768"><p class="caption">
 Generalised year-by-month residual departures for the full
@@ -1032,17 +1048,17 @@ full residual distribution as well as its mean. A zero mean alone cannot
 rule out wrong dispersion or tails. Posterior predictive ranks reuse the
 fitted data and are not guaranteed uniform; conditioning for
 hierarchical models remains important.</p>
-<p>Actual year effects are still available from <code><a href="../reference/influ.html">influ()</a></code> and
-the index functions. Estimating a group-specific change in the index
-requires a separate model with the relevant interaction or process,
-followed by model checking. Do not add a normal score back onto a
-coefficient.</p>
+<p>Actual year effects remain available from <code><a href="../reference/influ.html">influ()</a></code> and
+the index functions. The new implied-effect calculation is a conditional
+diagnostic, not an adopted group-specific index. Estimating such an
+index still requires the appropriate model structure and
+standardisation, followed by model checking.</p>
 <p>For a different grouping, retain it during calculation:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">fit</span>, data <span class="op">=</span> <span class="va">original_data</span>,</span>
 <span>  groups <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"area"</span>, <span class="st">"gear"</span><span class="op">)</span>, nsim <span class="op">=</span> <span class="fl">1000</span>, seed <span class="op">=</span> <span class="fl">41</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">checks</span>, groups <span class="op">=</span> <span class="st">"area"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">checks</span>, groups <span class="op">=</span> <span class="st">"gear"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals</a></span><span class="op">(</span><span class="va">checks</span>, groups <span class="op">=</span> <span class="st">"area"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals</a></span><span class="op">(</span><span class="va">checks</span>, groups <span class="op">=</span> <span class="st">"gear"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">checks</span><span class="op">)</span></span></code></pre></div>
 <p>Keep original row names. influ2 verifies fitted data before retaining
 the group columns, including after omissions, subsets, or reordering. It
@@ -1401,6 +1417,13 @@ with supplied PIT values. Install <strong>bayesplot &gt;=
 1.16.0</strong> to use them. The default overview does not require
 bayesplot. Nothing below refits a model, reruns MCMC, simulates more
 responses, or retains a response-simulation matrix.</p>
+<p><strong>Reference-band caution:</strong> the <a href="residual-validation.html#first-check-the-reference-itself">validation
+study</a> found a horizontal grid-alignment problem in bayesplot
+1.16.0’s independent PIT ECDF limits. Its independent-uniform control
+crossed the displayed 95% limits 12.46% of the time. This affects the
+optional reference display, not the stored PIT values or the default
+four panels. Do not interpret these band crossings as a calibrated 5%
+test; the dependency correction is pending review.</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf"</span><span class="op">)</span>,</span>
@@ -1421,8 +1444,9 @@ additional response simulations are used.
 </p>
 </div>
 <p>The PIT curves contain much the same distributional information as
-the normal Q-Q panel. Their reference limits are <strong>simultaneous
-under the independent- uniform reference</strong>, whereas the existing
+the normal Q-Q panel. Their reference limits are <strong>intended to be
+simultaneous under the independent-uniform reference</strong>, subject
+to the version-specific alignment limitation above, whereas the existing
 Q-Q ribbon is pointwise. This does not make the PIT plots automatically
 calibrated for estimated parameters, posterior predictive reuse of
 observations, or latent dependence. We explicitly choose bayesplot’s
@@ -1537,7 +1561,7 @@ during calculation, as above:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">external_checks</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">external_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals</a></span><span class="op">(</span><span class="va">external_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span></code></pre></div>
 <p>The constructor processes the supplied matrix in batches and does not
 retain it, the fitted model, or a function capturing either. The matrix
 you created still occupies memory until you release it. This initial

@@ -1,106 +1,59 @@
-# Plot generalised residual departures by year and group
+# Plot residual-implied annual effects
 
-The maintained successor to the historical residual-implied coefficient
-display. Plot each year-by-group mean normal-score rank residual around
-zero, using exactly the same calculation as
-[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md).
+Display the fixed baseline and local residual-implied trajectories. This
+restores the effect-scale question of the historical plot, with an
+explicit traditional option. Use
+[`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
+for grouped PIT scores.
 
 ## Usage
 
 ``` r
-plot_implied_residuals(
-  fit,
-  data = NULL,
-  year = NULL,
-  groups = "area",
-  type = "quantile",
-  min_n = 10L,
-  colour = "purple4",
-  ...
-)
+plot_implied_residuals(fit, colour = "purple4", ncol = 3L, ...)
+
+# S3 method for class 'influ_implied'
+plot(x, ...)
+
+# S3 method for class 'influ_implied'
+autoplot(object, ...)
 ```
 
 ## Arguments
 
 - fit:
 
-  A supported fitted model or a precomputed `influ_residuals` object.
-
-- data:
-
-  Original model data with original row names, for calculation only.
-
-- year:
-
-  Time column; `NULL` uses the standard automatic detection. With a
-  stored object, an explicit value must match its recorded time column.
-
-- groups:
-
-  One retained categorical column used for panels.
-
-- type:
-
-  `"quantile"`, `"generalised"`, or `"generalized"`. All select the same
-  simulation-based normal-score residuals; native types are rejected.
-
-- min_n:
-
-  Minimum records required in a year-by-group stratum.
+  An `influ_implied` result or a supported fitted model.
 
 - colour:
 
-  Colour used for departures.
+  Colour of implied-effect points, lines, and intervals.
+
+- ncol:
+
+  Number of facet columns, default three.
 
 - ...:
 
-  Calculation options passed to
-  [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md),
-  e.g. `nsim`, `batch_size`, `seed`, and `component`. Not accepted for a
-  stored object.
+  Calculation arguments passed to
+  [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+  for a fitted model, including `method = "traditional"`. Not accepted
+  for stored results: calculate a separate result to change its method,
+  interval, or baseline.
+
+- x, object:
+
+  An \`influ_implied\` result.
 
 ## Value
 
-A ggplot. Its `data` contains stratum means, counts, and descriptive
-standard errors, not implied coefficients. The `residual_metadata`
-attribute records the simulation target.
+A ggplot. Its data retain every stratum and its status; metadata
+describe the effect scale and conditional interpretation.
 
-## Details
+## Examples
 
-This function no longer adds residuals to year coefficients.
-Normal-score residuals are dimensionless; adding them (or Pearson
-residuals) to link-scale effects does not produce coefficients of an
-interaction. Positive departures indicate observations tending towards
-the upper part of their predictive distributions, not a percentage
-correction to CPUE. Actual coefficient effects remain available through
-[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md); an
-interaction-specific index requires a separately fitted model.
-
-Bars show mean plus/minus SD/sqrt(n), a descriptive iid standard error,
-not an interval accounting for dependence, model estimation, or
-simulation error. They are not confidence intervals for interaction
-coefficients. Singleton strata have no bar. Unsupported and missing
-strata are not joined across intervening sampled years. All panels share
-the same residual scale. Specify groups independently of the outcome;
-response-defined selection invalidates the zero reference. Outcome
-columns are rejected, but derived outcome groups cannot be detected
-automatically.
-
-To calculate once and redraw without simulation, retain the required
-columns with `influ_residuals(fit, groups = c("area", "gear"))`. Then
-pass that object here. Original-data alignment and component selection
-are performed during calculation. A combined delta diagnostic is not a
-positive-component diagnostic; use an explicit supported `component`.
-Saved objects lacking the group columns must be recalculated. Data
-cannot be attached later to an object without its fitted-observation
-provenance.
-
-## References
-
-Starr, P. J., and Kendrick, T. H. (2019). FLA 1 Fishery Characterisation
-and CPUE. New Zealand Fisheries Assessment Report 2019/09, Figure O.9;
-Middleton, D. A. J. (2025). A Rapid Update of CPUE for the Snapper
-Fishery in SNA 2 to 2024. FAR 2025/32, Appendix C. These motivate the
-grouping, not the new normal-score scale. Dunn, P. K., and Smyth, G. K.
-(1996). Randomized quantile residuals. Journal of Computational and
-Graphical Statistics 5(3), 236-244.
+``` r
+data(lobsters_per_pot)
+fit <- glm(lobsters ~ year + month + depth, family = poisson(),
+  data = lobsters_per_pot)
+plot_implied_residuals(fit, groups = "month")
+```

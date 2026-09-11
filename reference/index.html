@@ -19,6 +19,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/implied-effects.html">Residual-implied effects</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-validation.html">Residual validation</a></li>
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
@@ -241,7 +243,21 @@
 
         <dt>
 
-          <code><a href="plot_implied_residuals.html">plot_implied_residuals()</a></code>
+          <code><a href="plot_implied_residuals.html">plot_implied_residuals()</a></code> <code><a href="plot_implied_residuals.html">plot(<i>&lt;influ_implied&gt;</i>)</a></code> <code><a href="plot_implied_residuals.html">autoplot(<i>&lt;influ_implied&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot residual-implied annual effects</dd>
+
+        <dt>
+
+          <code><a href="implied_effects.html">implied_effects()</a></code> <code><a href="implied_effects.html">print(<i>&lt;influ_implied&gt;</i>)</a></code> <code><a href="implied_effects.html">as.data.frame(<i>&lt;influ_implied&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Calculate residual-implied effects by year and group</dd>
+
+        <dt>
+
+          <code><a href="plot_grouped_residuals.html">plot_grouped_residuals()</a></code>
 
         </dt>
         <dd>Plot generalised residual departures by year and group</dd>

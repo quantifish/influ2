@@ -23,6 +23,8 @@ residuals by year, and a response-adaptive calibration or distribution panel."><
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/implied-effects.html">Residual-implied effects</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-validation.html">Residual validation</a></li>
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
@@ -154,7 +156,7 @@ Two-column success/failure responses need no override.</p></dd>
 
 <dt id="arg-groups">groups<a class="anchor" aria-label="anchor" href="#arg-groups"></a></dt>
 <dd><p>Optional names of original-data grouping columns to retain
-for <code><a href="plot_implied_residuals.html">plot_implied_residuals()</a></code>. Specify these independently of the response.
+for <code><a href="plot_grouped_residuals.html">plot_grouped_residuals()</a></code>. Specify these independently of the response.
 Only these columns, not the complete model data, are stored.</p></dd>
 
 
@@ -268,7 +270,7 @@ or automatic MCMC, marginal integration, or new-group brms prediction is added.<
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="as_influ_residuals.html">as_influ_residuals()</a></code> for externally generated response simulations;
 <code><a href="plot.influ_residuals.html">plot.influ_residuals()</a></code>, <code><a href="plot_predicted_residuals.html">plot_predicted_residuals()</a></code>,
-<code><a href="plot_implied_residuals.html">plot_implied_residuals()</a></code></p></div>
+<code><a href="plot_grouped_residuals.html">plot_grouped_residuals()</a></code></p></div>
     </div>
 
     <div class="section level2">

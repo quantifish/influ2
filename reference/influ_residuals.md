@@ -108,7 +108,7 @@ print(x, ...)
 - groups:
 
   Optional names of original-data grouping columns to retain for
-  [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md).
+  [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md).
   Specify these independently of the response. Only these columns, not
   the complete model data, are stored.
 
@@ -237,7 +237,7 @@ added.
 for externally generated response simulations;
 [`plot.influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md),
 [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md),
-[`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+[`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
 
 ## Examples
 

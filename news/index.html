@@ -19,6 +19,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/residual-diagnostics.html">Residual diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/implied-effects.html">Residual-implied effects</a></li>
+    <li><a class="dropdown-item" href="../articles/residual-validation.html">Residual validation</a></li>
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
@@ -44,7 +46,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="influ2-110">influ2 1.1.0<a class="anchor" aria-label="anchor" href="#influ2-110"></a></h2>
-<ul><li><p>Residual and index calculations now name a missing optional model backend before trying to extract its formula or family. Saved compact results remain usable without those backends. An isolated minimal-installation smoke check now runs within the existing Ubuntu-release CI job.</p></li>
+<ul><li><p>Restored effect-scale <code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code> with a compact <code><a href="../reference/implied_effects.html">implied_effects()</a></code> calculation and likelihood-based local adjustments. Initial adapters cover Gaussian/log-response, Poisson, and NB2 models in lm, GLM, GAM, and glmmTMB. Explicit traditional options distinguish ordinary log-response arithmetic from the historical standardised-residual GLM convention. The new article verifies both comparisons. Conditional intervals are not full interaction/index uncertainty; unsupported cases fail clearly. The previous grouped PIT calculation is unchanged under its clearer name, <code><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals()</a></code>; update callers that pass stored PIT objects.</p></li>
+<li><p>Added a frozen, reproducible N09 residual-validation study: 100 NB2 datasets each for glmmTMB and sdmTMB, known-truth controls, omitted-structure cases, and seed/count sensitivity. The article reports conditioning-specific behaviour and an independent bayesplot 1.16.0 PIT-band grid-alignment finding. No PIT calculation or conditioning default changed. Monte Carlo fits are not rerun by CI or vignette builds.</p></li>
+<li><p>Residual and index calculations now name a missing optional model backend before trying to extract its formula or family. Saved compact results remain usable without those backends. An isolated minimal-installation smoke check now runs within the existing Ubuntu-release CI job.</p></li>
 <li><p>Added clean-session save/reload regression tests for compact influence, residual, CPUE-index, and step-comparison results, including mixed-model and Bayesian examples. The main vignette shows how to save the results and reopen their tables and plots without repeating model calculations.</p></li>
 <li><p>Added a worked <code><a href="../reference/plot_data_extent.html">plot_data_extent()</a></code> example near the start of the main vignette and in the helper’s documentation. A separate lobster-data copy illustrates missing measurements without changing any fitted examples; zero responses remain observed values, not missing data.</p></li>
 <li><p>Shortened the ratio-scale CDI y-axis label to “Relative Effect” for all terms. Reorganised the website reference and article lists, with residual diagnostics first and Bentley validation last. Calculations are unchanged.</p></li>

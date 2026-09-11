@@ -9,6 +9,12 @@ Residual checks address the first question; influence, CDI, and step
 plots primarily address the second. Comparing credible candidate models
 helps address the third. None is a substitute for the others.
 
+For repeated simulations of known negative-binomial mixed and spatial
+models, see [Residual
+validation](https://www.quantifish.co.nz/influ2/articles/residual-validation.md).
+That study distinguishes conditioning effects, omitted structure, and
+finite-simulation behaviour; it does not change the defaults used here.
+
 This article uses the same **simulated lobster CPUE** example as
 [Influence
 diagnostics](https://www.quantifish.co.nz/influ2/articles/influ2.md). It
@@ -21,7 +27,8 @@ plots or p-values into automatic selection rules.
 |:---|:---|:---|
 | [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md) then [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | How do the overall response distribution, fitted-value patterns, and fishing-year residual distributions compare with model simulations? | Simulation conditioning differs between backends; the panels are exploratory, not a calibrated pass/fail test. |
 | [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md) | Does residual behaviour change with the predictive mean? | Reuses generalised residuals and matching predictive means; it is not a predictive interval plot. |
-| [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | Do groups show generalised residual departures through time? | Mean normal-score departures, not implied coefficients or a fitted interaction. |
+| [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md) | Do groups show generalised residual departures through time? | Mean normal-score departures, not implied coefficients or a fitted interaction. |
+| [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md) then [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | What local annual effect adjustment is suggested by each group? | Holds the original model fixed; initial Gaussian/log-response, Poisson, and NB2 support only. |
 | `plot(checks, type = "qq")` | How do simulation-based quantile residuals compare with their normal reference? | Uses a precomputed `influ_residuals` object; the ribbon is a nominal reference, not a calibrated model-specific test. |
 
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
@@ -563,7 +570,7 @@ performs no new simulations.
 The generalised-residual helpers
 [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
 and
-[`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+[`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
 remain available for their separate questions. Q-Q plots use the unified
 simulation-based workflow shown above.
 
@@ -919,7 +926,7 @@ For real fisheries, inspect vessel, gear, year, season, and location.
 Sparse regions and changing fleet composition deserve attention. These
 are in-sample diagnostics, not independent validation observations.
 
-## Grouped departures: revisiting implied coefficients
+## Grouped PIT departures and residual-implied effects
 
 New Zealand inshore CPUE reports use residual-implied coefficients to
 explore departures from a shared year effect. Figure O.9 of Starr and
@@ -931,29 +938,29 @@ omitting strata with fewer than 10 records. These examples motivate the
 grouping and support checks; their captions do not establish a universal
 Pearson-residual definition.
 
-The earlier influ2 helper defaulted to native Pearson residuals and
-added their mean to the link-scale year effect. This was an exploratory
-convention, not a general interaction estimator. Pearson residuals and
-normal-score residuals are dimensionless, whereas the coefficient is on
-the model’s link scale. **Replacing Pearson residuals with quantile
-residuals in that sum would still mix scales.** Ordinary GLM partial
-residuals instead involve working residuals, as described in [R’s GLM
-documentation](https://search.r-project.org/R/refmans/stats/html/glm.summaries.html);
-that does not supply a universal quantile-residual-to-coefficient
-conversion.
+There are now two deliberately distinct functions.
+[`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
+displays **mean generalised residual departures around zero**. A
+positive point means that a group’s responses tend to be high within
+their own predictive distributions; it is not a log-CPUE adjustment or
+biomass multiplier.
 
-The maintained
+[`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+and
 [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
-therefore now displays **mean generalised residual departures around
-zero**, not adjusted coefficients. The familiar helper name is retained,
-but the axis and returned data explicitly describe the new quantity. A
-positive point means that a group’s catches tend to be high within their
-own fitted predictive distributions. It is not a log-CPUE adjustment,
-biomass multiplier, or fitted interaction coefficient.
+restore the **effect-scale question**: how would a group’s annual
+trajectory depart from the fitted baseline if a small local adjustment
+were allowed? The new default estimates that adjustment using the fitted
+response likelihood. The separate [Residual-implied effects
+article](https://www.quantifish.co.nz/influ2/articles/implied-effects.md)
+demonstrates agreement with ordinary log-residual arithmetic, compares
+the actual historical standardised-residual GLM convention, and shows a
+negative-binomial mixed model. PIT scores are not added to coefficients.
+Neither display fits a full interaction.
 
 ``` r
 
-plot_implied_residuals(full_checks, groups = "month", min_n = 10)
+plot_grouped_residuals(full_checks, groups = "month", min_n = 10)
 ```
 
 ![Twelve monthly panels show mean normal-score residual departures
@@ -976,12 +983,12 @@ wrong dispersion or tails. Posterior predictive ranks reuse the fitted
 data and are not guaranteed uniform; conditioning for hierarchical
 models remains important.
 
-Actual year effects are still available from
+Actual year effects remain available from
 [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) and
-the index functions. Estimating a group-specific change in the index
-requires a separate model with the relevant interaction or process,
-followed by model checking. Do not add a normal score back onto a
-coefficient.
+the index functions. The new implied-effect calculation is a conditional
+diagnostic, not an adopted group-specific index. Estimating such an
+index still requires the appropriate model structure and
+standardisation, followed by model checking.
 
 For a different grouping, retain it during calculation:
 
@@ -989,8 +996,8 @@ For a different grouping, retain it during calculation:
 
 checks <- influ_residuals(fit, data = original_data,
   groups = c("area", "gear"), nsim = 1000, seed = 41)
-plot_implied_residuals(checks, groups = "area")
-plot_implied_residuals(checks, groups = "gear")
+plot_grouped_residuals(checks, groups = "area")
+plot_grouped_residuals(checks, groups = "gear")
 plot_predicted_residuals(checks)
 ```
 
@@ -1345,6 +1352,15 @@ The default overview does not require bayesplot. Nothing below refits a
 model, reruns MCMC, simulates more responses, or retains a
 response-simulation matrix.
 
+**Reference-band caution:** the [validation
+study](https://www.quantifish.co.nz/influ2/articles/residual-validation.html#first-check-the-reference-itself)
+found a horizontal grid-alignment problem in bayesplot 1.16.0’s
+independent PIT ECDF limits. Its independent-uniform control crossed the
+displayed 95% limits 12.46% of the time. This affects the optional
+reference display, not the stored PIT values or the default four panels.
+Do not interpret these band crossings as a calibrated 5% test; the
+dependency correction is pending review.
+
 ``` r
 
 patchwork::wrap_plots(
@@ -1369,11 +1385,12 @@ calibrated goodness-of-fit thresholds for this fitted mixed model. No
 additional response simulations are used.
 
 The PIT curves contain much the same distributional information as the
-normal Q-Q panel. Their reference limits are **simultaneous under the
-independent- uniform reference**, whereas the existing Q-Q ribbon is
-pointwise. This does not make the PIT plots automatically calibrated for
-estimated parameters, posterior predictive reuse of observations, or
-latent dependence. We explicitly choose bayesplot’s
+normal Q-Q panel. Their reference limits are **intended to be
+simultaneous under the independent-uniform reference**, subject to the
+version-specific alignment limitation above, whereas the existing Q-Q
+ribbon is pointwise. This does not make the PIT plots automatically
+calibrated for estimated parameters, posterior predictive reuse of
+observations, or latent dependence. We explicitly choose bayesplot’s
 independent-reference method and do not apply its alternative
 dependence-aware tests or report p-values for these fitted-data ranks.
 bayesplot may print a message about its newer correlated method; that is
@@ -1505,7 +1522,7 @@ calculation, as above:
 plot(external_checks, type = "qq")
 plot(external_checks, type = "pit_ecdf_diff")
 plot_predicted_residuals(external_checks)
-plot_implied_residuals(external_checks, groups = "month")
+plot_grouped_residuals(external_checks, groups = "month")
 ```
 
 The constructor processes the supplied matrix in batches and does not

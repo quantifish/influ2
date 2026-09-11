@@ -222,6 +222,14 @@ methods here display `influ_residuals` objects.
   [`autoplot(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
   : Plot a four-panel CPUE residual diagnostic
 - [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+  [`plot(`*`<influ_implied>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+  [`autoplot(`*`<influ_implied>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+  : Plot residual-implied annual effects
+- [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+  [`print(`*`<influ_implied>`*`)`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+  [`as.data.frame(`*`<influ_implied>`*`)`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+  : Calculate residual-implied effects by year and group
+- [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
   : Plot generalised residual departures by year and group
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
   : Plot predictive means against generalised residuals
@@ -254,6 +262,10 @@ Simulated data supplied with the package.
 
 - [Residual
   diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md):
+- [Residual-implied
+  effects](https://www.quantifish.co.nz/influ2/articles/implied-effects.md):
+- [Residual
+  validation](https://www.quantifish.co.nz/influ2/articles/residual-validation.md):
 - [Influence
   diagnostics](https://www.quantifish.co.nz/influ2/articles/influ2.md):
 - [CPUE

@@ -2,6 +2,29 @@
 
 ## influ2 1.1.0
 
+- Restored effect-scale
+  [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
+  with a compact
+  [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+  calculation and likelihood-based local adjustments. Initial adapters
+  cover Gaussian/log-response, Poisson, and NB2 models in lm, GLM, GAM,
+  and glmmTMB. Explicit traditional options distinguish ordinary
+  log-response arithmetic from the historical standardised-residual GLM
+  convention. The new article verifies both comparisons. Conditional
+  intervals are not full interaction/index uncertainty; unsupported
+  cases fail clearly. The previous grouped PIT calculation is unchanged
+  under its clearer name,
+  [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md);
+  update callers that pass stored PIT objects.
+
+- Added a frozen, reproducible N09 residual-validation study: 100 NB2
+  datasets each for glmmTMB and sdmTMB, known-truth controls,
+  omitted-structure cases, and seed/count sensitivity. The article
+  reports conditioning-specific behaviour and an independent bayesplot
+  1.16.0 PIT-band grid-alignment finding. No PIT calculation or
+  conditioning default changed. Monte Carlo fits are not rerun by CI or
+  vignette builds.
+
 - Residual and index calculations now name a missing optional model
   backend before trying to extract its formula or family. Saved compact
   results remain usable without those backends. An isolated
