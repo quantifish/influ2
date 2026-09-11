@@ -59,8 +59,22 @@ and reports 95.99%. The executed main-vignette example and news rebuilt, its
 rendered instructions were checked, and all 72 local plotted-image/lightbox
 checks passed across seven articles. No plotting or calculation function body,
 export, or existing visual snapshot changed. These are not a new CRAN archive
-check; no CRAN or win-builder submission was made. Publication results follow
-after deployment.
+check; no CRAN or win-builder submission was made.
+
+Source `4f7d78eaf27864ddb725101057359b2f955a7c75` is published and installed
+in the usual Mac R library. GitHub coverage run 34564362598 passed all 4,610
+expectations, with no warnings or skips, and confirmed 95.99% coverage.
+Website run 34564362596 passed all 75 plotted-image/lightbox checks across
+seven articles, including optional examples. Pages run 34564853504 deployed
+website revision `d41f3bb543b67077f952d8b35963d6ce5775b8ad`. The completed
+website and coverage jobs have zero annotations.
+
+Direct public-page checks verified the new save/reopen section, its code and
+limitations, and preservation of the preceding data-completeness example.
+Ubuntu-release and Windows-release checks in run 34564362595 were still
+running at this publication review. The preceding data-completeness source's
+two release-platform checks (34562564813) have both passed. This record is
+excluded bookkeeping, not a change to the tested package source.
 
 ## Data-completeness example and deployment maintenance, 11 September 2026
 
