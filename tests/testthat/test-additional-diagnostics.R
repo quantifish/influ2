@@ -65,6 +65,20 @@ test_that("data extent reports the observed proportion by focus level", {
   )
 })
 
+test_that("data completeness distinguishes zero responses from missing values", {
+  data <- data.frame(
+    year = c(2000, 2000, 2001, 2001, NA),
+    cpue = c(0, 0, 0, NA, 7),
+    depth = c(NA, NA, 20, 30, NA)
+  )
+  original <- data
+  plot <- plot_data_extent(data, "year", c("cpue", "depth"))
+  expect_identical(data, original)
+  expect_equal(plot$data$proportion[plot$data$variable == "cpue"], c(1, 0.5))
+  expect_equal(plot$data$proportion[plot$data$variable == "depth"], c(0, 1))
+  expect_equal(unique(plot$data$time), c(2000, 2001))
+})
+
 test_that("grouped residual means retain the generalised scale", {
   fixture <- bentley_fixture()
   checks <- influ_residuals(fixture$model, data = fixture$data, groups = "area", nsim = 50)

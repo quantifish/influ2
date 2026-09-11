@@ -345,6 +345,29 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
 #' @param xvar Name of the temporal or grouping column.
 #' @param yvar Names of columns whose non-missing coverage is displayed.
 #'
+#' @details For each variable and observed time level, bubble area represents
+#'   the proportion of records whose value is not `NA`. A zero response is an
+#'   observed value, not missing data. Fixed-size red markers sit underneath
+#'   the dark completeness bubbles; a red marker alone indicates all values
+#'   are missing. Records with a missing `xvar` are excluded.
+#'   Completeness is calculated separately for each variable among the records
+#'   supplied; it is not sampling intensity, measurement accuracy, or the
+#'   proportion of joint complete cases across all selected variables.
+#'
+#' @examples
+#' data(lobsters_per_pot)
+#' coverage_example <- lobsters_per_pot
+#' example_year <- as.integer(as.character(coverage_example$year))
+#' record_number <- seq_len(nrow(coverage_example))
+#' coverage_example$soak[example_year < 2005] <- NA_real_
+#' coverage_example$soak[
+#'   example_year >= 2005 & example_year < 2010 & record_number %% 2 == 0
+#' ] <- NA_real_
+#' coverage_example$depth[
+#'   example_year < 2010 & record_number %% 4 == 0
+#' ] <- NA_real_
+#' plot_data_extent(coverage_example, "year", c("lobsters", "depth", "soak"))
+#'
 #' @return A [ggplot2::ggplot()] object.
 #' @export
 plot_data_extent <- function(data, xvar, yvar) {

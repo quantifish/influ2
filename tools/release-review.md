@@ -10,7 +10,9 @@ is a separate, later step authorised by the maintainer.
 The subsequent N09 calibration-study and interpretation discussion is now
 explicitly parked. Preserve its proposed scope for later review with Nicholas;
 do not start simulation studies or change conditioning defaults. The current
-request is limited to the CDI axis wording and website reference/article order.
+work is limited to small presentation improvements, including the worked
+`plot_data_extent()` example, and the website-deployment action update selected
+as the second small task. The calibration study is not being started.
 
 The maintainer has explicitly parked issue #18 and its
 [two-region plan](two-region-plan.md). Preserve the plan and leave the issue
@@ -24,6 +26,31 @@ The [development consideration list](development-backlog.md) tracks Nicholas's
 individual suggestions, potential Ginflu-inspired features, and related parked
 decisions. It separates discussion priorities from optional candidates; adding
 an item there does not approve implementation or make it a CRAN release gate.
+
+## Data-completeness example and deployment maintenance, 11 September 2026
+
+The main vignette now introduces `plot_data_extent()` immediately after loading
+the simulated lobster data. A separate copy has deliberately missing depth and
+soak-time measurements; all fitted examples still use the unchanged original.
+The figure and help explain the non-missing-record denominator, red reference
+markers, and why a zero response counts as observed. The example does not
+estimate sampling intensity or joint complete-case coverage. Figure numbering
+and the full lightbox caption follow the shared site implementation.
+
+All 4,530 local test expectations passed without failures, warnings, or skips.
+The main article, help example, and news rebuilt successfully. The new figure
+was visually inspected, and all 72 plotted-image/lightbox checks passed on
+seven locally rendered articles. No calculation or plotting function body
+changed, and no new CRAN archive or win-builder submission was made.
+
+For the maintainer's requested second small task, the website-deployment action
+was upgraded from v4.4.1 to the verified v4.9.0 release, pinned to its immutable
+commit `fa24774553152dd7873cd16ebd8d959b010c5445`. Its native Node 24 runtime
+addresses the recurring old-runtime annotation. Upstream metadata confirms
+support for the existing `clean`, `branch`, and `folder` inputs. Permissions,
+deployment target, clean behaviour, workflow triggers, and the two-platform
+R-check matrix are unchanged. See the [upstream release](https://github.com/JamesIves/github-pages-deploy-action/releases/tag/v4.9.0).
+Live deployment verification is recorded separately after publication.
 
 ## CDI label and website organisation, 11 September 2026
 
