@@ -90,6 +90,15 @@ The initial website run 34644847533 failed before article execution on an
 external CDN SSL error while downloading bootstrap-toc. Only that failed
 workflow was retried; this is not a statistical or vignette regression.
 
+The corrected developer script is published in `7bd30fa`. Its minimal check
+passed in 46 seconds on Ubuntu in workflow 34645409513, and was correctly
+skipped on Windows. The existing two-platform archive checks were still
+running at this review, as was the website retry. The superseded run
+34644847513 was cancelled to avoid duplicate Windows work. Coverage and the
+website did not need another run for the developer-only correction. The Mac's
+usual installed influ2 matches the tested package code; an installed CPUE-index
+smoke calculation passed. All source changes are committed and pushed.
+
 ## Compact-result restart checks, 11 September 2026
 
 The approved increment tests saving and reopening the four compact result
