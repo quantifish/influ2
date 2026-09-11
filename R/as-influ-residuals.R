@@ -97,7 +97,7 @@
 #'   residual helpers as fitted-model results. Metadata identifies external
 #'   input, explicit alignment, response component, and declared conditioning.
 #' @seealso [influ_residuals()], [plot.influ_residuals()],
-#'   [plot_predicted_residuals()], [plot_implied_residuals()]
+#'   [plot_predicted_residuals()], [plot_grouped_residuals()]
 #' @examples
 #' d <- data.frame(year = rep(2010:2012, each = 10),
 #'   cpue = rep(c(0, 1, 2, 3, 4), 6))

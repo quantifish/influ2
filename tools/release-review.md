@@ -5,7 +5,61 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
-## Priority update: 11 September 2026
+## Priority update: 12 September 2026
+
+The maintainer subsequently approved the bounded N09 study and a separate
+residual-implied-effect implementation. These supersede the earlier parked
+status of the first N09 increment, not the remaining release decisions.
+
+N09 now contains 100 NB2 datasets for each of glmmTMB and sdmTMB, 500 eligible
+fits, and 1,960 diagnostic records including known-truth controls and paired
+seed/count sensitivity. No production fits failed eligibility. The compact
+installed artefact is approximately 263 kB; it retains summaries and selected
+diagnostics, not model fits or observation-by-simulation matrices. The
+`Residual validation` article is built from these frozen results. Runtime and
+study hashes record the original baseline independently of later package edits.
+See [tools/n09](n09/README.md) for the protocol and reproduction commands.
+
+Pooled PIT checks can miss omitted covariates or spatial structure, and different
+conditioning choices answer different questions. The separate bayesplot 1.16.0
+reference-grid finding is documented and has not been silently patched. Review
+calibration and interpretation with Nicholas before changing defaults or making
+broader fitted-model calibration claims.
+
+`plot_implied_residuals()` now addresses the effect-scale question directly,
+using compact `implied_effects()` results and one local likelihood shift per
+year/group stratum. Gaussian identity, NB2 log, and Poisson log adapters cover
+lm, GLM, GAM, and glmmTMB. Original parameters, offsets, smooths, and fitted
+random effects remain fixed. Conditional profile intervals omit uncertainty in
+the original fit and dependence; they are not refitted-interaction intervals.
+Unsupported backends, families, two-part models, weighted fits, and year
+interactions fail explicitly. They require additional validated adapters, not
+an automatic fallback to PIT scores or positive-component residuals.
+
+The `Residual-implied effects` article distinguishes two historical conventions:
+ordinary log-response residuals, which agree exactly with the new shifts for
+constant log variance, and the analyser GLM's centred `rstandard()` recipe,
+which does not generally agree and mixes scales. Both have worked comparisons.
+The old zero-centred PIT summaries remain unchanged as
+`plot_grouped_residuals()`. New numerical tests independently reconstruct both
+comparisons and count likelihoods; visual regression tests cover both displays.
+
+The final local regression suite passed 5,234 assertions with zero failures,
+warnings, or skips, including the two new visual baselines. The three new
+implied-effect figures and six N09 figures were visually inspected. All 81
+plotted-image/lightbox-caption checks across nine locally rendered articles
+passed. All nine source vignettes built into a fresh archive. Source-archive
+checks and publication evidence will be recorded below once verified.
+Local coverage is 95.95%, above the agreed 95% target. The minimal-installation
+check also passes its 12 saved-result, fresh-core, and 19 missing-package
+contracts; those existing contracts do not yet include a separate fresh-process
+implied-result case. The new implied-result tests cover numerical equality,
+compact RDS round trips, plotting, ordering, RNG preservation, and explicit guards.
+No CRAN or win-builder submission was made.
+Issue #18, #22, the median-column decision, and legacy/frozen-article review
+remain parked; no GitHub issues were closed.
+
+## Earlier priority update: 11 September 2026 (superseded above)
 
 The subsequent N09 calibration-study and interpretation discussion is now
 explicitly parked. Preserve its proposed scope for later review with Nicholas;
@@ -511,7 +565,7 @@ package. They are not merely historical helpers:
 | `plot_step()`, `influ_steps()` | Review automatic ordinary-model refits, explicit spatial-process stages, and reuse of compact results or supplied fits. |
 | `get_bayes_R2()` | Retain the brms summary; decide whether a worked example is needed. |
 | `table_criterion()` | Extended to six backends and mixed lists; review native likelihood targets, conditional AIC limits, paired LOO differences, and the new model-comparison article. |
-| `plot_implied_residuals()` | Review the fisheries interpretation, strata threshold, residual choice, and one-standard-error bars. |
+| `plot_implied_residuals()` | First effect-scale implementation completed on 12 September; review the worked historical/new comparisons and extension priorities. `plot_grouped_residuals()` separately retains the generalised PIT strata display. See the priority update above for supported families and conditional-interval limits. |
 | `plot_predicted_residuals()` | Review residual types and smooths for each intended backend. |
 | `influ_residuals()`, `plot(..., type = "qq")` | Supported simulation-based Q-Q workflow, including standalone panels. The native-residual `plot_qq()` helper was explicitly retired on 10 September 2026. |
 

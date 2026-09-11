@@ -82,7 +82,7 @@ test_that("data completeness distinguishes zero responses from missing values", 
 test_that("grouped residual means retain the generalised scale", {
   fixture <- bentley_fixture()
   checks <- influ_residuals(fixture$model, data = fixture$data, groups = "area", nsim = 50)
-  p <- plot_implied_residuals(checks, groups = "area", min_n = 1)
+  p <- plot_grouped_residuals(checks, groups = "area", min_n = 1)
   first <- p$data[1, ]
   keep <- as.character(checks$observations$year) == first$level &
     as.character(checks$groups$area) == first$group
@@ -91,7 +91,7 @@ test_that("grouped residual means retain the generalised scale", {
   expect_equal(first$std_error, sd(r) / sqrt(length(r)))
   expect_equal(first$lower, mean(r) - sd(r) / sqrt(length(r)))
   expect_equal(first$upper, mean(r) + sd(r) / sqrt(length(r)))
-  expect_error(plot_implied_residuals(checks, groups = "area", min_n = 0), "integer of at least")
+  expect_error(plot_grouped_residuals(checks, groups = "area", min_n = 0), "integer of at least")
 })
 
 test_that("bubble plots reject inputs that would silently discard groups", {

@@ -1,13 +1,13 @@
 # Development ideas and decisions
 
-Last reviewed: 11 September 2026.
+Last reviewed: 12 September 2026.
 
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records
 an idea, not approval to implement it, a completed feature, or an additional
-requirement for the first CRAN release. The maintainer has parked the N09
-calibration study and interpretation review for now, preferring small plotting
-and website improvements. Ginflu-inspired extensions remain later candidates.
+requirement for the first CRAN release. The maintainer has now approved a
+bounded first N09 validation increment: negative-binomial glmmTMB and sdmTMB
+simulations, without changing defaults. Ginflu-inspired extensions remain later candidates.
 
 Use [release-review.md](release-review.md) for the separate release checklist,
 existing issue decisions, legacy triage, and final-check evidence. This list
@@ -22,6 +22,7 @@ does not reopen completed issues or change the parked status of issue #18.
 - **Addressed:** the concern is already covered; retain the note to avoid
   accidentally restoring an obsolete interface.
 - **Completed:** the agreed implementation, tests, and documentation are in place.
+- **In progress:** a bounded scope is approved and is being executed.
 
 ## Nicholas's residual-diagnostic proposal
 
@@ -41,11 +42,11 @@ used influ2 revision `7bb976c`.
 | N06 | Make spatial and mixed-effect conditioning explicit — **Completed, 11 September** | `conditioning` exposes backend defaults and supported fitted, single conditional-draw, new-effect, and posterior-predictive targets. Independent native objectives protect fits; sdmTMB/tinyVAST share one joint draw across all response batches, with matching probabilities and explicit delta components. glmmTMB supports fitted effects and new effects, including protection against externally changed simulation controls. Native replay, batching, RNG, field/component, and guard tests pass. Shared draws require converged, unprofiled ML fits, not REML. Worked spatial comparisons are rendered. PR #26 passed both release platforms, coverage, and website checks and was merged; see the [audit](residual-conditioning-audit.md). Existing defaults remain; broader calibration validation is N09. |
 | N07 | Optional response-simulation retention — **Candidate** | Agree summary-only, in-memory, and potentially on-disk modes, draw/row subsetting, and memory warnings. Disk storage does not remove the cost of materialising a full matrix for another package. Keep compact retention as the default. |
 | N08 | DHARMa and response-simulation bayesplot bridges — **Candidate** | Reuse explicit retained or supplied simulations, with response/component metadata. Let `DHARMa::createDHARMa()` calculate its own residuals rather than replacing them with influ2 ranks. Test supported dependency interfaces, make dependencies optional, and warn before large exports. Coordinate with G02. |
-| N09 | Clarify finite-simulation calibration and diagnostic targets — **Parked, 11 September** | Retain the proposed simulation-based calibration and interpretation review with Nicholas for later discussion. Start with representative negative-binomial glmmTMB and spatial/spatiotemporal sdmTMB scenarios only if approved, then consider other backends. Compare correct and misspecified models, conditioning options, seed sensitivity, and reference-band behaviour. Distinguish analytic PIT, fitted-data ranks, posterior predictive checks, and LOO-PIT; fitting and spatial dependence affect interpretation. No study or default change is currently authorised. |
+| N09 | Clarify finite-simulation calibration and diagnostic targets — **First increment completed, 12 September; interpretation review pending** | 100 NB2 datasets per backend, 500 eligible glmmTMB/sdmTMB fits, and 1,960 diagnostic records cover omitted terms, conditioning, known-truth controls, and paired sensitivity. Compact results and the Residual validation article are reproducible via the [protocol](n09/protocol.md). Pooled distribution checks can miss omitted structure; conditioning changes the diagnostic target. A separate bayesplot 1.16.0 grid-alignment finding remains for review, not silently patched. Defaults stay unchanged. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
-Current priority: the requested small plotting and website improvements.
-N09 remains parked, and existing conditioning defaults remain unchanged.
+Current priority: review the completed first N09 results and the new implied-effect comparisons.
+Existing conditioning defaults remain unchanged.
 N07 retention and N08 bridges are still candidates; N02 counters were passed
 over and remain unimplemented. Resume these only after further discussion.
 
@@ -106,6 +107,7 @@ statistical assumptions, tests, dependency requirements, and licence obligations
 | Normal-score PIT transformation | **Completed / already available.** Q-Q, fitted-value, and year panels use `qnorm(pit)` by default; this is no longer outstanding work. N03 adds optional uniform-scale PIT ECDF views of those same ranks. It does not add a scale switch to the existing normal-score panels. |
 | Issue #18: two regional CPUE series | **Parked.** Preserve the [two-region plan](two-region-plan.md); do not begin its example or API work yet. |
 | Frequentist `Median = NA`, remaining legacy helpers, and frozen Get Started article | **Parked for later review.** Preserve the current records and article until the maintainer makes the remaining decisions. See [release-review.md](release-review.md). |
+| Residual-implied effects versus grouped PIT departures | **First implementation completed, 12 September.** `implied_effects()` / `plot_implied_residuals()` now estimate local conditional likelihood shifts on the effect scale. The unchanged zero-centred PIT display is `plot_grouped_residuals()`. The new article separately verifies ordinary log-residual equivalence and the historical analyser GLM `rstandard()` recipe. Gaussian identity (including log-response), NB2 log, and Poisson log support lm/GLM/GAM/glmmTMB; other backends, direct lognormal parameterisations, two-part responses, non-unit weights, and year interactions fail explicitly pending separately validated adapters. Intervals condition on the original fit; no full-model refit or uncertainty claim. |
 
 ## Keeping the list current
 

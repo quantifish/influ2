@@ -235,7 +235,7 @@ test_that("sdmTMB joint delta components route and simulate natively", {
   expect_identical(c$observations$row, rownames(d)[d$catch > 0])
   expect_true(all(c$observations$observed > 0))
   expect_equal(plot_predicted_residuals(c)$data, c$observations)
-  grouped <- plot_implied_residuals(c, groups = "year", min_n = 1)
+  grouped <- plot_grouped_residuals(c, groups = "year", min_n = 1)
   expect_equal(sum(grouped$data$n), sum(d$catch > 0))
   expect_identical(attr(grouped, "residual_metadata")$component, "positive")
   expect_equal(rownames(c$groups), c$observations$row)

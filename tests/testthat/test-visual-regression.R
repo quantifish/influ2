@@ -43,7 +43,7 @@ test_that("core influence figures remain visually stable", {
   )
   vdiffr::expect_doppelganger(
     "implied residual coefficient plot",
-    plot_implied_residuals(
+    plot_grouped_residuals(
       bentley_fixture()$model,
       year = "year",
       groups = "area",

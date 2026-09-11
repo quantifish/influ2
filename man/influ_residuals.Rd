@@ -72,7 +72,7 @@ fitted trial weights. Arbitrary case weights are not treated as trials.
 Two-column success/failure responses need no override.}
 
 \item{groups}{Optional names of original-data grouping columns to retain
-for \code{\link[=plot_implied_residuals]{plot_implied_residuals()}}. Specify these independently of the response.
+for \code{\link[=plot_grouped_residuals]{plot_grouped_residuals()}}. Specify these independently of the response.
 Only these columns, not the complete model data, are stored.}
 
 \item{conditioning}{Simulation target. \code{"backend_default"} preserves existing
@@ -199,5 +199,5 @@ plot(checks, type = "distribution", response_scale = "log1p")
 \seealso{
 \code{\link[=as_influ_residuals]{as_influ_residuals()}} for externally generated response simulations;
 \code{\link[=plot.influ_residuals]{plot.influ_residuals()}}, \code{\link[=plot_predicted_residuals]{plot_predicted_residuals()}},
-\code{\link[=plot_implied_residuals]{plot_implied_residuals()}}
+\code{\link[=plot_grouped_residuals]{plot_grouped_residuals()}}
 }

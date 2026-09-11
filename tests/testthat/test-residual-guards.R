@@ -19,11 +19,11 @@ test_that("implied residuals align omitted, excluded, and subset observations", 
       catch ~ year + x, family = stats::poisson(), data = data,
       na.action = get(action, envir = asNamespace("stats"))
     )
-    implicit <- plot_implied_residuals(model, groups = "month", min_n = 1)
-    explicit <- plot_implied_residuals(
+    implicit <- plot_grouped_residuals(model, groups = "month", min_n = 1)
+    explicit <- plot_grouped_residuals(
       model, data = data, groups = "month", min_n = 1
     )
-    permuted <- plot_implied_residuals(
+    permuted <- plot_grouped_residuals(
       model, data = data[nrow(data):1, ], groups = "month", min_n = 1
     )
     expect_equal(implicit$data, explicit$data)
@@ -38,8 +38,8 @@ test_that("implied residuals align omitted, excluded, and subset observations", 
     catch ~ year + x, family = stats::poisson(), data = data,
     subset = month != "1", na.action = stats::na.exclude
   )
-  implicit <- plot_implied_residuals(model, groups = "month", min_n = 1)
-  explicit <- plot_implied_residuals(
+  implicit <- plot_grouped_residuals(model, groups = "month", min_n = 1)
+  explicit <- plot_grouped_residuals(
     model, data = data, groups = "month", min_n = 1
   )
   expect_equal(implicit$data, explicit$data)
@@ -55,18 +55,18 @@ test_that("implied residuals reject changed data rather than reassigning residua
   changed <- data[nrow(data):1, ]
   rownames(changed) <- NULL
   expect_error(
-    plot_implied_residuals(model, data = changed, groups = "month", min_n = 1),
+    plot_grouped_residuals(model, data = changed, groups = "month", min_n = 1),
     "does not match"
   )
   changed <- data
   changed$x[1] <- changed$x[1] + 1
   expect_error(
-    plot_implied_residuals(model, data = changed, groups = "month", min_n = 1),
+    plot_grouped_residuals(model, data = changed, groups = "month", min_n = 1),
     "does not reproduce"
   )
   changed <- data[-1, ]
   expect_error(
-    plot_implied_residuals(model, data = changed, groups = "month", min_n = 1),
+    plot_grouped_residuals(model, data = changed, groups = "month", min_n = 1),
     "original row names"
   )
 })
@@ -74,7 +74,7 @@ test_that("implied residuals reject changed data rather than reassigning residua
 test_that("both helpers require retained fitted observations", {
   data <- residual_fixture()
   model <- glm(catch ~ year + x, family = poisson(), data = data, model = FALSE)
-  expect_error(plot_implied_residuals(model, data = data, groups = "month"), "retained model frame")
+  expect_error(plot_grouped_residuals(model, data = data, groups = "month"), "retained model frame")
   expect_error(plot_predicted_residuals(model), "retained model frame")
 })
 
@@ -122,7 +122,7 @@ test_that("the two helpers reuse exactly the unified residual calculation", {
     expect_equal(p$data, checks$observations)
     expect_equal(plot_predicted_residuals(model, nsim = 20)$data, p$data)
     expect_equal(attr(p, "residual_metadata"), checks$metadata)
-    grouped <- plot_implied_residuals(checks, groups = "month", min_n = 1)
+    grouped <- plot_grouped_residuals(checks, groups = "month", min_n = 1)
     expect_equal(sum(grouped$data$n), nrow(checks$observations))
     expect_false(any(c("implied", "estimate") %in% names(grouped$data)))
     expect_identical(attr(grouped, "residual_metadata")$component, checks$metadata$component)
@@ -134,19 +134,19 @@ test_that("stored residuals cannot be silently recalculated or relabelled", {
   model <- glm(catch ~ year + x, data = data, family = poisson())
   checks <- influ_residuals(model, data = data, groups = "month", nsim = 20)
   expect_error(plot_predicted_residuals(checks, nsim = 50), "Calculation arguments")
-  expect_error(plot_implied_residuals(checks, groups = "month", nsim = 50), "Calculation arguments")
-  expect_error(plot_implied_residuals(checks, groups = "month", data = data), "original data and year")
-  expect_error(plot_implied_residuals(checks, groups = "month", year = "wrong"), "original data and year")
-  expect_error(plot_implied_residuals(checks, groups = "area"), "lacks the grouping column")
-  expect_error(plot_implied_residuals(checks, groups = c("year", "month")), "one grouping")
-  expect_error(plot_implied_residuals(checks, groups = "month", min_n = 10000), "No year-by-group")
-  expect_equal(plot_implied_residuals(checks, groups = "month", year = "year")$data,
-    plot_implied_residuals(checks, groups = "month")$data)
+  expect_error(plot_grouped_residuals(checks, groups = "month", nsim = 50), "Calculation arguments")
+  expect_error(plot_grouped_residuals(checks, groups = "month", data = data), "original data and year")
+  expect_error(plot_grouped_residuals(checks, groups = "month", year = "wrong"), "original data and year")
+  expect_error(plot_grouped_residuals(checks, groups = "area"), "lacks the grouping column")
+  expect_error(plot_grouped_residuals(checks, groups = c("year", "month")), "one grouping")
+  expect_error(plot_grouped_residuals(checks, groups = "month", min_n = 10000), "No year-by-group")
+  expect_equal(plot_grouped_residuals(checks, groups = "month", year = "year")$data,
+    plot_grouped_residuals(checks, groups = "month")$data)
   checks$groups <- checks$groups[nrow(checks$groups):1, , drop = FALSE]
-  expect_error(plot_implied_residuals(checks, groups = "month"), "not aligned")
+  expect_error(plot_grouped_residuals(checks, groups = "month"), "not aligned")
   for (bad in list("pearson", "response", "deviance", NA_character_, c("a", "b"))) {
     expect_error(plot_predicted_residuals(model, type = bad), "generalised")
-    expect_error(plot_implied_residuals(model, type = bad), "generalised")
+    expect_error(plot_grouped_residuals(model, type = bad), "generalised")
   }
   for (type in c("generalised", "generalized")) {
     expect_s3_class(plot_predicted_residuals(model, type = type, nsim = 20), "ggplot")
@@ -171,14 +171,14 @@ test_that("group retention checks missing, changed, and response-defined columns
 test_that("generalised grouping works without a pure year coefficient", {
   data <- residual_fixture()
   model <- glm(catch ~ year * month + x, data = data, family = poisson())
-  expect_s3_class(plot_implied_residuals(model, groups = "month", nsim = 20), "ggplot")
+  expect_s3_class(plot_grouped_residuals(model, groups = "month", nsim = 20), "ggplot")
 })
 
 test_that("compact brms and multivariate objects cannot fabricate residuals", {
   skip_if_not_installed("brms")
   fit <- readRDS(system.file("extdata", "brms-fixtures", "fit2.rds", package = "influ2"))
   expect_error(plot_predicted_residuals(fit), "Compact brms influence fixtures")
-  expect_error(plot_implied_residuals(fit, groups = "month"), "native fitted object")
+  expect_error(plot_grouped_residuals(fit, groups = "month"), "native fitted object")
   multivariate <- structure(list(formula = structure(list(), class = "mvbrmsformula")), class = "brmsfit")
   expect_error(.check_residual_model(multivariate), "one response")
   mixed <- structure(list(data = data.frame(var = c("a", "b")),
@@ -194,12 +194,12 @@ test_that("sparse years are not bridged and singleton bars are absent", {
   keep <- !(checks$observations$year == "2012" & checks$groups$month == "1")
   checks$observations <- checks$observations[keep, ]
   checks$groups <- checks$groups[keep, , drop = FALSE]
-  p <- plot_implied_residuals(checks, groups = "month", min_n = 1)
+  p <- plot_grouped_residuals(checks, groups = "month", min_n = 1)
   expect_equal(length(unique(p$data$segment[p$data$group == "1"])), 2L)
   one <- !duplicated(checks$observations$year)
   checks$observations <- checks$observations[one, ]
   checks$groups <- checks$groups[one, , drop = FALSE]
-  p <- plot_implied_residuals(checks, groups = "month", min_n = 1)
+  p <- plot_grouped_residuals(checks, groups = "month", min_n = 1)
   expect_true(all(is.na(p$data$std_error)))
 })
 
@@ -214,11 +214,11 @@ test_that("group retention does not change simulation, and plots never call nati
   expect_equal(a$observations, b$observations)
   expect_equal(a$qq, b$qq)
   expect_identical(names(b$groups), c("month", "year"))
-  expect_s3_class(plot_implied_residuals(b, groups = "month"), "ggplot")
+  expect_s3_class(plot_grouped_residuals(b, groups = "month"), "ggplot")
   expect_s3_class(plot_predicted_residuals(fit, nsim = 20), "ggplot")
   set.seed(491)
   state <- .Random.seed
-  plot_implied_residuals(b, groups = "month")
+  plot_grouped_residuals(b, groups = "month")
   plot_predicted_residuals(b)
   expect_identical(.Random.seed, state)
 })
@@ -228,7 +228,7 @@ test_that("grouped normal scores detect a deliberately omitted catch difference"
   d <- expand.grid(year = factor(2001:2004), area = c("A", "B"), id = 1:60)
   d$catch <- rpois(nrow(d), ifelse(d$area == "A", 1, 12))
   fit <- glm(catch ~ year, data = d, family = poisson())
-  p <- plot_implied_residuals(fit, data = d, groups = "area", nsim = 100)
+  p <- plot_grouped_residuals(fit, data = d, groups = "area", nsim = 100)
   expect_true(all(p$data$residual[p$data$group == "A"] < -0.8))
   expect_true(all(p$data$residual[p$data$group == "B"] > 0.8))
   expect_identical(p$labels$y, "Mean normal-score rank residual")
@@ -238,7 +238,7 @@ test_that("categorical time labels retain order without forcing numeric years", 
   d <- residual_fixture()
   d$year <- factor(d$year, labels = c("first", "second", "third", "fourth"))
   fit <- glm(catch ~ year + x, data = d, family = poisson())
-  p <- plot_implied_residuals(fit, groups = "month", nsim = 20)
+  p <- plot_grouped_residuals(fit, groups = "month", nsim = 20)
   expect_true(all(p$data$x %in% 1:4))
   expect_identical(p$scales$scales[[2]]$labels, sort(levels(d$year)))
 })

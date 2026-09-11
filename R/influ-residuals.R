@@ -37,7 +37,7 @@
 #'   fitted trial weights. Arbitrary case weights are not treated as trials.
 #'   Two-column success/failure responses need no override.
 #' @param groups Optional names of original-data grouping columns to retain
-#'   for [plot_implied_residuals()]. Specify these independently of the response.
+#'   for [plot_grouped_residuals()]. Specify these independently of the response.
 #'   Only these columns, not the complete model data, are stored.
 #' @param conditioning Simulation target. `"backend_default"` preserves existing
 #'   behaviour: `"fitted"` for GLM/GAM/sdmTMB/tinyVAST, `"new_effects"` for
@@ -135,7 +135,7 @@
 #'   compact ECDF summaries, and explicit calculation metadata.
 #' @seealso [as_influ_residuals()] for externally generated response simulations;
 #'   [plot.influ_residuals()], [plot_predicted_residuals()],
-#'   [plot_implied_residuals()]
+#'   [plot_grouped_residuals()]
 #' @examples
 #' if (requireNamespace("glmmTMB", quietly = TRUE)) {
 #' data(lobsters_per_pot)

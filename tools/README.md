@@ -16,6 +16,7 @@
 | `tools/legacy/` | Fixture recipe and remaining retired-helper review copies | No |
 | `tools/release-review.md` | Pre-release decisions, issue queue, and checks | No |
 | `tools/development-backlog.md` | Nicholas's proposals, Ginflu-inspired candidates, and parked decisions | No |
+| `tools/n09/` | Fixed residual-validation protocol, simulation driver, report builder, and developer tests | No |
 | `tools/check-figure-captions.R`, `tools/tests/` | Site-wide lightbox caption and keyboard regression checks | No |
 | `tools/check-minimal-install.R`, `tools/tests/minimal-install-worker.R` | Isolated installation, core, saved-result, and missing-dependency smoke checks | No |
 | `pkgdown/`, `_pkgdown.yml` | Website configuration, assets, and frozen review article | No |

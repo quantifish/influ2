@@ -14,6 +14,10 @@ navbar:
       menu:
       - text: Residual diagnostics
         href: articles/residual-diagnostics.html
+      - text: Residual-implied effects
+        href: articles/implied-effects.html
+      - text: Residual validation
+        href: articles/residual-validation.html
       - text: CPUE indices
         href: articles/cpue-indices.html
       - text: Model comparison
@@ -32,6 +36,8 @@ articles:
   navbar: ~
   contents:
   - residual-diagnostics
+  - implied-effects
+  - residual-validation
   - influ2
   - cpue-indices
   - model-comparison
@@ -93,6 +99,8 @@ reference:
   - as_influ_residuals
   - plot.influ_residuals
   - plot_implied_residuals
+  - implied_effects
+  - plot_grouped_residuals
   - plot_predicted_residuals
 
 - title: Model comparison

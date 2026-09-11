@@ -50,7 +50,7 @@ test_that("external joint simulations reproduce ranks, means, and ECDF quantiles
     expect_equal(x$metadata$nsim, ncol(s))
     expect_s3_class(plot(x), "patchwork")
     expect_s3_class(plot_predicted_residuals(x), "ggplot")
-    grouped <- plot_implied_residuals(x, groups = "fleet", min_n = 2)
+    grouped <- plot_grouped_residuals(x, groups = "fleet", min_n = 2)
     expect_s3_class(grouped, "ggplot")
     expect_identical(attr(grouped, "residual_metadata")$component, args$component)
     expect_identical(x, do.call(as_influ_residuals, args))
@@ -104,7 +104,7 @@ test_that("explicit operation IDs preserve alignment when data row names differ"
   expect_identical(rownames(x$groups), x$observations$row)
   expect_identical(x$groups$fleet, args$data$fleet)
   expect_identical(args, before)
-  expect_s3_class(plot_implied_residuals(x, groups = "fleet", min_n = 2), "ggplot")
+  expect_s3_class(plot_grouped_residuals(x, groups = "fleet", min_n = 2), "ggplot")
 })
 
 test_that("a native glmmTMB simulation replay agrees with the external route", {

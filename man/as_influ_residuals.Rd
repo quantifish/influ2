@@ -91,7 +91,7 @@ in each batch. No additional responses are generated.}
 independent-uniform reference coverage for the Q-Q panel.}
 
 \item{groups}{Optional names of original-data grouping columns to retain
-for \code{\link[=plot_implied_residuals]{plot_implied_residuals()}}. Specify these independently of the response.
+for \code{\link[=plot_grouped_residuals]{plot_grouped_residuals()}}. Specify these independently of the response.
 Only these columns, not the complete model data, are stored.}
 
 \item{calibration_bins}{Requested number of roughly equal-observation-count
@@ -171,5 +171,5 @@ checks
 }
 \seealso{
 \code{\link[=influ_residuals]{influ_residuals()}}, \code{\link[=plot.influ_residuals]{plot.influ_residuals()}},
-\code{\link[=plot_predicted_residuals]{plot_predicted_residuals()}}, \code{\link[=plot_implied_residuals]{plot_implied_residuals()}}
+\code{\link[=plot_predicted_residuals]{plot_predicted_residuals()}}, \code{\link[=plot_grouped_residuals]{plot_grouped_residuals()}}
 }

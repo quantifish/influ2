@@ -23,11 +23,12 @@
 
 #' Plot generalised residual departures by year and group
 #'
-#' The maintained successor to the historical residual-implied coefficient
-#' display. Plot each year-by-group mean normal-score rank residual around
+#' Plot each year-by-group mean normal-score rank residual around
 #' zero, using exactly the same calculation as [influ_residuals()].
 #'
-#' @details This function no longer adds residuals to year coefficients.
+#' @details This is a grouped PIT diagnostic, not a residual-implied effect.
+#'   For an effect-scale adjustment use [implied_effects()] and
+#'   [plot_implied_residuals()]. This calculation does not add residuals to year coefficients.
 #'   Normal-score residuals are dimensionless; adding them (or Pearson residuals)
 #'   to link-scale effects does not produce coefficients of an interaction.
 #'   Positive departures indicate observations tending towards the upper part
@@ -75,7 +76,7 @@
 #'   attribute records the simulation target.
 #' @md
 #' @export
-plot_implied_residuals <- function(fit, data = NULL, year = NULL,
+plot_grouped_residuals <- function(fit, data = NULL, year = NULL,
     groups = "area", type = "quantile", min_n = 10L, colour = "purple4", ...) {
   .resid_general_type(type)
   .resid_integer(min_n, "min_n", 1L)
