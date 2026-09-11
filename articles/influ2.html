@@ -636,9 +636,9 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;       as.factor(year)               conditional                      0.60757313</span></span>
-<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10528749</span></span>
+<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10520110</span></span>
 <span><span class="co">#&gt;          depth_scaled               conditional                      0.05400688</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03084851</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03150923</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;              2013</span></span>
 <span><span class="co">#&gt;              2015</span></span>
@@ -701,11 +701,11 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
-<span><span class="co">#&gt;                  year               conditional                       0.2437404</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                       0.0515625</span></span>
+<span><span class="co">#&gt;                  year               conditional                      0.24374040</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.08243912</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
-<span><span class="co">#&gt;                 2</span></span></code></pre></div>
+<span><span class="co">#&gt;                 4</span></span></code></pre></div>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1412,12 +1412,88 @@ separation draws on the posterior-processing approach used in CPUETools
 <span class="citation">(<a href="#ref-CPUETools">Dragonfly Science,
 n.d.</a>)</span>, while the S3 design and GAM implementation were also
 informed by <code>gamInflu</code> <span class="citation">(<a href="#ref-Dunn2025">Dunn 2025</a>)</span>.</p>
+<div class="section level3">
+<h3 id="save-today-reopen-tomorrow">Save today, reopen tomorrow<a class="anchor" aria-label="anchor" href="#save-today-reopen-tomorrow"></a>
+</h3>
+<p>Save the calculated result objects to reuse their tables and plots in
+a later R session. They retain the estimates, interval summaries, and
+diagnostic metadata without retaining the fitted models by default. The
+same workflow applies to influence diagnostics, residual diagnostics,
+CPUE indices, and step comparisons.</p>
+<p>Here we reuse the influence, index, and step results calculated
+above. Only the residual diagnostic is calculated for the first time; it
+uses 100 response simulations from the existing glmmTMB fit, not a model
+refit or MCMC run. This example requires glmmTMB and MASS, as did the
+preceding index and step examples.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lobster_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  influence <span class="op">=</span> <span class="va">glmmTMB_diagnostic</span>,</span>
+<span>  residuals <span class="op">=</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_glmmTMB</span>, nsim <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">281</span><span class="op">)</span>,</span>
+<span>  index <span class="op">=</span> <span class="va">lobster_cpue</span>,</span>
+<span>  steps <span class="op">=</span> <span class="va">lobster_steps</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The vignette uses a temporary file; choose a persistent path in your analysis.</span></span>
+<span><span class="co"># For example: result_file &lt;- "lobster-results.rds"</span></span>
+<span><span class="va">result_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">lobster_results</span>, <span class="va">result_file</span><span class="op">)</span></span></code></pre></div>
+<p>In the later session, load <code>influ2</code> and read that file.
+The vignette reads it back immediately; the package tests additionally
+check this workflow in a separate, clean R session with no original
+fitted models. Reopening and plotting the summaries do not repeat the
+response simulations, CPUE prediction calculation, or step-model
+refits.</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/quantifish/influ2" class="external-link">influ2</a></span><span class="op">)</span></span>
+<span><span class="co"># After restarting R, set result_file to the persistent path used above:</span></span>
+<span><span class="co"># result_file &lt;- "lobster-results.rds"</span></span>
+<span><span class="va">restored_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">result_file</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">index</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Year     Mean Median        SD        CV    Qlower   Qupper       Method</span></span>
+<span><span class="co">#&gt; 1 2000 1.688662     NA 0.2399914 0.1421192 1.2781173 2.231079 standardised</span></span>
+<span><span class="co">#&gt; 2 2001 1.761248     NA 0.2494645 0.1416407 1.3343068 2.324799 standardised</span></span>
+<span><span class="co">#&gt; 3 2002 1.841306     NA 0.2566028 0.1393591 1.4012103 2.419629 standardised</span></span>
+<span><span class="co">#&gt; 4 2003 1.400957     NA 0.1908672 0.1362406 1.0726465 1.829755 standardised</span></span>
+<span><span class="co">#&gt; 5 2004 1.585962     NA 0.2156039 0.1359452 1.2149996 2.070187 standardised</span></span>
+<span><span class="co">#&gt; 6 2005 1.317816     NA 0.1864175 0.1414594 0.9987212 1.738863 standardised</span></span>
+<span><span class="co">#&gt;   Distribution Link</span></span>
+<span><span class="co">#&gt; 1      nbinom2  log</span></span>
+<span><span class="co">#&gt; 2      nbinom2  log</span></span>
+<span><span class="co">#&gt; 3      nbinom2  log</span></span>
+<span><span class="co">#&gt; 4      nbinom2  log</span></span>
+<span><span class="co">#&gt; 5      nbinom2  log</span></span>
+<span><span class="co">#&gt; 6      nbinom2  log</span></span>
+<span></span>
+<span><span class="co"># Recreate the plots without repeating the calculations.</span></span>
+<span><span class="va">restored_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  influence <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">influence</span><span class="op">)</span>,</span>
+<span>  residuals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">residuals</span><span class="op">)</span>,</span>
+<span>  index <span class="op">=</span> <span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">index</span><span class="op">)</span>,</span>
+<span>  steps <span class="op">=</span> <span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">steps</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Print an element, such as <code>restored_plots$residuals</code>, to
+display it. Saving the result objects, rather than only their figures,
+allows later changes to labels and layout using the stored results. Keep
+a record of the R and package versions, for example with
+<code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>: these tests check reuse with the same
+package version, not indefinite compatibility with future releases.</p>
+<p>This compact save does <strong>not</strong> replace the original fits
+and analysis code when new predictions, simulations, or refits are
+needed. It also does not package separate draw files created with
+<code>retain = "disk"</code>; keep those files separately if they are
+needed. The restart checks cover the default summary-only objects, not
+optional retained fitted models or external draw-file relocation.
+Retained residual objects include observation-level responses and
+diagnostic summaries, so check data-sharing permissions before sending
+them to someone else.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="families-and-response-structures">Families and response structures<a class="anchor" aria-label="anchor" href="#families-and-response-structures"></a>
 </h2>
 <p>The initial family set is:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/influ_families.html">influ_families</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              family                       aliases default_scale</span></span>
 <span><span class="co">#&gt; 1          gaussian                        normal    difference</span></span>

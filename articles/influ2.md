@@ -639,9 +639,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10528749
+#>         spatial_field conditional:latent_fields                      0.10520110
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03084851
+#>  spatiotemporal_field conditional:latent_fields                      0.03150923
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -708,11 +708,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                       0.2437404
-#>  spatiotemporal_field conditional:latent_fields                       0.0515625
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.08243912
 #>  level_at_maximum
 #>                 4
-#>                 2
+#>                 4
 ```
 
 ``` r
@@ -1329,6 +1329,90 @@ draws on the posterior-processing approach used in CPUETools ([Dragonfly
 Science, n.d.](#ref-CPUETools)), while the S3 design and GAM
 implementation were also informed by `gamInflu` ([Dunn
 2025](#ref-Dunn2025)).
+
+### Save today, reopen tomorrow
+
+Save the calculated result objects to reuse their tables and plots in a
+later R session. They retain the estimates, interval summaries, and
+diagnostic metadata without retaining the fitted models by default. The
+same workflow applies to influence diagnostics, residual diagnostics,
+CPUE indices, and step comparisons.
+
+Here we reuse the influence, index, and step results calculated above.
+Only the residual diagnostic is calculated for the first time; it uses
+100 response simulations from the existing glmmTMB fit, not a model
+refit or MCMC run. This example requires glmmTMB and MASS, as did the
+preceding index and step examples.
+
+``` r
+
+lobster_results <- list(
+  influence = glmmTMB_diagnostic,
+  residuals = influ_residuals(lobster_glmmTMB, nsim = 100, seed = 281),
+  index = lobster_cpue,
+  steps = lobster_steps
+)
+
+# The vignette uses a temporary file; choose a persistent path in your analysis.
+# For example: result_file <- "lobster-results.rds"
+result_file <- tempfile(fileext = ".rds")
+saveRDS(lobster_results, result_file)
+```
+
+In the later session, load `influ2` and read that file. The vignette
+reads it back immediately; the package tests additionally check this
+workflow in a separate, clean R session with no original fitted models.
+Reopening and plotting the summaries do not repeat the response
+simulations, CPUE prediction calculation, or step-model refits.
+
+``` r
+
+library(influ2)
+# After restarting R, set result_file to the persistent path used above:
+# result_file <- "lobster-results.rds"
+restored_results <- readRDS(result_file)
+
+head(as.data.frame(restored_results$index))
+#>   Year     Mean Median        SD        CV    Qlower   Qupper       Method
+#> 1 2000 1.688662     NA 0.2399914 0.1421192 1.2781173 2.231079 standardised
+#> 2 2001 1.761248     NA 0.2494645 0.1416407 1.3343068 2.324799 standardised
+#> 3 2002 1.841306     NA 0.2566028 0.1393591 1.4012103 2.419629 standardised
+#> 4 2003 1.400957     NA 0.1908672 0.1362406 1.0726465 1.829755 standardised
+#> 5 2004 1.585962     NA 0.2156039 0.1359452 1.2149996 2.070187 standardised
+#> 6 2005 1.317816     NA 0.1864175 0.1414594 0.9987212 1.738863 standardised
+#>   Distribution Link
+#> 1      nbinom2  log
+#> 2      nbinom2  log
+#> 3      nbinom2  log
+#> 4      nbinom2  log
+#> 5      nbinom2  log
+#> 6      nbinom2  log
+
+# Recreate the plots without repeating the calculations.
+restored_plots <- list(
+  influence = plot(restored_results$influence),
+  residuals = plot(restored_results$residuals),
+  index = plot_index(restored_results$index),
+  steps = plot_step(restored_results$steps)
+)
+```
+
+Print an element, such as `restored_plots$residuals`, to display it.
+Saving the result objects, rather than only their figures, allows later
+changes to labels and layout using the stored results. Keep a record of
+the R and package versions, for example with
+[`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html): these tests
+check reuse with the same package version, not indefinite compatibility
+with future releases.
+
+This compact save does **not** replace the original fits and analysis
+code when new predictions, simulations, or refits are needed. It also
+does not package separate draw files created with `retain = "disk"`;
+keep those files separately if they are needed. The restart checks cover
+the default summary-only objects, not optional retained fitted models or
+external draw-file relocation. Retained residual objects include
+observation-level responses and diagnostic summaries, so check
+data-sharing permissions before sending them to someone else.
 
 ## Families and response structures
 
