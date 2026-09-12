@@ -102,7 +102,7 @@ was initially unavailable, then partly recorded, and eventually complete.
 These added gaps are illustrative, not a feature of the original simulation.
 All models below still use the unchanged `lobsters_per_pot` dataset.
 
-```{r lobster-data-completeness, fig.height=3.25, fig.cap="Measurement completeness by year in a demonstration copy of the lobster data with deliberately added missing depth and soak-time values. Dark bubble area represents the proportion of existing records with a non-missing value; a red reference marker alone indicates none are available. Lobster counts, including zeros, remain fully recorded.", fig.alt="Annual completeness of lobster counts, depth, and soak time, showing complete counts and increasing covariate availability."}
+```{r lobster-data-completeness, fig.height=3.25, fig.cap="Measurement completeness by year in a demonstration copy of the lobster data with deliberately added missing depth and soak-time values. Dark bubble area represents the proportion of existing records with a non-missing value; blank cells indicate none are available. Lobster counts, including zeros, remain fully recorded.", fig.alt="Annual completeness of lobster counts, depth, and soak time, with blank cells for the earliest soak-time records and increasing covariate availability."}
 coverage_example <- lobsters_per_pot
 example_year <- as.integer(as.character(coverage_example$year))
 record_number <- seq_len(nrow(coverage_example))
@@ -132,7 +132,8 @@ plot_data_extent(
 The denominator is the number of records **already present in each year**,
 not the number of pot lifts that could have been sampled. A zero lobster
 count is a valid observation and counts as present; only `NA` is missing.
-The fixed-size red markers sit underneath the dark completeness bubbles.
+Cells with zero completeness are left blank. Where completeness is positive,
+fixed-size red markers sit underneath the dark completeness bubbles.
 This display does not assess measurement accuracy or show how many records
 would survive joint complete-case filtering across several covariates.
 

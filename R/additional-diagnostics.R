@@ -347,9 +347,10 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
 #'
 #' @details For each variable and observed time level, bubble area represents
 #'   the proportion of records whose value is not `NA`. A zero response is an
-#'   observed value, not missing data. Fixed-size red markers sit underneath
-#'   the dark completeness bubbles; a red marker alone indicates all values
-#'   are missing. Records with a missing `xvar` are excluded.
+#'   observed value, not missing data. Cells with zero completeness are blank;
+#'   neither a bubble nor a reference marker is drawn. For positive proportions,
+#'   fixed-size red markers sit underneath the dark completeness bubbles.
+#'   Records with a missing `xvar` are excluded.
 #'   Completeness is calculated separately for each variable among the records
 #'   supplied; it is not sampling intensity, measurement accuracy, or the
 #'   proportion of joint complete cases across all selected variables.
@@ -394,17 +395,24 @@ plot_data_extent <- function(data, xvar, yvar) {
   }))
   out$variable <- factor(out$variable, levels = rev(yvar))
   out$time <- .plot_level(out$time)
+  present <- out[!is.na(out$proportion) & out$proportion > 0, , drop = FALSE]
 
   ggplot2::ggplot(
     out,
     ggplot2::aes(x = .data$variable, y = .data$time)
   ) +
-    ggplot2::geom_point(size = 4, colour = "firebrick2", alpha = 0.55) +
+    # Retain the full grid, including completely missing variables and years.
+    ggplot2::geom_blank() +
+    ggplot2::geom_point(
+      data = present, size = 4, colour = "firebrick2", alpha = 0.55
+    ) +
     ggplot2::geom_point(
       ggplot2::aes(size = .data$proportion),
-      colour = "grey15", na.rm = TRUE
+      data = present, colour = "grey15", na.rm = TRUE
     ) +
-    ggplot2::scale_size_area(limits = c(0, 1), max_size = 8) +
+    ggplot2::scale_size_area(
+      limits = c(0, 1), breaks = c(0.25, 0.5, 0.75, 1), max_size = 8
+    ) +
     ggplot2::coord_flip() +
     ggplot2::labs(x = NULL, y = xvar, size = "Proportion present") +
     ggplot2::theme_bw()

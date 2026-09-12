@@ -77,6 +77,39 @@ test_that("data completeness distinguishes zero responses from missing values", 
   expect_equal(plot$data$proportion[plot$data$variable == "cpue"], c(1, 0.5))
   expect_equal(plot$data$proportion[plot$data$variable == "depth"], c(0, 1))
   expect_equal(unique(plot$data$time), c(2000, 2001))
+
+  points <- Filter(function(layer) inherits(layer$geom, "GeomPoint"), plot$layers)
+  expect_length(points, 2)
+  for (layer in points) {
+    expect_equal(nrow(layer$data), 3L)
+    expect_true(all(layer$data$proportion > 0))
+    expect_equal(layer$data$proportion[layer$data$variable == "cpue"], c(1, 0.5))
+  }
+  built <- ggplot2::ggplot_build(plot)
+  expect_equal(vapply(built$data, nrow, integer(1)), c(4L, 3L, 3L))
+  size_scale <- built$plot$scales$get_scales("size")
+  expect_equal(size_scale$get_limits(), c(0, 1))
+  expect_true(all(size_scale$get_breaks() > 0))
+})
+
+test_that("blank data-extent cells retain the full variable and year grid", {
+  for (year in list(c(2000, 2001), factor(c("Early", "Late")))) {
+    data <- data.frame(year = year, cpue = c(NA_real_, 0), depth = NA_real_)
+    plot <- plot_data_extent(data, "year", c("cpue", "depth"))
+    built <- ggplot2::ggplot_build(plot)
+    expect_equal(nrow(plot$data), 4L)
+    expect_equal(vapply(built$data, nrow, integer(1)), c(4L, 1L, 1L))
+    expect_equal(built$layout$panel_scales_x[[1]]$get_limits(), c("depth", "cpue"))
+    expected_time <- if (is.factor(year)) levels(year) else range(year)
+    expect_equal(built$layout$panel_scales_y[[1]]$get_limits(), expected_time)
+
+    data$cpue <- NA_real_
+    blank <- plot_data_extent(data, "year", c("cpue", "depth"))
+    built_blank <- ggplot2::ggplot_build(blank)
+    expect_equal(vapply(built_blank$data, nrow, integer(1)), c(4L, 0L, 0L))
+    expect_equal(built_blank$layout$panel_scales_x[[1]]$get_limits(), c("depth", "cpue"))
+    expect_equal(built_blank$layout$panel_scales_y[[1]]$get_limits(), expected_time)
+  }
 })
 
 test_that("grouped residual means retain the generalised scale", {

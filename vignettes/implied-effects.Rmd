@@ -56,6 +56,14 @@ fitted term contributions. Its `implieds()` helper can include the group main
 effect as well as year. Thus "traditional" was not one universal residual
 definition. Fisheries examples include @StarrKendrick2019 and @Middleton2025.
 
+An example by **Adam Langley** is @Langley2018: Figure 15 (p. 18) compares
+depth-specific annual residual-implied coefficients with the overall lognormal
+CPUE index, while Figures A5--A7 (pp. 55--57) show the same diagnostic question
+for months, target species, and vessels. The latter captions identify the
+intervals as standard errors of annual residuals. These are examples of the
+historical diagnostic, not validation of influ2's new likelihood adjustments
+or profile intervals for other response families.
+
 The new calculation agrees with **ordinary log-residual arithmetic** when
 the variance is constant; it does not generally equal the historical
 standardised-residual arithmetic. The examples below demonstrate both claims.
