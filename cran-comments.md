@@ -40,8 +40,9 @@ GitHub coverage run 34666609234 succeeded with 5,733 passing assertions and
 checks; Pages run 34667026970 published revision
 `356feec619247658c95a74e53a7213c194a7c848`. The live IV01 section, Figures 4
 and 5, and both full expanded captions were verified in the browser.
-R-CMD-check run 34666609202 (Ubuntu/Windows release) remains in progress,
-with a quiet scheduled follow-up active. These results apply to the source
+R-CMD-check run 34666609202 passed on Ubuntu release and Windows release.
+Each reported `Status: OK` and 5,733 passing assertions, with zero failures,
+warnings, or skips. This validation follow-up is complete. These results apply to the source
 revision above, not a later package change. No CRAN or win-builder submission
 was made. Detailed methods and the separate read-only BNS Gamma-support
 diagnosis are in `tools/release-review.md`.

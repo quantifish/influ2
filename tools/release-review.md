@@ -75,8 +75,11 @@ checks across nine articles. Pages run 34667026970 published revision
 `356feec619247658c95a74e53a7213c194a7c848`. Live browser review at
 `https://www.quantifish.co.nz/influ2/articles/implied-effects.html` confirmed
 the IV01 section, both new figures, and their full matching expanded captions.
-GitHub R-CMD-check run 34666609202 is still running on Ubuntu release and
-Windows release; the existing quiet follow-up is active for completion.
+GitHub R-CMD-check run 34666609202 passed on Ubuntu release and Windows
+release. Each reported `Status: OK` and 5,733 passing assertions, with zero
+failures, warnings, or skips. These checks apply to source
+`2989db942f7aa1e9a61af45d2b1e17c3232bd835`; only excluded validation records
+changed subsequently. This validation/publication follow-up is complete.
 No CRAN or win-builder submission, issue change, or resumption of parked work
 was made.
 
