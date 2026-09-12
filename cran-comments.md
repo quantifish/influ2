@@ -1,3 +1,48 @@
+## IV01 residual-implied-effect validation: 12 September 2026
+
+Source `2989db942f7aa1e9a61af45d2b1e17c3232bd835` adds a compact frozen
+400-fit NB2 glmmTMB validation, portable result audits, and worked figures
+and interpretation in the existing implied-effects vignette. No diagnostic
+algorithm, model-family support, or default changes. The original N09 study
+and its hashed source files remain untouched.
+
+Checked archive: `/private/tmp/influ2-iv01-check.KUhmnd/influ2_1.1.0.tar.gz`.
+SHA256: `fa4cd5c2cd650719a2b67c11e572cc82f1e46c12dd7c89c3f39b87a34ad52174`.
+All 167 tracked shipped files match the checkout, alongside R's generated
+DESCRIPTION metadata. Developer study sources and private review material
+are excluded. The IV01 RDS is 415,808 bytes and retains no fitted models,
+observation arrays, or simulation arrays.
+
+The macOS arm64 R 4.6.1 check used `--as-cran --no-manual` and
+`_R_CHECK_FORCE_SUGGESTS_=false`. It completed with zero errors, zero warnings,
+and one existing incoming-feasibility NOTE for a new submission and optional
+tinyVAST through its declared additional repository. DHARMa was unavailable
+locally; this is not a full optional-dependency or PDF-manual check. Installed
+size is 5.9 MB, including 3.9 MB of documentation (INFO). All nine vignettes
+built and rebuilt. CRAN-mode tests passed 5,717 assertions, with seven
+intentional visual-test groups skipped. Full local tests passed 5,733
+assertions, with no failures, warnings, or skips; coverage is 95.95278%.
+The isolated minimal-installation check passed its 12 saved-result contracts,
+fresh calculations, and 19 missing-package guards. The checked archive is
+installed in the usual Mac R library; its exact frozen result and
+fresh-session plotting have been verified.
+
+The separate study developer checks pass 66 assertions. Package tests add
+399 frozen-result assertions without running the Monte Carlo fits. New
+figures, their gaps and target overlays, and complete lightbox captions were
+visually checked; all 83 plotted-image caption checks across nine local
+articles pass. Scientific conclusions remain explicitly bounded: conditional
+local adjustments are not calibrated interaction tests or regional indices.
+Check log: `/private/tmp/influ2-iv01-check.KUhmnd/influ2.Rcheck/00check.log`.
+
+GitHub coverage run 34666609234 succeeded with 5,733 passing assertions and
+95.95% coverage. R-CMD-check run 34666609202 (Ubuntu/Windows release) and
+pkgdown run 34666609377 are still in progress; platform completion and live
+Pages publication remain to verify. These results apply to the source
+revision above, not a later package change. No CRAN or win-builder submission
+was made. Detailed methods and the separate read-only BNS Gamma-support
+diagnosis are in `tools/release-review.md`.
+
 ## N09 PIT reference-grid correction: 12 September 2026
 
 Source `b027b73c01e701bfcfe209b0de316e9e390dba75` corrects only the optional

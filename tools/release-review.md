@@ -49,8 +49,31 @@ The full local suite passes 5,733 assertions with no failures, warnings, or
 skips. Both new figures were rendered and visually reviewed; the isolated
 conditional targets remain visible as teal crosses, and no lines bridge
 unsupported cells. All 83 plotted-image/lightbox caption checks across nine
-local articles pass. Archive, coverage, and publication checks follow below
-when complete.
+local articles pass. Browser review verified both new figures and their full
+expanded captions. Local coverage remains 95.95278%; GitHub coverage run
+34666609234 passed 5,733 assertions and reported 95.95%.
+
+Source `2989db942f7aa1e9a61af45d2b1e17c3232bd835` is pushed. The fresh archive
+`/private/tmp/influ2-iv01-check.KUhmnd/influ2_1.1.0.tar.gz` has SHA256
+`fa4cd5c2cd650719a2b67c11e572cc82f1e46c12dd7c89c3f39b87a34ad52174`;
+all 167 tracked shipped files match the checkout. The frozen IV01 RDS SHA256
+is `6d4ec28807e5c576b62d48c01b539837d3c0addca9cfee6df6a0feb544ace808`.
+The Mac R 4.6.1 `--as-cran --no-manual` check completed with zero errors,
+zero warnings, and one existing incoming NOTE (new submission and optional
+tinyVAST through its declared repository). `_R_CHECK_FORCE_SUGGESTS_=false`
+was used because DHARMa is unavailable locally. All nine vignettes built and
+rebuilt; CRAN-mode tests passed 5,717 assertions, with seven intentional
+visual-test groups skipped. Installed size is 5.9 MB, including 3.9 MB of
+documentation, reported as INFO rather than a warning. This does not claim
+complete optional-dependency or PDF-manual checks. The isolated minimal
+installation check passed its 12 saved-result contracts, fresh calculations,
+and 19 missing-package guards. The checked archive is installed in the usual
+Mac R library, with the exact frozen artefact and fresh-session plot verified.
+
+GitHub R-CMD-check run 34666609202 (Ubuntu/Windows release) and website run
+34666609377 are still in progress. Their eventual completion and live Pages
+publication must be verified before calling publication complete. No CRAN or
+win-builder submission, issue change, or resumption of parked work was made.
 
 The additive BNS request was investigated read-only. All eight actual saved
 component GAMs reproduce the supported-family error with the correct
