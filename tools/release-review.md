@@ -5,6 +5,66 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## IV01 implied-effect validation: 12 September 2026
+
+The maintainer approved a bounded NB2 glmmTMB follow-up: 100 datasets per
+balanced/uneven and null/omitted-trend combination, each with 648 records,
+six years, three seasons, and 12 vessel random intercepts. All 400 ML fits
+were eligible, and all 800 known-parameter/public fitted-model calculations
+succeeded without warnings. Production IDs 1--100 exclude the three pilot
+IDs. No failed attempt was replaced and no example was selected by appearance.
+
+The existing runtime at `2b17448` was held fixed. New study sources are
+identified independently by their recorded MD5 hashes: study.R
+`45955acb86e50ad9fa26fab6ffc84a6d`, run.R
+`40e7633c24fba6e57bf8eb509aedc8d6`, protocol.md
+`558a76cbe94a1a1e80f2156312e604f7`. The study files were new, uncommitted
+developer work when run; they are not asserted to exist in that baseline
+revision. R 4.6.1, glmmTMB 1.1.14, and TMB 1.9.25 were used. Checkpoints and
+session information are in
+`/private/tmp/influ2-implied-validation.3B9ypC/production`; the published
+415,808-byte RDS retains all attempts, metrics, 14,400 cell records, summaries,
+and the four compact public results from the first eligible replicate (1).
+No fitted models or observation/simulation arrays are retained in the artefact.
+
+Known-parameter pointwise coverage is 94.4--95.0%; fitted-conditional target
+containment is 94.2--96.4%, explicitly not coverage for a fixed interaction.
+Under the null, fitted-model zero exclusions occur in 0.8--0.9% of supported
+cell intervals, with any exclusion in 9--12% of datasets. Known-parameter
+any-cell null exclusions are 49--65%; pointwise bars are not simultaneous
+tests. With the omitted trend, fitted adjustments track their own conditional
+targets (mean within-dataset RMSE 0.118 balanced / 0.139 uneven), but those
+targets differ from the injected pattern (RMSE 0.107 / 0.317). Strong supported
+cells retain the injected direction 100.0% / 98.3% of the time, whereas only
+92.5% / 32.8% exclude zero. Uneven sampling changes available support and
+signal absorption into fitted main effects and dispersion. These are one
+effect size and two fixed designs, not universal interval calibration or
+a power curve. Monte Carlo errors are calculated between datasets.
+
+The article adds two figures, interval/fit/support tables, and these limits.
+The independent developer checks pass 66 assertions; portable frozen-result
+tests pass 399 assertions without fitting a study model. The original N09
+artefact, hashed N09 study scripts, diagnostic code, and defaults are unchanged.
+The full local suite passes 5,733 assertions with no failures, warnings, or
+skips. Both new figures were rendered and visually reviewed; the isolated
+conditional targets remain visible as teal crosses, and no lines bridge
+unsupported cells. All 83 plotted-image/lightbox caption checks across nine
+local articles pass. Archive, coverage, and publication checks follow below
+when complete.
+
+The additive BNS request was investigated read-only. All eight actual saved
+component GAMs reproduce the supported-family error with the correct
+`year_factor` and `area_factor` arguments: four Gamma(log) positive models
+and four binomial(logit) encounter models. This is missing family support in
+the newly restored likelihood-based implied diagnostic, not evidence that
+the fits are invalid. Its preceding pinned BNS workflow plots zero-centred
+PIT summaries under an older API, which cannot substitute for implied effects.
+A Gamma log-mean likelihood adapter, independent optimum/profile tests, and
+native GAM dispersion checks are the next appropriate extension. Positive,
+encounter, and combined delta targets must remain separate. No BNS source,
+model, presentation, or assessment input was modified, and no Gamma support
+was silently added during this validation-only increment.
+
 ## N09 PIT plotting correction: 12 September 2026
 
 The maintainer approved the contained reference-grid correction after reviewing

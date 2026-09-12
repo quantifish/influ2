@@ -45,10 +45,33 @@ used influ2 revision `7bb976c`.
 | N09 | Clarify finite-simulation calibration and diagnostic targets — **First increment and plotting correction completed, 12 September; interpretation review pending** | 100 NB2 datasets per backend, 500 eligible glmmTMB/sdmTMB fits, and 1,960 diagnostic records cover omitted terms, conditioning, known-truth controls, and paired sensitivity. Compact results and the Residual validation article are reproducible via the [protocol](n09/protocol.md). The separately approved bayesplot 1.16.0 grid correction aligns both optional PIT plots without changing the interval calculation, stored ranks, defaults, or frozen study. The [follow-up control](n09/check-pit-alignment.R) reproduces 4.77% independent-uniform crossings instead of 12.46%. Pooled checks can still miss omitted structure; calibration and conditioning interpretation remain for review. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
-Current priority: review the completed first N09 results and the new implied-effect comparisons.
+Current priority: review the completed first N09 results and the IV01
+implied-effect validation below. The BNS Gamma implied-effect gap is now
+diagnosed; extending the family adapter is a separate next implementation.
 Existing conditioning defaults remain unchanged.
 N07 retention and N08 bridges are still candidates; N02 counters were passed
 over and remain unimplemented. Resume these only after further discussion.
+
+### IV01 implied-effect follow-up: completed bounded study, 12 September
+
+The approved NB2 glmmTMB study has 100 datasets for each balanced/uneven and
+null/omitted-trend combination: all 400 fits and 800 calculations succeeded.
+The [fixed protocol](implied-validation/protocol.md), independent numerical
+tests, full attempt/cell records, and compact public examples distinguish
+known-parameter coverage from fitted-conditional target containment. The
+`Residual-implied effects` article reports recovery, interval behaviour,
+sampling gaps, and model absorption of the injected trend. This does not
+complete broader N09 calibration or change any diagnostic algorithm/default.
+
+Read-only BNS follow-up confirmed the explicit supported-family error on
+four saved Gamma(log) positive-component GAMs and four binomial(logit)
+encounter GAMs. Existing PIT support does not imply support for the newly
+restored likelihood-based implied effect. Next: agree and validate a Gamma
+likelihood adapter first, preserving fitted smooths, random effects, offsets,
+dispersion, row alignment, and conditional-profile semantics. Binomial and
+combined delta shifts require their own contracts. Do not substitute grouped
+PIT or Pearson residuals, refit BNS models, or alter assessment indices.
+No BNS files or release inputs were changed during this investigation.
 
 Implementation review, 11 September: the maintainer approved N03 and arbitrary
 four-panel selection, retaining `c("qq", "fitted", "year", "auto")` as the
