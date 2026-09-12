@@ -5,6 +5,58 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Gamma(log) implied effects: 12 September 2026
+
+The maintainer authorised Gamma(log) support and downstream validation on the
+saved Bluenose positive GAMs. Source `39bb732723c9c0b08729fa4ee011153ea55da919`
+adds native-scale GLM/GAM/ML-glmmTMB adapters, a log-sum-exp local adjustment,
+and stable conditional Gamma profile intervals. glmmTMB's dispersion
+prediction is squared to obtain phi; GAMs retain sig2 and GLMs their native
+summary dispersion. No shape is re-estimated. Non-positive responses,
+unsupported links, non-unit weights, and combined two-part fits fail clearly.
+The plot also breaks gaps in numeric years absent from fitted factor levels.
+
+Independent density/profile checks cover constant and varying dispersion,
+smooths, vessel effects, offsets plus effort slopes, row alignment, response
+units, and extreme finite predictors. The full local suite passes 6,000
+assertions, with no failures, warnings, or skips. Local coverage is 95.97484%.
+The isolated minimal-installation check passes all 12 saved-result contracts
+and 19 optional-package guards. Frozen N09/IV01 artefacts and study scripts
+are unchanged; this extension does not claim Gamma interval calibration.
+
+The final archive is
+`/private/tmp/influ2-gamma-check.f3EqwG/final/influ2_1.1.0.tar.gz`, SHA256
+`a7a34833f98a1cdd7b968d184351ec9cd01bb5e455f0a8b248e23a57d238830b`.
+All 168 tracked shipped files match the checkout (apart from generated
+DESCRIPTION metadata, checked separately by R). Mac R 4.6.1
+`--as-cran --no-manual` completed with zero errors, zero warnings, and one
+existing incoming NOTE for new submission/optional tinyVAST. DHARMa is
+unavailable locally, and `_R_CHECK_FORCE_SUGGESTS_=false` was used. All nine
+vignettes built and rebuilt; CRAN-mode tests passed 5,984 assertions with
+seven intentional visual-test groups skipped. An initial code-analysis NOTE
+about duplicate local helper names was corrected in this final archive.
+The archive is installed in the usual local library. Local figure/lightbox
+checks pass for 84 figures across nine articles, and the new Gamma figure
+has been visually reviewed.
+
+Downstream BNS verification covers all 903 supported area/year and target/year
+cells from four saved positive Gamma GAMs. Maximum independent-benchmark
+differences are below 1.9e-14 for adjustments and 2.5e-11 for profile endpoints.
+Thirty-three local figures were generated; 20 replace positive-GAM area/target
+plots in the existing CPUE presentation, with corrected effect-scale captions.
+All 172 protected files, unrelated slides, meeting date, and presentation
+filename remain unchanged. No models were refitted, no response simulations
+were generated, and no assessment inputs were altered. The final installed
+package reproduces all eight saved results exactly. Private data and output
+figures are not in the public package. The local integration audit is in
+`/Users/darcy/Projects/BNS/reviews/2026-09-12-gamma-implied-integration/`.
+Binomial encounter and combined delta implied effects remain separate work.
+
+GitHub validation/publication is pending for this source: R-CMD-check
+34670537492 (Ubuntu release and Windows release), coverage 34670537513,
+and pkgdown 34670537460. Update this paragraph after verifying completion.
+No CRAN/win-builder submission, issue changes, or resumption of parked work.
+
 ## IV01 implied-effect validation: 12 September 2026
 
 The maintainer approved a bounded NB2 glmmTMB follow-up: 100 datasets per

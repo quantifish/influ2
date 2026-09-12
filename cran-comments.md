@@ -1,3 +1,32 @@
+## Gamma(log) implied-effect extension: 12 September 2026
+
+Source `39bb732723c9c0b08729fa4ee011153ea55da919` adds Gamma(log)
+likelihood-based implied effects to the existing GLM/GAM/glmmTMB interface,
+with native fitted dispersion, independent density/profile tests, a worked
+vignette, and missing-year plot-gap protection. No model refits or posterior
+simulation are required. The N09 and IV01 frozen studies are unchanged.
+
+Final archive: `/private/tmp/influ2-gamma-check.f3EqwG/final/influ2_1.1.0.tar.gz`.
+SHA256: `a7a34833f98a1cdd7b968d184351ec9cd01bb5e455f0a8b248e23a57d238830b`.
+All 168 tracked shipped files match the checkout, apart from R-generated
+DESCRIPTION metadata. The Mac arm64 R 4.6.1 `--as-cran --no-manual` check
+completed with zero errors, zero warnings, and one existing incoming NOTE
+for a new submission and optional tinyVAST from the declared additional
+repository. DHARMa is not locally installed; `_R_CHECK_FORCE_SUGGESTS_=false`
+was used. No full optional-dependency or PDF-manual check is claimed.
+All nine vignettes built and rebuilt; CRAN-mode tests passed 5,984 assertions
+with seven intentional visual-test groups skipped. Full local tests pass
+6,000 assertions, without failures, warnings, or skips. Coverage is 95.97484%.
+Minimal-installation checks pass all 12 saved-result contracts and 19
+optional-backend guards. The final archive is installed and independently
+reproduces the downstream Gamma results. All 84 local plotted-image/lightbox
+caption checks pass. Numerical Gamma agreement is not an interval-coverage
+calibration or a formal model-acceptance test.
+
+GitHub validation/publication is pending: R-CMD-check 34670537492, coverage
+34670537513, and pkgdown 34670537460, all for the source above. No CRAN or
+win-builder submission has been made.
+
 ## IV01 residual-implied-effect validation: 12 September 2026
 
 Source `2989db942f7aa1e9a61af45d2b1e17c3232bd835` adds a compact frozen
