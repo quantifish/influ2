@@ -53,11 +53,31 @@ figures are not in the public package. The local integration audit is in
 Binomial encounter and combined delta implied effects remain separate work.
 
 GitHub coverage run 34670537513 passed all 6,000 assertions, with no failures,
-warnings, or skips, and reported 95.97% coverage. Platform/publication checks
-remain pending: R-CMD-check 34670537492 (Ubuntu release and Windows release)
-and pkgdown 34670537460. The existing follow-up monitors their completion
-and live Pages publication. Update this paragraph after verifying completion.
+warnings, or skips, and reported 95.97% coverage. R-CMD-check 34670537492
+passed on Windows release but failed on Ubuntu release: 5,999 assertions
+passed and one existing NB2 optimiser-coordinate agreement assertion failed.
+All Gamma assertions passed. pkgdown 34670537460 and Pages 34670940080
+passed; all 87 published figure/lightbox checks passed and the live Gamma
+section was verified. The NB2 test correction and its new checks are recorded
+separately below; the failed Ubuntu run is not a successful package check.
 No CRAN/win-builder submission, issue changes, or resumption of parked work.
+
+### NB2 likelihood-agreement test correction: 12 September 2026
+
+The maintainer authorised fixing the numerical test. An independent native
+NB2 score root now checks the local adjustment with an explicit absolute
+log-shift error bound of 1e-9, allowing for the production root's 1e-10
+tolerance. The independent dnbinom maximum is still checked, on the
+likelihood scale, and both profile endpoints retain their existing checks.
+Year/group and full-precision values are included in failure diagnostics.
+Additional analytic cases cover zero and positive/negative near-zero shifts,
+with two optimiser brackets. No production calculation, plotting code,
+saved results, or frozen validation studies change. The targeted implied
+effects and Gamma suite passes all 500 assertions without failures, warnings,
+or skips. The full local suite passes all 6,027 assertions, also without
+failures, warnings, or skips. Its graphics device writes to a temporary file
+to avoid the local sandbox restriction on the default Rplots.pdf path.
+New GitHub check results are pending verification.
 
 ## IV01 implied-effect validation: 12 September 2026
 

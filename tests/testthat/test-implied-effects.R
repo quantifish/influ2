@@ -69,10 +69,26 @@ test_that("count shifts and profile intervals match independent likelihoods", {
     i <- d$year == cell$level & d$area == cell$group
     likelihood <- function(delta) sum(dnbinom(d$count[i], mu = exp(nb$linear.predictors[i] + delta),
       size = nb$theta, log = TRUE))
-    independent <- optimize(function(delta) -likelihood(delta), c(-5, 5), tol = 1e-10)$minimum
-    expect_equal(cell$adjustment, independent, tolerance = 1e-6)
-    expect_equal(2 * (likelihood(cell$adjustment) - likelihood(cell$lower - cell$baseline)), qchisq(.95, 1), tolerance = 1e-6)
-    expect_equal(2 * (likelihood(cell$adjustment) - likelihood(cell$upper - cell$baseline)), qchisq(.95, 1), tolerance = 1e-6)
+    # Solve the native score independently of the package's logistic form.
+    # A likelihood-value optimiser cannot reliably locate a nearly flat maximum
+    # to the relative precision previously required for shifts close to zero.
+    score <- function(delta) {
+      mu <- exp(nb$linear.predictors[i] + delta)
+      sum(nb$theta * (d$count[i] - mu) / (nb$theta + mu))
+    }
+    independent <- uniroot(score, c(-5, 5), tol = 1e-13)$root
+    context <- sprintf("year=%s, area=%s; adjustment=%.17g, independent=%.17g, difference=%.17g",
+      cell$level, cell$group, cell$adjustment, independent, cell$adjustment - independent)
+    # Absolute log-shift accuracy, allowing for the production root's 1e-10 tol.
+    expect_lt(abs(cell$adjustment - independent), 1e-9, label = context)
+    # Retain an independent dnbinom() maximum check, comparing likelihood values
+    # rather than the round-off-sensitive location returned by optimise().
+    maximum <- optimise(likelihood, c(-5, 5), maximum = TRUE, tol = 1e-10)$objective
+    expect_lt(abs(likelihood(cell$adjustment) - maximum), 1e-10, label = context)
+    expect_equal(2 * (likelihood(cell$adjustment) - likelihood(cell$lower - cell$baseline)), qchisq(.95, 1),
+      tolerance = 1e-6, info = context)
+    expect_equal(2 * (likelihood(cell$adjustment) - likelihood(cell$upper - cell$baseline)), qchisq(.95, 1),
+      tolerance = 1e-6, info = context)
   }
   pois <- glm(count ~ year + area + x + offset(log(exposure)), family = poisson(), data = d)
   p <- implied_effects(pois, groups = "area")
@@ -80,6 +96,22 @@ test_that("count shifts and profile intervals match independent likelihoods", {
   expect_equal(p$table$adjustment[1], log(sum(d$count[i]) / sum(fitted(pois)[i])))
   expect_error(implied_effects(nb, groups = "area", method = "traditional"), "Gaussian")
   expect_error(implied_effects(nb, groups = "area", interval = "descriptive"), "log-response variance")
+})
+
+test_that("NB2 local shifts retain absolute accuracy at and near zero", {
+  y <- c(0, 1, 2, 5, 8, 12)
+  # With constant fitted means and size, the exact NB2 shift is log(mean(y)/mu).
+  for (expected in c(-1e-7, 0, 1e-7)) {
+    eta <- rep(log(mean(y)) - expected, length(y))
+    actual <- influ2:::.implied_shift(y, eta, rep(4, length(y)), "nbinom2")$shift
+    context <- sprintf("expected=%.17g, actual=%.17g, difference=%.17g", expected, actual, actual - expected)
+    expect_lt(abs(actual - expected), 1e-9, label = context)
+    likelihood <- function(delta) sum(dnbinom(y, mu = exp(eta + delta), size = 4, log = TRUE))
+    for (bounds in list(c(-5, 5), c(-.25, .25))) {
+      maximum <- optimise(likelihood, bounds, maximum = TRUE, tol = 1e-10)$objective
+      expect_lt(abs(likelihood(actual) - maximum), 1e-10, label = context)
+    }
+  }
 })
 
 test_that("mixed effects and varying dispersion are held at fitted values", {

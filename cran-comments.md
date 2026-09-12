@@ -24,10 +24,20 @@ caption checks pass. Numerical Gamma agreement is not an interval-coverage
 calibration or a formal model-acceptance test.
 
 GitHub coverage 34670537513 passed all 6,000 assertions without failures,
-warnings, or skips and reported 95.97% coverage. Platform/publication checks
-remain pending: R-CMD-check 34670537492 and pkgdown 34670537460, both for
-the source above. The existing follow-up monitors their completion and live
-Pages publication. No CRAN or win-builder submission has been made.
+warnings, or skips and reported 95.97% coverage. R-CMD-check 34670537492
+passed on Windows release; Ubuntu release had 5,999 passing assertions and
+one failure in the existing NB2 optimiser-coordinate agreement test. All
+Gamma tests passed. pkgdown 34670537460 and Pages 34670940080 passed, with
+87 published figure/lightbox checks and the live Gamma section verified.
+A subsequent test-only correction checks the independent NB2 score root
+with an explicit absolute error bound, retains density/profile checks, and
+adds analytic zero/near-zero regression cases. Its targeted suite passes
+500 assertions, and the full local suite passes 6,027 assertions, both
+without failures, warnings, or skips. Fresh platform-check results remain
+pending.
+No production calculations or frozen study results change. The archive
+above predates this test-only correction. No CRAN or win-builder submission
+has been made.
 
 ## IV01 residual-implied-effect validation: 12 September 2026
 
