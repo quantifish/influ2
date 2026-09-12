@@ -117,20 +117,21 @@ plot_data_extent(
   labs(y = "Year")
 ```
 
-![Annual completeness of lobster counts, depth, and soak time, showing
-complete counts and increasing covariate
+![Annual completeness of lobster counts, depth, and soak time, with
+blank cells for the earliest soak-time records and increasing covariate
 availability.](influ2_files/figure-html/lobster-data-completeness-1.png)
 
 Measurement completeness by year in a demonstration copy of the lobster
 data with deliberately added missing depth and soak-time values. Dark
 bubble area represents the proportion of existing records with a
-non-missing value; a red reference marker alone indicates none are
-available. Lobster counts, including zeros, remain fully recorded.
+non-missing value; blank cells indicate none are available. Lobster
+counts, including zeros, remain fully recorded.
 
 The denominator is the number of records **already present in each
 year**, not the number of pot lifts that could have been sampled. A zero
 lobster count is a valid observation and counts as present; only `NA` is
-missing. The fixed-size red markers sit underneath the dark completeness
+missing. Cells with zero completeness are left blank. Where completeness
+is positive, fixed-size red markers sit underneath the dark completeness
 bubbles. This display does not assess measurement accuracy or show how
 many records would survive joint complete-case filtering across several
 covariates.
@@ -639,9 +640,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10520110
+#>         spatial_field conditional:latent_fields                      0.10528749
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03150923
+#>  spatiotemporal_field conditional:latent_fields                      0.03084851
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -708,11 +709,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                      0.24374040
-#>  spatiotemporal_field conditional:latent_fields                      0.08243912
+#>                  year               conditional                       0.2437404
+#>  spatiotemporal_field conditional:latent_fields                       0.0515625
 #>  level_at_maximum
 #>                 4
-#>                 4
+#>                 2
 ```
 
 ``` r
@@ -1376,9 +1377,9 @@ head(as.data.frame(restored_results$index))
 #>   Year     Mean Median        SD        CV    Qlower   Qupper       Method
 #> 1 2000 1.688662     NA 0.2399914 0.1421192 1.2781173 2.231079 standardised
 #> 2 2001 1.761248     NA 0.2494645 0.1416407 1.3343068 2.324799 standardised
-#> 3 2002 1.841306     NA 0.2566028 0.1393591 1.4012103 2.419629 standardised
+#> 3 2002 1.841306     NA 0.2566028 0.1393591 1.4012104 2.419629 standardised
 #> 4 2003 1.400957     NA 0.1908672 0.1362406 1.0726465 1.829755 standardised
-#> 5 2004 1.585962     NA 0.2156039 0.1359452 1.2149996 2.070187 standardised
+#> 5 2004 1.585962     NA 0.2156039 0.1359452 1.2149997 2.070187 standardised
 #> 6 2005 1.317816     NA 0.1864175 0.1414594 0.9987212 1.738863 standardised
 #>   Distribution Link
 #> 1      nbinom2  log

@@ -43,6 +43,15 @@ residual definition. Fisheries examples include Starr and Kendrick
 ([2019](#ref-StarrKendrick2019)) and Middleton
 ([2025](#ref-Middleton2025)).
 
+An example by **Adam Langley** is Langley ([2018](#ref-Langley2018)):
+Figure 15 (p. 18) compares depth-specific annual residual-implied
+coefficients with the overall lognormal CPUE index, while Figures A5–A7
+(pp. 55–57) show the same diagnostic question for months, target
+species, and vessels. The latter captions identify the intervals as
+standard errors of annual residuals. These are examples of the
+historical diagnostic, not validation of influ2’s new likelihood
+adjustments or profile intervals for other response families.
+
 The new calculation agrees with **ordinary log-residual arithmetic**
 when the variance is constant; it does not generally equal the
 historical standardised-residual arithmetic. The examples below
@@ -168,7 +177,7 @@ manual <- do.call(rbind, lapply(seq_len(nrow(historical$table)), function(j) {
     std_error = sd(standardised[keep]) / sqrt(sum(keep)))
 }))
 max(abs(manual$estimate - historical$table$estimate))
-#> [1] 2.220446e-16
+#> [1] 1.110223e-16
 stopifnot(isTRUE(all.equal(manual$estimate, historical$table$estimate, tolerance = 1e-10)))
 stopifnot(isTRUE(all.equal(manual$std_error, historical$table$std_error, tolerance = 1e-10)))
 ```
@@ -219,19 +228,19 @@ nb_fit <- glmmTMB::glmmTMB(
 nb_implied <- implied_effects(nb_fit, groups = "season")
 head(as.data.frame(nb_implied))
 #>   level        group   n    baseline  adjustment    estimate  std_error
-#> 1  2000 Early season 153  0.23187481  0.19752139  0.42939619 0.05137036
-#> 2  2001 Early season 143  0.21491937  0.12104052  0.33595989 0.05376133
-#> 3  2002 Early season 154  0.17412683  0.18936487  0.36349170 0.05169645
-#> 4  2003 Early season 160  0.09752318  0.13935836  0.23688154 0.05120520
-#> 5  2004 Early season  90 -0.06401734  0.13669553  0.07267819 0.06914226
-#> 6  2005 Early season  67 -0.13942674 -0.02277379 -0.16220053 0.08505896
-#>         lower      upper status
-#> 1  0.32965956 0.53107330     ok
-#> 2  0.23156150 0.44235353     ok
-#> 3  0.26307818 0.46577048     ok
-#> 4  0.13736603 0.33813090     ok
-#> 5 -0.06142452 0.20971571     ok
-#> 6 -0.32754176 0.00607398     ok
+#> 1  2000 Early season 153  0.23187513  0.19752093  0.42939606 0.05137036
+#> 2  2001 Early season 143  0.21491857  0.12104119  0.33595976 0.05376133
+#> 3  2002 Early season 154  0.17412706  0.18936452  0.36349158 0.05169645
+#> 4  2003 Early season 160  0.09752276  0.13935863  0.23688140 0.05120521
+#> 5  2004 Early season  90 -0.06401782  0.13669585  0.07267802 0.06914226
+#> 6  2005 Early season  67 -0.13942676 -0.02277388 -0.16220063 0.08505897
+#>        lower      upper status
+#> 1  0.3296594 0.53107317     ok
+#> 2  0.2315614 0.44235340     ok
+#> 3  0.2630781 0.46577037     ok
+#> 4  0.1373659 0.33813076     ok
+#> 5 -0.0614247 0.20971555     ok
+#> 6 -0.3275419 0.00607389     ok
 ```
 
 ``` r
@@ -642,6 +651,10 @@ two-part implied effects, nor calibrate these plots as formal
 significance tests.
 
 ## References
+
+Langley, A. D. 2018. *Stock Assessment of Snapper in SNA 7*. New Zealand
+Fisheries Assessment Report 2018/25. Fisheries New Zealand.
+<https://www.mpi.govt.nz/dmsdocument/29678/direct>.
 
 Middleton, D. A. J. 2025. *A Rapid Update of CPUE for the Snapper
 Fishery in SNA 2 to 2024*. New Zealand Fisheries Assessment Report

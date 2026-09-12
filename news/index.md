@@ -2,6 +2,17 @@
 
 ## influ2 1.1.0
 
+- [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
+  now leaves zero-completeness cells blank, without bubbles or red
+  reference markers, while retaining all variables and years on the
+  axes. Zero-valued observations still count as present. The main
+  article and help describe this distinction.
+
+- Added Langley’s (2018) SNA 7 assessment to the residual-implied
+  effects article, with pointers to its depth, month, target-species,
+  and vessel comparisons and an explicit distinction from the new
+  likelihood method.
+
 - Added Gamma(log) residual-implied effects for GLMs, mgcv GAMs, and ML
   glmmTMB fits, using native fitted dispersion and a stable analytic
   log-mean adjustment. Conditional profile intervals are checked against
