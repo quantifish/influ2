@@ -46,8 +46,8 @@ used influ2 revision `7bb976c`.
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
 Current priority: review the completed first N09 results and the IV01
-implied-effect validation below. The BNS Gamma implied-effect gap is now
-diagnosed; extending the family adapter is a separate next implementation.
+implied-effect validation below. The approved Gamma(log) adapter is now
+implemented and numerically verified against the saved BNS positive GAMs.
 Existing conditioning defaults remain unchanged.
 N07 retention and N08 bridges are still candidates; N02 counters were passed
 over and remain unimplemented. Resume these only after further discussion.
@@ -63,15 +63,18 @@ known-parameter coverage from fitted-conditional target containment. The
 sampling gaps, and model absorption of the injected trend. This does not
 complete broader N09 calibration or change any diagnostic algorithm/default.
 
-Read-only BNS follow-up confirmed the explicit supported-family error on
+The initial read-only BNS follow-up confirmed the explicit supported-family error on
 four saved Gamma(log) positive-component GAMs and four binomial(logit)
 encounter GAMs. Existing PIT support does not imply support for the newly
-restored likelihood-based implied effect. Next: agree and validate a Gamma
-likelihood adapter first, preserving fitted smooths, random effects, offsets,
-dispersion, row alignment, and conditional-profile semantics. Binomial and
-combined delta shifts require their own contracts. Do not substitute grouped
-PIT or Pearson residuals, refit BNS models, or alter assessment indices.
-No BNS files or release inputs were changed during this investigation.
+restored likelihood-based implied effect. The subsequent authorised Gamma
+increment adds native-scale GLM/GAM/glmmTMB adapters, stable local log-mean
+adjustments, and conditional profile intervals. All 903 supported area/year
+and target/year cells from four saved BNS positive GAMs agree with the
+independent benchmark (largest endpoint difference below 2.5e-11 log units).
+Their presentation plots were regenerated without refits, simulations, or
+assessment-input changes. Numerical verification is not Gamma coverage
+calibration. Binomial and combined delta shifts still require separate
+contracts; no grouped PIT or Pearson stand-in is used.
 
 Implementation review, 11 September: the maintainer approved N03 and arbitrary
 four-panel selection, retaining `c("qq", "fitted", "year", "auto")` as the
@@ -130,7 +133,7 @@ statistical assumptions, tests, dependency requirements, and licence obligations
 | Normal-score PIT transformation | **Completed / already available.** Q-Q, fitted-value, and year panels use `qnorm(pit)` by default; this is no longer outstanding work. N03 adds optional uniform-scale PIT ECDF views of those same ranks. It does not add a scale switch to the existing normal-score panels. |
 | Issue #18: two regional CPUE series | **Parked.** Preserve the [two-region plan](two-region-plan.md); do not begin its example or API work yet. |
 | Frequentist `Median = NA`, remaining legacy helpers, and frozen Get Started article | **Parked for later review.** Preserve the current records and article until the maintainer makes the remaining decisions. See [release-review.md](release-review.md). |
-| Residual-implied effects versus grouped PIT departures | **First implementation completed, 12 September.** `implied_effects()` / `plot_implied_residuals()` now estimate local conditional likelihood shifts on the effect scale. The unchanged zero-centred PIT display is `plot_grouped_residuals()`. The new article separately verifies ordinary log-residual equivalence and the historical analyser GLM `rstandard()` recipe. Gaussian identity (including log-response), NB2 log, and Poisson log support lm/GLM/GAM/glmmTMB; other backends, direct lognormal parameterisations, two-part responses, non-unit weights, and year interactions fail explicitly pending separately validated adapters. Intervals condition on the original fit; no full-model refit or uncertainty claim. |
+| Residual-implied effects versus grouped PIT departures | **First implementation and Gamma extension completed, 12 September.** `implied_effects()` / `plot_implied_residuals()` estimate local conditional likelihood shifts on the effect scale. The unchanged zero-centred PIT display is `plot_grouped_residuals()`. The article separately verifies ordinary log-residual equivalence and the historical analyser GLM `rstandard()` recipe. Gaussian identity (including log-response), NB2 log, Poisson log, and Gamma log have validated numerical adapters for applicable lm/GLM/GAM/glmmTMB fits; other backends, direct lognormal parameterisations, two-part responses, non-unit weights, and year interactions fail explicitly. Intervals condition on the original fit; numerical agreement is not universal interval calibration. |
 
 ## Keeping the list current
 

@@ -144,7 +144,7 @@ test_that("alignment, support, and explicit failure boundaries are enforced", {
   expect_error(implied_effects(interaction, groups = "area"), "year interactions")
   weighted <- glm(log(cpue) ~ year + area + x, data = d, weights = rep(2, nrow(d)))
   expect_error(implied_effects(weighted, groups = "area"), "Non-unit")
-  gamma <- glm(cpue ~ year + area + x, data = d, family = Gamma(link = "log"))
+  gamma <- glm(cpue ~ year + area + x, data = d, family = Gamma(link = "inverse"))
   expect_error(implied_effects(gamma, groups = "area"), "Supported implied-effect families")
   transformed <- glm(sqrt(cpue) ~ year + area + x, data = d)
   expect_error(implied_effects(transformed, groups = "area"), "other transformations")

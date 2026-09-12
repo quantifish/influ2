@@ -35,8 +35,11 @@ plot_implied_residuals <- function(fit, colour = "purple4", ncol = 3L, ...) {
   d <- d[order(d$group, d$position), ]
   usable <- d$status == "ok" & is.finite(d$estimate)
   if (!any(usable)) stop("No finite supported implied effects to plot; inspect the result table for sparse or boundary strata.", call. = FALSE)
+  # Break annual gaps even when a wholly absent year is not a factor level.
+  year_gap <- if (all(is.finite(numeric_levels))) abs(diff(d$x)) > 1 else rep(FALSE, nrow(d) - 1L)
   # Keep unsupported cells in data, but prevent lines from spanning them.
   d$segment <- cumsum(c(TRUE, diff(d$position) != 1L |
+    year_gap |
     utils::head(d$group, -1L) != utils::tail(d$group, -1L) |
     !utils::head(usable, -1L) | !utils::tail(usable, -1L)))
   shown <- d[usable, ]

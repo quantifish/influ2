@@ -7,7 +7,7 @@
 #'
 #' @param model A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. This
 #'   first implementation supports Gaussian identity-link models (including
-#'   an explicitly logged response), Poisson log-link, and NB2 log-link models.
+#'   an explicitly logged response), Poisson, NB2, and Gamma log-link models.
 #'   Other families, backends, joint models, non-unit case weights, and year
 #'   interactions fail explicitly rather than substitute another calculation.
 #' @param data Original model data with original row names, if needed to
@@ -42,6 +42,13 @@
 #'   constant variance and an explicitly logged response this equals the
 #'   traditional mean log-response residual. NB2 uses the fitted size parameter
 #'   and its log likelihood, not a mean of Pearson or PIT residuals.
+#'   Gamma(log) uses the native fitted scale phi (variance = phi * mean^2),
+#'   with shape = 1/phi. Its shift is log(sum(shape * response / fitted_mean)
+#'   / sum(shape)), or log(mean(response / fitted_mean)) for constant scale.
+#'   GAMs retain `sig2`, GLMs use `summary(model)$dispersion`, and glmmTMB
+#'   uses squared native dispersion predictions. No shape is re-estimated.
+#'   Gamma responses must be strictly positive; other Gamma links and joint
+#'   delta models are not automatically reinterpreted as Gamma(log) fits.
 #'
 #'   Automatic intervals condition on the whole original fit. They omit
 #'   uncertainty in its parameters, latent effects, and baseline, and do not
@@ -53,7 +60,7 @@
 #'   For all-zero count strata the optimum is delta = -Inf. These boundary
 #'   results are retained and flagged, not replaced with a pseudocount or a
 #'   finite correction. Their points/bars are omitted from the plot. Empty and
-#'   sparse cells break trajectories. Existing `influ_residuals` objects do not
+#'   sparse cells, and missing numeric years, break trajectories. Existing `influ_residuals` objects do not
 #'   contain the native likelihood needed here: use [plot_grouped_residuals()]
 #'   for their zero-centred grouped PIT summaries.
 #'
@@ -163,6 +170,9 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     interval = actual_interval, level = if (actual_interval == "conditional_profile") level else NA_real_,
     min_n = min_n, n = length(a$observed), component = "single fitted response",
     format_version = 1L)
+  if (a$family == "Gamma") {
+    metadata$dispersion <- "Native fitted Gamma scale phi = variance / mean^2; shape = 1/phi"
+  }
   structure(list(table = table, metadata = metadata), class = "influ_implied")
 }
 
@@ -207,8 +217,8 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   raw_family <- fam$family
   family <- if (grepl("^Negative Binomial|^nbinom2$", raw_family, ignore.case = TRUE)) "nbinom2" else raw_family
   if (!((family == "gaussian" && fam$link == "identity") ||
-      (family %in% c("poisson", "nbinom2") && fam$link == "log"))) {
-    stop("Supported implied-effect families are Gaussian(identity), Poisson(log), and NB2(log). Other parameterisations require a validated adapter.", call. = FALSE)
+      (family %in% c("poisson", "nbinom2", "Gamma") && fam$link == "log"))) {
+    stop("Supported implied-effect families are Gaussian(identity), Poisson(log), NB2(log), and Gamma(log). Other parameterisations require a validated adapter.", call. = FALSE)
   }
   log_response <- family == "gaussian" && is.call(f[[2L]]) && length(f[[2L]]) == 2L &&
     identical(f[[2L]][[1L]], as.name("log")) && is.symbol(f[[2L]][[2L]])
@@ -220,8 +230,11 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     stop("A finite numeric response vector is required.", call. = FALSE)
   }
   n <- length(observed)
-  if (family != "gaussian" && any(observed < 0 | abs(observed - round(observed)) > 1e-7)) {
+  if (family %in% c("poisson", "nbinom2") && any(observed < 0 | abs(observed - round(observed)) > 1e-7)) {
     stop("Count-model responses must be non-negative integers.", call. = FALSE)
+  }
+  if (family == "Gamma" && any(observed <= 0)) {
+    stop("Gamma implied effects require strictly positive responses.", call. = FALSE)
   }
   X <- stats::model.matrix(model)
   beta <- if (backend == "glmmTMB") glmmTMB::fixef(model)$cond else stats::coef(model)
@@ -253,12 +266,16 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
       "Fitted linear predictors", alignment)
     dispersion <- .align_observation_values(stats::predict(model, type = "disp", re.form = NULL), frame,
       "Fitted dispersion", alignment)
+    # glmmTMB reports Gamma sigma = 1/sqrt(shape), not phi = 1/shape.
+    if (family == "Gamma") dispersion <- dispersion^2
   } else {
     eta <- if (backend == "lm") model$fitted.values else model$linear.predictors
     dispersion <- if (family == "nbinom2") {
       if (is.function(fam$getTheta)) fam$getTheta(TRUE) else model$theta
     } else if (family == "gaussian") {
       if (backend == "gam") sqrt(model$sig2) else stats::sigma(model)
+    } else if (family == "Gamma") {
+      if (backend == "gam") model$sig2 else summary(model)$dispersion
     } else 1
   }
   if (!is.numeric(dispersion) || !length(dispersion) || !length(dispersion) %in% c(1L, n)) {
@@ -279,6 +296,14 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   z <- eta + delta
   if (family == "gaussian") return(sum(stats::dnorm(y, z, dispersion, log = TRUE)))
   if (family == "poisson") return(sum(y * z - exp(z) - lgamma(y + 1)))
+  if (family == "Gamma") {
+    log_shape <- -log(dispersion)
+    shape <- exp(log_shape)
+    log_ratio <- log(y) - z
+    return(sum(shape * log_shape - lgamma(shape) - log(y) +
+      shape * log_ratio - exp(log_shape + log_ratio)))
+  }
+  if (family != "nbinom2") stop("Unsupported implied-effect likelihood.", call. = FALSE)
   # Stable NB2 log likelihood, including for extreme finite shifts.
   softplus <- function(x) pmax(x, 0) + log1p(exp(-abs(x)))
   v <- z - log(dispersion)
@@ -291,6 +316,15 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     w <- 1 / dispersion^2
     return(list(shift = sum(w * (y - eta)) / sum(w), std_error = sqrt(1 / sum(w))))
   }
+  if (family == "Gamma") {
+    # Log-sum-exp avoids constructing y/exp(eta), which can overflow.
+    lse <- function(x) { largest <- max(x); largest + log(sum(exp(x - largest))) }
+    log_shape <- -log(dispersion)
+    total <- lse(rep_len(log_shape, length(y)))
+    delta <- lse(log_shape + log(y) - eta) - total
+    return(list(shift = delta, std_error = exp(-total / 2)))
+  }
+  if (!family %in% c("poisson", "nbinom2")) stop("Unsupported implied-effect likelihood.", call. = FALSE)
   if (all(y == 0)) return(list(shift = -Inf, std_error = NA_real_))
   if (family == "poisson") {
     largest <- max(eta)
@@ -313,6 +347,25 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
 }
 
 .implied_profile <- function(delta, y, eta, dispersion, family, level) {
+  if (family == "Gamma") {
+    # Profile relative to the exact optimum: no subtraction of large log
+    # likelihoods and no dependence on an extreme original linear predictor.
+    total_shape <- sum(1 / rep_len(dispersion, length(y)))
+    cutoff <- stats::qchisq(level, df = 1) / 2
+    loss <- function(h) {
+      if (abs(h) < 1e-4) h^2 * (.5 - h / 6 + h^2 / 24 - h^3 / 120) else h + expm1(-h)
+    }
+    gamma_profile <- function(h) total_shape * loss(h) - cutoff
+    return(delta + vapply(c(-1, 1), function(direction) {
+      width <- .25
+      for (j in seq_len(14L)) {
+        end <- direction * width
+        if (gamma_profile(end) >= 0) return(stats::uniroot(gamma_profile, sort(c(0, end)), tol = 1e-10)$root)
+        width <- width * 2
+      }
+      direction * Inf
+    }, numeric(1)))
+  }
   maximum <- .implied_loglik(delta, y, eta, dispersion, family)
   cutoff <- stats::qchisq(level, df = 1) / 2
   f <- function(x) maximum - .implied_loglik(x, y, eta, dispersion, family) - cutoff
