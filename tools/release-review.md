@@ -70,10 +70,15 @@ installation check passed its 12 saved-result contracts, fresh calculations,
 and 19 missing-package guards. The checked archive is installed in the usual
 Mac R library, with the exact frozen artefact and fresh-session plot verified.
 
-GitHub R-CMD-check run 34666609202 (Ubuntu/Windows release) and website run
-34666609377 are still in progress. Their eventual completion and live Pages
-publication must be verified before calling publication complete. No CRAN or
-win-builder submission, issue change, or resumption of parked work was made.
+Website run 34666609377 succeeded with 86 plotted-image/lightbox caption
+checks across nine articles. Pages run 34667026970 published revision
+`356feec619247658c95a74e53a7213c194a7c848`. Live browser review at
+`https://www.quantifish.co.nz/influ2/articles/implied-effects.html` confirmed
+the IV01 section, both new figures, and their full matching expanded captions.
+GitHub R-CMD-check run 34666609202 is still running on Ubuntu release and
+Windows release; the existing quiet follow-up is active for completion.
+No CRAN or win-builder submission, issue change, or resumption of parked work
+was made.
 
 The additive BNS request was investigated read-only. All eight actual saved
 component GAMs reproduce the supported-family error with the correct

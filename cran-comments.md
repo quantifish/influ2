@@ -36,9 +36,12 @@ local adjustments are not calibrated interaction tests or regional indices.
 Check log: `/private/tmp/influ2-iv01-check.KUhmnd/influ2.Rcheck/00check.log`.
 
 GitHub coverage run 34666609234 succeeded with 5,733 passing assertions and
-95.95% coverage. R-CMD-check run 34666609202 (Ubuntu/Windows release) and
-pkgdown run 34666609377 are still in progress; platform completion and live
-Pages publication remain to verify. These results apply to the source
+95.95% coverage. Website run 34666609377 passed 86 lightbox/figure-caption
+checks; Pages run 34667026970 published revision
+`356feec619247658c95a74e53a7213c194a7c848`. The live IV01 section, Figures 4
+and 5, and both full expanded captions were verified in the browser.
+R-CMD-check run 34666609202 (Ubuntu/Windows release) remains in progress,
+with a quiet scheduled follow-up active. These results apply to the source
 revision above, not a later package change. No CRAN or win-builder submission
 was made. Detailed methods and the separate read-only BNS Gamma-support
 diagnosis are in `tools/release-review.md`.
