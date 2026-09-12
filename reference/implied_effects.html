@@ -87,7 +87,7 @@ abundance indices. Calculate once and plot the compact result repeatedly.</p>
 <dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>A retained <code>lm</code>, GLM, <code>mgcv</code> GAM, or ML <code>glmmTMB</code> fit. This
 first implementation supports Gaussian identity-link models (including
-an explicitly logged response), Poisson log-link, and NB2 log-link models.
+an explicitly logged response), Poisson, NB2, and Gamma log-link models.
 Other families, backends, joint models, non-unit case weights, and year
 interactions fail explicitly rather than substitute another calculation.</p></dd>
 
@@ -172,7 +172,14 @@ fitted random effects, smooths, offsets, and dispersion values fixed.
 Gaussian shifts are precision-weighted mean response residuals. With
 constant variance and an explicitly logged response this equals the
 traditional mean log-response residual. NB2 uses the fitted size parameter
-and its log likelihood, not a mean of Pearson or PIT residuals.</p>
+and its log likelihood, not a mean of Pearson or PIT residuals.
+Gamma(log) uses the native fitted scale phi (variance = phi * mean^2),
+with shape = 1/phi. Its shift is log(sum(shape * response / fitted_mean)
+/ sum(shape)), or log(mean(response / fitted_mean)) for constant scale.
+GAMs retain <code>sig2</code>, GLMs use <code>summary(model)$dispersion</code>, and glmmTMB
+uses squared native dispersion predictions. No shape is re-estimated.
+Gamma responses must be strictly positive; other Gamma links and joint
+delta models are not automatically reinterpreted as Gamma(log) fits.</p>
 <p>Automatic intervals condition on the whole original fit. They omit
 uncertainty in its parameters, latent effects, and baseline, and do not
 account for residual dependence. They are neither full interaction
@@ -182,7 +189,7 @@ posterior averaging, response simulation, or area integration is done.</p>
 <p>For all-zero count strata the optimum is delta = -Inf. These boundary
 results are retained and flagged, not replaced with a pseudocount or a
 finite correction. Their points/bars are omitted from the plot. Empty and
-sparse cells break trajectories. Existing <code>influ_residuals</code> objects do not
+sparse cells, and missing numeric years, break trajectories. Existing <code>influ_residuals</code> objects do not
 contain the native likelihood needed here: use <code><a href="plot_grouped_residuals.html">plot_grouped_residuals()</a></code>
 for their zero-centred grouped PIT summaries.</p>
 <p>Directly parameterised lognormal families are not supported in this first

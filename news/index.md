@@ -2,6 +2,14 @@
 
 ## influ2 1.1.0
 
+- Added Gamma(log) residual-implied effects for GLMs, mgcv GAMs, and ML
+  glmmTMB fits, using native fitted dispersion and a stable analytic
+  log-mean adjustment. Conditional profile intervals are checked against
+  independent Gamma densities, including varying dispersion. Smooths,
+  fitted random effects, effort slopes, and offsets remain fixed; no
+  model or Gamma shape is refitted. Annual trajectories now also break
+  across numeric years wholly absent from the fitted factor levels.
+
 - Added IV01, a frozen 400-fit NB2 glmmTMB validation of
   residual-implied effects, with balanced/uneven sampling,
   null/omitted-trend cases, and known-parameter controls. The article

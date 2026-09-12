@@ -13,9 +13,9 @@ regional abundance indices.
 now defaults to a local **likelihood adjustment**. The original model’s
 parameters, fitted random effects, smooths, dispersion, and exposure
 offsets stay fixed. Only one additional effect-scale shift is estimated
-in each supported group-year stratum. For a log-link count model, that
-shift multiplies the expected response, while respecting the fitted
-count distribution. No full model is refitted and no MCMC is run.
+in each supported group-year stratum. For a supported log-link model,
+that shift multiplies the expected response, while respecting the fitted
+response distribution. No full model is refitted and no MCMC is run.
 
 The zero-centred PIT summaries previously displayed under this name are
 now available as
@@ -515,13 +515,103 @@ cells are intentionally absent from the width table, not assigned zero
 width. Larger record counts do not by themselves validate ignoring
 uncertainty in estimated vessel effects or other fitted parameters.
 
+## Positive CPUE: Gamma with a log link
+
+Gamma(log) fits use the same effect-scale question, without treating
+continuous CPUE as a count or adding dimensionless PIT scores to
+coefficients. Write the original fitted mean as `mu_i`, and the native
+fitted scale as `phi_i`, so that the variance is `phi_i * mu_i^2` and
+the shape is `k_i = 1 / phi_i`. The local adjustment is
+
+``` math
+\widehat\delta = \log\left\{\frac{\sum_i k_i y_i/\mu_i}{\sum_i k_i}\right\}.
+```
+
+For a constant fitted scale, this simplifies to
+`log(mean(response / fitted_mean))`. Thus `exp(adjustment) = 1.5`
+suggests a 50% upward adjustment relative to the original predictions in
+that cell. It is not a separately estimated regional CPUE index. The
+plotted trajectory is the centred fixed baseline **plus** this
+adjustment, not the adjustment alone.
+
+The GAM adapter retains
+[`sig2`](https://stat.ethz.ch/R-manual/R-devel/library/mgcv/html/gamObject.html).
+The GLM adapter uses `summary(fit)$dispersion`. glmmTMB’s native Gamma
+[dispersion
+prediction](https://glmmtmb.github.io/glmmTMB/reference/sigma.glmmTMB.html)
+is `1 / sqrt(shape)`, so influ2 squares it to obtain `phi`. No
+alternative shape estimate is fitted. The conditional intervals solve
+the Gamma likelihood-ratio equation with these original scales held
+fixed; they are asymmetric on the log-effect scale.
+
+This small GAM example deliberately leaves differing seasonal trends out
+of the fitted model. It includes a smooth, a vessel effect, an effort
+offset, and an additional estimated effort slope, all retained in the
+predictions.
+
+``` r
+
+set.seed(821)
+example$log_effort <- log(example$soak / mean(example$soak))
+example$gamma_cpue <- rgamma(nrow(example), shape = 1.4,
+  scale = exp(eta + 1.3 * example$log_effort) / 1.4)
+gamma_fit <- mgcv::gam(gamma_cpue ~ year + season + s(depth, k = 5) +
+  s(vessel, bs = "re") + log_effort + offset(log_effort),
+  family = Gamma(link = "log"), method = "REML", data = example)
+gamma_implied <- implied_effects(gamma_fit, groups = "season")
+head(as.data.frame(gamma_implied))
+#>   level        group   n     baseline adjustment   estimate  std_error
+#> 1  2000 Early season 153  0.258691817  0.1704350 0.42912679 0.07097604
+#> 2  2001 Early season 143  0.094065712  0.1496641 0.24372981 0.07341578
+#> 3  2002 Early season 154  0.097604420  0.1830004 0.28060481 0.07074522
+#> 4  2003 Early season 160 -0.007255446  0.1059896 0.09873419 0.06940607
+#> 5  2004 Early season  90 -0.078192613  0.1650387 0.08684613 0.09254143
+#> 6  2005 Early season  67 -0.086668992  0.1917475 0.10507850 0.10725562
+#>         lower     upper status
+#> 1  0.29316820 0.5715387     ok
+#> 2  0.10320716 0.3911573     ok
+#> 3  0.14507837 0.4225427     ok
+#> 4 -0.03428370 0.2379230     ok
+#> 5 -0.08921054 0.2738768     ok
+#> 6 -0.09802436 0.3229262     ok
+```
+
+``` r
+
+plot(gamma_implied)
+```
+
+![Three seasonal panels show Gamma implied-effect trajectories and
+conditional intervals against their fitted
+baselines.](implied-effects_files/figure-html/implied-gamma-plot-1.png)
+
+Gamma(log) residual-implied effects for simulated positive CPUE. Grey
+lines show the centred fixed year-plus-season baseline; purple
+trajectories add the local Gamma likelihood adjustment. Bars are 95%
+conditional profile-likelihood intervals, holding the original
+coefficients, smooths, vessel effects, offsets, and native fitted scale
+fixed. They exclude uncertainty in the original fit and residual
+dependence. Point area represents sample size; no response simulation or
+model refitting is needed to calculate these diagnostics.
+
+The Gamma arithmetic is tested against independent
+[`dgamma()`](https://rdrr.io/r/stats/GammaDist.html) optimisation and
+profile endpoints, including unequal fixed scales. Tests also check
+response-unit invariance, missing-year gaps, sparse cells, row
+alignment, and saved-result plotting. This is numerical validation,
+**not** a simulation calibration of Gamma interval coverage. The NB2
+study above does not supply that calibration. Strictly positive
+responses and a log link are required. An entire joint delta model is
+not silently replaced by its positive Gamma component.
+
 ## Interpretation, uncertainty, and scope
 
 The current adapters support `lm`, GLM, GAM, and ML glmmTMB for Gaussian
-identity-link, Poisson log-link, and NB2 log-link models. Fitted GAM
-smooths and mixed-model effects stay fixed. Traditional comparison is
-restricted to constant-variance Gaussian models of `log(response)`; the
-historical standardised option additionally requires a plain GLM.
+identity-link, Poisson log-link, NB2 log-link, and Gamma log-link
+models. Fitted GAM smooths and mixed-model effects stay fixed.
+Traditional comparison is restricted to constant-variance Gaussian
+models of `log(response)`; the historical standardised option
+additionally requires a plain GLM.
 
 Conditional profile intervals ignore uncertainty in the original model,
 its baseline, and its estimated latent effects. Descriptive one-SE bars
@@ -540,15 +630,16 @@ positive-component calculation is never silently substituted for a
 combined-response diagnostic.
 
 The tests independently reconstruct the historical recipe, check
-log-response agreement, compare NB2 shifts and profile endpoints with
-native density calculations, and cover offsets, fitted random effects,
-GAMs, row alignment, unsupported cases, and compact save/reload. This
-validates the implemented arithmetic, not universal scientific
-calibration of implied-effect intervals. IV01 adds bounded empirical
-evidence for NB2 glmmTMB only: one effect size, two fixed sampling
-designs, and 100 datasets per scenario. It does not validate Gamma,
-binomial, spatial, Bayesian, or combined two-part implied effects, nor
-does it calibrate these plots as formal significance tests.
+log-response agreement, compare NB2 and Gamma shifts and profile
+endpoints with native density calculations, and cover offsets, fitted
+random effects, GAMs, row alignment, unsupported cases, and compact
+save/reload. This validates the implemented arithmetic, not universal
+scientific calibration of implied-effect intervals. IV01 adds bounded
+empirical evidence for NB2 glmmTMB only: one effect size, two fixed
+sampling designs, and 100 datasets per scenario. It does not calibrate
+Gamma intervals, validate binomial, spatial, Bayesian, or combined
+two-part implied effects, nor calibrate these plots as formal
+significance tests.
 
 ## References
 

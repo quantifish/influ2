@@ -35,9 +35,9 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
   A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. This first
   implementation supports Gaussian identity-link models (including an
-  explicitly logged response), Poisson log-link, and NB2 log-link
-  models. Other families, backends, joint models, non-unit case weights,
-  and year interactions fail explicitly rather than substitute another
+  explicitly logged response), Poisson, NB2, and Gamma log-link models.
+  Other families, backends, joint models, non-unit case weights, and
+  year interactions fail explicitly rather than substitute another
   calculation.
 
 - data:
@@ -124,7 +124,14 @@ random effects, smooths, offsets, and dispersion values fixed. Gaussian
 shifts are precision-weighted mean response residuals. With constant
 variance and an explicitly logged response this equals the traditional
 mean log-response residual. NB2 uses the fitted size parameter and its
-log likelihood, not a mean of Pearson or PIT residuals.
+log likelihood, not a mean of Pearson or PIT residuals. Gamma(log) uses
+the native fitted scale phi (variance = phi \* mean^2), with shape =
+1/phi. Its shift is log(sum(shape \* response / fitted_mean) /
+sum(shape)), or log(mean(response / fitted_mean)) for constant scale.
+GAMs retain `sig2`, GLMs use `summary(model)$dispersion`, and glmmTMB
+uses squared native dispersion predictions. No shape is re-estimated.
+Gamma responses must be strictly positive; other Gamma links and joint
+delta models are not automatically reinterpreted as Gamma(log) fits.
 
 Automatic intervals condition on the whole original fit. They omit
 uncertainty in its parameters, latent effects, and baseline, and do not
@@ -137,8 +144,9 @@ done.
 For all-zero count strata the optimum is delta = -Inf. These boundary
 results are retained and flagged, not replaced with a pseudocount or a
 finite correction. Their points/bars are omitted from the plot. Empty
-and sparse cells break trajectories. Existing `influ_residuals` objects
-do not contain the native likelihood needed here: use
+and sparse cells, and missing numeric years, break trajectories.
+Existing `influ_residuals` objects do not contain the native likelihood
+needed here: use
 [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
 for their zero-centred grouped PIT summaries.
 
