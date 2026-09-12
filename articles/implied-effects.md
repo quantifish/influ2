@@ -268,6 +268,253 @@ shift `-Inf`); the table flags that boundary and the plot omits the
 non-finite point, rather than inventing a finite value by adding a
 pseudocount.
 
+## Simulation check: what do these implied effects recover?
+
+The **IV01** follow-up checks this question in 400 simulated NB2 glmmTMB
+fits: 100 independent datasets for each combination of balanced/uneven
+sampling and no interaction/an omitted year-by-season trend. Each
+dataset has six years, three seasons, 12 vessel random intercepts, and
+648 observations. Balanced cells each contain 36 observations; the
+uneven design contains one empty cell, five cells below `min_n = 10`,
+and 12 supported cells. Thus the comparison changes coverage, not total
+sample size. The generating size is 4, vessel SD is 0.4, and the largest
+injected log-mean shift is 0.6.
+
+Every fit retains year, season, depth, and vessel effects, but not their
+year-by-season interaction. No failed fit is replaced. The [fixed
+protocol and reproduction
+scripts](https://github.com/quantifish/influ2/tree/master/tools/implied-validation)
+record the design, seed schedule, source hashes, and independent
+numerical checks. This article reads a frozen compact result: **it does
+not refit the 400 models**, and neither does the package test suite.
+
+``` r
+
+validation <- readRDS(system.file("extdata", "implied-validation.rds", package = "influ2"))
+knitr::kable(validation$fit_summary[, c("sampling", "signal", "attempted",
+  "eligible", "errors", "warnings")],
+  col.names = c("Sampling", "Interaction", "Attempted", "Eligible", "Errors", "Warnings"))
+```
+
+|                | Sampling | Interaction | Attempted | Eligible | Errors | Warnings |
+|:---------------|:---------|:------------|----------:|---------:|-------:|---------:|
+| balanced.null  | balanced | null        |       100 |      100 |      0 |        0 |
+| balanced.trend | balanced | trend       |       100 |      100 |      0 |        0 |
+| uneven.null    | uneven   | null        |       100 |      100 |      0 |        0 |
+| uneven.trend   | uneven   | trend       |       100 |      100 |      0 |        0 |
+
+All 400 fits were eligible, and all 800 calculations (two routes per
+fit) succeeded without warnings. Empty and sparse cells remained
+explicit; no all-zero boundary cells occurred in this run. Separate
+deterministic tests exercise that boundary behaviour.
+
+### Separate the injected pattern from the fitted-conditional target
+
+There are two checks on each dataset:
+
+1.  **Known-parameter control:** fix the true additive predictor,
+    realised vessel effects, and size. The injected shift is then
+    exactly the quantity the local likelihood is estimating.
+2.  **Fitted-model calculation:** use the public
+    [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+    result from the fitted model. Its main effects and dispersion can
+    absorb some omitted structure. The appropriate local target is the
+    shift maximising *expected* likelihood under the generating response
+    distribution, with that fitted predictor and size held fixed.
+
+For the second route, an independent one-dimensional optimisation
+obtains the target from the known generating means. Equivalently, its
+expected score is zero:
+
+``` math
+\sum_{i\ \mathrm{in\ cell}}
+\frac{\widehat\phi_i\{\mu_i^{\mathrm{true}}-
+  \exp(\widehat\eta_i+\delta)\}}
+ {\widehat\phi_i+\exp(\widehat\eta_i+\delta)}=0.
+```
+
+That target depends on the fitted data. Its interval **containment** is
+not ordinary confidence coverage for a fixed population interaction, and
+adding the displayed baseline does not propagate uncertainty in that
+baseline.
+
+The following example is production replicate 1: the first dataset with
+all four fits and calculations eligible, selected before inspecting its
+curves. The teal marks are conditional targets added to the **same
+fitted baseline**, not independently centred true annual indices.
+
+``` r
+
+example_plots <- lapply(c("null", "trend"), function(signal) {
+  case <- validation$examples$cases[[paste0("uneven:", signal)]]
+  p <- plot(case$result)
+  shown <- p$data[p$data$status == "ok", ]
+  key <- function(d) paste(d$level, d$group, sep = ":")
+  shown$target <- case$truth$target[match(key(shown), key(case$truth))]
+  p + geom_line(data = shown, aes(y = baseline + target),
+    colour = "#008080", linetype = 2) +
+    geom_point(data = shown, aes(y = baseline + target),
+      colour = "#008080", shape = 4, size = 2) +
+    labs(title = if (signal == "null") "No omitted interaction" else "Omitted seasonal trend",
+      subtitle = "Purple: implied effect | Teal: conditional target | Grey: fitted baseline",
+      caption = NULL, x = "Year")
+})
+patchwork::wrap_plots(example_plots, ncol = 1)
+```
+
+![Two rows of three seasonal panels compare fitted implied effects,
+fixed baselines, and known conditional targets, retaining gaps in uneven
+sampling.](implied-effects_files/figure-html/implied-validation-example-1.png)
+
+Frozen IV01 uneven-sampling example: no omitted interaction (top) and an
+omitted seasonal trend (bottom). Purple points and lines are the public
+residual-implied effects, with 95% conditional profile intervals; grey
+lines are their fixed fitted baselines. Teal dashed lines and crosses
+add the independently calculated expected-likelihood target to the same
+baseline. Each dataset has 648 observations, but one empty and five
+sparse cells are omitted, with no lines spanning gaps. Replicate 1 was
+selected before visual inspection. These are local implied effects, not
+refitted interactions or regional indices.
+
+### Interval behaviour, without turning the plot into a significance test
+
+The table gives percentages, with **one Monte Carlo standard error** in
+parentheses. Summaries first average over supported cells within each
+dataset, then over 100 independent datasets. Monte Carlo errors use
+variation between datasets; they do not treat the cells within a fitted
+model as independent replicates.
+
+``` r
+
+rates <- validation$summary
+percentage <- function(value, se) sprintf("%.1f (%.1f)", 100 * value, 100 * se)
+knitr::kable(data.frame(
+  Sampling = rates$sampling, Interaction = rates$signal,
+  Route = ifelse(rates$route == "known_parameters", "Known parameters", "Fitted model"),
+  `Target in interval (%)` = percentage(rates$containment, rates$containment_mcse),
+  `Cells excluding zero (%)` = percentage(rates$zero_exclusion, rates$zero_exclusion_mcse),
+  `Datasets with any exclusion (%)` = percentage(rates$any_zero_exclusion, rates$any_zero_exclusion_mcse),
+  check.names = FALSE))
+```
+
+| Sampling | Interaction | Route | Target in interval (%) | Cells excluding zero (%) | Datasets with any exclusion (%) |
+|:---|:---|:---|:---|:---|:---|
+| balanced | null | Fitted model | 94.2 (0.5) | 0.9 (0.3) | 12.0 (3.3) |
+| balanced | null | Known parameters | 94.4 (0.5) | 5.6 (0.5) | 65.0 (4.8) |
+| balanced | trend | Fitted model | 96.4 (0.4) | 42.8 (0.6) | 100.0 (0.0) |
+| balanced | trend | Known parameters | 95.0 (0.5) | 47.7 (0.6) | 100.0 (0.0) |
+| uneven | null | Fitted model | 94.2 (0.7) | 0.8 (0.3) | 9.0 (2.9) |
+| uneven | null | Known parameters | 94.5 (0.7) | 5.5 (0.7) | 49.0 (5.0) |
+| uneven | trend | Fitted model | 95.7 (0.5) | 19.5 (0.6) | 100.0 (0.0) |
+| uneven | trend | Known parameters | 95.0 (0.6) | 47.2 (0.8) | 100.0 (0.0) |
+
+Under known parameters, pointwise coverage was 94.4–95.0%, close to the
+nominal 95% in these cases. Fitted-conditional target containment was
+94.2–96.4%, but that is a different, data-dependent target. Under the
+null, only about 0.8–0.9% of fitted-model cell intervals excluded zero,
+and 9–12% of datasets had at least one exclusion. By contrast, the
+known-parameter control had a zero exclusion somewhere in 49–65% of null
+datasets: many pointwise checks are not a simultaneous test. **Neither
+route provides a calibrated whole-model test of a missing interaction.**
+
+### Uneven sampling changes what remains for the diagnostic to detect
+
+The next figure compares the average local adjustment and its
+appropriate conditional target with the raw injected pattern. It shows
+all seasons, including the middle season with no injected trend.
+Missing/sparse cells have no diagnostic estimate; an input truth curve
+does not fill those gaps.
+
+``` r
+
+recovery <- subset(validation$cell_summary, signal == "trend" & route == "fitted_model")
+recovery$year <- as.integer(recovery$level)
+recovery$group <- factor(recovery$group, levels = validation$metadata$settings$seasons)
+recovery <- recovery[order(recovery$sampling, recovery$group, recovery$year), ]
+recovery$segment <- cumsum(c(TRUE, diff(recovery$year) != 1L |
+  head(recovery$group, -1) != tail(recovery$group, -1) |
+  head(recovery$sampling, -1) != tail(recovery$sampling, -1) |
+  head(recovery$usable, -1) == 0 | tail(recovery$usable, -1) == 0))
+supported <- subset(recovery, usable > 0)
+ggplot(recovery, aes(year)) +
+  geom_hline(yintercept = 0, colour = "grey85") +
+  geom_line(aes(y = injected, colour = "Injected pattern", linetype = "Injected pattern")) +
+  geom_line(data = supported, aes(y = adjustment, group = segment,
+    colour = "Mean adjustment", linetype = "Mean adjustment")) +
+  geom_point(data = supported, aes(y = adjustment), colour = "purple4", size = 2) +
+  geom_line(data = supported, aes(y = target, group = segment,
+    colour = "Conditional target", linetype = "Conditional target")) +
+  geom_point(data = supported, aes(y = target), colour = "#008080", shape = 4, size = 2) +
+  facet_grid(sampling ~ group) +
+  scale_colour_manual(values = c("Injected pattern" = "grey50",
+    "Mean adjustment" = "purple4", "Conditional target" = "#008080")) +
+  scale_linetype_manual(values = c("Injected pattern" = 3,
+    "Mean adjustment" = 1, "Conditional target" = 2)) +
+  scale_x_continuous(breaks = 2011:2016) +
+  labs(x = "Year", y = "Local log-mean shift", colour = NULL, linetype = NULL) +
+  theme(legend.position = "bottom")
+```
+
+![Balanced and uneven seasonal facets show close agreement between mean
+adjustments and conditional targets, with stronger separation from raw
+injected trends under uneven
+sampling.](implied-effects_files/figure-html/implied-validation-recovery-1.png)
+
+IV01 omitted-trend cases, averaged over 100 independent datasets per
+sampling design. Purple points and solid lines show average fitted-model
+local log-mean adjustments; teal crosses and dashed lines show average
+fitted-conditional expected-likelihood targets; grey dotted lines show
+the raw injected seasonal pattern. Top: balanced sampling; bottom:
+uneven sampling with the same total observations. Unsupported cells have
+no purple or teal estimate, and those lines do not bridge gaps. Fitted
+main effects and nuisance parameters absorb more of the injected pattern
+under uneven sampling, so raw interaction recovery is not the same
+estimand as the local conditional adjustment. These are mean curves, not
+confidence bands.
+
+Across the two signal scenarios, the mean within-dataset RMSE around the
+fitted-conditional target was 0.118 and 0.139 log units for balanced and
+uneven sampling. The corresponding target-versus-injected-pattern RMSE
+was 0.107 and 0.317. Thus the attenuated uneven-sampling display is not
+evidence that the local optimiser lost the signal: much of it has
+already entered the fitted baseline or other parameters. Mean fitted NB2
+size fell from 4.18/4.20 in the null cases to 2.79/3.47 in the trend
+cases; omitted structure was also accommodated by greater estimated
+overdispersion.
+
+For supported cells with pre-specified absolute injected shift at least
+0.3, the fitted adjustments recovered the injected direction 100.0% and
+98.3% of the time, but their intervals excluded zero only 92.5% and
+32.8% of the time, respectively. These are descriptive results at **one
+effect size**, not a general power calculation. The supported strong
+cells differ between designs, and the six unsupported uneven cells
+cannot contribute evidence.
+
+``` r
+
+widths <- subset(validation$cell_summary, signal == "trend" & route == "fitted_model")
+width_summary <- aggregate(width ~ sampling + n, widths, mean)
+knitr::kable(width_summary, digits = 3,
+  col.names = c("Sampling", "Observations per supported cell", "Mean conditional interval width (log units)"))
+```
+
+| Sampling | Observations per supported cell | Mean conditional interval width (log units) |
+|:---|---:|---:|
+| uneven | 12 | 0.910 |
+| uneven | 24 | 0.594 |
+| balanced | 36 | 0.514 |
+| uneven | 36 | 0.454 |
+| uneven | 60 | 0.333 |
+| uneven | 80 | 0.318 |
+| uneven | 96 | 0.263 |
+| uneven | 108 | 0.269 |
+| uneven | 120 | 0.222 |
+
+Small supported cells generally have wider intervals. Empty and sparse
+cells are intentionally absent from the width table, not assigned zero
+width. Larger record counts do not by themselves validate ignoring
+uncertainty in estimated vessel effects or other fitted parameters.
+
 ## Interpretation, uncertainty, and scope
 
 The current adapters support `lm`, GLM, GAM, and ML glmmTMB for Gaussian
@@ -297,7 +544,11 @@ log-response agreement, compare NB2 shifts and profile endpoints with
 native density calculations, and cover offsets, fitted random effects,
 GAMs, row alignment, unsupported cases, and compact save/reload. This
 validates the implemented arithmetic, not universal scientific
-calibration of implied-effect intervals.
+calibration of implied-effect intervals. IV01 adds bounded empirical
+evidence for NB2 glmmTMB only: one effect size, two fixed sampling
+designs, and 100 datasets per scenario. It does not validate Gamma,
+binomial, spatial, Bayesian, or combined two-part implied effects, nor
+does it calibrate these plots as formal significance tests.
 
 ## References
 

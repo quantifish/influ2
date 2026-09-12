@@ -347,6 +347,408 @@ and the plot omits the non-finite point, rather than inventing a finite
 value by adding a pseudocount.</p>
 </div>
 <div class="section level2">
+<h2 id="simulation-check-what-do-these-implied-effects-recover">Simulation check: what do these implied effects recover?<a class="anchor" aria-label="anchor" href="#simulation-check-what-do-these-implied-effects-recover"></a>
+</h2>
+<p>The <strong>IV01</strong> follow-up checks this question in 400
+simulated NB2 glmmTMB fits: 100 independent datasets for each
+combination of balanced/uneven sampling and no interaction/an omitted
+year-by-season trend. Each dataset has six years, three seasons, 12
+vessel random intercepts, and 648 observations. Balanced cells each
+contain 36 observations; the uneven design contains one empty cell, five
+cells below <code>min_n = 10</code>, and 12 supported cells. Thus the
+comparison changes coverage, not total sample size. The generating size
+is 4, vessel SD is 0.4, and the largest injected log-mean shift is
+0.6.</p>
+<p>Every fit retains year, season, depth, and vessel effects, but not
+their year-by-season interaction. No failed fit is replaced. The <a href="https://github.com/quantifish/influ2/tree/master/tools/implied-validation" class="external-link">fixed
+protocol and reproduction scripts</a> record the design, seed schedule,
+source hashes, and independent numerical checks. This article reads a
+frozen compact result: <strong>it does not refit the 400
+models</strong>, and neither does the package test suite.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">validation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"implied-validation.rds"</span>, package <span class="op">=</span> <span class="st">"influ2"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">fit_summary</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sampling"</span>, <span class="st">"signal"</span>, <span class="st">"attempted"</span>,</span>
+<span>  <span class="st">"eligible"</span>, <span class="st">"errors"</span>, <span class="st">"warnings"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Sampling"</span>, <span class="st">"Interaction"</span>, <span class="st">"Attempted"</span>, <span class="st">"Eligible"</span>, <span class="st">"Errors"</span>, <span class="st">"Warnings"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="21%">
+<col width="12%">
+<col width="16%">
+<col width="14%">
+<col width="12%">
+<col width="9%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">Sampling</th>
+<th align="left">Interaction</th>
+<th align="right">Attempted</th>
+<th align="right">Eligible</th>
+<th align="right">Errors</th>
+<th align="right">Warnings</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">balanced.null</td>
+<td align="left">balanced</td>
+<td align="left">null</td>
+<td align="right">100</td>
+<td align="right">100</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">balanced.trend</td>
+<td align="left">balanced</td>
+<td align="left">trend</td>
+<td align="right">100</td>
+<td align="right">100</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">uneven.null</td>
+<td align="left">uneven</td>
+<td align="left">null</td>
+<td align="right">100</td>
+<td align="right">100</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">uneven.trend</td>
+<td align="left">uneven</td>
+<td align="left">trend</td>
+<td align="right">100</td>
+<td align="right">100</td>
+<td align="right">0</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p>All 400 fits were eligible, and all 800 calculations (two routes per
+fit) succeeded without warnings. Empty and sparse cells remained
+explicit; no all-zero boundary cells occurred in this run. Separate
+deterministic tests exercise that boundary behaviour.</p>
+<div class="section level3">
+<h3 id="separate-the-injected-pattern-from-the-fitted-conditional-target">Separate the injected pattern from the fitted-conditional
+target<a class="anchor" aria-label="anchor" href="#separate-the-injected-pattern-from-the-fitted-conditional-target"></a>
+</h3>
+<p>There are two checks on each dataset:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Known-parameter control:</strong> fix the true additive
+predictor, realised vessel effects, and size. The injected shift is then
+exactly the quantity the local likelihood is estimating.</li>
+<li>
+<strong>Fitted-model calculation:</strong> use the public
+<code><a href="../reference/implied_effects.html">implied_effects()</a></code> result from the fitted model. Its main
+effects and dispersion can absorb some omitted structure. The
+appropriate local target is the shift maximising <em>expected</em>
+likelihood under the generating response distribution, with that fitted
+predictor and size held fixed.</li>
+</ol>
+<p>For the second route, an independent one-dimensional optimisation
+obtains the target from the known generating means. Equivalently, its
+expected score is zero:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mo>∑</mo><mrow><mi>i</mi><mspace width="0.222em"></mspace><mrow><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi><mspace width="0.222em"></mspace><mi mathvariant="normal">c</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">l</mi><mi mathvariant="normal">l</mi></mrow></mrow></munder><mfrac><mrow><msub><mover><mi>ϕ</mi><mo accent="true">̂</mo></mover><mi>i</mi></msub><mo stretchy="false" form="prefix">{</mo><msubsup><mi>μ</mi><mi>i</mi><mrow><mi mathvariant="normal">t</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">u</mi><mi mathvariant="normal">e</mi></mrow></msubsup><mo>−</mo><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mover><mi>η</mi><mo accent="true">̂</mo></mover><mi>i</mi></msub><mo>+</mo><mi>δ</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">}</mo></mrow><mrow><msub><mover><mi>ϕ</mi><mo accent="true">̂</mo></mover><mi>i</mi></msub><mo>+</mo><mrow><mi mathvariant="normal">exp</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msub><mover><mi>η</mi><mo accent="true">̂</mo></mover><mi>i</mi></msub><mo>+</mo><mi>δ</mi><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><mo>=</mo><mn>0</mn><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\sum_{i\ \mathrm{in\ cell}}
+\frac{\widehat\phi_i\{\mu_i^{\mathrm{true}}-
+  \exp(\widehat\eta_i+\delta)\}}
+ {\widehat\phi_i+\exp(\widehat\eta_i+\delta)}=0.
+</annotation></semantics></math></p>
+<p>That target depends on the fitted data. Its interval
+<strong>containment</strong> is not ordinary confidence coverage for a
+fixed population interaction, and adding the displayed baseline does not
+propagate uncertainty in that baseline.</p>
+<p>The following example is production replicate 1: the first dataset
+with all four fits and calculations eligible, selected before inspecting
+its curves. The teal marks are conditional targets added to the
+<strong>same fitted baseline</strong>, not independently centred true
+annual indices.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">example_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"null"</span>, <span class="st">"trend"</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">signal</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">case</span> <span class="op">&lt;-</span> <span class="va">validation</span><span class="op">$</span><span class="va">examples</span><span class="op">$</span><span class="va">cases</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"uneven:"</span>, <span class="va">signal</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">case</span><span class="op">$</span><span class="va">result</span><span class="op">)</span></span>
+<span>  <span class="va">shown</span> <span class="op">&lt;-</span> <span class="va">p</span><span class="op">$</span><span class="va">data</span><span class="op">[</span><span class="va">p</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"ok"</span>, <span class="op">]</span></span>
+<span>  <span class="va">key</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">level</span>, <span class="va">d</span><span class="op">$</span><span class="va">group</span>, sep <span class="op">=</span> <span class="st">":"</span><span class="op">)</span></span>
+<span>  <span class="va">shown</span><span class="op">$</span><span class="va">target</span> <span class="op">&lt;-</span> <span class="va">case</span><span class="op">$</span><span class="va">truth</span><span class="op">$</span><span class="va">target</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu">key</span><span class="op">(</span><span class="va">shown</span><span class="op">)</span>, <span class="fu">key</span><span class="op">(</span><span class="va">case</span><span class="op">$</span><span class="va">truth</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="va">p</span> <span class="op">+</span> <span class="fu">geom_line</span><span class="op">(</span>data <span class="op">=</span> <span class="va">shown</span>, <span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">baseline</span> <span class="op">+</span> <span class="va">target</span><span class="op">)</span>,</span>
+<span>    colour <span class="op">=</span> <span class="st">"#008080"</span>, linetype <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">geom_point</span><span class="op">(</span>data <span class="op">=</span> <span class="va">shown</span>, <span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">baseline</span> <span class="op">+</span> <span class="va">target</span><span class="op">)</span>,</span>
+<span>      colour <span class="op">=</span> <span class="st">"#008080"</span>, shape <span class="op">=</span> <span class="fl">4</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">signal</span> <span class="op">==</span> <span class="st">"null"</span><span class="op">)</span> <span class="st">"No omitted interaction"</span> <span class="kw">else</span> <span class="st">"Omitted seasonal trend"</span>,</span>
+<span>      subtitle <span class="op">=</span> <span class="st">"Purple: implied effect | Teal: conditional target | Grey: fitted baseline"</span>,</span>
+<span>      caption <span class="op">=</span> <span class="cn">NULL</span>, x <span class="op">=</span> <span class="st">"Year"</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="va">example_plots</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="implied-effects_files/figure-html/implied-validation-example-1.png" class="r-plt" alt="Two rows of three seasonal panels compare fitted implied effects, fixed baselines, and known conditional targets, retaining gaps in uneven sampling." width="1056"><p class="caption">
+Frozen IV01 uneven-sampling example: no omitted interaction (top) and an
+omitted seasonal trend (bottom). Purple points and lines are the public
+residual-implied effects, with 95% conditional profile intervals; grey
+lines are their fixed fitted baselines. Teal dashed lines and crosses
+add the independently calculated expected-likelihood target to the same
+baseline. Each dataset has 648 observations, but one empty and five
+sparse cells are omitted, with no lines spanning gaps. Replicate 1 was
+selected before visual inspection. These are local implied effects, not
+refitted interactions or regional indices.
+</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="interval-behaviour-without-turning-the-plot-into-a-significance-test">Interval behaviour, without turning the plot into a significance
+test<a class="anchor" aria-label="anchor" href="#interval-behaviour-without-turning-the-plot-into-a-significance-test"></a>
+</h3>
+<p>The table gives percentages, with <strong>one Monte Carlo standard
+error</strong> in parentheses. Summaries first average over supported
+cells within each dataset, then over 100 independent datasets. Monte
+Carlo errors use variation between datasets; they do not treat the cells
+within a fitted model as independent replicates.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rates</span> <span class="op">&lt;-</span> <span class="va">validation</span><span class="op">$</span><span class="va">summary</span></span>
+<span><span class="va">percentage</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">value</span>, <span class="va">se</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.1f (%.1f)"</span>, <span class="fl">100</span> <span class="op">*</span> <span class="va">value</span>, <span class="fl">100</span> <span class="op">*</span> <span class="va">se</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Sampling <span class="op">=</span> <span class="va">rates</span><span class="op">$</span><span class="va">sampling</span>, Interaction <span class="op">=</span> <span class="va">rates</span><span class="op">$</span><span class="va">signal</span>,</span>
+<span>  Route <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">rates</span><span class="op">$</span><span class="va">route</span> <span class="op">==</span> <span class="st">"known_parameters"</span>, <span class="st">"Known parameters"</span>, <span class="st">"Fitted model"</span><span class="op">)</span>,</span>
+<span>  `Target in interval (%)` <span class="op">=</span> <span class="fu">percentage</span><span class="op">(</span><span class="va">rates</span><span class="op">$</span><span class="va">containment</span>, <span class="va">rates</span><span class="op">$</span><span class="va">containment_mcse</span><span class="op">)</span>,</span>
+<span>  `Cells excluding zero (%)` <span class="op">=</span> <span class="fu">percentage</span><span class="op">(</span><span class="va">rates</span><span class="op">$</span><span class="va">zero_exclusion</span>, <span class="va">rates</span><span class="op">$</span><span class="va">zero_exclusion_mcse</span><span class="op">)</span>,</span>
+<span>  `Datasets with any exclusion (%)` <span class="op">=</span> <span class="fu">percentage</span><span class="op">(</span><span class="va">rates</span><span class="op">$</span><span class="va">any_zero_exclusion</span>, <span class="va">rates</span><span class="op">$</span><span class="va">any_zero_exclusion_mcse</span><span class="op">)</span>,</span>
+<span>  check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="7%">
+<col width="10%">
+<col width="14%">
+<col width="19%">
+<col width="21%">
+<col width="27%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Sampling</th>
+<th align="left">Interaction</th>
+<th align="left">Route</th>
+<th align="left">Target in interval (%)</th>
+<th align="left">Cells excluding zero (%)</th>
+<th align="left">Datasets with any exclusion (%)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">balanced</td>
+<td align="left">null</td>
+<td align="left">Fitted model</td>
+<td align="left">94.2 (0.5)</td>
+<td align="left">0.9 (0.3)</td>
+<td align="left">12.0 (3.3)</td>
+</tr>
+<tr class="even">
+<td align="left">balanced</td>
+<td align="left">null</td>
+<td align="left">Known parameters</td>
+<td align="left">94.4 (0.5)</td>
+<td align="left">5.6 (0.5)</td>
+<td align="left">65.0 (4.8)</td>
+</tr>
+<tr class="odd">
+<td align="left">balanced</td>
+<td align="left">trend</td>
+<td align="left">Fitted model</td>
+<td align="left">96.4 (0.4)</td>
+<td align="left">42.8 (0.6)</td>
+<td align="left">100.0 (0.0)</td>
+</tr>
+<tr class="even">
+<td align="left">balanced</td>
+<td align="left">trend</td>
+<td align="left">Known parameters</td>
+<td align="left">95.0 (0.5)</td>
+<td align="left">47.7 (0.6)</td>
+<td align="left">100.0 (0.0)</td>
+</tr>
+<tr class="odd">
+<td align="left">uneven</td>
+<td align="left">null</td>
+<td align="left">Fitted model</td>
+<td align="left">94.2 (0.7)</td>
+<td align="left">0.8 (0.3)</td>
+<td align="left">9.0 (2.9)</td>
+</tr>
+<tr class="even">
+<td align="left">uneven</td>
+<td align="left">null</td>
+<td align="left">Known parameters</td>
+<td align="left">94.5 (0.7)</td>
+<td align="left">5.5 (0.7)</td>
+<td align="left">49.0 (5.0)</td>
+</tr>
+<tr class="odd">
+<td align="left">uneven</td>
+<td align="left">trend</td>
+<td align="left">Fitted model</td>
+<td align="left">95.7 (0.5)</td>
+<td align="left">19.5 (0.6)</td>
+<td align="left">100.0 (0.0)</td>
+</tr>
+<tr class="even">
+<td align="left">uneven</td>
+<td align="left">trend</td>
+<td align="left">Known parameters</td>
+<td align="left">95.0 (0.6)</td>
+<td align="left">47.2 (0.8)</td>
+<td align="left">100.0 (0.0)</td>
+</tr>
+</tbody>
+</table>
+<p>Under known parameters, pointwise coverage was 94.4–95.0%, close to
+the nominal 95% in these cases. Fitted-conditional target containment
+was 94.2–96.4%, but that is a different, data-dependent target. Under
+the null, only about 0.8–0.9% of fitted-model cell intervals excluded
+zero, and 9–12% of datasets had at least one exclusion. By contrast, the
+known-parameter control had a zero exclusion somewhere in 49–65% of null
+datasets: many pointwise checks are not a simultaneous test.
+<strong>Neither route provides a calibrated whole-model test of a
+missing interaction.</strong></p>
+</div>
+<div class="section level3">
+<h3 id="uneven-sampling-changes-what-remains-for-the-diagnostic-to-detect">Uneven sampling changes what remains for the diagnostic to
+detect<a class="anchor" aria-label="anchor" href="#uneven-sampling-changes-what-remains-for-the-diagnostic-to-detect"></a>
+</h3>
+<p>The next figure compares the average local adjustment and its
+appropriate conditional target with the raw injected pattern. It shows
+all seasons, including the middle season with no injected trend.
+Missing/sparse cells have no diagnostic estimate; an input truth curve
+does not fill those gaps.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">recovery</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">cell_summary</span>, <span class="va">signal</span> <span class="op">==</span> <span class="st">"trend"</span> <span class="op">&amp;</span> <span class="va">route</span> <span class="op">==</span> <span class="st">"fitted_model"</span><span class="op">)</span></span>
+<span><span class="va">recovery</span><span class="op">$</span><span class="va">year</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">level</span><span class="op">)</span></span>
+<span><span class="va">recovery</span><span class="op">$</span><span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">group</span>, levels <span class="op">=</span> <span class="va">validation</span><span class="op">$</span><span class="va">metadata</span><span class="op">$</span><span class="va">settings</span><span class="op">$</span><span class="va">seasons</span><span class="op">)</span></span>
+<span><span class="va">recovery</span> <span class="op">&lt;-</span> <span class="va">recovery</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">sampling</span>, <span class="va">recovery</span><span class="op">$</span><span class="va">group</span>, <span class="va">recovery</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="va">recovery</span><span class="op">$</span><span class="va">segment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">year</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">1L</span> <span class="op">|</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">group</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">!=</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">group</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">|</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">sampling</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">!=</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">sampling</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">|</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">usable</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span> <span class="op">|</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">recovery</span><span class="op">$</span><span class="va">usable</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">supported</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">recovery</span>, <span class="va">usable</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="fu">ggplot</span><span class="op">(</span><span class="va">recovery</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">year</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_hline</span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, colour <span class="op">=</span> <span class="st">"grey85"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">injected</span>, colour <span class="op">=</span> <span class="st">"Injected pattern"</span>, linetype <span class="op">=</span> <span class="st">"Injected pattern"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span>data <span class="op">=</span> <span class="va">supported</span>, <span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">adjustment</span>, group <span class="op">=</span> <span class="va">segment</span>,</span>
+<span>    colour <span class="op">=</span> <span class="st">"Mean adjustment"</span>, linetype <span class="op">=</span> <span class="st">"Mean adjustment"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_point</span><span class="op">(</span>data <span class="op">=</span> <span class="va">supported</span>, <span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">adjustment</span><span class="op">)</span>, colour <span class="op">=</span> <span class="st">"purple4"</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span>data <span class="op">=</span> <span class="va">supported</span>, <span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">target</span>, group <span class="op">=</span> <span class="va">segment</span>,</span>
+<span>    colour <span class="op">=</span> <span class="st">"Conditional target"</span>, linetype <span class="op">=</span> <span class="st">"Conditional target"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_point</span><span class="op">(</span>data <span class="op">=</span> <span class="va">supported</span>, <span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">target</span><span class="op">)</span>, colour <span class="op">=</span> <span class="st">"#008080"</span>, shape <span class="op">=</span> <span class="fl">4</span>, size <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_grid</span><span class="op">(</span><span class="va">sampling</span> <span class="op">~</span> <span class="va">group</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_colour_manual</span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Injected pattern"</span> <span class="op">=</span> <span class="st">"grey50"</span>,</span>
+<span>    <span class="st">"Mean adjustment"</span> <span class="op">=</span> <span class="st">"purple4"</span>, <span class="st">"Conditional target"</span> <span class="op">=</span> <span class="st">"#008080"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_linetype_manual</span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Injected pattern"</span> <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    <span class="st">"Mean adjustment"</span> <span class="op">=</span> <span class="fl">1</span>, <span class="st">"Conditional target"</span> <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_x_continuous</span><span class="op">(</span>breaks <span class="op">=</span> <span class="fl">2011</span><span class="op">:</span><span class="fl">2016</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Year"</span>, y <span class="op">=</span> <span class="st">"Local log-mean shift"</span>, colour <span class="op">=</span> <span class="cn">NULL</span>, linetype <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="implied-effects_files/figure-html/implied-validation-recovery-1.png" class="r-plt" alt="Balanced and uneven seasonal facets show close agreement between mean adjustments and conditional targets, with stronger separation from raw injected trends under uneven sampling." width="1056"><p class="caption">
+IV01 omitted-trend cases, averaged over 100 independent datasets per
+sampling design. Purple points and solid lines show average fitted-model
+local log-mean adjustments; teal crosses and dashed lines show average
+fitted-conditional expected-likelihood targets; grey dotted lines show
+the raw injected seasonal pattern. Top: balanced sampling; bottom:
+uneven sampling with the same total observations. Unsupported cells have
+no purple or teal estimate, and those lines do not bridge gaps. Fitted
+main effects and nuisance parameters absorb more of the injected pattern
+under uneven sampling, so raw interaction recovery is not the same
+estimand as the local conditional adjustment. These are mean curves, not
+confidence bands.
+</p>
+</div>
+<p>Across the two signal scenarios, the mean within-dataset RMSE around
+the fitted-conditional target was 0.118 and 0.139 log units for balanced
+and uneven sampling. The corresponding target-versus-injected-pattern
+RMSE was 0.107 and 0.317. Thus the attenuated uneven-sampling display is
+not evidence that the local optimiser lost the signal: much of it has
+already entered the fitted baseline or other parameters. Mean fitted NB2
+size fell from 4.18/4.20 in the null cases to 2.79/3.47 in the trend
+cases; omitted structure was also accommodated by greater estimated
+overdispersion.</p>
+<p>For supported cells with pre-specified absolute injected shift at
+least 0.3, the fitted adjustments recovered the injected direction
+100.0% and 98.3% of the time, but their intervals excluded zero only
+92.5% and 32.8% of the time, respectively. These are descriptive results
+at <strong>one effect size</strong>, not a general power calculation.
+The supported strong cells differ between designs, and the six
+unsupported uneven cells cannot contribute evidence.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">widths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">cell_summary</span>, <span class="va">signal</span> <span class="op">==</span> <span class="st">"trend"</span> <span class="op">&amp;</span> <span class="va">route</span> <span class="op">==</span> <span class="st">"fitted_model"</span><span class="op">)</span></span>
+<span><span class="va">width_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">width</span> <span class="op">~</span> <span class="va">sampling</span> <span class="op">+</span> <span class="va">n</span>, <span class="va">widths</span>, <span class="va">mean</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">width_summary</span>, digits <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Sampling"</span>, <span class="st">"Observations per supported cell"</span>, <span class="st">"Mean conditional interval width (log units)"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="10%">
+<col width="37%">
+<col width="51%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Sampling</th>
+<th align="right">Observations per supported cell</th>
+<th align="right">Mean conditional interval width (log units)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">uneven</td>
+<td align="right">12</td>
+<td align="right">0.910</td>
+</tr>
+<tr class="even">
+<td align="left">uneven</td>
+<td align="right">24</td>
+<td align="right">0.594</td>
+</tr>
+<tr class="odd">
+<td align="left">balanced</td>
+<td align="right">36</td>
+<td align="right">0.514</td>
+</tr>
+<tr class="even">
+<td align="left">uneven</td>
+<td align="right">36</td>
+<td align="right">0.454</td>
+</tr>
+<tr class="odd">
+<td align="left">uneven</td>
+<td align="right">60</td>
+<td align="right">0.333</td>
+</tr>
+<tr class="even">
+<td align="left">uneven</td>
+<td align="right">80</td>
+<td align="right">0.318</td>
+</tr>
+<tr class="odd">
+<td align="left">uneven</td>
+<td align="right">96</td>
+<td align="right">0.263</td>
+</tr>
+<tr class="even">
+<td align="left">uneven</td>
+<td align="right">108</td>
+<td align="right">0.269</td>
+</tr>
+<tr class="odd">
+<td align="left">uneven</td>
+<td align="right">120</td>
+<td align="right">0.222</td>
+</tr>
+</tbody>
+</table>
+<p>Small supported cells generally have wider intervals. Empty and
+sparse cells are intentionally absent from the width table, not assigned
+zero width. Larger record counts do not by themselves validate ignoring
+uncertainty in estimated vessel effects or other fitted parameters.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="interpretation-uncertainty-and-scope">Interpretation, uncertainty, and scope<a class="anchor" aria-label="anchor" href="#interpretation-uncertainty-and-scope"></a>
 </h2>
 <p>The current adapters support <code>lm</code>, GLM, GAM, and ML
@@ -374,7 +776,11 @@ log-response agreement, compare NB2 shifts and profile endpoints with
 native density calculations, and cover offsets, fitted random effects,
 GAMs, row alignment, unsupported cases, and compact save/reload. This
 validates the implemented arithmetic, not universal scientific
-calibration of implied-effect intervals.</p>
+calibration of implied-effect intervals. IV01 adds bounded empirical
+evidence for NB2 glmmTMB only: one effect size, two fixed sampling
+designs, and 100 datasets per scenario. It does not validate Gamma,
+binomial, spatial, Bayesian, or combined two-part implied effects, nor
+does it calibrate these plots as formal significance tests.</p>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

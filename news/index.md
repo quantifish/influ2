@@ -2,6 +2,14 @@
 
 ## influ2 1.1.0
 
+- Added IV01, a frozen 400-fit NB2 glmmTMB validation of
+  residual-implied effects, with balanced/uneven sampling,
+  null/omitted-trend cases, and known-parameter controls. The article
+  separates injected interactions from fitted-conditional targets and
+  reports interval limitations. Package tests audit compact results
+  without rerunning the study. No diagnostic algorithm, family support,
+  or default changed.
+
 - Corrected the optional PIT ECDF and difference plots’ reference-grid
   mismatch identified by N09. bayesplot’s independent simultaneous
   limits are retained, aligned with the empirical CDF, and completed at
