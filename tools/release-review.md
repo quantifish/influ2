@@ -5,6 +5,36 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## N09 PIT plotting correction: 12 September 2026
+
+The maintainer approved the contained reference-grid correction after reviewing
+the N09 finding. Both optional PIT plots now use `(0:K) / K`, including the
+zero endpoint, for bayesplot's unchanged simultaneous independent-uniform
+limits and the empirical CDF. The difference display subtracts the same grid.
+Stored PIT values, response simulations, conditioning, and default panels are
+unchanged. The original N09 artefact and the hashed study scripts are intact;
+their `displayed_band_crossing` metrics still describe the historical display.
+
+The separate `tools/n09/check-pit-alignment.R` control reproduces 477 crossings
+in 10,000 independent-uniform samples (4.77%), versus the original 1,246
+(12.46%); the independent DKW reference still gives 471 (4.71%). This is a
+plotting/calculation alignment check, not fitted-model residual calibration.
+The latter and the broader scientific interpretation remain for review.
+
+Validation before publication: 5,334 full-suite assertions passed, with no
+failures, warnings, or skips. Coverage is 95.95278%. Numerical tests compare
+the corrected plot with frozen N09 limits, retain endpoint masses and ties,
+verify subtraction on the common grid, preserve diagnostic/RNG/theme state,
+and reject unrecognised future dependency layouts without double-correcting
+already aligned output. The one affected visual snapshot was reviewed and
+updated. The two affected articles and plotting reference page were rebuilt;
+the PIT figures were visually inspected, and all 81 plotted-image/lightbox
+caption checks across nine local articles passed.
+
+Fresh source-archive checks and GitHub publication are in progress; results
+will be recorded against their exact revision. No CRAN/win-builder submission,
+upstream issue, or change to the parked release decisions is authorised here.
+
 ## Priority update: 12 September 2026
 
 The maintainer subsequently approved the bounded N09 study and a separate
@@ -22,7 +52,8 @@ See [tools/n09](n09/README.md) for the protocol and reproduction commands.
 
 Pooled PIT checks can miss omitted covariates or spatial structure, and different
 conditioning choices answer different questions. The separate bayesplot 1.16.0
-reference-grid finding is documented and has not been silently patched. Review
+reference-grid finding was documented separately; the approved correction is
+recorded above. Review
 calibration and interpretation with Nicholas before changing defaults or making
 broader fitted-model calibration claims.
 

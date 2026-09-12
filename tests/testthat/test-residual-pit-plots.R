@@ -5,6 +5,23 @@ pit_plot_fixture <- function() {
   influ_residuals(glm(cpue ~ year, Gamma(link = "log"), data = d), nsim = 40, seed = 18)
 }
 
+test_that("PIT limits use the binomial grid identified by the frozen N09 audit", {
+  skip_if_not_installed("bayesplot", "1.16.0")
+  frozen <- readRDS(system.file("extdata", "n09-validation.rds", package = "influ2"))
+  x <- pit_plot_fixture()
+  x$observations <- data.frame(pit = (seq_len(480) - 0.5) / 480)
+  original <- x
+  a <- ggplot2::ggplot_build(suppressMessages(plot(x, type = "pit_ecdf")))$data
+  b <- ggplot2::ggplot_build(suppressMessages(plot(x, type = "pit_ecdf_diff")))$data
+  grid <- (0:100) / 100
+  expect_equal(a[[1]]$x, grid)
+  expect_equal(a[[1]]$y, c(0, frozen$bands$upper))
+  expect_equal(a[[2]]$y, c(0, frozen$bands$lower))
+  expect_equal(a[[3]]$y, ecdf(x$observations$pit)(grid))
+  for (i in 1:3) expect_equal(b[[i]]$y, a[[i]]$y - a[[i]]$x)
+  expect_identical(x, original)
+})
+
 test_that("PIT plots delegate stored ranks and preserve results and global state", {
   skip_if_not_installed("bayesplot", "1.16.0")
   x <- pit_plot_fixture()
@@ -18,13 +35,16 @@ test_that("PIT plots delegate stored ranks and preserve results and global state
   difference <- suppressMessages(plot(x, type = "pit_ecdf_diff", pit_grid_size = 20))
   a <- ggplot2::ggplot_build(regular)$data
   b <- ggplot2::ggplot_build(difference)$data
-  grid <- seq(0, 1, length.out = 20)
+  grid <- (0:20) / 20
   expect_equal(a[[3]]$x, grid)
   expect_equal(a[[3]]$y, ecdf(x$observations$pit)(grid))
   for (i in 1:3) expect_equal(b[[i]]$y, a[[i]]$y - grid)
   native <- suppressMessages(bayesplot::ppc_pit_ecdf(pit = x$observations$pit,
     K = 20, prob = x$metadata$level, method = "independent", interpolate_adj = FALSE))
-  expect_equal(a[1:3], ggplot2::ggplot_build(native)$data)
+  native_data <- ggplot2::ggplot_build(native)$data
+  expect_equal(a[[1]]$y, c(0, native_data[[1]]$y))
+  expect_equal(a[[2]]$y, c(0, native_data[[2]]$y))
+  expect_identical(attr(regular, "pit_reference")$evaluation_points, 21)
   expect_equal(a[[4]]$slope, 1)
   expect_equal(b[[4]]$yintercept, 0)
   expect_identical(attr(regular, "pit_reference")$method, "independent")
@@ -48,8 +68,60 @@ test_that("PIT panels accept all backend summaries without treating them as LOO-
   for (backend in c("glm", "gam", "glmmTMB", "brms", "sdmTMB", "tinyVAST")) {
     x$metadata$backend <- backend
     p <- suppressMessages(plot(x, type = "pit_ecdf", pit_grid_size = 2))
-    expect_equal(ggplot2::ggplot_build(p)$data[[3]]$y, c(1 / 3, 1))
+    expect_equal(ggplot2::ggplot_build(p)$data[[3]]$y, c(1 / 3, 2 / 3, 1))
     expect_match(p$labels$subtitle, "80% simultaneous", fixed = TRUE)
+  }
+})
+
+test_that("PIT endpoint masses and ties are retained on the common grid", {
+  skip_if_not_installed("bayesplot", "1.16.0")
+  x <- pit_plot_fixture()
+  for (pit in list(c(0, 0, 0, 1), c(0, .5, .5, 1), rep(1, 4), rep(0, 4))) {
+    x$observations <- data.frame(pit = pit)
+    for (K in c(2L, 3L, 7L)) {
+      a <- ggplot2::ggplot_build(suppressMessages(plot(x, type = "pit_ecdf", pit_grid_size = K)))$data
+      b <- ggplot2::ggplot_build(suppressMessages(plot(x, type = "pit_ecdf_diff", pit_grid_size = K)))$data
+      grid <- (0:K) / K
+      expect_equal(a[[3]]$y, vapply(grid, function(u) mean(pit <= u), numeric(1)))
+      expect_equal(a[[1]]$y[c(1, K + 1L)], c(0, 1))
+      expect_equal(a[[2]]$y[c(1, K + 1L)], c(0, 1))
+      for (i in 1:3) expect_equal(b[[i]]$y, a[[i]]$y - grid)
+    }
+  }
+})
+
+test_that("already aligned upstream plots are not corrected twice", {
+  # Emulate public plots with known binomial limits, without private bayesplot APIs.
+  make_plot <- function(grid, upper, lower, pit) {
+    ggplot2::ggplot(data.frame(x = grid, upper, lower, empirical = ecdf(pit)(grid))) +
+      ggplot2::geom_step(ggplot2::aes(x = .data$x, y = .data$upper)) +
+      ggplot2::geom_step(ggplot2::aes(x = .data$x, y = .data$lower)) +
+      ggplot2::geom_step(ggplot2::aes(x = .data$x, y = .data$empirical))
+  }
+  pit <- c(.1, .4, .6, .9)
+  for (with_zero in c(FALSE, TRUE)) {
+    grid <- if (with_zero) c(0, .5, 1) else c(.5, 1)
+    p <- make_plot(grid, rep(1, length(grid)), c(rep(0, length(grid) - 1), 1), pit)
+    if (with_zero) p$data$upper[1] <- 0
+    aligned <- .resid_align_pit_plot(p, pit, 2, TRUE, version = "1.17.0")
+    d <- ggplot2::ggplot_build(aligned)$data
+    expect_equal(d[[1]]$x, c(0, .5, 1))
+    expect_equal(d[[1]]$y, c(0, .5, 0))
+    expect_equal(d[[2]]$y, c(0, -.5, 0))
+    expect_equal(d[[3]]$y, c(0, 0, 0))
+    expect_identical(attr(aligned, "pit_alignment")$alignment, "already_aligned")
+  }
+  p <- make_plot(c(0, 1), c(1, 1), c(0, 1), pit)
+  expect_error(.resid_align_pit_plot(p, pit, 2, FALSE, "1.17.0"), "Cannot safely align")
+  p <- make_plot(c(0, .5, 1), c(0, 1, 1), c(0, 0, 1), pit)
+  for (bad in list(p + ggplot2::geom_hline(yintercept = 0),
+      ggplot2::ggplot(), p + ggplot2::scale_x_reverse())) {
+    expect_error(.resid_align_pit_plot(bad, pit, 2, FALSE, "1.17.0"), "Cannot safely align")
+  }
+  for (column in c("upper", "lower", "empirical", "x")) {
+    bad <- p
+    bad$data[[column]][1] <- .125
+    expect_error(.resid_align_pit_plot(bad, pit, 2, FALSE, "1.17.0"), "Cannot safely align")
   }
 })
 

@@ -49,6 +49,28 @@ from model estimation and latent dependence. No patch or upstream message was
 made in this increment. The full audit counts and Monte Carlo intervals are
 in the installed artefact and article.
 
+### Plotting correction: 12 September 2026
+
+Following maintainer approval, the public influ2 PIT plots now align those
+unchanged limits and the empirical CDF on `(0:K) / K`, including zero and one.
+The difference plot subtracts that same grid. No stored PIT values, defaults,
+study scripts, or frozen results have been changed. The original
+`displayed_band_crossing` field remains a historical measure of the old plot.
+The separate follow-up control uses the corrected public plot and reproduces
+477 crossings in 10,000 independent-uniform samples (4.77%):
+
+```sh
+Rscript --vanilla tools/n09/check-pit-alignment.R
+```
+
+Source inspection confirmed that bayesplot 1.16.0 and upstream revision
+`e651a2a9064f8fef0cbd3a298e082f82b58c31e4` still contain the mismatch in
+`R/helpers-ppc.R`. influ2 corrects the recognised released-version layout,
+accepts already aligned output without a second correction, and fails
+explicitly on unrecognised layouts/versions. The interval calculation still
+comes from the public `bayesplot::ppc_pit_ecdf()` function, not copied code or
+private dependency helpers. No upstream issue or message has been sent.
+
 ## Interpretation boundary
 
 The DKW crossing summary is an iid-uniform reference comparison, not a

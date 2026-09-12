@@ -47,9 +47,10 @@ check using \code{response_diagnostic}. The default \code{NULL} is equivalent to
 \code{c("qq", "fitted", "year", "auto")}. Required summaries must already
 exist in \code{x}; selecting a panel never recalculates residuals.}
 
-\item{pit_grid_size}{Number of evaluation points for the PIT ECDF and its
-simultaneous reference limits, between 2 and 1000 (default 100). Used
-only for PIT-ECDF panels, not for the stored response ECDF grid.}
+\item{pit_grid_size}{Number of equal subdivisions of \verb{[0, 1]} for the PIT ECDF
+and its simultaneous reference limits, between 2 and 1000 (default 100).
+There are \code{pit_grid_size + 1} evaluation points, including zero and one.
+Used only for PIT-ECDF panels, not for the stored response ECDF grid.}
 }
 \value{
 A ggplot or a four-panel patchwork object, which can be customised.
@@ -117,6 +118,16 @@ estimation, posterior predictive reuse, or latent dependence. bayesplot's
 alternative dependence-aware tests are not automatically applied to these
 fitted-data ranks. No p-value, refit, or further response simulation is
 requested. The bridge does not change bayesplot's global theme or colours.
+influ2 aligns the limits and empirical CDF on \code{(0:K) / K}, where
+\code{K = pit_grid_size}, correcting a plotting-grid mismatch in bayesplot
+1.16.0 without changing its interval calculation. Differences subtract
+this same grid from every curve. The zero-endpoint limits are zero;
+observed PIT values equal to zero or one are retained, not jittered.
+Already aligned dependency output is not shifted again; unrecognised
+versions/layouts fail explicitly rather than guessing about their limits.
+The simultaneous reference applies at the evaluation points, not every
+point between them. The returned plot's \code{pit_reference} attribute records
+the dependency version, grid size, and alignment action.
 }
 \seealso{
 \code{\link[=influ_residuals]{influ_residuals()}} for a worked calculation and standalone Q-Q

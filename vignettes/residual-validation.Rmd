@@ -132,7 +132,8 @@ version and method, not the underlying theory of simultaneous ECDF bands
 
 The control uses 10,000 independent samples of 480 uniform values. Crossing
 means that at least one empirical-CDF value lies outside the reference limits.
-The aligned row is an **audit calculation**, not a patched plotting function.
+This table is the **frozen original audit**, including the pre-correction
+display. The current plotting correction is described immediately below it.
 
 ```{r n09-band-table}
 audit <- study$band_audit
@@ -144,12 +145,21 @@ knitr::kable(audit[, c("Reference", "n", "Crossing", "Interval")],
   col.names = c("Reference", "Samples", "Crossing rate", "95% Monte Carlo interval"))
 ```
 
-The displayed limit crossing rate is `r percent(audit$rate[audit$method == "displayed"])`,
-not approximately 5%. **Do not treat crossings of those displayed optional
-bands as a calibrated 5% test.** This does not change the stored PIT values,
-normal-score Q-Q calculation, or response ECDF panel. No dependency patch or
-default change has been made here; the alignment correction is a separate
-follow-up decision.
+The original displayed limit crossing rate was `r percent(audit$rate[audit$method == "displayed"])`,
+not approximately 5%. **Follow-up correction, 12 September 2026:** influ2 now
+aligns bayesplot's unchanged limits and the empirical CDF on `(0:K) / K`,
+including the exact zero-endpoint limits. Both PIT plots use that grid, and
+the difference plot subtracts it from every curve. Repeating the same control
+through the corrected public plotting function gives 477 crossings in 10,000
+samples (4.77%), matching the original aligned audit. The separate
+[follow-up script](https://github.com/quantifish/influ2/blob/master/tools/n09/check-pit-alignment.R)
+reproduces this without model fits or changes to the frozen artefact.
+
+Stored PIT values, the normal-score Q-Q calculation, response ECDF, and default
+panels are unchanged. **Even correctly aligned independent-uniform limits are
+not calibrated 5% thresholds for fitted-model residuals.** The archived
+`displayed_band_crossing` metrics deliberately retain the original display;
+they have not been relabelled or recomputed using the corrected plot.
 
 For the main study we therefore use an independent summary: the exact maximum
 distance of the empirical PIT CDF from uniformity,
@@ -308,11 +318,12 @@ plot(spatial[["omit_st:fitted"]], response_scale = "log1p")
 
 The optional plots below reuse the saved full-model sdmTMB PIT values. They
 make the conditioning contrast visible without running the models again.
-The bands are supplied by the locally installed bayesplot; the known 1.16.0
-alignment limitation above must be kept in mind. The numerical study is frozen
-to its recorded version, even if a future plotting dependency changes.
+The bands are calculated by the locally installed bayesplot and aligned by
+influ2 as described above. These figures use the corrected plotting code;
+the numerical study and its original crossing metrics remain frozen to their
+recorded versions.
 
-```{r n09-pit-comparison, eval=has_bayesplot, fig.width=11, fig.height=8, fig.cap="PIT ECDF difference displays for the same full sdmTMB fit: fitted effects (upper left), one shared conditional latent draw (upper right), and new effects (lower left). Curves reuse stored PIT values; zero is the uniform reference. Pale limits are the native optional bayesplot display, which has the documented grid-alignment problem in version 1.16.0. Do not read crossings as calibrated rejection decisions. No new response simulations or model fits are performed.", fig.alt="Three PIT ECDF difference displays contrasting sdmTMB conditioning targets."}
+```{r n09-pit-comparison, eval=has_bayesplot, fig.width=11, fig.height=8, fig.cap="PIT ECDF difference displays for the same full sdmTMB fit: fitted effects (upper left), one shared conditional latent draw (upper right), and new effects (lower left). Curves reuse stored PIT values; zero is the uniform reference. Pale limits are bayesplot's independent-uniform simultaneous limits, with their evaluation grid corrected by influ2. The original study metrics remain frozen. Do not read crossings as calibrated rejection decisions. No new response simulations or model fits are performed.", fig.alt="Three PIT ECDF difference displays contrasting sdmTMB conditioning targets."}
 patchwork::wrap_plots(
   plot(spatial[["full:fitted"]], type = "pit_ecdf_diff") + labs(title = "Fitted effects"),
   plot(spatial[["full:conditional_draw"]], type = "pit_ecdf_diff") + labs(title = "One conditional draw"),
@@ -356,8 +367,8 @@ claim that a backend's residuals are either "valid" or "invalid".
 
 Review the following with Nicholas before changing statistical defaults:
 
-1. Address the independently reproduced optional reference-band alignment
-   problem separately from residual calibration.
+1. Keep the now-corrected reference-band display separate from the remaining
+   question of fitted-model residual calibration.
 2. Decide which scientific question each conditioning scheme should answer,
    using the full-model and omitted-structure results together. Do not pick a
    default simply because its Q-Q curve looks closest to normal.
