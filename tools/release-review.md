@@ -52,9 +52,11 @@ figures are not in the public package. The local integration audit is in
 `/Users/darcy/Projects/BNS/reviews/2026-09-12-gamma-implied-integration/`.
 Binomial encounter and combined delta implied effects remain separate work.
 
-GitHub validation/publication is pending for this source: R-CMD-check
-34670537492 (Ubuntu release and Windows release), coverage 34670537513,
-and pkgdown 34670537460. Update this paragraph after verifying completion.
+GitHub coverage run 34670537513 passed all 6,000 assertions, with no failures,
+warnings, or skips, and reported 95.97% coverage. Platform/publication checks
+remain pending: R-CMD-check 34670537492 (Ubuntu release and Windows release)
+and pkgdown 34670537460. The existing follow-up monitors their completion
+and live Pages publication. Update this paragraph after verifying completion.
 No CRAN/win-builder submission, issue changes, or resumption of parked work.
 
 ## IV01 implied-effect validation: 12 September 2026

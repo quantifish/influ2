@@ -23,9 +23,11 @@ reproduces the downstream Gamma results. All 84 local plotted-image/lightbox
 caption checks pass. Numerical Gamma agreement is not an interval-coverage
 calibration or a formal model-acceptance test.
 
-GitHub validation/publication is pending: R-CMD-check 34670537492, coverage
-34670537513, and pkgdown 34670537460, all for the source above. No CRAN or
-win-builder submission has been made.
+GitHub coverage 34670537513 passed all 6,000 assertions without failures,
+warnings, or skips and reported 95.97% coverage. Platform/publication checks
+remain pending: R-CMD-check 34670537492 and pkgdown 34670537460, both for
+the source above. The existing follow-up monitors their completion and live
+Pages publication. No CRAN or win-builder submission has been made.
 
 ## IV01 residual-implied-effect validation: 12 September 2026
 
