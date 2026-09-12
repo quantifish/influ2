@@ -2,6 +2,16 @@
 
 ## influ2 1.1.0
 
+- Corrected the optional PIT ECDF and difference plots’ reference-grid
+  mismatch identified by N09. bayesplot’s independent simultaneous
+  limits are retained, aligned with the empirical CDF, and completed at
+  zero. `pit_grid_size = K` now displays all `K + 1` points of
+  `(0:K) / K`. Endpoint masses are retained; stored residuals and
+  default panels are unchanged. Regression tests cover the frozen N09
+  limits, ties, endpoints, and future dependency-layout guards. The
+  independent-uniform control now reproduces 4.77% crossings, versus
+  12.46% before the fix; this is not a fitted-model calibration claim.
+
 - Restored effect-scale
   [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md)
   with a compact

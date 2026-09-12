@@ -1352,14 +1352,17 @@ The default overview does not require bayesplot. Nothing below refits a
 model, reruns MCMC, simulates more responses, or retains a
 response-simulation matrix.
 
-**Reference-band caution:** the [validation
+**Reference-grid correction:** the [validation
 study](https://www.quantifish.co.nz/influ2/articles/residual-validation.html#first-check-the-reference-itself)
 found a horizontal grid-alignment problem in bayesplot 1.16.0’s
-independent PIT ECDF limits. Its independent-uniform control crossed the
-displayed 95% limits 12.46% of the time. This affects the optional
-reference display, not the stored PIT values or the default four panels.
-Do not interpret these band crossings as a calibrated 5% test; the
-dependency correction is pending review.
+independent PIT ECDF limits. influ2 now places those limits and the
+empirical CDF on their common calculation grid, including both
+endpoints. In the same 10,000-sample independent-uniform control, the
+corrected display crosses the 95% limits 4.77% of the time, compared
+with 12.46% before the correction. The interval calculation, stored PIT
+values, and default four panels are unchanged. This fixes the display,
+**not fitted-model calibration**. The original study and its
+pre-correction results remain frozen and available for comparison.
 
 ``` r
 
@@ -1385,22 +1388,28 @@ calibrated goodness-of-fit thresholds for this fitted mixed model. No
 additional response simulations are used.
 
 The PIT curves contain much the same distributional information as the
-normal Q-Q panel. Their reference limits are **intended to be
-simultaneous under the independent-uniform reference**, subject to the
-version-specific alignment limitation above, whereas the existing Q-Q
-ribbon is pointwise. This does not make the PIT plots automatically
-calibrated for estimated parameters, posterior predictive reuse of
-observations, or latent dependence. We explicitly choose bayesplot’s
-independent-reference method and do not apply its alternative
-dependence-aware tests or report p-values for these fitted-data ranks.
-bayesplot may print a message about its newer correlated method; that is
-not evidence that those tests validate this residual calculation.
+normal Q-Q panel. Their reference limits are **simultaneous on the
+evaluation grid under the independent-uniform reference**, whereas the
+existing Q-Q ribbon is pointwise. This does not make the PIT plots
+automatically calibrated for estimated parameters, posterior predictive
+reuse of observations, or latent dependence. We explicitly choose
+bayesplot’s independent-reference method and do not apply its
+alternative dependence-aware tests or report p-values for these
+fitted-data ranks. bayesplot may print a message about its newer
+correlated method; that is not evidence that those tests validate this
+residual calculation.
 
-`pit_grid_size` controls the number of evaluation points (default 100,
-maximum 1000), not the number of response simulations. More points can
-resolve finer departures but take longer to calculate the reference
-limits. `response_scale` affects only the response ECDF; PIT ECDFs
-retain their uniform horizontal scale.
+`pit_grid_size = K` controls the number of equal subdivisions of \[0,
+1\] (default 100, maximum 1000), giving `K + 1` evaluation points
+including zero and one. It does not control the number of response
+simulations. More points can resolve finer departures but take longer to
+calculate the reference limits. `response_scale` affects only the
+response ECDF; PIT ECDFs retain their uniform horizontal scale. The
+curves connect grid evaluations; the reference is not a simultaneous
+guarantee at every point between them. Endpoint PIT values and ties are
+kept. The plotting bridge recognises already aligned dependency output
+and refuses unknown layouts rather than silently shifting future
+versions’ limits.
 
 To change any of the four panels, supply their names in row-wise order.
 The unchanged default is `c("qq", "fitted", "year", "auto")`; `"auto"`

@@ -306,8 +306,9 @@ finding concerns that installed version and method, not the underlying
 theory of simultaneous ECDF bands <span class="citation">(<a href="#ref-Sailynoja2022">Säilynoja et al. 2022</a>)</span>.</p>
 <p>The control uses 10,000 independent samples of 480 uniform values.
 Crossing means that at least one empirical-CDF value lies outside the
-reference limits. The aligned row is an <strong>audit
-calculation</strong>, not a patched plotting function.</p>
+reference limits. This table is the <strong>frozen original
+audit</strong>, including the pre-correction display. The current
+plotting correction is described immediately below it.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">audit</span> <span class="op">&lt;-</span> <span class="va">study</span><span class="op">$</span><span class="va">band_audit</span></span>
 <span><span class="va">audit</span><span class="op">$</span><span class="va">Reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>displayed <span class="op">=</span> <span class="st">"bayesplot 1.16.0, as displayed"</span>,</span>
@@ -350,12 +351,23 @@ calculation</strong>, not a patched plotting function.</p>
 </tr>
 </tbody>
 </table>
-<p>The displayed limit crossing rate is 12.5%, not approximately 5%.
-<strong>Do not treat crossings of those displayed optional bands as a
-calibrated 5% test.</strong> This does not change the stored PIT values,
-normal-score Q-Q calculation, or response ECDF panel. No dependency
-patch or default change has been made here; the alignment correction is
-a separate follow-up decision.</p>
+<p>The original displayed limit crossing rate was 12.5%, not
+approximately 5%. <strong>Follow-up correction, 12 September
+2026:</strong> influ2 now aligns bayesplot’s unchanged limits and the
+empirical CDF on <code>(0:K) / K</code>, including the exact
+zero-endpoint limits. Both PIT plots use that grid, and the difference
+plot subtracts it from every curve. Repeating the same control through
+the corrected public plotting function gives 477 crossings in 10,000
+samples (4.77%), matching the original aligned audit. The separate <a href="https://github.com/quantifish/influ2/blob/master/tools/n09/check-pit-alignment.R" class="external-link">follow-up
+script</a> reproduces this without model fits or changes to the frozen
+artefact.</p>
+<p>Stored PIT values, the normal-score Q-Q calculation, response ECDF,
+and default panels are unchanged. <strong>Even correctly aligned
+independent-uniform limits are not calibrated 5% thresholds for
+fitted-model residuals.</strong> The archived
+<code>displayed_band_crossing</code> metrics deliberately retain the
+original display; they have not been relabelled or recomputed using the
+corrected plot.</p>
 <p>For the main study we therefore use an independent summary: the exact
 maximum distance of the empirical PIT CDF from uniformity,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><msub><mrow><mi mathvariant="normal">sup</mi><mo>⁡</mo></mrow><mi>u</mi></msub><mo stretchy="false" form="prefix">|</mo><mover><mi>F</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><mi>u</mi><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mi>u</mi><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">D=\sup_u|\widehat F(u)-u|</annotation></semantics></math>.
@@ -896,10 +908,10 @@ evidence that the omitted field is unnecessary.
 </h3>
 <p>The optional plots below reuse the saved full-model sdmTMB PIT
 values. They make the conditioning contrast visible without running the
-models again. The bands are supplied by the locally installed bayesplot;
-the known 1.16.0 alignment limitation above must be kept in mind. The
-numerical study is frozen to its recorded version, even if a future
-plotting dependency changes.</p>
+models again. The bands are calculated by the locally installed
+bayesplot and aligned by influ2 as described above. These figures use
+the corrected plotting code; the numerical study and its original
+crossing metrics remain frozen to their recorded versions.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">spatial</span><span class="op">[[</span><span class="st">"full:fitted"</span><span class="op">]</span><span class="op">]</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Fitted effects"</span><span class="op">)</span>,</span>
@@ -912,10 +924,11 @@ plotting dependency changes.</p>
 PIT ECDF difference displays for the same full sdmTMB fit: fitted
 effects (upper left), one shared conditional latent draw (upper right),
 and new effects (lower left). Curves reuse stored PIT values; zero is
-the uniform reference. Pale limits are the native optional bayesplot
-display, which has the documented grid-alignment problem in version
-1.16.0. Do not read crossings as calibrated rejection decisions. No new
-response simulations or model fits are performed.
+the uniform reference. Pale limits are bayesplot’s independent-uniform
+simultaneous limits, with their evaluation grid corrected by influ2. The
+original study metrics remain frozen. Do not read crossings as
+calibrated rejection decisions. No new response simulations or model
+fits are performed.
 </p>
 </div>
 </div>
@@ -1240,8 +1253,8 @@ are either “valid” or “invalid”.</p>
 <p>Review the following with Nicholas before changing statistical
 defaults:</p>
 <ol style="list-style-type: decimal">
-<li>Address the independently reproduced optional reference-band
-alignment problem separately from residual calibration.</li>
+<li>Keep the now-corrected reference-band display separate from the
+remaining question of fitted-model residual calibration.</li>
 <li>Decide which scientific question each conditioning scheme should
 answer, using the full-model and omitted-structure results together. Do
 not pick a default simply because its Q-Q curve looks closest to
