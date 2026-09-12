@@ -37,9 +37,11 @@ Pages run 34661011378 published website revision
 `9bbaf9c152a42f6a1e2b5e8926cd15673f85eabe`. Live browser inspection verified
 the corrected residual article's Figure 16 and its full lightbox caption,
 and the updated N09 correction explanation and Figure 6 caption.
-R-CMD-check run 34660520086 (Ubuntu release and Windows release only) is still
-running and is being followed separately. Do not read this as a completed
-cross-platform check. Detailed evidence is in `tools/release-review.md`.
+R-CMD-check run 34660520086 passed on both Ubuntu release and Windows release:
+each reported `Status: OK` and 5,334 passing assertions with zero failures,
+warnings, or skips. These checks apply to source
+`b027b73c01e701bfcfe209b0de316e9e390dba75`; subsequent validation-record changes
+are excluded from the package. Detailed evidence is in `tools/release-review.md`.
 No CRAN or win-builder submission was made.
 
 ## Residual-implied effects and first N09 study: 12 September 2026

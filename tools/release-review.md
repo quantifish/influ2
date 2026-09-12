@@ -50,8 +50,11 @@ nine articles; Pages run 34661011378 published revision
 `9bbaf9c152a42f6a1e2b5e8926cd15673f85eabe`. Live browser inspection verified
 the corrected residual article's Figure 16 and its full expanded caption,
 and the N09 correction explanation and Figure 6 caption. R-CMD-check run
-34660520086 (Ubuntu release and Windows release only) is still running and
-is being followed separately. No cross-platform completion is claimed yet.
+34660520086 passed on Ubuntu release and Windows release: each reported
+`Status: OK` and 5,334 passing assertions with zero failures, warnings, or
+skips. These checks apply to source `b027b73c01e701bfcfe209b0de316e9e390dba75`,
+not to a later package change. Only excluded validation records changed
+after that source revision. This validation/publication follow-up is complete.
 No CRAN/win-builder submission, upstream issue, or change to the parked release
 decisions was made.
 
