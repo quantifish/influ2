@@ -31,9 +31,29 @@ updated. The two affected articles and plotting reference page were rebuilt;
 the PIT figures were visually inspected, and all 81 plotted-image/lightbox
 caption checks across nine local articles passed.
 
-Fresh source-archive checks and GitHub publication are in progress; results
-will be recorded against their exact revision. No CRAN/win-builder submission,
-upstream issue, or change to the parked release decisions is authorised here.
+Source `b027b73c01e701bfcfe209b0de316e9e390dba75` is pushed. Its fresh source
+archive passes the Mac R 4.6.1 `--as-cran --no-manual` check with zero errors,
+zero warnings, and the existing incoming NOTE (new submission and optional
+tinyVAST through its declared repository). `_R_CHECK_FORCE_SUGGESTS_=false`
+was used because optional DHARMa is unavailable locally. All nine vignettes
+built and rebuilt; CRAN-mode tests passed 5,318 assertions with seven
+intentional visual-test groups skipped. The isolated minimal-installation
+check passed its 12 saved-result contracts, fresh core calculations, and
+19 missing-package guards. The exact archive hash and log are recorded in
+`cran-comments.md`; all 165 tracked shipped files match the checkout.
+
+The checked archive is installed in the usual Mac R library. A fresh-session
+PIT plot verifies the corrected grid and unchanged stored diagnostic.
+GitHub coverage run 34660520149 passed 5,334 assertions and reports 95.95%.
+Website run 34660520151 passed all 84 figure/lightbox-caption checks across
+nine articles; Pages run 34661011378 published revision
+`9bbaf9c152a42f6a1e2b5e8926cd15673f85eabe`. Live browser inspection verified
+the corrected residual article's Figure 16 and its full expanded caption,
+and the N09 correction explanation and Figure 6 caption. R-CMD-check run
+34660520086 (Ubuntu release and Windows release only) is still running and
+is being followed separately. No cross-platform completion is claimed yet.
+No CRAN/win-builder submission, upstream issue, or change to the parked release
+decisions was made.
 
 ## Priority update: 12 September 2026
 

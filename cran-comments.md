@@ -1,3 +1,47 @@
+## N09 PIT reference-grid correction: 12 September 2026
+
+Source `b027b73c01e701bfcfe209b0de316e9e390dba75` corrects only the optional
+PIT ECDF and difference plots' horizontal reference grid. bayesplot's interval
+calculation, stored ranks, residual algorithms, and default panels are unchanged.
+The original N09 study artefact and hashed study sources are intact.
+
+Checked archive: `/private/tmp/influ2-pit-check.x10eZ7/influ2_1.1.0.tar.gz`.
+SHA256: `48bbf025177ab7d19b22aa5e60eb74d9b7de09f209410aec942a296b5a611eb7`.
+All 165 tracked package files alongside R's generated DESCRIPTION metadata
+match the checkout. Private review files and developer scripts are excluded.
+
+The macOS arm64 R 4.6.1 source-archive check used `--as-cran --no-manual` and
+`_R_CHECK_FORCE_SUGGESTS_=false`: zero errors, zero warnings, and one existing
+incoming-feasibility NOTE for a new submission and optional tinyVAST through
+its declared additional repository. DHARMa was unavailable locally; this is
+not a complete optional-dependency or PDF-manual check. All nine vignettes
+built and rebuilt. CRAN-mode tests passed 5,318 assertions, with seven
+intentional visual-test groups skipped. The full local suite passed 5,334
+assertions with no failures, warnings, or skips. Local coverage is 95.95278%.
+The isolated minimal-installation check passed its 12 saved-result contracts,
+fresh core calculations, and 19 missing-package guards.
+
+The independent-uniform control now reproduces 477 crossings in 10,000
+samples (4.77%), versus 1,246 (12.46%) with the original misaligned display.
+This is not evidence of fitted-model residual calibration. The corrected
+article figures and visual snapshot were reviewed; 81 local lightbox/figure
+caption checks across nine articles passed. The expanded N09 Figure 6 caption
+was also checked in the browser and correctly identifies the plotting fix.
+Full check log: `/private/tmp/influ2-pit-check.x10eZ7/influ2.Rcheck/00check.log`.
+The checked archive is installed in the usual Mac R library; a fresh-session
+PIT plot verified the corrected grid and unchanged stored diagnostic.
+
+GitHub coverage run 34660520149 passed all 5,334 assertions and reported
+95.95%. Website run 34660520151 passed all 84 lightbox/figure-caption checks.
+Pages run 34661011378 published website revision
+`9bbaf9c152a42f6a1e2b5e8926cd15673f85eabe`. Live browser inspection verified
+the corrected residual article's Figure 16 and its full lightbox caption,
+and the updated N09 correction explanation and Figure 6 caption.
+R-CMD-check run 34660520086 (Ubuntu release and Windows release only) is still
+running and is being followed separately. Do not read this as a completed
+cross-platform check. Detailed evidence is in `tools/release-review.md`.
+No CRAN or win-builder submission was made.
+
 ## Residual-implied effects and first N09 study: 12 September 2026
 
 Source `e9ed7f279055c5cf75f6dd4e33016ee82bc1dd03` restores an effect-scale
