@@ -33,11 +33,18 @@ A subsequent test-only correction checks the independent NB2 score root
 with an explicit absolute error bound, retains density/profile checks, and
 adds analytic zero/near-zero regression cases. Its targeted suite passes
 500 assertions, and the full local suite passes 6,027 assertions, both
-without failures, warnings, or skips. Fresh platform-check results remain
-pending.
+without failures, warnings, or skips. For corrected source
+`869ad140b656b9bfaff7e34ae986c29e797ed929`, R-CMD-check 34673040569
+completed with `Status: OK` on both Ubuntu release and Windows release;
+each passed 6,027 assertions, with no failures, warnings, or skips.
+Coverage run 34673040566 also passed all 6,027 assertions and reported
+95.97% coverage. pkgdown 34673040572 passed its nine-page/87-image
+lightbox checks, plus caption/alt and keyboard regressions. Pages run
+34673435026 successfully deployed `cb2fe9abe0dc229c2bd7b7b488d1e04fb158238a`,
+whose deployment commit identifies the corrected source above.
 No production calculations or frozen study results change. The archive
-above predates this test-only correction. No CRAN or win-builder submission
-has been made.
+above predates this test-only correction and must be rebuilt before any
+future submission. No CRAN or win-builder submission has been made.
 
 ## IV01 residual-implied-effect validation: 12 September 2026
 

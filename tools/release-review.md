@@ -77,7 +77,18 @@ effects and Gamma suite passes all 500 assertions without failures, warnings,
 or skips. The full local suite passes all 6,027 assertions, also without
 failures, warnings, or skips. Its graphics device writes to a temporary file
 to avoid the local sandbox restriction on the default Rplots.pdf path.
-New GitHub check results are pending verification.
+For checked source `869ad140b656b9bfaff7e34ae986c29e797ed929`, R-CMD-check
+run 34673040569 completed successfully on both Ubuntu release and Windows
+release. Each reports `Status: OK` and 6,027 passing assertions, with zero
+failures, warnings, or skips. GitHub coverage run 34673040566 also passes
+all 6,027 assertions and reports 95.97% coverage. pkgdown 34673040572 passes
+all lightbox checks (nine pages and 87 plotted images, plus caption/alt and
+keyboard regressions). Pages run 34673435026 successfully deploys
+`cb2fe9abe0dc229c2bd7b7b488d1e04fb158238a`, whose commit identifies the
+same checked source. The earlier Ubuntu failure is resolved by this run.
+The older local Gamma tarball recorded above predates this test-only
+correction and must be rebuilt before any future submission. No CRAN or
+win-builder submission was made, and no BNS outputs were changed.
 
 ## IV01 implied-effect validation: 12 September 2026
 
