@@ -86,6 +86,8 @@ reference:
   contents:
   - cpue_index
   - integrate_index
+  - index_table
+  - index_vcov
   - plot_index
   - geo_mean
 

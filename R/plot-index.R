@@ -5,15 +5,53 @@
 #'
 #' @param x,object An [influ_index][cpue_index] object.
 #' @param show_probs Show the stored pointwise uncertainty interval.
+#' @param type `"index"` (default), `"correlation"`, or `"covariance"`. The
+#'   latter two display the stored annual uncertainty matrix as a heatmap.
+#' @param scale For matrix displays, `"log"` (default) or `"response"`.
 #' @param ... Reserved for future use; unused.
 #' @return A ggplot object.
-#' @seealso [cpue_index()], [integrate_index()], [plot_compare()]
+#' @seealso [index_vcov()], [index_table()], [cpue_index()], [integrate_index()], [plot_compare()]
 #' @export
-plot_index <- function(x, show_probs = TRUE, ...) {
+plot_index <- function(x, show_probs = TRUE, ...,
+    type = c("index", "correlation", "covariance"), scale = c("log", "response")) {
   if (!inherits(x, "influ_index")) {
     stop("Calculate an `influ_index` with `cpue_index()` or `integrate_index()` before plotting.", call. = FALSE)
   }
+  type <- match.arg(type)
+  scale <- match.arg(scale)
+  if (type != "index") return(.plot_index_matrix(x, type, scale))
   .plot_cpue_indices(list(x), labels = "Index", show_probs = show_probs)
+}
+
+.plot_index_matrix <- function(x, type, scale) {
+  covariance <- index_vcov(x, scale = scale)
+  if (type == "correlation") {
+    if (any(diag(covariance) <= 0)) {
+      stop("Correlation is undefined for an index with zero variance; use a covariance plot instead.", call. = FALSE)
+    }
+    covariance <- stats::cov2cor(covariance)
+  }
+  years <- rownames(covariance)
+  d <- expand.grid(row = years, column = years, stringsAsFactors = FALSE)
+  d$value <- as.vector(covariance)
+  d$row <- factor(d$row, levels = rev(years))
+  d$column <- factor(d$column, levels = years)
+  breaks <- years[unique(round(seq(1, length(years), length.out = min(8L, length(years)))))]
+  limit <- if (type == "correlation") 1 else max(abs(covariance))
+  if (limit == 0) limit <- 1
+  ggplot2::ggplot(d, ggplot2::aes(x = .data$column, y = .data$row, fill = .data$value)) +
+    ggplot2::geom_tile() +
+    ggplot2::coord_fixed() +
+    ggplot2::scale_x_discrete(breaks = breaks, expand = c(0, 0)) +
+    ggplot2::scale_y_discrete(breaks = breaks, expand = c(0, 0)) +
+    ggplot2::scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
+      midpoint = 0, limits = c(-limit, limit)) +
+    ggplot2::labs(x = "Year", y = "Year", fill = if (type == "correlation") {
+      "Correlation"
+    } else paste0("Covariance\n(", scale, " scale)"),
+      title = paste("Annual index", type),
+      subtitle = paste(if (scale == "log") "Log-index" else "Response-scale index",
+        "uncertainty; not residual autocorrelation"))
 }
 
 #' @rdname plot_index

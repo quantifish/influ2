@@ -5,6 +5,44 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Assessment tables and annual covariance: 13 September 2026
+
+The maintainer authorised issue #22 and the joint annual-index covariance
+extension. `index_table()` supplies explicit marginal lognormal parameters,
+without replacing actual posterior medians, and omits all-missing medians
+from reporting while preserving the full `as.data.frame()` schema.
+`index_vcov()`/`vcov()` extract compact response/log annual covariance across
+the six existing supported backends. Matrix displays, exact year selection,
+positive-definiteness checks, and explicit missing/non-positive guards are
+documented. Singular relative-index covariance is retained, not repaired.
+
+The [downstream audit](assessment-output-review.md) distinguishes packhorse
+(PHC) unscaled log covariance from CRA5's native-correlation/existing-SD
+construction. The saved CRA5 REML/selective-random-effect contract is not
+supported by the current ML/zero-group-effect index adapter: it is not
+silently converted or advertised as a migrated assessment. All 5,055 PHC
+matrix/table pairs match year ordering and unscaled log SEs. A complete saved
+brms fit independently reproduces both matrices through native predictions,
+including batching, scaling, and compact retention. No assessment or saved
+CPUE fit was refitted, and no MCMC was run; saved source files are unchanged.
+
+The full local suite passes 6,170 assertions, without failures, warnings,
+errors, or skips. Coverage is 96.0501%; the new `index-output.R` has 100%
+line coverage. The isolated minimal-installation check passes all 12
+saved-result contracts and 19 optional-backend guards, now including the
+new tables, matrices, and matrix plots. This is numerical contract testing,
+not proof of calibration for every model or assessment.
+
+All nine pkgdown articles build. The main article's new Figure 16 and the
+CPUE indices article show joint covariance/correlation, lognormal output,
+year ordering, and assessment interpretation, with Hoyle et al. (2024).
+The rendered matrix figure, expanded full caption, and likelihood equation
+were visually checked. All 86 local plotted-image/lightbox checks pass.
+Archive checking and GitHub publication are recorded below when complete.
+Issue #18, selective regional prediction, the legacy/frozen-article review,
+and broader N09 calibration remain separate decisions. No CRAN or win-builder
+submission is authorised.
+
 ## Gamma(log) implied effects: 12 September 2026
 
 The maintainer authorised Gamma(log) support and downstream validation on the

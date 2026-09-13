@@ -94,8 +94,8 @@ offsets from their formula and the supplied reference predictors.}
 \item{row.names, optional}{Passed to the data-frame method.}
 }
 \value{
-An S3 \code{influ_index} object containing \code{table}, \code{metadata}, and optional
-\code{draws}. \code{as.data.frame()} returns the assessment table with \code{Year}, \code{Mean},
+An S3 \code{influ_index} object containing \code{table}, \code{metadata}, compact
+\code{covariance}, and optional \code{draws}. \code{as.data.frame()} returns the full table with \code{Year}, \code{Mean},
 \code{Median}, \code{SD}, \code{CV}, \code{Qlower}, \code{Qupper}, \code{Method}, \code{Distribution}, and \code{Link}.
 }
 \description{
@@ -135,7 +135,10 @@ brms posterior mean, but omits uncertainty summaries; it does not replace
 joint predictions with predictions at posterior-mean coefficients.
 
 Working storage is bounded by reference and draw batches plus a compact
-annual covariance or draw matrix. Native prediction code can allocate
+annual covariance or draw matrix. The result retains response-scale and,
+when defined, log-index covariance matrices even with \code{retain = "summary"}.
+Use \code{\link[=index_vcov]{index_vcov()}} to extract them and \code{\link[=index_table]{index_table()}} for reporting.
+Native prediction code can allocate
 additional memory. The result does not retain the model or reference data.
 Spatial response estimates evaluate the fitted model at the reference
 locations in each observed year. sdmTMB IID group effects are set to zero;
@@ -162,5 +165,5 @@ if (requireNamespace("glmmTMB", quietly = TRUE)) {
 }
 }
 \seealso{
-\code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_index]{plot_index()}}, \code{\link[=plot_compare]{plot_compare()}}, \code{\link[=geo_mean]{geo_mean()}}, \code{\link[=influ_indices]{influ_indices()}}
+\code{\link[=index_table]{index_table()}}, \code{\link[=index_vcov]{index_vcov()}}, \code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_index]{plot_index()}}, \code{\link[=plot_compare]{plot_compare()}}, \code{\link[=geo_mean]{geo_mean()}}, \code{\link[=influ_indices]{influ_indices()}}
 }

@@ -792,7 +792,7 @@ lobster_cpue <- cpue_index(
   units = "lobsters per pot"
 )
 
-index_table <- as.data.frame(lobster_cpue)
+lobster_index_table <- index_table(lobster_cpue)
 ```
 
 Both `method = "standardised"` and `method = "standardized"` work. The
@@ -800,13 +800,15 @@ calculated result contains the familiar assessment columns, plus method,
 distribution, and link information. The reporting columns are shown below.
 `Mean` is the estimated expected CPUE, `SD` is its standard error, and `CV`
 is `SD / Mean`. `Qlower` and `Qupper` give the pointwise 95% confidence interval.
-`Median` is missing for this frequentist fit; it is populated with the
-posterior median when using a complete brms fit. None of these uncertainty
-columns describes the variation among individual pot catches.
+`index_table()` omits an unavailable `Median` column for this frequentist fit;
+it retains the genuine posterior median when using a complete brms fit.
+`as.data.frame()` still provides the full schema, including missing medians,
+for code that depends on those columns. None of these uncertainty columns
+describes variation among individual observations.
 
 ```{r lobster-assessment-table, eval=has_glmmTMB}
 knitr::kable(
-  index_table[c("Year", "Mean", "Median", "SD", "CV", "Qlower", "Qupper")],
+  lobster_index_table[c("Year", "Mean", "SD", "CV", "Qlower", "Qupper")],
   digits = 3,
   caption = "Standardised lobster CPUE and uncertainty at the common reference profile."
 )
@@ -846,6 +848,116 @@ for an executed GLM/GAM area comparison, and the
 for sdmTMB and tinyVAST response indices and totals. Area integration does not
 automatically convert CPUE into absolute biomass; compatible density units or
 an explicit catchability conversion are required.
+
+### Passing annual covariance to an assessment
+
+Annual estimates from one fitted model can share uncertainty through common
+coefficients, smooths, or latent effects. Passing only their SDs loses that
+dependence. `index_vcov()` retrieves the **annual-index** variance--covariance
+matrix, not the much larger model-coefficient matrix. It works for the same
+six backends as `cpue_index()` and `integrate_index()`.
+
+```{r lobster-assessment-covariance, eval=has_glmmTMB}
+Sigma_log <- index_vcov(lobster_cpue, scale = "log", require_pd = TRUE)
+Sigma_response <- index_vcov(lobster_cpue, scale = "response")
+stopifnot(identical(rownames(Sigma_log), lobster_index_table$Year))
+
+assessment_table <- data.frame(
+  Year = lobster_index_table$Year,
+  Index = lobster_index_table$Mean,
+  LogIndex = log(lobster_index_table$Mean),
+  SElog = sqrt(diag(Sigma_log)),
+  row.names = NULL
+)
+knitr::kable(assessment_table, digits = 3,
+  caption = "Unscaled annual indices and log-scale standard errors from their joint covariance. The complete matrix, not just SElog, accompanies this table.")
+```
+
+Here `LogIndex` is the log of the fitted expected-response estimate. It is
+not a posterior mean of log indices or a bias-corrected estimate. The
+diagonal of `Sigma_log` contains log-index variances; the off-diagonal entries
+describe covariance between annual estimation errors. Correlation rescales
+those entries and is often easier to read.
+
+```{r lobster-assessment-matrices, eval=has_glmmTMB, fig.width=10, fig.height=5, fig.cap="Annual log-index covariance (left) and correlation (right) for the same standardised lobster index. Each cell relates a pair of annual estimates; diagonal cells describe each year itself. The matrices retain common fitted-parameter uncertainty and are not residual autocorrelation estimates. Indices are unscaled, with the same reference profile and zero-month-effect convention as the preceding table.", fig.alt="Two year-by-year heatmaps of log-index covariance and correlation from the lobster glmmTMB model."}
+patchwork::wrap_plots(
+  plot(lobster_cpue, type = "covariance") + labs(subtitle = NULL),
+  plot(lobster_cpue, type = "correlation") + labs(subtitle = NULL),
+  nrow = 1
+)
+```
+
+A possible assessment likelihood relates this vector to expected abundance
+through a catchability parameter:
+
+\[
+  \log \widehat{\boldsymbol I}
+  \mathrel{\dot\sim}
+  \mathrm{MVN}\!\left(\log q + \log \boldsymbol B,\,
+    \boldsymbol\Sigma_{\mathrm{CPUE}} + \boldsymbol\Sigma_{\mathrm{extra}}\right).
+\]
+
+This is a modelling choice and an approximation, not an assessment fitted by
+influ2. Replacing the full covariance by its diagonal assumes independent
+annual estimation errors. Keeping the off-diagonal entries preserves their
+estimated dependence, including uncertainty in year-to-year contrasts. It can
+increase or decrease uncertainty in particular contrasts; it does **not**
+guarantee narrower intervals, a changed stock-status estimate, or removal of
+bias. @Hoyle2024 emphasise covariance propagation when aggregating predictions
+(Section 5.8) and distinguish index estimation error from additional
+catchability/process variation (Section 5.5). The matrix supplies the former;
+the assessment must justify any additional error model separately.
+
+Use the default `rescale = "raw"` for this workflow when the assessment
+estimates catchability. Dividing every uncertain annual series by its own
+geometric mean removes a common log-level and makes the full log covariance
+singular. `require_pd = TRUE` catches this; influ2 does not add jitter to make
+it invertible. A contrast-based likelihood is another deliberate assessment
+design, not something to obtain by silently dropping a year. A single known
+unit conversion, in contrast, leaves log covariance unchanged.
+
+Keep the table and both axes of the matrix in exactly the same year order.
+The following bundle is ready to save with `saveRDS()` and inspect in the
+assessment project; it retains neither the CPUE model nor its posterior draws.
+
+```{r lobster-assessment-bundle, eval=has_glmmTMB}
+assessment_input <- list(
+  table = assessment_table,
+  log_covariance = Sigma_log,
+  response_covariance = Sigma_response,
+  definition = lobster_cpue$metadata
+)
+```
+
+For a subset, use `index_vcov(lobster_cpue, years = selected_years)` and match
+the table to those same labels. Separate index objects do not imply zero
+cross-series covariance: combining regions or reporting systems still needs
+an explicit dependence assumption. For brms, this is posterior covariance,
+not a prior-free likelihood; a two-stage assessment must consider the first
+model's priors rather than count that information twice.
+
+### Marginal lognormal table parameters
+
+For an assessment that instead requires one lognormal distribution per year,
+`index_table(..., format = "lognormal")` adds `Meanlog`, `SDlog`, and
+`LognormalMedian`, calculated from `Mean` and `SD`. These are explicitly
+**moment-matched approximations to index uncertainty**, not the distribution
+of the observed response and not replacements for genuine posterior medians.
+
+```{r lobster-lognormal-table, eval=has_glmmTMB}
+lognormal_table <- index_table(lobster_cpue, format = "lognormal")
+knitr::kable(
+  lognormal_table[c("Year", "Meanlog", "SDlog", "LognormalMedian")],
+  digits = 3,
+  caption = "Marginal lognormal approximations to the standardised index uncertainty. These are an alternative assessment-table convention, not the joint matrix's log-scale parameters."
+)
+```
+
+In general, `Meanlog` differs from `log(Mean)`, and `SDlog` differs from
+`sqrt(diag(Sigma_log))`. Do not combine these marginal SDs with the matrix's
+correlations without explicitly choosing a different uncertainty model. The
+[CPUE indices article](cpue-indices.html#lognormal-assessment-parameters)
+gives the formulae, calculation sources, and safeguards.
 
 ## One interface and compact uncertainty
 
@@ -934,7 +1046,7 @@ library(influ2)
 # result_file <- "lobster-results.rds"
 restored_results <- readRDS(result_file)
 
-head(as.data.frame(restored_results$index))
+head(index_table(restored_results$index))
 
 # Recreate the plots without repeating the calculations.
 restored_plots <- list(

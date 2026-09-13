@@ -35,8 +35,11 @@ saved_result_view <- function(x) {
     plots <- list(overview = plot(x), qq = plot(x, type = "qq"),
       distribution = plot(x, type = "distribution"))
   } else if (inherits(x, "influ_index")) {
-    tables <- list(index = as.data.frame(x))
-    plots <- list(index = influ2::plot_index(x))
+    tables <- list(index = as.data.frame(x), reporting = influ2::index_table(x),
+      covariance = influ2::index_vcov(x, "response"),
+      log_covariance = influ2::index_vcov(x))
+    plots <- list(index = influ2::plot_index(x),
+      correlation = influ2::plot_index(x, type = "correlation"))
   } else if (inherits(x, "influ_steps")) {
     tables <- list(indices = influ2::influ_indices(x), summary = summary(x))
     plots <- list(steps = influ2::plot_step(x))

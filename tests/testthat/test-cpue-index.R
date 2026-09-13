@@ -43,6 +43,9 @@ test_that("response indices reproduce weighted predictions and joint delta uncer
     expect_equal(tab$Mean[i], expected)
   }
   covariance <- gradient %*% vcov(m) %*% t(gradient)
+  dimnames(covariance) <- list(tab$Year, tab$Year)
+  expect_equal(index_vcov(index, "response"), covariance)
+  expect_equal(index_vcov(index), covariance / outer(tab$Mean, tab$Mean))
   expect_equal(tab$SD, sqrt(diag(covariance)), ignore_attr = TRUE)
   expect_equal(tab$CV, tab$SD / tab$Mean)
   expect_true(all(is.na(tab$Median)))
@@ -154,6 +157,11 @@ test_that("GAM indices preserve smooth and offset predictions", {
   expect_equal(a$table$Mean, as.numeric(tapply(p, g$year, mean)))
   expect_equal(a$table, cpue_index(m, reference_data = ref, batch_size = 1)$table)
   expect_true(all(is.finite(a$table$SD)))
+  X <- predict(m, g, type = "lpmatrix")
+  G <- rowsum(X * as.numeric(p) / nrow(ref), g$year)
+  expected <- G %*% vcov(m, unconditional = !is.null(m$Vc)) %*% t(G)
+  dimnames(expected) <- list(a$table$Year, a$table$Year)
+  expect_equal(index_vcov(a, "response"), expected)
 })
 
 test_that("glmmTMB indices agree with native response estimates and uncertainty", {
@@ -166,6 +174,10 @@ test_that("glmmTMB indices agree with native response estimates and uncertainty"
   native <- predict(m, nd, type = "response", re.form = NA, se.fit = TRUE)
   expect_equal(a$table$Mean, as.numeric(native$fit))
   expect_equal(a$table$SD, as.numeric(native$se.fit), tolerance = 1e-5)
+  native_joint <- predict(m, nd, type = "response", re.form = NA, cov.fit = TRUE)
+  expect_equal(unname(index_vcov(a, "response")), unname(native_joint$cov.fit), tolerance = 1e-5)
+  native_log <- predict(m, nd, type = "link", re.form = NA, cov.fit = TRUE)
+  expect_equal(unname(index_vcov(a)), unname(native_log$cov.fit), tolerance = 1e-5)
   expect_equal(a$table, cpue_index(m, reference_data = data.frame(x = 0.5), batch_size = 1)$table)
   d$catch[seq(1, nrow(d), by = 3)] <- 0
   for (family in list(glmmTMB::nbinom2(), glmmTMB::truncated_nbinom2())) {
@@ -202,6 +214,9 @@ test_that("brms batching preserves draw identities, weighted means, and normalis
   expect_equal(a$table$Mean, colMeans(a$draws), ignore_attr = TRUE)
   expect_equal(a$table$Median, apply(a$draws, 2, median), ignore_attr = TRUE)
   expect_equal(a$table$SD, apply(a$draws, 2, sd), ignore_attr = TRUE)
+  expect_equal(index_vcov(a, "response"), cov(a$draws))
+  expect_equal(index_vcov(a), cov(log(a$draws)))
+  expect_equal(index_table(a)$Median, a$table$Median)
   scaled <- cpue_index(model, reference_data = ref, ndraws = 10,
     rescale = 1, retain = "draws")
   expect_equal(exp(rowMeans(log(scaled$draws))), rep(1, 10), ignore_attr = TRUE)
@@ -211,6 +226,10 @@ test_that("brms batching preserves draw identities, weighted means, and normalis
   expect_equal(summary$table$Mean, preview$table$Mean)
   expect_true(all(is.na(preview$table$SD)))
   expect_null(summary$draws)
+  joint <- cpue_index(model, reference_data = ref, ndraws = 10, retain = "draws")
+  expect_equal(index_vcov(summary), cov(log(joint$draws)))
+  expect_equal(summary$covariance, joint$covariance)
+  expect_null(preview$covariance)
   model$fit <- NULL
   expect_error(cpue_index(model, reference_data = ref), "complete")
 })

@@ -1,5 +1,19 @@
 # influ2 1.1.0
 
+* Added `index_table()` for assessment reporting, including explicit
+  moment-matched `Meanlog`, `SDlog`, and `LognormalMedian` columns. Reporting
+  omits an unavailable median by default, while `as.data.frame()` preserves
+  the existing schema and genuine posterior medians remain unchanged (#22).
+
+* Standardised and area-integrated indices now retain compact response- and
+  log-scale annual covariance matrices across all six supported backends.
+  `index_vcov()` and `vcov()` extract them with explicit year alignment;
+  `plot(index, type = "covariance")` or `"correlation"` displays them without
+  recalculation. Preview/old objects and undefined log covariance fail clearly.
+  Relative-index singularity is preserved, not repaired with jitter. Worked
+  assessment examples distinguish joint covariance from marginal lognormal
+  approximations, model-coefficient covariance, and additional assessment error.
+
 * `plot_data_extent()` now leaves zero-completeness cells blank, without
   bubbles or red reference markers, while retaining all variables and years
   on the axes. Zero-valued observations still count as present. The main

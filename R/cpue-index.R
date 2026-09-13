@@ -78,7 +78,10 @@
 #'   joint predictions with predictions at posterior-mean coefficients.
 #'
 #'   Working storage is bounded by reference and draw batches plus a compact
-#'   annual covariance or draw matrix. Native prediction code can allocate
+#'   annual covariance or draw matrix. The result retains response-scale and,
+#'   when defined, log-index covariance matrices even with `retain = "summary"`.
+#'   Use [index_vcov()] to extract them and [index_table()] for reporting.
+#'   Native prediction code can allocate
 #'   additional memory. The result does not retain the model or reference data.
 #'   Spatial response estimates evaluate the fitted model at the reference
 #'   locations in each observed year. sdmTMB IID group effects are set to zero;
@@ -93,10 +96,10 @@
 #'   Year-effect results preserve the original diagnostic estimand and cannot
 #'   be rescaled by this function. These indices are not biomass estimates.
 #'
-#' @return An S3 `influ_index` object containing `table`, `metadata`, and optional
-#'   `draws`. `as.data.frame()` returns the assessment table with `Year`, `Mean`,
+#' @return An S3 `influ_index` object containing `table`, `metadata`, compact
+#'   `covariance`, and optional `draws`. `as.data.frame()` returns the full table with `Year`, `Mean`,
 #'   `Median`, `SD`, `CV`, `Qlower`, `Qupper`, `Method`, `Distribution`, and `Link`.
-#' @seealso [integrate_index()], [plot_index()], [plot_compare()], [geo_mean()], [influ_indices()]
+#' @seealso [index_table()], [index_vcov()], [integrate_index()], [plot_index()], [plot_compare()], [geo_mean()], [influ_indices()]
 #' @examples
 #' if (requireNamespace("glmmTMB", quietly = TRUE)) {
 #'   data(lobsters_per_pot)
@@ -247,6 +250,7 @@ cpue_index <- function(model, year = NULL,
     if (!is.null(time_values)) d[[native_time]] <- if (length(i) == 1L) rep(time_values[i], length(rows)) else time_values[i]
     d
   }
+  annual_covariance <- NULL
   if (!is.null(info)) {
     result <- .index_spatial(model, backend, info, years, newdata, weights,
       uncertainty != "none", ndraws, batch_size, draw_batch_size, seed,
@@ -267,6 +271,7 @@ cpue_index <- function(model, year = NULL,
       intervals <- apply(draws, 2L, stats::quantile, probs = probs, names = FALSE)
       tab$Qlower <- intervals[1L, ]
       tab$Qupper <- intervals[2L, ]
+      annual_covariance <- .index_draw_covariance(draws, estimate, years)
     }
     uncertainty_label <- "joint Gaussian parameter/field simulation"
   } else if (backend == "brms") {
@@ -286,6 +291,7 @@ cpue_index <- function(model, year = NULL,
       intervals <- apply(draws, 2, stats::quantile, probs = probs, names = FALSE)
       tab$Qlower <- intervals[1, ]
       tab$Qupper <- intervals[2, ]
+      annual_covariance <- .index_draw_covariance(draws, estimate, years)
     }
     uncertainty_label <- "posterior expected-response draws"
   } else {
@@ -314,6 +320,9 @@ cpue_index <- function(model, year = NULL,
         tab$Qlower <- exp(log(estimate) + q[1] * tab$SD / estimate)
         tab$Qupper <- exp(log(estimate) + q[2] * tab$SD / estimate)
       }
+      dimnames(covariance) <- list(years, years)
+      annual_covariance <- list(response = covariance,
+        log = if (all(estimate > 0)) covariance / outer(estimate, estimate) else NULL)
     }
     uncertainty_label <- "joint-covariance delta method"
     draws <- NULL
@@ -339,14 +348,23 @@ cpue_index <- function(model, year = NULL,
     ndraws = if (backend %in% c("brms", "sdmTMB", "tinyVAST")) nrow(draws) else NULL,
     seed = if (!is.null(info) && uncertainty != "none") seed else NULL,
     draw_ids = if (backend == "brms") result$draw_ids else NULL),
-    if (retain == "draws") draws else NULL)
+    if (retain == "draws") draws else NULL, covariance = annual_covariance)
 }
 
-.new_cpue_index <- function(table, metadata, draws = NULL) {
+.index_draw_covariance <- function(draws, estimate, years) {
+  response <- stats::cov(draws)
+  dimnames(response) <- list(years, years)
+  log_covariance <- if (all(estimate > 0) && all(draws > 0)) stats::cov(log(draws)) else NULL
+  if (!is.null(log_covariance)) dimnames(log_covariance) <- list(years, years)
+  list(response = response, log = log_covariance)
+}
+
+.new_cpue_index <- function(table, metadata, draws = NULL, covariance = NULL) {
   table$Method <- metadata$method
   table$Distribution <- metadata$family
   table$Link <- metadata$link
-  structure(list(table = table, metadata = metadata, draws = draws), class = "influ_index")
+  structure(list(table = table, metadata = metadata, draws = draws,
+    covariance = covariance), class = "influ_index")
 }
 
 #' @rdname cpue_index
@@ -362,6 +380,6 @@ as.data.frame.influ_index <- function(x, row.names = NULL, optional = FALSE, ...
 print.influ_index <- function(x, ...) {
   cat("CPUE index |", x$metadata$backend, "|", x$metadata$method, "\n")
   cat("Scale:", x$metadata$scale, "| Uncertainty:", x$metadata$uncertainty, "\n")
-  print(x$table, row.names = FALSE, ...)
+  print(index_table(x), row.names = FALSE, ...)
   invisible(x)
 }

@@ -129,6 +129,10 @@ integrate_index <- function(model, reference_data, area, year = NULL,
       result$table[[column]] <- result$table[[column]] * multiplier
     }
     if (!is.null(result$draws)) result$draws <- result$draws * multiplier
+    if (!is.null(result$covariance$response)) {
+      result$covariance$response <- result$covariance$response * multiplier^2
+    }
+    # Multiplication by a known positive constant only translates log indices.
   }
   if (any(!is.finite(result$table$Mean))) stop("Integrated expectations overflowed; check areas and units.", call. = FALSE)
   result$table$Method <- "integrated"

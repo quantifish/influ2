@@ -6,7 +6,13 @@
 \alias{autoplot.influ_index}
 \title{Plot calculated CPUE indices}
 \usage{
-plot_index(x, show_probs = TRUE, ...)
+plot_index(
+  x,
+  show_probs = TRUE,
+  ...,
+  type = c("index", "correlation", "covariance"),
+  scale = c("log", "response")
+)
 
 \method{plot}{influ_index}(x, ...)
 
@@ -18,6 +24,11 @@ plot_index(x, show_probs = TRUE, ...)
 \item{show_probs}{Show the stored pointwise uncertainty interval.}
 
 \item{...}{Reserved for future use; unused.}
+
+\item{type}{\code{"index"} (default), \code{"correlation"}, or \code{"covariance"}. The
+latter two display the stored annual uncertainty matrix as a heatmap.}
+
+\item{scale}{For matrix displays, \code{"log"} (default) or \code{"response"}.}
 }
 \value{
 A ggplot object.
@@ -26,5 +37,5 @@ A ggplot object.
 Display assessment indices without refitting or recalculating predictions.
 }
 \seealso{
-\code{\link[=cpue_index]{cpue_index()}}, \code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_compare]{plot_compare()}}
+\code{\link[=index_vcov]{index_vcov()}}, \code{\link[=index_table]{index_table()}}, \code{\link[=cpue_index]{cpue_index()}}, \code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_compare]{plot_compare()}}
 }

@@ -3,6 +3,8 @@ title: "CPUE indices"
 output:
   rmarkdown::html_vignette:
     toc: true
+bibliography: references.bib
+link-citations: true
 vignette: >
   %\VignetteIndexEntry{CPUE indices}
   %\VignetteEncoding{UTF-8}
@@ -25,7 +27,8 @@ theme_set(theme_bw())
 population in every year. It produces the familiar assessment columns:
 `Year`, `Mean`, `Median`, `SD`, `CV`, `Qlower`, and `Qupper`, alongside method,
 distribution, and link metadata. The result is an `influ_index` object;
-`as.data.frame()` gives the table for reporting or CSV export.
+`index_table()` gives a reporting table, omitting an unavailable median by
+default. `as.data.frame()` retains the full, stable schema for existing code.
 
 This is a different quantity from the centred **year-effect contrasts** in
 the influence and step plots. Both are useful, but neither is automatically
@@ -61,7 +64,7 @@ lobster_index <- cpue_index(
   lobster_model, year = "year", method = "standardised",
   reference_data = reference, units = "lobsters per pot"
 )
-knitr::kable(as.data.frame(lobster_index), digits = 3)
+knitr::kable(index_table(lobster_index), digits = 3)
 ```
 
 `method = "standardized"` works identically. There is no need to refit a model
@@ -96,7 +99,8 @@ as.data.frame(bayesian_index)
 ```
 
 Prediction batches preserve the same draw identities across years and
-reference rows. Only the annual summaries are retained by default. Setting
+reference rows. Only the annual summaries and their two small covariance
+matrices are retained by default. Setting
 `retain = "draws"` retains a draw-by-year matrix, not the much larger
 reference-row-by-draw prediction matrix. The fitted model and reference data
 are not embedded in the output object. Native prediction routines can still
@@ -106,6 +110,113 @@ allocate their own working memory.
 this also avoids covariance propagation. For brms it still averages existing
 posterior expected-response draws, so it is not a shortcut that substitutes
 posterior-mean coefficients and changes the quantity being estimated.
+
+## Lognormal assessment parameters
+
+Some assessments accept an index median and a log-scale SD, whereas others
+accept an arithmetic mean and CV. `index_table(index, format = "lognormal")`
+provides an explicit marginal lognormal approximation from the index's `Mean`
+and `SD`:
+
+\[
+  s^2 = \log(1 + (\mathrm{SD}/\mathrm{Mean})^2),\qquad
+  m = \log(\mathrm{Mean}) - s^2/2.
+\]
+
+The additional columns are `Meanlog = m`, `SDlog = s`, and
+`LognormalMedian = exp(m)`. Substituting them into the usual lognormal moment
+formulae recovers the input mean and variance. They describe **uncertainty in
+the annual index**, not the distribution or residual dispersion of the fitted
+response. A negative-binomial CPUE model can therefore supply a lognormal
+assessment approximation without becoming a lognormal response model.
+
+```{r index-lognormal, eval=has_glmmTMB}
+assessment_marginals <- index_table(lobster_index, format = "lognormal")
+knitr::kable(assessment_marginals[c("Year", "Mean", "SD", "CV",
+  "Meanlog", "SDlog", "LognormalMedian")], digits = 3)
+stopifnot(isTRUE(all.equal(
+  exp(assessment_marginals$Meanlog + assessment_marginals$SDlog^2 / 2),
+  assessment_marginals$Mean
+)))
+```
+
+An actual posterior `Median`, where available, is preserved separately; it is
+not overwritten by `LognormalMedian`. Frequentist reporting omits the missing
+`Median` by default, while `include_median = "always"` retains that column.
+This resolves the empty-column presentation without inventing posterior
+summaries. Non-positive means, invalid SDs, preview results, and year-effect
+contrasts cannot produce this lognormal table.
+
+The moment-matched `Meanlog` is not `log(Mean)`. Similarly, `SDlog` is not
+generally the log-index SE from the joint calculation below. Choose the
+assessment likelihood's convention explicitly: do not silently substitute
+one centre or uncertainty measure for the other.
+
+## Joint annual uncertainty
+
+`index_vcov(index)` (or `vcov(index)`) returns covariance among **log annual
+indices**; `scale = "response"` gives covariance in the reported units.
+The calculation uses the same reference population, random-effect target,
+and normalisation as the table. It never refits the model or simulates new
+observations. The diagonal of the response matrix matches `SD^2`.
+
+| Backend | Joint covariance calculation |
+| --- | --- |
+| GLM, GAM, glmmTMB | Delta method through the weighted annual response means; log-index gradients for log covariance. |
+| brms | Sample covariance of annual posterior expected-response draws; take logs of those same draws for log covariance. |
+| sdmTMB, tinyVAST | Sample covariance of joint Gaussian parameter/field simulations of the annual index; these are not MCMC draws. |
+
+Shared parameters and fields can correlate estimates in different years.
+This is not a residual autocorrelation estimate. A matrix cannot be recovered
+from marginal SDs alone; old saved summaries without covariance must be
+recalculated from their fitted models. `uncertainty = "none"` deliberately
+does not provide a matrix. Log covariance requires positive estimates and,
+for simulation methods, positive draws; values are not clipped to pass this
+check. A response-scale matrix can still exist when log covariance cannot.
+
+```{r index-joint-uncertainty, eval=has_glmmTMB}
+Sigma <- index_vcov(lobster_index, require_pd = TRUE)
+stopifnot(identical(rownames(Sigma), as.character(lobster_index$table$Year)))
+stopifnot(isTRUE(all.equal(
+  unname(diag(index_vcov(lobster_index, scale = "response"))),
+  lobster_index$table$SD^2
+)))
+
+# Select and order both dimensions together, then match the table to them.
+selected_years <- tail(lobster_index$table$Year, 5)
+selected_Sigma <- index_vcov(lobster_index, years = selected_years)
+selected_table <- index_table(lobster_index)[
+  match(rownames(selected_Sigma), lobster_index$table$Year), ]
+stopifnot(identical(selected_table$Year, rownames(selected_Sigma)))
+```
+
+```{r index-correlation, eval=has_glmmTMB, fig.cap="Correlation among the unscaled annual log CPUE indices. The off-diagonal cells preserve dependence from the shared fitted model; these are not correlations among observed responses or residuals. The full covariance, rather than this unitless display, is the assessment input."}
+plot(lobster_index, type = "correlation")
+```
+
+For a covariance display, use `plot(lobster_index, type = "covariance")`.
+The [main article](influ2.html#passing-annual-covariance-to-an-assessment)
+shows both and an example assessment-input bundle. Keeping estimated
+dependence is preferable to discarding it *when the joint uncertainty model
+is appropriate*, but it is not a guarantee of improved stock-status estimates.
+@Hoyle2024 discuss covariance propagation in index construction (Section 5.8)
+and the additional sources of uncertainty an assessment may need (Section 5.5).
+
+Retain `rescale = "raw"` for an assessment with an estimated catchability.
+Draw-wise geometric-mean normalisation removes a common level and makes
+the log covariance singular. The default extractor permits positive
+semidefinite matrices for inspection; `require_pd = TRUE` rejects a matrix
+that cannot safely be Cholesky-factorised. It never repairs eigenvalues or
+adds diagonal jitter. Too few draws or other model constraints can also
+produce rank deficiency.
+
+Area integration retains the same matrices. Multiplying by a known positive
+area or unit-conversion constant multiplies response covariance by its square
+and leaves log covariance unchanged. Reference-weight and catchability
+uncertainty, additional assessment process/error variance, and cross-series
+covariance between independently calculated objects are not supplied.
+For brms, the matrix summarises a posterior, not a prior-free likelihood;
+check prior reuse before treating it as new independent assessment evidence.
 
 ## A common reference population and relative scaling
 
@@ -182,7 +293,8 @@ not MCMC draws. The reported frequentist `Mean` is a plug-in expectation,
 with simulation-based uncertainty, **not a Laplace bias-corrected total**.
 Native `sdmTMB::get_index()` and `tinyVAST::integrate_output()` offer bias
 correction; agreement checks use their uncorrected estimates to compare the
-same calculation. The `Median` convention is unchanged pending display review.
+same calculation. Frequentist `Median` remains undefined in the full schema
+and is omitted from the default reporting table.
 
 All calculations use a fixed common reference domain in the observed years.
 They do not forecast or automatically supply year-varying environmental
@@ -233,7 +345,7 @@ gam_total <- integrate_index(gam_density, density_grid, area = "area_km2",
   area_units = "km^2", response_units = "kg/km^2", units = "kg")
 glm_total <- integrate_index(glm_density, density_grid, area = "area_km2",
   area_units = "km^2", response_units = "kg/km^2", units = "kg")
-knitr::kable(as.data.frame(gam_total), digits = 3)
+knitr::kable(index_table(gam_total), digits = 3)
 ```
 
 ```{r area-comparison, eval=has_mgcv, fig.cap="Area-integrated expected density over the same 100 km² domain, comparing a GAM with a spatial smooth against a GLM with a depth effect but no explicit spatial term. Both return totals in kg under the simulated density units. Pointwise 95% confidence intervals propagate joint coefficient uncertainty; they do not describe new catches or uncertainty in the difference between models."}
@@ -271,8 +383,11 @@ seasonal_total <- integrate_index(seasonal_model, quarter_grid,
   area_units = "km^2", response_units = "kg/km^2", units = "kg")
 ```
 
-Only the compact annual table is retained by default. Spatial and brms indices
+Only the compact annual table and covariance matrices are retained by default.
+Spatial and brms indices
 can retain annual draws with `retain = "draws"`; grid-by-draw arrays are not
 stored. Independent cell standard errors are never added together. All area,
 covariate, and seasonal weights are treated as known, and valid units, domain
 coverage, and extrapolation remain scientific decisions for the analyst.
+
+## References
