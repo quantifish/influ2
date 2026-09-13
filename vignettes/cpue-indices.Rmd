@@ -30,6 +30,11 @@ distribution, and link metadata. The result is an `influ_index` object;
 `index_table()` gives a reporting table, omitting an unavailable median by
 default. `as.data.frame()` retains the full, stable schema for existing code.
 
+For two regional series from one fitted model, see
+[Regional CPUE indices](regional-cpue.html). That worked example groups four
+statistical areas into two regions, holds reference weights fixed, and checks
+the annual uncertainty against native predictions.
+
 This is a different quantity from the centred **year-effect contrasts** in
 the influence and step plots. Both are useful, but neither is automatically
 an area-integrated abundance or biomass index.

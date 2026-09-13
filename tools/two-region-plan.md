@@ -1,13 +1,35 @@
 # Two regional CPUE series from one fitted model
 
-Planning only for issue #18, commissioned 10 September 2026. No regional
-model, new vignette, or regional API is implemented by this plan. Keep #18
-open until an executed example is approved and validated.
+## Implemented example: 14 September 2026
 
-**Parked by the maintainer on 11 September 2026.** Retain this plan for a
-later review; do not start the regional example or close #18. The immediate
-priority is collaboration with Nicholas Ducharme-Barth on his proposed
-residual-diagnostic work. Resume this item only when the maintainer asks.
+The maintainer explicitly resumed issue #18. `vignettes/regional-cpue.Rmd`
+now executes the bounded example below: 3,040 simulated observations across
+eight years and four areas, one NB2 ML glmmTMB interaction model, and two
+regional series. A second additive fit is used only as a counterexample.
+The original lobster data, existing runtime API, CRA5/BNS/PHC inputs, and
+frozen legacy material are unchanged. No new public function is needed.
+
+Six figures show sampling allocations, unscaled indices, known truth versus
+nominal and standardised CPUE, relative indices, a 75:25 weighting sensitivity,
+and coincident trends under a shared-year model. All have complete captions
+and use the site's shared numbering/lightbox machinery. The article exports
+regional assessment tables and **within-region** annual log covariance. It
+explicitly does not supply cross-region covariance or assume independent
+regional assessment likelihoods.
+
+The executed article checks weighted native response predictions and their
+joint covariance for both regions. Maximum differences are below 1e-8 on
+this Mac. `tests/testthat/test-regional-indices.R` adds an independent small
+fixture, native and analytic-gradient covariance checks, uneven reference
+weights, row permutations/splitting, batching, dropped factor levels,
+normalisation covariance, invalid-level/convergence/REML guards, plots, and
+the additive-model counterexample. All 45 new expectations pass locally.
+Full-suite, source-archive, website, and GitHub evidence is tracked separately
+in `release-review.md`; closure follows that review, not this record alone.
+
+## Original design (10 September; parked 11 September; resumed 14 September)
+
+The following plan is retained to explain the design and its boundaries.
 
 ## Scientific question
 

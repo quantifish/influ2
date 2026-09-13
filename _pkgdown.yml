@@ -20,6 +20,8 @@ navbar:
         href: articles/residual-validation.html
       - text: CPUE indices
         href: articles/cpue-indices.html
+      - text: Regional CPUE indices
+        href: articles/regional-cpue.html
       - text: Model comparison
         href: articles/model-comparison.html
       - text: Hurdle, delta, and zero-inflated models
@@ -40,6 +42,7 @@ articles:
   - residual-validation
   - influ2
   - cpue-indices
+  - regional-cpue
   - model-comparison
   - hurdle
   - spatial-spatiotemporal

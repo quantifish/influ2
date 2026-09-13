@@ -1,5 +1,13 @@
 # influ2 1.1.0
 
+* Added a worked Regional CPUE indices article (#18): one negative-binomial
+  glmmTMB model, four areas, and two fixed-reference regional series, using
+  the existing index API. It demonstrates interaction-supported trends,
+  known simulated truth, weight sensitivity, relative normalisation, and
+  assessment tables/covariance, with independent native-prediction checks.
+  Separate regional results do not supply cross-region covariance; the
+  article explicitly guards against interpreting them as independent.
+
 * Added `index_table()` for assessment reporting, including explicit
   moment-matched `Meanlog`, `SDlog`, and `LognormalMedian` columns. Reporting
   omits an unavailable median by default, while `as.data.frame()` preserves

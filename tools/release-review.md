@@ -5,6 +5,30 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Two regional CPUE series: 14 September 2026
+
+The maintainer resumed issue #18. The new `regional-cpue` article fits one
+NB2 ML glmmTMB model with year-by-area interactions, then calculates Region A
+(areas 1+2) and Region B (areas 3+4) using fixed area and covariate-profile
+weights. It reuses `cpue_index()`, `index_table()`, `index_vcov()`, and
+`plot_compare()` without changing runtime APIs or other examples' data.
+
+Six figures cover sample composition, two expected-response series, known
+simulation truth and nominal CPUE, relative normalisation, a 75:25 weighting
+sensitivity, and an additive shared-year counterexample. The last requires
+one separate demonstration fit; no model is refitted during extraction.
+The article has rendered successfully, including native response/covariance
+agreement for both regions (maximum discrepancy below 1e-8). All 45 new
+regression expectations pass. Ten local pages/92 plotted images pass shared
+caption/lightbox checks; the new figures were visually inspected.
+
+The scope is deliberately limited: zero vessel effects, not marginalisation;
+ML, not CRA5's REML/selective-effect workflow; within-region annual covariance,
+not cross-region covariance or independent regional assessment likelihoods.
+Known-truth agreement in one simulation is not a coverage study. Source-archive,
+full-suite, and remote publication checks are being completed before closure.
+Legacy review, broader N09 interpretation, and CRAN submission remain separate.
+
 ## Assessment tables and annual covariance: 13 September 2026
 
 The maintainer authorised issue #22 and the joint annual-index covariance
