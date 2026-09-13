@@ -640,9 +640,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10528749
+#>         spatial_field conditional:latent_fields                      0.10520110
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03084851
+#>  spatiotemporal_field conditional:latent_fields                      0.03150923
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -709,11 +709,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                       0.2437404
-#>  spatiotemporal_field conditional:latent_fields                       0.0515625
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.08243912
 #>  level_at_maximum
 #>                 4
-#>                 2
+#>                 4
 ```
 
 ``` r
@@ -1059,7 +1059,7 @@ lobster_cpue <- cpue_index(
   units = "lobsters per pot"
 )
 
-index_table <- as.data.frame(lobster_cpue)
+lobster_index_table <- index_table(lobster_cpue)
 ```
 
 Both `method = "standardised"` and `method = "standardized"` work. The
@@ -1067,40 +1067,44 @@ calculated result contains the familiar assessment columns, plus method,
 distribution, and link information. The reporting columns are shown
 below. `Mean` is the estimated expected CPUE, `SD` is its standard
 error, and `CV` is `SD / Mean`. `Qlower` and `Qupper` give the pointwise
-95% confidence interval. `Median` is missing for this frequentist fit;
-it is populated with the posterior median when using a complete brms
-fit. None of these uncertainty columns describes the variation among
-individual pot catches.
+95% confidence interval.
+[`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
+omits an unavailable `Median` column for this frequentist fit; it
+retains the genuine posterior median when using a complete brms fit.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) still
+provides the full schema, including missing medians, for code that
+depends on those columns. None of these uncertainty columns describes
+variation among individual observations.
 
 ``` r
 
 knitr::kable(
-  index_table[c("Year", "Mean", "Median", "SD", "CV", "Qlower", "Qupper")],
+  lobster_index_table[c("Year", "Mean", "SD", "CV", "Qlower", "Qupper")],
   digits = 3,
   caption = "Standardised lobster CPUE and uncertainty at the common reference profile."
 )
 ```
 
-| Year |  Mean | Median |    SD |    CV | Qlower | Qupper |
-|:-----|------:|-------:|------:|------:|-------:|-------:|
-| 2000 | 1.689 |     NA | 0.240 | 0.142 |  1.278 |  2.231 |
-| 2001 | 1.761 |     NA | 0.249 | 0.142 |  1.334 |  2.325 |
-| 2002 | 1.841 |     NA | 0.257 | 0.139 |  1.401 |  2.420 |
-| 2003 | 1.401 |     NA | 0.191 | 0.136 |  1.073 |  1.830 |
-| 2004 | 1.586 |     NA | 0.216 | 0.136 |  1.215 |  2.070 |
-| 2005 | 1.318 |     NA | 0.186 | 0.141 |  0.999 |  1.739 |
-| 2006 | 1.167 |     NA | 0.158 | 0.136 |  0.895 |  1.522 |
-| 2007 | 1.192 |     NA | 0.162 | 0.136 |  0.914 |  1.555 |
-| 2008 | 1.183 |     NA | 0.165 | 0.139 |  0.900 |  1.554 |
-| 2009 | 1.134 |     NA | 0.158 | 0.140 |  0.862 |  1.490 |
-| 2010 | 1.230 |     NA | 0.168 | 0.137 |  0.940 |  1.608 |
-| 2011 | 1.390 |     NA | 0.190 | 0.136 |  1.064 |  1.816 |
-| 2012 | 1.217 |     NA | 0.170 | 0.140 |  0.925 |  1.601 |
-| 2013 | 1.369 |     NA | 0.186 | 0.136 |  1.049 |  1.788 |
-| 2014 | 1.258 |     NA | 0.170 | 0.135 |  0.965 |  1.640 |
-| 2015 | 1.059 |     NA | 0.145 | 0.137 |  0.810 |  1.384 |
-| 2016 | 1.090 |     NA | 0.147 | 0.135 |  0.837 |  1.420 |
-| 2017 | 1.113 |     NA | 0.152 | 0.137 |  0.851 |  1.455 |
+| Year |  Mean |    SD |    CV | Qlower | Qupper |
+|:-----|------:|------:|------:|-------:|-------:|
+| 2000 | 1.689 | 0.240 | 0.142 |  1.278 |  2.231 |
+| 2001 | 1.761 | 0.249 | 0.142 |  1.334 |  2.325 |
+| 2002 | 1.841 | 0.257 | 0.139 |  1.401 |  2.420 |
+| 2003 | 1.401 | 0.191 | 0.136 |  1.073 |  1.830 |
+| 2004 | 1.586 | 0.216 | 0.136 |  1.215 |  2.070 |
+| 2005 | 1.318 | 0.186 | 0.141 |  0.999 |  1.739 |
+| 2006 | 1.167 | 0.158 | 0.136 |  0.895 |  1.522 |
+| 2007 | 1.192 | 0.162 | 0.136 |  0.914 |  1.555 |
+| 2008 | 1.183 | 0.165 | 0.139 |  0.900 |  1.554 |
+| 2009 | 1.134 | 0.158 | 0.140 |  0.862 |  1.490 |
+| 2010 | 1.230 | 0.168 | 0.137 |  0.940 |  1.608 |
+| 2011 | 1.390 | 0.190 | 0.136 |  1.064 |  1.816 |
+| 2012 | 1.217 | 0.170 | 0.140 |  0.925 |  1.601 |
+| 2013 | 1.369 | 0.186 | 0.136 |  1.049 |  1.788 |
+| 2014 | 1.258 | 0.170 | 0.135 |  0.965 |  1.640 |
+| 2015 | 1.059 | 0.145 | 0.137 |  0.810 |  1.384 |
+| 2016 | 1.090 | 0.147 | 0.135 |  0.837 |  1.420 |
+| 2017 | 1.113 | 0.152 | 0.137 |  0.851 |  1.455 |
 
 Standardised lobster CPUE and uncertainty at the common reference
 profile. {.table}
@@ -1161,6 +1165,193 @@ article](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.htm
 for sdmTMB and tinyVAST response indices and totals. Area integration
 does not automatically convert CPUE into absolute biomass; compatible
 density units or an explicit catchability conversion are required.
+
+### Passing annual covariance to an assessment
+
+Annual estimates from one fitted model can share uncertainty through
+common coefficients, smooths, or latent effects. Passing only their SDs
+loses that dependence.
+[`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)
+retrieves the **annual-index** variance–covariance matrix, not the much
+larger model-coefficient matrix. It works for the same six backends as
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+and
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md).
+
+``` r
+
+Sigma_log <- index_vcov(lobster_cpue, scale = "log", require_pd = TRUE)
+Sigma_response <- index_vcov(lobster_cpue, scale = "response")
+stopifnot(identical(rownames(Sigma_log), lobster_index_table$Year))
+
+assessment_table <- data.frame(
+  Year = lobster_index_table$Year,
+  Index = lobster_index_table$Mean,
+  LogIndex = log(lobster_index_table$Mean),
+  SElog = sqrt(diag(Sigma_log)),
+  row.names = NULL
+)
+knitr::kable(assessment_table, digits = 3,
+  caption = "Unscaled annual indices and log-scale standard errors from their joint covariance. The complete matrix, not just SElog, accompanies this table.")
+```
+
+| Year | Index | LogIndex | SElog |
+|:-----|------:|---------:|------:|
+| 2000 | 1.689 |    0.524 | 0.142 |
+| 2001 | 1.761 |    0.566 | 0.142 |
+| 2002 | 1.841 |    0.610 | 0.139 |
+| 2003 | 1.401 |    0.337 | 0.136 |
+| 2004 | 1.586 |    0.461 | 0.136 |
+| 2005 | 1.318 |    0.276 | 0.141 |
+| 2006 | 1.167 |    0.154 | 0.136 |
+| 2007 | 1.192 |    0.176 | 0.136 |
+| 2008 | 1.183 |    0.168 | 0.139 |
+| 2009 | 1.134 |    0.125 | 0.140 |
+| 2010 | 1.230 |    0.207 | 0.137 |
+| 2011 | 1.390 |    0.329 | 0.136 |
+| 2012 | 1.217 |    0.196 | 0.140 |
+| 2013 | 1.369 |    0.314 | 0.136 |
+| 2014 | 1.258 |    0.229 | 0.135 |
+| 2015 | 1.059 |    0.057 | 0.137 |
+| 2016 | 1.090 |    0.086 | 0.135 |
+| 2017 | 1.113 |    0.107 | 0.137 |
+
+Unscaled annual indices and log-scale standard errors from their joint
+covariance. The complete matrix, not just SElog, accompanies this table.
+{.table}
+
+Here `LogIndex` is the log of the fitted expected-response estimate. It
+is not a posterior mean of log indices or a bias-corrected estimate. The
+diagonal of `Sigma_log` contains log-index variances; the off-diagonal
+entries describe covariance between annual estimation errors.
+Correlation rescales those entries and is often easier to read.
+
+``` r
+
+patchwork::wrap_plots(
+  plot(lobster_cpue, type = "covariance") + labs(subtitle = NULL),
+  plot(lobster_cpue, type = "correlation") + labs(subtitle = NULL),
+  nrow = 1
+)
+```
+
+![Two year-by-year heatmaps of log-index covariance and correlation from
+the lobster glmmTMB
+model.](influ2_files/figure-html/lobster-assessment-matrices-1.png)
+
+Annual log-index covariance (left) and correlation (right) for the same
+standardised lobster index. Each cell relates a pair of annual
+estimates; diagonal cells describe each year itself. The matrices retain
+common fitted-parameter uncertainty and are not residual autocorrelation
+estimates. Indices are unscaled, with the same reference profile and
+zero-month-effect convention as the preceding table.
+
+A possible assessment likelihood relates this vector to expected
+abundance through a catchability parameter:
+
+``` math
+  \log \widehat{\boldsymbol I}
+  \mathrel{\dot\sim}
+  \mathrm{MVN}\!\left(\log q + \log \boldsymbol B,\,
+    \boldsymbol\Sigma_{\mathrm{CPUE}} + \boldsymbol\Sigma_{\mathrm{extra}}\right).
+```
+
+This is a modelling choice and an approximation, not an assessment
+fitted by influ2. Replacing the full covariance by its diagonal assumes
+independent annual estimation errors. Keeping the off-diagonal entries
+preserves their estimated dependence, including uncertainty in
+year-to-year contrasts. It can increase or decrease uncertainty in
+particular contrasts; it does **not** guarantee narrower intervals, a
+changed stock-status estimate, or removal of bias. Hoyle et al.
+([2024](#ref-Hoyle2024)) emphasise covariance propagation when
+aggregating predictions (Section 5.8) and distinguish index estimation
+error from additional catchability/process variation (Section 5.5). The
+matrix supplies the former; the assessment must justify any additional
+error model separately.
+
+Use the default `rescale = "raw"` for this workflow when the assessment
+estimates catchability. Dividing every uncertain annual series by its
+own geometric mean removes a common log-level and makes the full log
+covariance singular. `require_pd = TRUE` catches this; influ2 does not
+add jitter to make it invertible. A contrast-based likelihood is another
+deliberate assessment design, not something to obtain by silently
+dropping a year. A single known unit conversion, in contrast, leaves log
+covariance unchanged.
+
+Keep the table and both axes of the matrix in exactly the same year
+order. The following bundle is ready to save with
+[`saveRDS()`](https://rdrr.io/r/base/readRDS.html) and inspect in the
+assessment project; it retains neither the CPUE model nor its posterior
+draws.
+
+``` r
+
+assessment_input <- list(
+  table = assessment_table,
+  log_covariance = Sigma_log,
+  response_covariance = Sigma_response,
+  definition = lobster_cpue$metadata
+)
+```
+
+For a subset, use `index_vcov(lobster_cpue, years = selected_years)` and
+match the table to those same labels. Separate index objects do not
+imply zero cross-series covariance: combining regions or reporting
+systems still needs an explicit dependence assumption. For brms, this is
+posterior covariance, not a prior-free likelihood; a two-stage
+assessment must consider the first model’s priors rather than count that
+information twice.
+
+### Marginal lognormal table parameters
+
+For an assessment that instead requires one lognormal distribution per
+year, `index_table(..., format = "lognormal")` adds `Meanlog`, `SDlog`,
+and `LognormalMedian`, calculated from `Mean` and `SD`. These are
+explicitly **moment-matched approximations to index uncertainty**, not
+the distribution of the observed response and not replacements for
+genuine posterior medians.
+
+``` r
+
+lognormal_table <- index_table(lobster_cpue, format = "lognormal")
+knitr::kable(
+  lognormal_table[c("Year", "Meanlog", "SDlog", "LognormalMedian")],
+  digits = 3,
+  caption = "Marginal lognormal approximations to the standardised index uncertainty. These are an alternative assessment-table convention, not the joint matrix's log-scale parameters."
+)
+```
+
+| Year | Meanlog | SDlog | LognormalMedian |
+|:-----|--------:|------:|----------------:|
+| 2000 |   0.514 | 0.141 |           1.672 |
+| 2001 |   0.556 | 0.141 |           1.744 |
+| 2002 |   0.601 | 0.139 |           1.824 |
+| 2003 |   0.328 | 0.136 |           1.388 |
+| 2004 |   0.452 | 0.135 |           1.572 |
+| 2005 |   0.266 | 0.141 |           1.305 |
+| 2006 |   0.145 | 0.135 |           1.156 |
+| 2007 |   0.167 | 0.135 |           1.181 |
+| 2008 |   0.158 | 0.139 |           1.172 |
+| 2009 |   0.116 | 0.139 |           1.123 |
+| 2010 |   0.197 | 0.136 |           1.218 |
+| 2011 |   0.320 | 0.136 |           1.377 |
+| 2012 |   0.186 | 0.139 |           1.205 |
+| 2013 |   0.305 | 0.135 |           1.357 |
+| 2014 |   0.220 | 0.135 |           1.246 |
+| 2015 |   0.048 | 0.136 |           1.049 |
+| 2016 |   0.077 | 0.134 |           1.081 |
+| 2017 |   0.098 | 0.136 |           1.103 |
+
+Marginal lognormal approximations to the standardised index uncertainty.
+These are an alternative assessment-table convention, not the joint
+matrix’s log-scale parameters. {.table}
+
+In general, `Meanlog` differs from `log(Mean)`, and `SDlog` differs from
+`sqrt(diag(Sigma_log))`. Do not combine these marginal SDs with the
+matrix’s correlations without explicitly choosing a different
+uncertainty model. The [CPUE indices
+article](https://www.quantifish.co.nz/influ2/articles/cpue-indices.html#lognormal-assessment-parameters)
+gives the formulae, calculation sources, and safeguards.
 
 ## One interface and compact uncertainty
 
@@ -1373,14 +1564,14 @@ library(influ2)
 # result_file <- "lobster-results.rds"
 restored_results <- readRDS(result_file)
 
-head(as.data.frame(restored_results$index))
-#>   Year     Mean Median        SD        CV    Qlower   Qupper       Method
-#> 1 2000 1.688662     NA 0.2399914 0.1421192 1.2781173 2.231079 standardised
-#> 2 2001 1.761248     NA 0.2494645 0.1416407 1.3343068 2.324799 standardised
-#> 3 2002 1.841306     NA 0.2566028 0.1393591 1.4012104 2.419629 standardised
-#> 4 2003 1.400957     NA 0.1908672 0.1362406 1.0726465 1.829755 standardised
-#> 5 2004 1.585962     NA 0.2156039 0.1359452 1.2149997 2.070187 standardised
-#> 6 2005 1.317816     NA 0.1864175 0.1414594 0.9987212 1.738863 standardised
+head(index_table(restored_results$index))
+#>   Year     Mean        SD        CV    Qlower   Qupper       Method
+#> 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised
+#> 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised
+#> 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised
+#> 4 2003 1.400957 0.1908672 0.1362406 1.0726465 1.829755 standardised
+#> 5 2004 1.585962 0.2156039 0.1359452 1.2149996 2.070187 standardised
+#> 6 2005 1.317816 0.1864175 0.1414594 0.9987212 1.738863 standardised
 #>   Distribution Link
 #> 1      nbinom2  log
 #> 2      nbinom2  log
@@ -1511,6 +1702,11 @@ Dragonfly Science. n.d. *CPUETools*.
 
 Dunn, Alistair. 2025. *gamInflu: Influence Analysis for Generalized
 Additive Models*. <https://github.com/alistairdunn1/gamInflu>.
+
+Hoyle, Simon D., Robert A. Campbell, Nicholas D. Ducharme-Barth, et al.
+2024. “Catch Per Unit Effort Modelling for Stock Assessment: A Summary
+of Good Practices.” *Fisheries Research* 269: 106860.
+<https://doi.org/10.1016/j.fishres.2023.106860>.
 
 Hsu, Jhen, Yi-Jay Chang, and Nicholas D. Ducharme-Barth. 2022.
 “Evaluation of the Influence of Spatial Treatments on

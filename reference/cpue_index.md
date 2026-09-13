@@ -143,10 +143,11 @@ print(x, ...)
 
 ## Value
 
-An S3 `influ_index` object containing `table`, `metadata`, and optional
-`draws`. [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
-returns the assessment table with `Year`, `Mean`, `Median`, `SD`, `CV`,
-`Qlower`, `Qupper`, `Method`, `Distribution`, and `Link`.
+An S3 `influ_index` object containing `table`, `metadata`, compact
+`covariance`, and optional `draws`.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) returns
+the full table with `Year`, `Mean`, `Median`, `SD`, `CV`, `Qlower`,
+`Qupper`, `Method`, `Distribution`, and `Link`.
 
 ## Details
 
@@ -185,18 +186,23 @@ does not replace joint predictions with predictions at posterior-mean
 coefficients.
 
 Working storage is bounded by reference and draw batches plus a compact
-annual covariance or draw matrix. Native prediction code can allocate
-additional memory. The result does not retain the model or reference
-data. Spatial response estimates evaluate the fitted model at the
-reference locations in each observed year. sdmTMB IID group effects are
-set to zero; tinyVAST non-spatial temporal effects and smooths remain as
-fitted. Joint fixed/latent Gaussian draws propagate field and parameter
-uncertainty, with empirical pointwise intervals. `Mean` remains the
-plug-in expected response and `Median` remains unavailable for these
-frequentist models. This is not a Laplace bias-corrected index or
-integration over a new population of random effects. Grid predictions
-are immediately reduced to annual values; a grid-by-draw array is never
-retained. Use
+annual covariance or draw matrix. The result retains response-scale and,
+when defined, log-index covariance matrices even with
+`retain = "summary"`. Use
+[`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)
+to extract them and
+[`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
+for reporting. Native prediction code can allocate additional memory.
+The result does not retain the model or reference data. Spatial response
+estimates evaluate the fitted model at the reference locations in each
+observed year. sdmTMB IID group effects are set to zero; tinyVAST
+non-spatial temporal effects and smooths remain as fitted. Joint
+fixed/latent Gaussian draws propagate field and parameter uncertainty,
+with empirical pointwise intervals. `Mean` remains the plug-in expected
+response and `Median` remains unavailable for these frequentist models.
+This is not a Laplace bias-corrected index or integration over a new
+population of random effects. Grid predictions are immediately reduced
+to annual values; a grid-by-draw array is never retained. Use
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
 for area-weighted totals, which have different units. Year-effect
 results preserve the original diagnostic estimand and cannot be rescaled
@@ -204,6 +210,8 @@ by this function. These indices are not biomass estimates.
 
 ## See also
 
+[`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md),
+[`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md),
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md),
 [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md),
 [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md),

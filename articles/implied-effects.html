@@ -270,7 +270,7 @@ fixed-effect fit with a mixed model.</p>
 <span>    std_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">standardised</span><span class="op">[</span><span class="va">keep</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">keep</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">estimate</span> <span class="op">-</span> <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">estimate</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.110223e-16</span></span>
+<span><span class="co">#&gt; [1] 2.220446e-16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">estimate</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">std_error</span>, <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">std_error</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -315,19 +315,19 @@ means by <code>exp(delta)</code>.</p>
 <span><span class="va">nb_implied</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">nb_fit</span>, groups <span class="op">=</span> <span class="st">"season"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">nb_implied</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   level        group   n    baseline  adjustment    estimate  std_error</span></span>
-<span><span class="co">#&gt; 1  2000 Early season 153  0.23187513  0.19752093  0.42939606 0.05137036</span></span>
-<span><span class="co">#&gt; 2  2001 Early season 143  0.21491857  0.12104119  0.33595976 0.05376133</span></span>
-<span><span class="co">#&gt; 3  2002 Early season 154  0.17412706  0.18936452  0.36349158 0.05169645</span></span>
-<span><span class="co">#&gt; 4  2003 Early season 160  0.09752276  0.13935863  0.23688140 0.05120521</span></span>
-<span><span class="co">#&gt; 5  2004 Early season  90 -0.06401782  0.13669585  0.07267802 0.06914226</span></span>
-<span><span class="co">#&gt; 6  2005 Early season  67 -0.13942676 -0.02277388 -0.16220063 0.08505897</span></span>
-<span><span class="co">#&gt;        lower      upper status</span></span>
-<span><span class="co">#&gt; 1  0.3296594 0.53107317     ok</span></span>
-<span><span class="co">#&gt; 2  0.2315614 0.44235340     ok</span></span>
-<span><span class="co">#&gt; 3  0.2630781 0.46577037     ok</span></span>
-<span><span class="co">#&gt; 4  0.1373659 0.33813076     ok</span></span>
-<span><span class="co">#&gt; 5 -0.0614247 0.20971555     ok</span></span>
-<span><span class="co">#&gt; 6 -0.3275419 0.00607389     ok</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  2000 Early season 153  0.23187481  0.19752139  0.42939619 0.05137036</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143  0.21491937  0.12104052  0.33595989 0.05376133</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154  0.17412683  0.18936487  0.36349170 0.05169645</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160  0.09752318  0.13935836  0.23688154 0.05120520</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90 -0.06401734  0.13669553  0.07267819 0.06914226</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67 -0.13942674 -0.02277379 -0.16220053 0.08505896</span></span>
+<span><span class="co">#&gt;         lower      upper status</span></span>
+<span><span class="co">#&gt; 1  0.32965956 0.53107330     ok</span></span>
+<span><span class="co">#&gt; 2  0.23156150 0.44235353     ok</span></span>
+<span><span class="co">#&gt; 3  0.26307818 0.46577048     ok</span></span>
+<span><span class="co">#&gt; 4  0.13736603 0.33813090     ok</span></span>
+<span><span class="co">#&gt; 5 -0.06142452 0.20971571     ok</span></span>
+<span><span class="co">#&gt; 6 -0.32754176 0.00607398     ok</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">nb_implied</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">

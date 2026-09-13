@@ -7,8 +7,10 @@ calculates the expected response for a fixed reference population in
 every year. It produces the familiar assessment columns: `Year`, `Mean`,
 `Median`, `SD`, `CV`, `Qlower`, and `Qupper`, alongside method,
 distribution, and link metadata. The result is an `influ_index` object;
-[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) gives the
-table for reporting or CSV export.
+[`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
+gives a reporting table, omitting an unavailable median by default.
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) retains
+the full, stable schema for existing code.
 
 This is a different quantity from the centred **year-effect contrasts**
 in the influence and step plots. Both are useful, but neither is
@@ -54,29 +56,29 @@ lobster_index <- cpue_index(
   lobster_model, year = "year", method = "standardised",
   reference_data = reference, units = "lobsters per pot"
 )
-knitr::kable(as.data.frame(lobster_index), digits = 3)
+knitr::kable(index_table(lobster_index), digits = 3)
 ```
 
-| Year |  Mean | Median |    SD |    CV | Qlower | Qupper | Method       | Distribution | Link |
-|:-----|------:|-------:|------:|------:|-------:|-------:|:-------------|:-------------|:-----|
-| 2000 | 1.674 |     NA | 0.238 | 0.142 |  1.267 |  2.212 | standardised | nbinom2      | log  |
-| 2001 | 1.744 |     NA | 0.247 | 0.142 |  1.321 |  2.303 | standardised | nbinom2      | log  |
-| 2002 | 1.815 |     NA | 0.254 | 0.140 |  1.380 |  2.387 | standardised | nbinom2      | log  |
-| 2003 | 1.387 |     NA | 0.189 | 0.136 |  1.062 |  1.812 | standardised | nbinom2      | log  |
-| 2004 | 1.572 |     NA | 0.214 | 0.136 |  1.204 |  2.053 | standardised | nbinom2      | log  |
-| 2005 | 1.310 |     NA | 0.185 | 0.141 |  0.993 |  1.729 | standardised | nbinom2      | log  |
-| 2006 | 1.167 |     NA | 0.158 | 0.136 |  0.895 |  1.522 | standardised | nbinom2      | log  |
-| 2007 | 1.184 |     NA | 0.161 | 0.136 |  0.907 |  1.545 | standardised | nbinom2      | log  |
-| 2008 | 1.172 |     NA | 0.164 | 0.140 |  0.891 |  1.541 | standardised | nbinom2      | log  |
-| 2009 | 1.123 |     NA | 0.157 | 0.140 |  0.853 |  1.477 | standardised | nbinom2      | log  |
-| 2010 | 1.219 |     NA | 0.167 | 0.137 |  0.932 |  1.595 | standardised | nbinom2      | log  |
-| 2011 | 1.379 |     NA | 0.189 | 0.137 |  1.055 |  1.803 | standardised | nbinom2      | log  |
-| 2012 | 1.214 |     NA | 0.170 | 0.140 |  0.922 |  1.598 | standardised | nbinom2      | log  |
-| 2013 | 1.372 |     NA | 0.187 | 0.136 |  1.050 |  1.792 | standardised | nbinom2      | log  |
-| 2014 | 1.259 |     NA | 0.171 | 0.136 |  0.965 |  1.642 | standardised | nbinom2      | log  |
-| 2015 | 1.067 |     NA | 0.146 | 0.137 |  0.816 |  1.395 | standardised | nbinom2      | log  |
-| 2016 | 1.094 |     NA | 0.148 | 0.135 |  0.840 |  1.426 | standardised | nbinom2      | log  |
-| 2017 | 1.118 |     NA | 0.153 | 0.137 |  0.855 |  1.462 | standardised | nbinom2      | log  |
+| Year |  Mean |    SD |    CV | Qlower | Qupper | Method       | Distribution | Link |
+|:-----|------:|------:|------:|-------:|-------:|:-------------|:-------------|:-----|
+| 2000 | 1.674 | 0.238 | 0.142 |  1.267 |  2.212 | standardised | nbinom2      | log  |
+| 2001 | 1.744 | 0.247 | 0.142 |  1.321 |  2.303 | standardised | nbinom2      | log  |
+| 2002 | 1.815 | 0.254 | 0.140 |  1.380 |  2.387 | standardised | nbinom2      | log  |
+| 2003 | 1.387 | 0.189 | 0.136 |  1.062 |  1.812 | standardised | nbinom2      | log  |
+| 2004 | 1.572 | 0.214 | 0.136 |  1.204 |  2.053 | standardised | nbinom2      | log  |
+| 2005 | 1.310 | 0.185 | 0.141 |  0.993 |  1.729 | standardised | nbinom2      | log  |
+| 2006 | 1.167 | 0.158 | 0.136 |  0.895 |  1.522 | standardised | nbinom2      | log  |
+| 2007 | 1.184 | 0.161 | 0.136 |  0.907 |  1.545 | standardised | nbinom2      | log  |
+| 2008 | 1.172 | 0.164 | 0.140 |  0.891 |  1.541 | standardised | nbinom2      | log  |
+| 2009 | 1.123 | 0.157 | 0.140 |  0.853 |  1.477 | standardised | nbinom2      | log  |
+| 2010 | 1.219 | 0.167 | 0.137 |  0.932 |  1.595 | standardised | nbinom2      | log  |
+| 2011 | 1.379 | 0.189 | 0.137 |  1.055 |  1.803 | standardised | nbinom2      | log  |
+| 2012 | 1.214 | 0.170 | 0.140 |  0.922 |  1.598 | standardised | nbinom2      | log  |
+| 2013 | 1.372 | 0.187 | 0.136 |  1.051 |  1.792 | standardised | nbinom2      | log  |
+| 2014 | 1.259 | 0.171 | 0.136 |  0.965 |  1.642 | standardised | nbinom2      | log  |
+| 2015 | 1.067 | 0.146 | 0.137 |  0.816 |  1.395 | standardised | nbinom2      | log  |
+| 2016 | 1.094 | 0.148 | 0.135 |  0.840 |  1.426 | standardised | nbinom2      | log  |
+| 2017 | 1.118 | 0.153 | 0.137 |  0.855 |  1.462 | standardised | nbinom2      | log  |
 
 `method = "standardized"` works identically. There is no need to refit a
 model when printing, exporting, or plotting this result.
@@ -125,17 +127,171 @@ as.data.frame(bayesian_index)
 ```
 
 Prediction batches preserve the same draw identities across years and
-reference rows. Only the annual summaries are retained by default.
-Setting `retain = "draws"` retains a draw-by-year matrix, not the much
-larger reference-row-by-draw prediction matrix. The fitted model and
-reference data are not embedded in the output object. Native prediction
-routines can still allocate their own working memory.
+reference rows. Only the annual summaries and their two small covariance
+matrices are retained by default. Setting `retain = "draws"` retains a
+draw-by-year matrix, not the much larger reference-row-by-draw
+prediction matrix. The fitted model and reference data are not embedded
+in the output object. Native prediction routines can still allocate
+their own working memory.
 
 `uncertainty = "none"` omits uncertainty summaries. For frequentist
 models this also avoids covariance propagation. For brms it still
 averages existing posterior expected-response draws, so it is not a
 shortcut that substitutes posterior-mean coefficients and changes the
 quantity being estimated.
+
+## Lognormal assessment parameters
+
+Some assessments accept an index median and a log-scale SD, whereas
+others accept an arithmetic mean and CV.
+`index_table(index, format = "lognormal")` provides an explicit marginal
+lognormal approximation from the index’s `Mean` and `SD`:
+
+``` math
+  s^2 = \log(1 + (\mathrm{SD}/\mathrm{Mean})^2),\qquad
+  m = \log(\mathrm{Mean}) - s^2/2.
+```
+
+The additional columns are `Meanlog = m`, `SDlog = s`, and
+`LognormalMedian = exp(m)`. Substituting them into the usual lognormal
+moment formulae recovers the input mean and variance. They describe
+**uncertainty in the annual index**, not the distribution or residual
+dispersion of the fitted response. A negative-binomial CPUE model can
+therefore supply a lognormal assessment approximation without becoming a
+lognormal response model.
+
+``` r
+
+assessment_marginals <- index_table(lobster_index, format = "lognormal")
+knitr::kable(assessment_marginals[c("Year", "Mean", "SD", "CV",
+  "Meanlog", "SDlog", "LognormalMedian")], digits = 3)
+```
+
+| Year |  Mean |    SD |    CV | Meanlog | SDlog | LognormalMedian |
+|:-----|------:|------:|------:|--------:|------:|----------------:|
+| 2000 | 1.674 | 0.238 | 0.142 |   0.505 | 0.142 |           1.657 |
+| 2001 | 1.744 | 0.247 | 0.142 |   0.546 | 0.141 |           1.727 |
+| 2002 | 1.815 | 0.254 | 0.140 |   0.586 | 0.139 |           1.798 |
+| 2003 | 1.387 | 0.189 | 0.136 |   0.318 | 0.136 |           1.374 |
+| 2004 | 1.572 | 0.214 | 0.136 |   0.443 | 0.136 |           1.557 |
+| 2005 | 1.310 | 0.185 | 0.141 |   0.260 | 0.141 |           1.297 |
+| 2006 | 1.167 | 0.158 | 0.136 |   0.146 | 0.135 |           1.157 |
+| 2007 | 1.184 | 0.161 | 0.136 |   0.159 | 0.135 |           1.173 |
+| 2008 | 1.172 | 0.164 | 0.140 |   0.149 | 0.139 |           1.160 |
+| 2009 | 1.123 | 0.157 | 0.140 |   0.106 | 0.139 |           1.112 |
+| 2010 | 1.219 | 0.167 | 0.137 |   0.189 | 0.136 |           1.208 |
+| 2011 | 1.379 | 0.189 | 0.137 |   0.312 | 0.136 |           1.366 |
+| 2012 | 1.214 | 0.170 | 0.140 |   0.184 | 0.139 |           1.202 |
+| 2013 | 1.372 | 0.187 | 0.136 |   0.307 | 0.136 |           1.359 |
+| 2014 | 1.259 | 0.171 | 0.136 |   0.221 | 0.135 |           1.247 |
+| 2015 | 1.067 | 0.146 | 0.137 |   0.056 | 0.136 |           1.057 |
+| 2016 | 1.094 | 0.148 | 0.135 |   0.081 | 0.134 |           1.084 |
+| 2017 | 1.118 | 0.153 | 0.137 |   0.103 | 0.136 |           1.108 |
+
+``` r
+
+stopifnot(isTRUE(all.equal(
+  exp(assessment_marginals$Meanlog + assessment_marginals$SDlog^2 / 2),
+  assessment_marginals$Mean
+)))
+```
+
+An actual posterior `Median`, where available, is preserved separately;
+it is not overwritten by `LognormalMedian`. Frequentist reporting omits
+the missing `Median` by default, while `include_median = "always"`
+retains that column. This resolves the empty-column presentation without
+inventing posterior summaries. Non-positive means, invalid SDs, preview
+results, and year-effect contrasts cannot produce this lognormal table.
+
+The moment-matched `Meanlog` is not `log(Mean)`. Similarly, `SDlog` is
+not generally the log-index SE from the joint calculation below. Choose
+the assessment likelihood’s convention explicitly: do not silently
+substitute one centre or uncertainty measure for the other.
+
+## Joint annual uncertainty
+
+`index_vcov(index)` (or `vcov(index)`) returns covariance among **log
+annual indices**; `scale = "response"` gives covariance in the reported
+units. The calculation uses the same reference population, random-effect
+target, and normalisation as the table. It never refits the model or
+simulates new observations. The diagonal of the response matrix matches
+`SD^2`.
+
+| Backend | Joint covariance calculation |
+|----|----|
+| GLM, GAM, glmmTMB | Delta method through the weighted annual response means; log-index gradients for log covariance. |
+| brms | Sample covariance of annual posterior expected-response draws; take logs of those same draws for log covariance. |
+| sdmTMB, tinyVAST | Sample covariance of joint Gaussian parameter/field simulations of the annual index; these are not MCMC draws. |
+
+Shared parameters and fields can correlate estimates in different years.
+This is not a residual autocorrelation estimate. A matrix cannot be
+recovered from marginal SDs alone; old saved summaries without
+covariance must be recalculated from their fitted models.
+`uncertainty = "none"` deliberately does not provide a matrix. Log
+covariance requires positive estimates and, for simulation methods,
+positive draws; values are not clipped to pass this check. A
+response-scale matrix can still exist when log covariance cannot.
+
+``` r
+
+Sigma <- index_vcov(lobster_index, require_pd = TRUE)
+stopifnot(identical(rownames(Sigma), as.character(lobster_index$table$Year)))
+stopifnot(isTRUE(all.equal(
+  unname(diag(index_vcov(lobster_index, scale = "response"))),
+  lobster_index$table$SD^2
+)))
+
+# Select and order both dimensions together, then match the table to them.
+selected_years <- tail(lobster_index$table$Year, 5)
+selected_Sigma <- index_vcov(lobster_index, years = selected_years)
+selected_table <- index_table(lobster_index)[
+  match(rownames(selected_Sigma), lobster_index$table$Year), ]
+stopifnot(identical(selected_table$Year, rownames(selected_Sigma)))
+```
+
+``` r
+
+plot(lobster_index, type = "correlation")
+```
+
+![Correlation among the unscaled annual log CPUE indices. The
+off-diagonal cells preserve dependence from the shared fitted model;
+these are not correlations among observed responses or residuals. The
+full covariance, rather than this unitless display, is the assessment
+input.](cpue-indices_files/figure-html/index-correlation-1.png)
+
+Correlation among the unscaled annual log CPUE indices. The off-diagonal
+cells preserve dependence from the shared fitted model; these are not
+correlations among observed responses or residuals. The full covariance,
+rather than this unitless display, is the assessment input.
+
+For a covariance display, use
+`plot(lobster_index, type = "covariance")`. The [main
+article](https://www.quantifish.co.nz/influ2/articles/influ2.html#passing-annual-covariance-to-an-assessment)
+shows both and an example assessment-input bundle. Keeping estimated
+dependence is preferable to discarding it *when the joint uncertainty
+model is appropriate*, but it is not a guarantee of improved
+stock-status estimates. Hoyle et al. ([2024](#ref-Hoyle2024)) discuss
+covariance propagation in index construction (Section 5.8) and the
+additional sources of uncertainty an assessment may need (Section 5.5).
+
+Retain `rescale = "raw"` for an assessment with an estimated
+catchability. Draw-wise geometric-mean normalisation removes a common
+level and makes the log covariance singular. The default extractor
+permits positive semidefinite matrices for inspection;
+`require_pd = TRUE` rejects a matrix that cannot safely be
+Cholesky-factorised. It never repairs eigenvalues or adds diagonal
+jitter. Too few draws or other model constraints can also produce rank
+deficiency.
+
+Area integration retains the same matrices. Multiplying by a known
+positive area or unit-conversion constant multiplies response covariance
+by its square and leaves log covariance unchanged. Reference-weight and
+catchability uncertainty, additional assessment process/error variance,
+and cross-series covariance between independently calculated objects are
+not supplied. For brms, the matrix summarises a posterior, not a
+prior-free likelihood; check prior reuse before treating it as new
+independent assessment evidence.
 
 ## A common reference population and relative scaling
 
@@ -238,8 +394,8 @@ bias-corrected total**. Native
 and
 [`tinyVAST::integrate_output()`](https://vast-lib.github.io/tinyVAST/reference/integrate_output.html)
 offer bias correction; agreement checks use their uncorrected estimates
-to compare the same calculation. The `Median` convention is unchanged
-pending display review.
+to compare the same calculation. Frequentist `Median` remains undefined
+in the full schema and is omitted from the default reporting table.
 
 All calculations use a fixed common reference domain in the observed
 years. They do not forecast or automatically supply year-varying
@@ -295,17 +451,17 @@ gam_total <- integrate_index(gam_density, density_grid, area = "area_km2",
   area_units = "km^2", response_units = "kg/km^2", units = "kg")
 glm_total <- integrate_index(glm_density, density_grid, area = "area_km2",
   area_units = "km^2", response_units = "kg/km^2", units = "kg")
-knitr::kable(as.data.frame(gam_total), digits = 3)
+knitr::kable(index_table(gam_total), digits = 3)
 ```
 
-| Year |    Mean | Median |     SD |    CV |  Qlower |  Qupper | Method     | Distribution | Link |
-|:-----|--------:|-------:|-------:|------:|--------:|--------:|:-----------|:-------------|:-----|
-| 2011 | 472.599 |     NA | 29.482 | 0.062 | 418.208 | 534.065 | integrated | Gamma        | log  |
-| 2012 | 548.591 |     NA | 30.319 | 0.055 | 492.273 | 611.352 | integrated | Gamma        | log  |
-| 2013 | 561.066 |     NA | 30.956 | 0.055 | 503.559 | 625.141 | integrated | Gamma        | log  |
-| 2014 | 631.213 |     NA | 34.297 | 0.054 | 567.446 | 702.144 | integrated | Gamma        | log  |
-| 2015 | 635.394 |     NA | 38.429 | 0.060 | 564.368 | 715.359 | integrated | Gamma        | log  |
-| 2016 | 758.069 |     NA | 43.860 | 0.058 | 676.800 | 849.096 | integrated | Gamma        | log  |
+| Year |    Mean |     SD |    CV |  Qlower |  Qupper | Method     | Distribution | Link |
+|:-----|--------:|-------:|------:|--------:|--------:|:-----------|:-------------|:-----|
+| 2011 | 472.599 | 29.482 | 0.062 | 418.208 | 534.065 | integrated | Gamma        | log  |
+| 2012 | 548.591 | 30.319 | 0.055 | 492.273 | 611.352 | integrated | Gamma        | log  |
+| 2013 | 561.066 | 30.956 | 0.055 | 503.559 | 625.141 | integrated | Gamma        | log  |
+| 2014 | 631.213 | 34.297 | 0.054 | 567.446 | 702.144 | integrated | Gamma        | log  |
+| 2015 | 635.394 | 38.429 | 0.060 | 564.368 | 715.359 | integrated | Gamma        | log  |
+| 2016 | 758.069 | 43.860 | 0.058 | 676.800 | 849.096 | integrated | Gamma        | log  |
 
 ``` r
 
@@ -364,9 +520,16 @@ seasonal_total <- integrate_index(seasonal_model, quarter_grid,
   area_units = "km^2", response_units = "kg/km^2", units = "kg")
 ```
 
-Only the compact annual table is retained by default. Spatial and brms
-indices can retain annual draws with `retain = "draws"`; grid-by-draw
-arrays are not stored. Independent cell standard errors are never added
-together. All area, covariate, and seasonal weights are treated as
-known, and valid units, domain coverage, and extrapolation remain
-scientific decisions for the analyst.
+Only the compact annual table and covariance matrices are retained by
+default. Spatial and brms indices can retain annual draws with
+`retain = "draws"`; grid-by-draw arrays are not stored. Independent cell
+standard errors are never added together. All area, covariate, and
+seasonal weights are treated as known, and valid units, domain coverage,
+and extrapolation remain scientific decisions for the analyst.
+
+## References
+
+Hoyle, Simon D., Robert A. Campbell, Nicholas D. Ducharme-Barth, et al.
+2024. “Catch Per Unit Effort Modelling for Stock Assessment: A Summary
+of Good Practices.” *Fisheries Research* 269: 106860.
+<https://doi.org/10.1016/j.fishres.2023.106860>.

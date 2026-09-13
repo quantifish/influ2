@@ -199,6 +199,11 @@ to display the resulting `influ_index` objects.
   : Calculate an assessment-ready CPUE index
 - [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
   : Calculate an area-integrated expected-response index
+- [`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
+  : Format a calculated index for assessment reporting
+- [`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)
+  [`vcov(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)
+  : Extract covariance among calculated annual indices
 - [`plot_index()`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
   [`plot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)
   [`autoplot(`*`<influ_index>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index.md)

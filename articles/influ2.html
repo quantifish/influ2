@@ -639,9 +639,9 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;       as.factor(year)               conditional                      0.60757313</span></span>
-<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10528749</span></span>
+<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10520110</span></span>
 <span><span class="co">#&gt;          depth_scaled               conditional                      0.05400688</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03084851</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03150923</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;              2013</span></span>
 <span><span class="co">#&gt;              2015</span></span>
@@ -704,11 +704,11 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
-<span><span class="co">#&gt;                  year               conditional                       0.2437404</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                       0.0515625</span></span>
+<span><span class="co">#&gt;                  year               conditional                      0.24374040</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.08243912</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
-<span><span class="co">#&gt;                 2</span></span></code></pre></div>
+<span><span class="co">#&gt;                 4</span></span></code></pre></div>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1021,7 +1021,7 @@ over the population of monthly random effects.</p>
 <span>  units <span class="op">=</span> <span class="st">"lobsters per pot"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">index_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">lobster_cpue</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">lobster_index_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">lobster_cpue</span><span class="op">)</span></span></code></pre></div>
 <p>Both <code>method = "standardised"</code> and
 <code>method = "standardized"</code> work. The calculated result
 contains the familiar assessment columns, plus method, distribution, and
@@ -1029,13 +1029,16 @@ link information. The reporting columns are shown below.
 <code>Mean</code> is the estimated expected CPUE, <code>SD</code> is its
 standard error, and <code>CV</code> is <code>SD / Mean</code>.
 <code>Qlower</code> and <code>Qupper</code> give the pointwise 95%
-confidence interval. <code>Median</code> is missing for this frequentist
-fit; it is populated with the posterior median when using a complete
-brms fit. None of these uncertainty columns describes the variation
-among individual pot catches.</p>
+confidence interval. <code><a href="../reference/index_table.html">index_table()</a></code> omits an unavailable
+<code>Median</code> column for this frequentist fit; it retains the
+genuine posterior median when using a complete brms fit.
+<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> still provides the full schema, including
+missing medians, for code that depends on those columns. None of these
+uncertainty columns describes variation among individual
+observations.</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="va">index_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"Median"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>, <span class="st">"Qlower"</span>, <span class="st">"Qupper"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  <span class="va">lobster_index_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>, <span class="st">"Qlower"</span>, <span class="st">"Qupper"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  caption <span class="op">=</span> <span class="st">"Standardised lobster CPUE and uncertainty at the common reference profile."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -1045,7 +1048,6 @@ reference profile.</caption>
 <thead><tr class="header">
 <th align="left">Year</th>
 <th align="right">Mean</th>
-<th align="right">Median</th>
 <th align="right">SD</th>
 <th align="right">CV</th>
 <th align="right">Qlower</th>
@@ -1055,7 +1057,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2000</td>
 <td align="right">1.689</td>
-<td align="right">NA</td>
 <td align="right">0.240</td>
 <td align="right">0.142</td>
 <td align="right">1.278</td>
@@ -1064,7 +1065,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2001</td>
 <td align="right">1.761</td>
-<td align="right">NA</td>
 <td align="right">0.249</td>
 <td align="right">0.142</td>
 <td align="right">1.334</td>
@@ -1073,7 +1073,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2002</td>
 <td align="right">1.841</td>
-<td align="right">NA</td>
 <td align="right">0.257</td>
 <td align="right">0.139</td>
 <td align="right">1.401</td>
@@ -1082,7 +1081,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2003</td>
 <td align="right">1.401</td>
-<td align="right">NA</td>
 <td align="right">0.191</td>
 <td align="right">0.136</td>
 <td align="right">1.073</td>
@@ -1091,7 +1089,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2004</td>
 <td align="right">1.586</td>
-<td align="right">NA</td>
 <td align="right">0.216</td>
 <td align="right">0.136</td>
 <td align="right">1.215</td>
@@ -1100,7 +1097,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2005</td>
 <td align="right">1.318</td>
-<td align="right">NA</td>
 <td align="right">0.186</td>
 <td align="right">0.141</td>
 <td align="right">0.999</td>
@@ -1109,7 +1105,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2006</td>
 <td align="right">1.167</td>
-<td align="right">NA</td>
 <td align="right">0.158</td>
 <td align="right">0.136</td>
 <td align="right">0.895</td>
@@ -1118,7 +1113,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2007</td>
 <td align="right">1.192</td>
-<td align="right">NA</td>
 <td align="right">0.162</td>
 <td align="right">0.136</td>
 <td align="right">0.914</td>
@@ -1127,7 +1121,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2008</td>
 <td align="right">1.183</td>
-<td align="right">NA</td>
 <td align="right">0.165</td>
 <td align="right">0.139</td>
 <td align="right">0.900</td>
@@ -1136,7 +1129,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2009</td>
 <td align="right">1.134</td>
-<td align="right">NA</td>
 <td align="right">0.158</td>
 <td align="right">0.140</td>
 <td align="right">0.862</td>
@@ -1145,7 +1137,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2010</td>
 <td align="right">1.230</td>
-<td align="right">NA</td>
 <td align="right">0.168</td>
 <td align="right">0.137</td>
 <td align="right">0.940</td>
@@ -1154,7 +1145,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2011</td>
 <td align="right">1.390</td>
-<td align="right">NA</td>
 <td align="right">0.190</td>
 <td align="right">0.136</td>
 <td align="right">1.064</td>
@@ -1163,7 +1153,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2012</td>
 <td align="right">1.217</td>
-<td align="right">NA</td>
 <td align="right">0.170</td>
 <td align="right">0.140</td>
 <td align="right">0.925</td>
@@ -1172,7 +1161,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2013</td>
 <td align="right">1.369</td>
-<td align="right">NA</td>
 <td align="right">0.186</td>
 <td align="right">0.136</td>
 <td align="right">1.049</td>
@@ -1181,7 +1169,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2014</td>
 <td align="right">1.258</td>
-<td align="right">NA</td>
 <td align="right">0.170</td>
 <td align="right">0.135</td>
 <td align="right">0.965</td>
@@ -1190,7 +1177,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2015</td>
 <td align="right">1.059</td>
-<td align="right">NA</td>
 <td align="right">0.145</td>
 <td align="right">0.137</td>
 <td align="right">0.810</td>
@@ -1199,7 +1185,6 @@ reference profile.</caption>
 <tr class="odd">
 <td align="left">2016</td>
 <td align="right">1.090</td>
-<td align="right">NA</td>
 <td align="right">0.147</td>
 <td align="right">0.135</td>
 <td align="right">0.837</td>
@@ -1208,7 +1193,6 @@ reference profile.</caption>
 <tr class="even">
 <td align="left">2017</td>
 <td align="right">1.113</td>
-<td align="right">NA</td>
 <td align="right">0.152</td>
 <td align="right">0.137</td>
 <td align="right">0.851</td>
@@ -1257,19 +1241,378 @@ article</a> for sdmTMB and tinyVAST response indices and totals. Area
 integration does not automatically convert CPUE into absolute biomass;
 compatible density units or an explicit catchability conversion are
 required.</p>
+<div class="section level3">
+<h3 id="passing-annual-covariance-to-an-assessment">Passing annual covariance to an assessment<a class="anchor" aria-label="anchor" href="#passing-annual-covariance-to-an-assessment"></a>
+</h3>
+<p>Annual estimates from one fitted model can share uncertainty through
+common coefficients, smooths, or latent effects. Passing only their SDs
+loses that dependence. <code><a href="../reference/index_vcov.html">index_vcov()</a></code> retrieves the
+<strong>annual-index</strong> variance–covariance matrix, not the much
+larger model-coefficient matrix. It works for the same six backends as
+<code><a href="../reference/cpue_index.html">cpue_index()</a></code> and <code><a href="../reference/integrate_index.html">integrate_index()</a></code>.</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">Sigma_log</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, scale <span class="op">=</span> <span class="st">"log"</span>, require_pd <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">Sigma_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, scale <span class="op">=</span> <span class="st">"response"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">Sigma_log</span><span class="op">)</span>, <span class="va">lobster_index_table</span><span class="op">$</span><span class="va">Year</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">assessment_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Year <span class="op">=</span> <span class="va">lobster_index_table</span><span class="op">$</span><span class="va">Year</span>,</span>
+<span>  Index <span class="op">=</span> <span class="va">lobster_index_table</span><span class="op">$</span><span class="va">Mean</span>,</span>
+<span>  LogIndex <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">lobster_index_table</span><span class="op">$</span><span class="va">Mean</span><span class="op">)</span>,</span>
+<span>  SElog <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">Sigma_log</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  row.names <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">assessment_table</span>, digits <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  caption <span class="op">=</span> <span class="st">"Unscaled annual indices and log-scale standard errors from their joint covariance. The complete matrix, not just SElog, accompanies this table."</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Unscaled annual indices and log-scale standard errors from
+their joint covariance. The complete matrix, not just SElog, accompanies
+this table.</caption>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Index</th>
+<th align="right">LogIndex</th>
+<th align="right">SElog</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2000</td>
+<td align="right">1.689</td>
+<td align="right">0.524</td>
+<td align="right">0.142</td>
+</tr>
+<tr class="even">
+<td align="left">2001</td>
+<td align="right">1.761</td>
+<td align="right">0.566</td>
+<td align="right">0.142</td>
+</tr>
+<tr class="odd">
+<td align="left">2002</td>
+<td align="right">1.841</td>
+<td align="right">0.610</td>
+<td align="right">0.139</td>
+</tr>
+<tr class="even">
+<td align="left">2003</td>
+<td align="right">1.401</td>
+<td align="right">0.337</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="odd">
+<td align="left">2004</td>
+<td align="right">1.586</td>
+<td align="right">0.461</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="even">
+<td align="left">2005</td>
+<td align="right">1.318</td>
+<td align="right">0.276</td>
+<td align="right">0.141</td>
+</tr>
+<tr class="odd">
+<td align="left">2006</td>
+<td align="right">1.167</td>
+<td align="right">0.154</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="even">
+<td align="left">2007</td>
+<td align="right">1.192</td>
+<td align="right">0.176</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="odd">
+<td align="left">2008</td>
+<td align="right">1.183</td>
+<td align="right">0.168</td>
+<td align="right">0.139</td>
+</tr>
+<tr class="even">
+<td align="left">2009</td>
+<td align="right">1.134</td>
+<td align="right">0.125</td>
+<td align="right">0.140</td>
+</tr>
+<tr class="odd">
+<td align="left">2010</td>
+<td align="right">1.230</td>
+<td align="right">0.207</td>
+<td align="right">0.137</td>
+</tr>
+<tr class="even">
+<td align="left">2011</td>
+<td align="right">1.390</td>
+<td align="right">0.329</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="odd">
+<td align="left">2012</td>
+<td align="right">1.217</td>
+<td align="right">0.196</td>
+<td align="right">0.140</td>
+</tr>
+<tr class="even">
+<td align="left">2013</td>
+<td align="right">1.369</td>
+<td align="right">0.314</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="odd">
+<td align="left">2014</td>
+<td align="right">1.258</td>
+<td align="right">0.229</td>
+<td align="right">0.135</td>
+</tr>
+<tr class="even">
+<td align="left">2015</td>
+<td align="right">1.059</td>
+<td align="right">0.057</td>
+<td align="right">0.137</td>
+</tr>
+<tr class="odd">
+<td align="left">2016</td>
+<td align="right">1.090</td>
+<td align="right">0.086</td>
+<td align="right">0.135</td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="right">1.113</td>
+<td align="right">0.107</td>
+<td align="right">0.137</td>
+</tr>
+</tbody>
+</table>
+<p>Here <code>LogIndex</code> is the log of the fitted expected-response
+estimate. It is not a posterior mean of log indices or a bias-corrected
+estimate. The diagonal of <code>Sigma_log</code> contains log-index
+variances; the off-diagonal entries describe covariance between annual
+estimation errors. Correlation rescales those entries and is often
+easier to read.</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, type <span class="op">=</span> <span class="st">"covariance"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>subtitle <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, type <span class="op">=</span> <span class="st">"correlation"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>subtitle <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
+<span>  nrow <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="influ2_files/figure-html/lobster-assessment-matrices-1.png" class="r-plt" alt="Two year-by-year heatmaps of log-index covariance and correlation from the lobster glmmTMB model." width="960"><p class="caption">
+Annual log-index covariance (left) and correlation (right) for the same
+standardised lobster index. Each cell relates a pair of annual
+estimates; diagonal cells describe each year itself. The matrices retain
+common fitted-parameter uncertainty and are not residual autocorrelation
+estimates. Indices are unscaled, with the same reference profile and
+zero-month-effect convention as the preceding table.
+</p>
+</div>
+<p>A possible assessment likelihood relates this vector to expected
+abundance through a catchability parameter:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mover><mi>𝐈</mi><mo accent="true">̂</mo></mover><mover><mo>∼</mo><mo accent="true">̇</mo></mover><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">V</mi><mi mathvariant="normal">N</mi></mrow><mspace width="-0.167em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mi mathvariant="normal">log</mi><mi>q</mi><mo>+</mo><mi mathvariant="normal">log</mi><mi>𝐁</mi><mo>,</mo><mspace width="0.167em"></mspace><msub><mi>𝚺</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">P</mi><mi mathvariant="normal">U</mi><mi mathvariant="normal">E</mi></mrow></msub><mo>+</mo><msub><mi>𝚺</mi><mrow><mi mathvariant="normal">e</mi><mi mathvariant="normal">x</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">a</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">
+  \log \widehat{\boldsymbol I}
+  \mathrel{\dot\sim}
+  \mathrm{MVN}\!\left(\log q + \log \boldsymbol B,\,
+    \boldsymbol\Sigma_{\mathrm{CPUE}} + \boldsymbol\Sigma_{\mathrm{extra}}\right).
+</annotation></semantics></math></p>
+<p>This is a modelling choice and an approximation, not an assessment
+fitted by influ2. Replacing the full covariance by its diagonal assumes
+independent annual estimation errors. Keeping the off-diagonal entries
+preserves their estimated dependence, including uncertainty in
+year-to-year contrasts. It can increase or decrease uncertainty in
+particular contrasts; it does <strong>not</strong> guarantee narrower
+intervals, a changed stock-status estimate, or removal of bias. <span class="citation">Hoyle et al. (<a href="#ref-Hoyle2024">2024</a>)</span>
+emphasise covariance propagation when aggregating predictions (Section
+5.8) and distinguish index estimation error from additional
+catchability/process variation (Section 5.5). The matrix supplies the
+former; the assessment must justify any additional error model
+separately.</p>
+<p>Use the default <code>rescale = "raw"</code> for this workflow when
+the assessment estimates catchability. Dividing every uncertain annual
+series by its own geometric mean removes a common log-level and makes
+the full log covariance singular. <code>require_pd = TRUE</code> catches
+this; influ2 does not add jitter to make it invertible. A contrast-based
+likelihood is another deliberate assessment design, not something to
+obtain by silently dropping a year. A single known unit conversion, in
+contrast, leaves log covariance unchanged.</p>
+<p>Keep the table and both axes of the matrix in exactly the same year
+order. The following bundle is ready to save with <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>
+and inspect in the assessment project; it retains neither the CPUE model
+nor its posterior draws.</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">assessment_input</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  table <span class="op">=</span> <span class="va">assessment_table</span>,</span>
+<span>  log_covariance <span class="op">=</span> <span class="va">Sigma_log</span>,</span>
+<span>  response_covariance <span class="op">=</span> <span class="va">Sigma_response</span>,</span>
+<span>  definition <span class="op">=</span> <span class="va">lobster_cpue</span><span class="op">$</span><span class="va">metadata</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>For a subset, use
+<code>index_vcov(lobster_cpue, years = selected_years)</code> and match
+the table to those same labels. Separate index objects do not imply zero
+cross-series covariance: combining regions or reporting systems still
+needs an explicit dependence assumption. For brms, this is posterior
+covariance, not a prior-free likelihood; a two-stage assessment must
+consider the first model’s priors rather than count that information
+twice.</p>
+</div>
+<div class="section level3">
+<h3 id="marginal-lognormal-table-parameters">Marginal lognormal table parameters<a class="anchor" aria-label="anchor" href="#marginal-lognormal-table-parameters"></a>
+</h3>
+<p>For an assessment that instead requires one lognormal distribution
+per year, <code>index_table(..., format = "lognormal")</code> adds
+<code>Meanlog</code>, <code>SDlog</code>, and
+<code>LognormalMedian</code>, calculated from <code>Mean</code> and
+<code>SD</code>. These are explicitly <strong>moment-matched
+approximations to index uncertainty</strong>, not the distribution of
+the observed response and not replacements for genuine posterior
+medians.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lognormal_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, format <span class="op">=</span> <span class="st">"lognormal"</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
+<span>  <span class="va">lognormal_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Meanlog"</span>, <span class="st">"SDlog"</span>, <span class="st">"LognormalMedian"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  caption <span class="op">=</span> <span class="st">"Marginal lognormal approximations to the standardised index uncertainty. These are an alternative assessment-table convention, not the joint matrix's log-scale parameters."</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Marginal lognormal approximations to the standardised index
+uncertainty. These are an alternative assessment-table convention, not
+the joint matrix’s log-scale parameters.</caption>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Meanlog</th>
+<th align="right">SDlog</th>
+<th align="right">LognormalMedian</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2000</td>
+<td align="right">0.514</td>
+<td align="right">0.141</td>
+<td align="right">1.672</td>
+</tr>
+<tr class="even">
+<td align="left">2001</td>
+<td align="right">0.556</td>
+<td align="right">0.141</td>
+<td align="right">1.744</td>
+</tr>
+<tr class="odd">
+<td align="left">2002</td>
+<td align="right">0.601</td>
+<td align="right">0.139</td>
+<td align="right">1.824</td>
+</tr>
+<tr class="even">
+<td align="left">2003</td>
+<td align="right">0.328</td>
+<td align="right">0.136</td>
+<td align="right">1.388</td>
+</tr>
+<tr class="odd">
+<td align="left">2004</td>
+<td align="right">0.452</td>
+<td align="right">0.135</td>
+<td align="right">1.572</td>
+</tr>
+<tr class="even">
+<td align="left">2005</td>
+<td align="right">0.266</td>
+<td align="right">0.141</td>
+<td align="right">1.305</td>
+</tr>
+<tr class="odd">
+<td align="left">2006</td>
+<td align="right">0.145</td>
+<td align="right">0.135</td>
+<td align="right">1.156</td>
+</tr>
+<tr class="even">
+<td align="left">2007</td>
+<td align="right">0.167</td>
+<td align="right">0.135</td>
+<td align="right">1.181</td>
+</tr>
+<tr class="odd">
+<td align="left">2008</td>
+<td align="right">0.158</td>
+<td align="right">0.139</td>
+<td align="right">1.172</td>
+</tr>
+<tr class="even">
+<td align="left">2009</td>
+<td align="right">0.116</td>
+<td align="right">0.139</td>
+<td align="right">1.123</td>
+</tr>
+<tr class="odd">
+<td align="left">2010</td>
+<td align="right">0.197</td>
+<td align="right">0.136</td>
+<td align="right">1.218</td>
+</tr>
+<tr class="even">
+<td align="left">2011</td>
+<td align="right">0.320</td>
+<td align="right">0.136</td>
+<td align="right">1.377</td>
+</tr>
+<tr class="odd">
+<td align="left">2012</td>
+<td align="right">0.186</td>
+<td align="right">0.139</td>
+<td align="right">1.205</td>
+</tr>
+<tr class="even">
+<td align="left">2013</td>
+<td align="right">0.305</td>
+<td align="right">0.135</td>
+<td align="right">1.357</td>
+</tr>
+<tr class="odd">
+<td align="left">2014</td>
+<td align="right">0.220</td>
+<td align="right">0.135</td>
+<td align="right">1.246</td>
+</tr>
+<tr class="even">
+<td align="left">2015</td>
+<td align="right">0.048</td>
+<td align="right">0.136</td>
+<td align="right">1.049</td>
+</tr>
+<tr class="odd">
+<td align="left">2016</td>
+<td align="right">0.077</td>
+<td align="right">0.134</td>
+<td align="right">1.081</td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="right">0.098</td>
+<td align="right">0.136</td>
+<td align="right">1.103</td>
+</tr>
+</tbody>
+</table>
+<p>In general, <code>Meanlog</code> differs from <code>log(Mean)</code>,
+and <code>SDlog</code> differs from <code>sqrt(diag(Sigma_log))</code>.
+Do not combine these marginal SDs with the matrix’s correlations without
+explicitly choosing a different uncertainty model. The <a href="cpue-indices.html#lognormal-assessment-parameters">CPUE indices
+article</a> gives the formulae, calculation sources, and safeguards.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="one-interface-and-compact-uncertainty">One interface and compact uncertainty<a class="anchor" aria-label="anchor" href="#one-interface-and-compact-uncertainty"></a>
 </h2>
 <p>All fitted-model methods return an <code>influ_diag</code>:</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/methods.html" class="external-link">methods</a></span><span class="op">(</span><span class="st">"influ"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     </span></span>
 <span><span class="co">#&gt; [5] influ.glmmTMB*  influ.sdmTMB*   influ.tinyVAST*</span></span>
 <span><span class="co">#&gt; see '?methods' for accessing help and source code</span></span></code></pre></div>
 <p>The result contains compact tables for influence, coefficient or
 field summaries, data composition, and index comparisons:</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/influ_extractors.html">influ_effects</a></span><span class="op">(</span><span class="va">glm_diagnostic</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   focus level term   component scale   estimate  std_error       lower</span></span>
 <span><span class="co">#&gt; 1  year  2000 year conditional  link 0.26025542 0.05632333  0.14986373</span></span>
@@ -1388,7 +1731,7 @@ field summaries, data composition, and index comparisons:</p>
 <span><span class="co">#&gt; 7 analytic covariance</span></span>
 <span><span class="co">#&gt; 8 analytic covariance</span></span></code></pre></div>
 <p>Calculation and retention are separate choices:</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate uncertainty, retaining summaries only.</span></span>
 <span><span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">fitted_model</span>, focus <span class="op">=</span> <span class="st">"year"</span>, retain <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span>
 <span></span>
@@ -1428,7 +1771,7 @@ above. Only the residual diagnostic is calculated for the first time; it
 uses 100 response simulations from the existing glmmTMB fit, not a model
 refit or MCMC run. This example requires glmmTMB and MASS, as did the
 preceding index and step examples.</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  influence <span class="op">=</span> <span class="va">glmmTMB_diagnostic</span>,</span>
 <span>  residuals <span class="op">=</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_glmmTMB</span>, nsim <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">281</span><span class="op">)</span>,</span>
@@ -1446,20 +1789,20 @@ check this workflow in a separate, clean R session with no original
 fitted models. Reopening and plotting the summaries do not repeat the
 response simulations, CPUE prediction calculation, or step-model
 refits.</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/quantifish/influ2" class="external-link">influ2</a></span><span class="op">)</span></span>
 <span><span class="co"># After restarting R, set result_file to the persistent path used above:</span></span>
 <span><span class="co"># result_file &lt;- "lobster-results.rds"</span></span>
 <span><span class="va">restored_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">result_file</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">index</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Year     Mean Median        SD        CV    Qlower   Qupper       Method</span></span>
-<span><span class="co">#&gt; 1 2000 1.688662     NA 0.2399914 0.1421192 1.2781173 2.231079 standardised</span></span>
-<span><span class="co">#&gt; 2 2001 1.761248     NA 0.2494645 0.1416407 1.3343068 2.324799 standardised</span></span>
-<span><span class="co">#&gt; 3 2002 1.841306     NA 0.2566028 0.1393591 1.4012104 2.419629 standardised</span></span>
-<span><span class="co">#&gt; 4 2003 1.400957     NA 0.1908672 0.1362406 1.0726465 1.829755 standardised</span></span>
-<span><span class="co">#&gt; 5 2004 1.585962     NA 0.2156039 0.1359452 1.2149997 2.070187 standardised</span></span>
-<span><span class="co">#&gt; 6 2005 1.317816     NA 0.1864175 0.1414594 0.9987212 1.738863 standardised</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">index</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Year     Mean        SD        CV    Qlower   Qupper       Method</span></span>
+<span><span class="co">#&gt; 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised</span></span>
+<span><span class="co">#&gt; 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised</span></span>
+<span><span class="co">#&gt; 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised</span></span>
+<span><span class="co">#&gt; 4 2003 1.400957 0.1908672 0.1362406 1.0726465 1.829755 standardised</span></span>
+<span><span class="co">#&gt; 5 2004 1.585962 0.2156039 0.1359452 1.2149996 2.070187 standardised</span></span>
+<span><span class="co">#&gt; 6 2005 1.317816 0.1864175 0.1414594 0.9987212 1.738863 standardised</span></span>
 <span><span class="co">#&gt;   Distribution Link</span></span>
 <span><span class="co">#&gt; 1      nbinom2  log</span></span>
 <span><span class="co">#&gt; 2      nbinom2  log</span></span>
@@ -1496,7 +1839,7 @@ them to someone else.</p>
 <h2 id="families-and-response-structures">Families and response structures<a class="anchor" aria-label="anchor" href="#families-and-response-structures"></a>
 </h2>
 <p>The initial family set is:</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/influ_families.html">influ_families</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              family                       aliases default_scale</span></span>
 <span><span class="co">#&gt; 1          gaussian                        normal    difference</span></span>
@@ -1585,6 +1928,12 @@ Dragonfly Science. n.d. <em>CPUETools</em>. <a href="https://github.com/dragonfl
 <div id="ref-Dunn2025" class="csl-entry">
 Dunn, Alistair. 2025. <em>gamInflu: Influence Analysis for Generalized
 Additive Models</em>. <a href="https://github.com/alistairdunn1/gamInflu" class="external-link">https://github.com/alistairdunn1/gamInflu</a>.
+</div>
+<div id="ref-Hoyle2024" class="csl-entry">
+Hoyle, Simon D., Robert A. Campbell, Nicholas D. Ducharme-Barth, et al.
+2024. <span>“Catch Per Unit Effort Modelling for Stock Assessment: A
+Summary of Good Practices.”</span> <em>Fisheries Research</em> 269:
+106860. <a href="https://doi.org/10.1016/j.fishres.2023.106860" class="external-link">https://doi.org/10.1016/j.fishres.2023.106860</a>.
 </div>
 <div id="ref-Hsu2022" class="csl-entry">
 Hsu, Jhen, Yi-Jay Chang, and Nicholas D. Ducharme-Barth. 2022.

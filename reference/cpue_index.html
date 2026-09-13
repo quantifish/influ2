@@ -190,8 +190,8 @@ offsets from their formula and the supplied reference predictors.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An S3 <code>influ_index</code> object containing <code>table</code>, <code>metadata</code>, and optional
-<code>draws</code>. <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> returns the assessment table with <code>Year</code>, <code>Mean</code>,
+    <p>An S3 <code>influ_index</code> object containing <code>table</code>, <code>metadata</code>, compact
+<code>covariance</code>, and optional <code>draws</code>. <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> returns the full table with <code>Year</code>, <code>Mean</code>,
 <code>Median</code>, <code>SD</code>, <code>CV</code>, <code>Qlower</code>, <code>Qupper</code>, <code>Method</code>, <code>Distribution</code>, and <code>Link</code>.</p>
     </div>
     <div class="section level2">
@@ -224,7 +224,10 @@ These intervals are pointwise, not simultaneous. Preview mode retains the
 brms posterior mean, but omits uncertainty summaries; it does not replace
 joint predictions with predictions at posterior-mean coefficients.</p>
 <p>Working storage is bounded by reference and draw batches plus a compact
-annual covariance or draw matrix. Native prediction code can allocate
+annual covariance or draw matrix. The result retains response-scale and,
+when defined, log-index covariance matrices even with <code>retain = "summary"</code>.
+Use <code><a href="index_vcov.html">index_vcov()</a></code> to extract them and <code><a href="index_table.html">index_table()</a></code> for reporting.
+Native prediction code can allocate
 additional memory. The result does not retain the model or reference data.
 Spatial response estimates evaluate the fitted model at the reference
 locations in each observed year. sdmTMB IID group effects are set to zero;
@@ -241,7 +244,7 @@ be rescaled by this function. These indices are not biomass estimates.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="integrate_index.html">integrate_index()</a></code>, <code><a href="plot_index.html">plot_index()</a></code>, <code><a href="plot_compare.html">plot_compare()</a></code>, <code><a href="geo_mean.html">geo_mean()</a></code>, <code><a href="influ_extractors.html">influ_indices()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="index_table.html">index_table()</a></code>, <code><a href="index_vcov.html">index_vcov()</a></code>, <code><a href="integrate_index.html">integrate_index()</a></code>, <code><a href="plot_index.html">plot_index()</a></code>, <code><a href="plot_compare.html">plot_compare()</a></code>, <code><a href="geo_mean.html">geo_mean()</a></code>, <code><a href="influ_extractors.html">influ_indices()</a></code></p></div>
     </div>
 
     <div class="section level2">
