@@ -12,6 +12,12 @@ gives a reporting table, omitting an unavailable median by default.
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) retains
 the full, stable schema for existing code.
 
+For two regional series from one fitted model, see [Regional CPUE
+indices](https://www.quantifish.co.nz/influ2/articles/regional-cpue.md).
+That worked example groups four statistical areas into two regions,
+holds reference weights fixed, and checks the annual uncertainty against
+native predictions.
+
 This is a different quantity from the centred **year-effect contrasts**
 in the influence and step plots. Both are useful, but neither is
 automatically an area-integrated abundance or biomass index.

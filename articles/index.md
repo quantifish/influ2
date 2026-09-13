@@ -12,6 +12,8 @@
   diagnostics](https://www.quantifish.co.nz/influ2/articles/influ2.md):
 - [CPUE
   indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md):
+- [Regional CPUE
+  indices](https://www.quantifish.co.nz/influ2/articles/regional-cpue.md):
 - [Model
   comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.md):
 - [Hurdle and zero-inflated
