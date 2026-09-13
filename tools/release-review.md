@@ -38,7 +38,22 @@ CPUE indices article show joint covariance/correlation, lognormal output,
 year ordering, and assessment interpretation, with Hoyle et al. (2024).
 The rendered matrix figure, expanded full caption, and likelihood equation
 were visually checked. All 86 local plotted-image/lightbox checks pass.
-Archive checking and GitHub publication are recorded below when complete.
+The final archive of source `8121f4a9702d0e45dd465ef960e74cbfa6288a22` is
+`/private/tmp/influ2-assessment-check.M4mUSW/final/influ2_1.1.0.tar.gz`, SHA256
+`9128c3e399af312b0ff9da23f020a046169de7cf32540fe9297e1c3d0d4d258b`.
+All 173 comparable shipped files match the checkout. Mac R 4.6.1
+`--as-cran --no-manual` passes with zero errors, zero warnings, and one existing
+new-submission/optional-tinyVAST NOTE. DHARMa is unavailable locally;
+`_R_CHECK_FORCE_SUGGESTS_=false` was used. All nine vignettes rebuild, and
+CRAN-mode tests pass 6,153 assertions with eight intentional visual groups
+skipped. The initial undeclared cowplot dependency was replaced with the
+existing patchwork dependency before this final build.
+
+The feature source is committed and pushed, and issue #22 is closed with
+implementation and local validation evidence. GitHub R-CMD-check `34728811092`,
+coverage `34728811093`, and pkgdown `34728811081` are running; publication is
+not yet claimed. The validation follow-up monitors their final results and
+Pages. Local numerical success is distinct from those external checks.
 Issue #18, selective regional prediction, the legacy/frozen-article review,
 and broader N09 calibration remain separate decisions. No CRAN or win-builder
 submission is authorised.
@@ -1066,14 +1081,14 @@ clear to users and should not silently produce a different estimand.
 **Required by the maintainer, 10 September 2026:** work through all open
 issues before preparing the final CRAN submission archive. Close each with
 a linked implementation/test, or a documented maintainer-approved decision.
-Do not bulk-close issues just to empty the tracker. Two issues remain after
-resolving #6, #12, #13, and #21 on 10 September; refresh this list before the final
-build to catch new issues.
+Do not bulk-close issues just to empty the tracker. Issue #18 is the remaining
+open issue after #22 was implemented and closed on 13 September; refresh this
+list before the final build to catch new issues.
 
 | Issue | Resolution work before closure |
 | --- | --- |
 | [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Planning only for now: one four-area model, with areas 1+2 and 3+4 forming two regional indices. See tools/two-region-plan.md. The future separate vignette must demonstrate fixed reference weights, regional labelling, uncertainty, and distinct trends supported by the model. |
-| [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Resolve the assessment-table/lognormal-parameter request together with the deliberately deferred Median/NA decision. Observation dispersion and uncertainty in an annual index are different quantities. |
+| [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Closed, 13 September. Explicit marginal lognormal parameters, median reporting, and compact annual covariance are implemented and locally validated. See the current assessment-output section above; external CI/publication are tracked separately. |
 
 Issue [#13](https://github.com/quantifish/influ2/issues/13) is closed with the
 maintainer's approval. All three original checklist items are complete:

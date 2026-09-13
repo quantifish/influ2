@@ -1,3 +1,38 @@
+## Assessment tables and covariance: 13 September 2026
+
+Source `8121f4a9702d0e45dd465ef960e74cbfa6288a22` implements issue #22:
+explicit marginal lognormal assessment parameters, median reporting, and
+joint annual response/log covariance across the six supported index backends.
+It adds extraction, matrix plots, independent numerical tests, and worked
+vignette examples. Existing backend model-structure boundaries remain;
+no private assessment data or fits are shipped.
+
+Final archive:
+`/private/tmp/influ2-assessment-check.M4mUSW/final/influ2_1.1.0.tar.gz`.
+SHA256: `9128c3e399af312b0ff9da23f020a046169de7cf32540fe9297e1c3d0d4d258b`.
+All 173 comparable shipped files match the checkout; R-generated DESCRIPTION
+metadata is checked separately. Mac arm64 R 4.6.1 `--as-cran --no-manual`
+completed with zero errors, zero warnings, and one existing incoming NOTE
+for a new submission and optional tinyVAST from its declared additional
+repository. DHARMa was unavailable locally, and
+`_R_CHECK_FORCE_SUGGESTS_=false` was used. This is not a PDF-manual or full
+optional-dependency check. An initial undeclared vignette layout dependency
+was removed by using the existing patchwork dependency in this final archive.
+
+All nine vignettes build and rebuild. CRAN-mode tests pass 6,153 assertions,
+with eight intentional visual-test groups skipped; the unrestricted local
+suite passes 6,170 assertions without failures, warnings, or skips. Local
+coverage is 96.0501%. Minimal-installation checks pass all 12 saved-result
+contracts and 19 optional-backend guards. The final matrix figure has been
+visually checked, and all 86 local figure/lightbox caption checks pass.
+
+GitHub R-CMD-check `34728811092` (Ubuntu and Windows release only), coverage
+`34728811093`, and pkgdown `34728811081` are still in progress at this record.
+Their results and public Pages deployment are not implied by the local check.
+The existing follow-up monitors those runs. No CRAN or win-builder submission
+has been made. Regional outputs, remaining legacy review, and broader
+scientific calibration remain separate release decisions.
+
 ## Gamma(log) implied-effect extension: 12 September 2026
 
 Source `39bb732723c9c0b08729fa4ee011153ea55da919` adds Gamma(log)
