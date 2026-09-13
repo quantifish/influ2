@@ -25,7 +25,10 @@ weights, row permutations/splitting, batching, dropped factor levels,
 normalisation covariance, invalid-level/convergence/REML guards, plots, and
 the additive-model counterexample. All 45 new expectations pass locally.
 Full-suite, source-archive, website, and GitHub evidence is tracked separately
-in `release-review.md`; closure follows that review, not this record alone.
+in `release-review.md`. Both release platforms pass all 6,215 assertions,
+coverage is 96.05%, and the ten-page/95-image website build and Pages deployment
+pass. The article is live, and issue #18 was closed on 14 September. No CRAN
+or win-builder submission was made; the other parked work is unchanged.
 
 ## Original design (10 September; parked 11 September; resumed 14 September)
 

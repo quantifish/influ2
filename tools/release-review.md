@@ -25,9 +25,39 @@ caption/lightbox checks; the new figures were visually inspected.
 The scope is deliberately limited: zero vessel effects, not marginalisation;
 ML, not CRA5's REML/selective-effect workflow; within-region annual covariance,
 not cross-region covariance or independent regional assessment likelihoods.
-Known-truth agreement in one simulation is not a coverage study. Source-archive,
-full-suite, and remote publication checks are being completed before closure.
-Legacy review, broader N09 interpretation, and CRAN submission remain separate.
+Known-truth agreement in one simulation is not a coverage study. The full local
+test suite passes, and the source archive's tests pass 6,198 assertions, with
+zero failures/warnings and eight intentional CRAN-mode visual groups skipped.
+The 45 new regional expectations also pass outside CRAN mode. In the actual
+3,040-observation example, standardised log-RMSE against its conditional truth
+is 0.093 (A) and 0.072 (B), compared with nominal 0.313 and 0.295 respectively.
+These are descriptive checks of this example, not validation across simulations.
+
+The archive `/private/tmp/influ2-regional-check.NPGhHp/influ2_1.1.0.tar.gz`
+has SHA256 `7e777006cdeebdff56f0d83b17eb6c2790dbc014a43c75ef36fe256c49210e5e`.
+All 175 comparable shipped source files match commit
+`27e28410e3941034092e2cb10798931a47a81193`; R-generated DESCRIPTION metadata
+is excluded from that byte comparison. Mac R 4.6.1 `--as-cran --no-manual`
+passes with zero errors, zero warnings, and one existing incoming NOTE
+(new submission/optional tinyVAST). DHARMa is unavailable locally, and
+`_R_CHECK_FORCE_SUGGESTS_=false` was used; no PDF-manual or full optional
+dependency claim is made. All ten vignettes build and rebuild. The full site
+build and ten-page/92-image caption/lightbox checks pass, and the enlarged
+comparison figure's full caption was checked in the browser.
+
+Source is pushed. GitHub coverage `34780217958` passes all 6,215 assertions
+with zero failures, warnings, or skips and reports 96.05% coverage. pkgdown
+`34780218022` passes all ten-page/95-image caption/lightbox checks, and Pages
+deployment `34780735834` publishes gh-pages commit
+`3968bece4ee8fd96e61bcf5b8e38d0d0bab81768`. Fresh HTTP and browser reads verify
+the live regional article, all six numbered figure buttons, and its link from
+the CPUE-indices article. Ubuntu/Windows run `34780217917` passes on both
+release platforms: each reports `Status: OK`, 6,215 assertions, and zero
+failures, warnings, or skips. The checked archive is installed locally,
+including `vignette("regional-cpue", package = "influ2")`.
+Issue #18 was closed on 14 September with the implementation, validation,
+and publication evidence. Legacy review, broader N09 interpretation,
+and CRAN submission remain separate. No CRAN or win-builder upload was made.
 
 ## Assessment tables and annual covariance: 13 September 2026
 
@@ -1118,13 +1148,13 @@ clear to users and should not silently produce a different estimand.
 **Required by the maintainer, 10 September 2026:** work through all open
 issues before preparing the final CRAN submission archive. Close each with
 a linked implementation/test, or a documented maintainer-approved decision.
-Do not bulk-close issues just to empty the tracker. Issue #18 is the remaining
-open issue after #22 was implemented and closed on 13 September; refresh this
-list before the final build to catch new issues.
+Do not bulk-close issues just to empty the tracker. Issue #18 was implemented
+and closed on 14 September, after #22 on 13 September. No issues remain open
+at that review; refresh the tracker before the final build to catch new issues.
 
 | Issue | Resolution work before closure |
 | --- | --- |
-| [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Planning only for now: one four-area model, with areas 1+2 and 3+4 forming two regional indices. See tools/two-region-plan.md. The future separate vignette must demonstrate fixed reference weights, regional labelling, uncertainty, and distinct trends supported by the model. |
+| [#18: Two region example](https://github.com/quantifish/influ2/issues/18) | Closed, 14 September. The separate Regional CPUE indices article and 45 numerical/guard expectations implement the bounded one-model, four-area/two-region example. Native weighted predictions and covariance agree; both platform checks and publication pass. Cross-region covariance and selective CRA5 predictions remain explicit separate extensions. See tools/two-region-plan.md and the current validation section above. |
 | [#22: get_index output](https://github.com/quantifish/influ2/issues/22) | Closed, 13 September. Explicit marginal lognormal parameters, median reporting, and compact annual covariance are implemented and locally validated. See the current assessment-output section above; external CI/publication are tracked separately. |
 
 Issue [#13](https://github.com/quantifish/influ2/issues/13) is closed with the

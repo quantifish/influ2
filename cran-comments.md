@@ -1,3 +1,39 @@
+## Regional CPUE example: 14 September 2026
+
+Source `27e28410e3941034092e2cb10798931a47a81193` adds the worked regional
+index article for issue #18 and 45 independent numerical/guard expectations.
+It changes no runtime API, modelling dependency, private assessment input,
+or existing simulated dataset. One ML NB2 glmmTMB interaction fit supplies
+two regional standardised series. The article states the zero-random-effect
+target and the absence of cross-region covariance in separately calculated
+objects. Its tables and matrices agree with native predictions, and its
+shared-year counterexample shows why interactions are needed here.
+
+Checked archive: `/private/tmp/influ2-regional-check.NPGhHp/influ2_1.1.0.tar.gz`.
+SHA256: `7e777006cdeebdff56f0d83b17eb6c2790dbc014a43c75ef36fe256c49210e5e`.
+All 175 comparable shipped source files match the committed checkout.
+Mac arm64 R 4.6.1 `R CMD check --as-cran --no-manual` passes with zero errors,
+zero warnings, and one existing incoming NOTE for a new submission and
+optional tinyVAST from the declared additional repository. DHARMa is not
+installed locally; `_R_CHECK_FORCE_SUGGESTS_=false` was used. This is not
+a PDF-manual or full optional-dependency check.
+
+All ten vignettes build/rebuild. CRAN-mode tests pass 6,198 assertions,
+with eight intentionally skipped visual groups and no failures or warnings.
+The full unrestricted local suite also passes. The full website build and
+ten-page/92-image lightbox/caption checks pass; the enlarged comparison
+figure and its complete numbered caption were checked in the browser.
+GitHub coverage `34780217958` passes all 6,215 assertions without failures,
+warnings, or skips and reports 96.05%. pkgdown `34780218022` passes its ten-page/
+95-image lightbox/caption checks; Pages `34780735834` publishes gh-pages commit
+`3968bece4ee8fd96e61bcf5b8e38d0d0bab81768`. The live regional article, its six
+numbered figure buttons, and its CPUE-indices cross-link are verified.
+Ubuntu/Windows checks `34780217917` both report `Status: OK` and 6,215 passing
+assertions, with no failures, warnings, or skips. Issue #18 is closed with
+validation and publication evidence. The checked archive is installed locally.
+Later validation-record commits change only files excluded from the archive.
+No CRAN or win-builder submission has been made.
+
 ## Assessment tables and covariance: 13 September 2026
 
 Source `8121f4a9702d0e45dd465ef960e74cbfa6288a22` implements issue #22:
