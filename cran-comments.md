@@ -26,12 +26,23 @@ coverage is 96.0501%. Minimal-installation checks pass all 12 saved-result
 contracts and 19 optional-backend guards. The final matrix figure has been
 visually checked, and all 86 local figure/lightbox caption checks pass.
 
-GitHub R-CMD-check `34728811092` (Ubuntu and Windows release only), coverage
-`34728811093`, and pkgdown `34728811081` are still in progress at this record.
-Their results and public Pages deployment are not implied by the local check.
-The existing follow-up monitors those runs. No CRAN or win-builder submission
-has been made. Regional outputs, remaining legacy review, and broader
-scientific calibration remain separate release decisions.
+GitHub R-CMD-check `34728811092` passed on Ubuntu release and Windows release:
+both report `Status: OK` and 6,170 passing assertions, with zero failures,
+warnings, or skips. Coverage `34728811093` passed the same assertions and
+reported 96.05%. These checks identify feature source
+`8121f4a9702d0e45dd465ef960e74cbfa6288a22`; later `[skip ci]` commits change
+only excluded release records.
+
+pkgdown `34728811081` passed all nine-page/89-image lightbox checks, plus
+caption/alt and keyboard regressions. Pages deployment `34729170706` published
+gh-pages commit `a8e48233b2e6429fe3f2b05fe1ecfb69e05bac6e`, which identifies
+the same feature source. Fresh HTTP checks verified the main article's
+covariance section, matrix figure, lognormal table, and Hoyle2024 reference,
+the CPUE-indices article, and both new reference pages. The live matrix image
+matches the deployment byte-for-byte. Validation/publication are complete,
+and the follow-up monitor is paused. No CRAN or win-builder submission has
+been made. Regional outputs, remaining legacy review, and broader scientific
+calibration remain separate release decisions.
 
 ## Gamma(log) implied-effect extension: 12 September 2026
 

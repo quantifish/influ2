@@ -50,10 +50,23 @@ skipped. The initial undeclared cowplot dependency was replaced with the
 existing patchwork dependency before this final build.
 
 The feature source is committed and pushed, and issue #22 is closed with
-implementation and local validation evidence. GitHub R-CMD-check `34728811092`,
-coverage `34728811093`, and pkgdown `34728811081` are running; publication is
-not yet claimed. The validation follow-up monitors their final results and
-Pages. Local numerical success is distinct from those external checks.
+implementation and validation evidence. GitHub R-CMD-check `34728811092`
+completed successfully on Ubuntu release and Windows release. Both report
+`Status: OK` and 6,170 passing assertions, with zero failures, warnings, or
+skips. Coverage `34728811093` also passed all 6,170 assertions and reported
+96.05%. All checks identify feature source `8121f4a9702d0e45dd465ef960e74cbfa6288a22`;
+later `[skip ci]` commits only update excluded release records.
+
+pkgdown `34728811081` passed all nine-page/89-image lightbox checks, plus
+caption/alt and keyboard regressions. Pages deployment `34729170706`
+successfully published gh-pages commit `a8e48233b2e6429fe3f2b05fe1ecfb69e05bac6e`,
+whose commit message identifies the same feature source. Fresh HTTP requests
+verified the live main article's new covariance section, paired matrix
+figure, lognormal table, and Hoyle2024 reference, plus the CPUE-indices article
+and both new function-reference pages. The live paired matrix PNG matches
+the deployed commit byte-for-byte (SHA256
+`8bc8c6c3bb5b0cd7d5898efc6d5122af092c7d24bb1badc97f318411464c34e2`).
+Validation and publication are complete; the follow-up monitor is paused.
 Issue #18, selective regional prediction, the legacy/frozen-article review,
 and broader N09 calibration remain separate decisions. No CRAN or win-builder
 submission is authorised.
