@@ -46,8 +46,12 @@ the complete site build and 10-page/97-image caption/lightbox checks. Pages
 run `34897061607` publishes revision
 `1dc85b89ebe0d60f3a552ad4287178f63abbce79`. Live browser inspection verifies
 the new article section, both comparison figures, and both complete enlarged
-captions. Ubuntu release in `34896111892` has passed; Windows release remains
-in progress at this entry.
+captions. R-CMD-check run `34896111892` passes on Ubuntu release and Windows
+release: each reports `Status: OK`, with 6,296 passing assertions and zero
+failures, warnings, or skips, including the new article-based tests. All checks
+apply to source `d10f33802106b2201cbb09b9731863309ac193ae`; the later commits
+only update this excluded validation record. Source and review material are
+pushed for Nicholas's review.
 
 The guidance explicitly distinguishes exploratory patterns from calibrated
 fitted-model tests, response ECDFs from PIT ECDFs, and residual-implied effects
