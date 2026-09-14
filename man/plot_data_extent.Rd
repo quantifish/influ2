@@ -20,11 +20,9 @@ A [ggplot2::ggplot()] object.
 Plot the completeness of variables through time
 }
 \details{
-For each variable and observed time level, bubble area represents
+For each variable and observed time level, dark bubble area represents
   the proportion of records whose value is not `NA`. A zero response is an
-  observed value, not missing data. Cells with zero completeness are blank;
-  neither a bubble nor a reference marker is drawn. For positive proportions,
-  fixed-size red markers sit underneath the dark completeness bubbles.
+  observed value, not missing data. Cells with zero completeness are blank.
   Records with a missing `xvar` are excluded.
   Completeness is calculated separately for each variable among the records
   supplied; it is not sampling intensity, measurement accuracy, or the

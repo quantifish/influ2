@@ -345,11 +345,9 @@ get_bayes_R2 <- function(fits, probs = c(0.025, 0.975), ...) {
 #' @param xvar Name of the temporal or grouping column.
 #' @param yvar Names of columns whose non-missing coverage is displayed.
 #'
-#' @details For each variable and observed time level, bubble area represents
+#' @details For each variable and observed time level, dark bubble area represents
 #'   the proportion of records whose value is not `NA`. A zero response is an
-#'   observed value, not missing data. Cells with zero completeness are blank;
-#'   neither a bubble nor a reference marker is drawn. For positive proportions,
-#'   fixed-size red markers sit underneath the dark completeness bubbles.
+#'   observed value, not missing data. Cells with zero completeness are blank.
 #'   Records with a missing `xvar` are excluded.
 #'   Completeness is calculated separately for each variable among the records
 #'   supplied; it is not sampling intensity, measurement accuracy, or the
@@ -403,9 +401,6 @@ plot_data_extent <- function(data, xvar, yvar) {
   ) +
     # Retain the full grid, including completely missing variables and years.
     ggplot2::geom_blank() +
-    ggplot2::geom_point(
-      data = present, size = 4, colour = "firebrick2", alpha = 0.55
-    ) +
     ggplot2::geom_point(
       ggplot2::aes(size = .data$proportion),
       data = present, colour = "grey15", na.rm = TRUE

@@ -79,17 +79,35 @@ test_that("data completeness distinguishes zero responses from missing values", 
   expect_equal(unique(plot$data$time), c(2000, 2001))
 
   points <- Filter(function(layer) inherits(layer$geom, "GeomPoint"), plot$layers)
-  expect_length(points, 2)
+  expect_length(points, 1)
   for (layer in points) {
     expect_equal(nrow(layer$data), 3L)
     expect_true(all(layer$data$proportion > 0))
     expect_equal(layer$data$proportion[layer$data$variable == "cpue"], c(1, 0.5))
   }
   built <- ggplot2::ggplot_build(plot)
-  expect_equal(vapply(built$data, nrow, integer(1)), c(4L, 3L, 3L))
+  expect_equal(vapply(built$data, nrow, integer(1)), c(4L, 3L))
+  expect_true(all(built$data[[2]]$colour == "grey15"))
   size_scale <- built$plot$scales$get_scales("size")
   expect_equal(size_scale$get_limits(), c(0, 1))
   expect_true(all(size_scale$get_breaks() > 0))
+})
+
+test_that("small completeness proportions have no fixed-size background markers", {
+  data <- data.frame(
+    year = rep(2000, 20),
+    cpue = c(0, rep(NA_real_, 19)),
+    depth = rep(NA_real_, 20)
+  )
+  plot <- plot_data_extent(data, "year", c("cpue", "depth"))
+  expect_equal(plot$data$proportion, c(0.05, 0))
+  expect_length(plot$layers, 2)
+  expect_s3_class(plot$layers[[1]]$geom, "GeomBlank")
+  expect_s3_class(plot$layers[[2]]$geom, "GeomPoint")
+  built <- ggplot2::ggplot_build(plot)
+  expect_equal(vapply(built$data, nrow, integer(1)), c(2L, 1L))
+  expect_identical(built$data[[2]]$colour, "grey15")
+  expect_equal(built$data[[2]]$size, 8 * sqrt(0.05))
 })
 
 test_that("blank data-extent cells retain the full variable and year grid", {
@@ -98,7 +116,7 @@ test_that("blank data-extent cells retain the full variable and year grid", {
     plot <- plot_data_extent(data, "year", c("cpue", "depth"))
     built <- ggplot2::ggplot_build(plot)
     expect_equal(nrow(plot$data), 4L)
-    expect_equal(vapply(built$data, nrow, integer(1)), c(4L, 1L, 1L))
+    expect_equal(vapply(built$data, nrow, integer(1)), c(4L, 1L))
     expect_equal(built$layout$panel_scales_x[[1]]$get_limits(), c("depth", "cpue"))
     expected_time <- if (is.factor(year)) levels(year) else range(year)
     expect_equal(built$layout$panel_scales_y[[1]]$get_limits(), expected_time)
@@ -106,7 +124,7 @@ test_that("blank data-extent cells retain the full variable and year grid", {
     data$cpue <- NA_real_
     blank <- plot_data_extent(data, "year", c("cpue", "depth"))
     built_blank <- ggplot2::ggplot_build(blank)
-    expect_equal(vapply(built_blank$data, nrow, integer(1)), c(4L, 0L, 0L))
+    expect_equal(vapply(built_blank$data, nrow, integer(1)), c(4L, 0L))
     expect_equal(built_blank$layout$panel_scales_x[[1]]$get_limits(), c("depth", "cpue"))
     expect_equal(built_blank$layout$panel_scales_y[[1]]$get_limits(), expected_time)
   }
