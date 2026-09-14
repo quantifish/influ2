@@ -130,9 +130,9 @@ counts, including zeros, remain fully recorded.
 The denominator is the number of records **already present in each
 year**, not the number of pot lifts that could have been sampled. A zero
 lobster count is a valid observation and counts as present; only `NA` is
-missing. Cells with zero completeness are left blank. Where completeness
-is positive, fixed-size red markers sit underneath the dark completeness
-bubbles. This display does not assess measurement accuracy or show how
+missing. Cells with zero completeness are left blank; positive
+completeness is shown by the area of a dark bubble, with no background
+markers. This display does not assess measurement accuracy or show how
 many records would survive joint complete-case filtering across several
 covariates.
 

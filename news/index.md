@@ -35,10 +35,12 @@
   assessment error.
 
 - [`plot_data_extent()`](https://www.quantifish.co.nz/influ2/reference/plot_data_extent.md)
-  now leaves zero-completeness cells blank, without bubbles or red
-  reference markers, while retaining all variables and years on the
-  axes. Zero-valued observations still count as present. The main
-  article and help describe this distinction.
+  now leaves zero-completeness cells blank, without bubbles, while
+  retaining all variables and years on the axes. Red background markers
+  have also been removed from positive-completeness cells: dark bubble
+  area alone shows the proportion present. Zero-valued observations
+  still count as present. The main article and help describe this
+  distinction.
 
 - Added Langley’s (2018) SNA 7 assessment to the residual-implied
   effects article, with pointers to its depth, month, target-species,
