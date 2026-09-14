@@ -20,8 +20,34 @@ The new article-chunk tests pass 76 expectations, covering row permutations,
 misalignment guards, unchanged ranks/RNG, point counts, all 12 spatial facets,
 and common scales. The full local regression suite and read-only saved-result
 audit pass. Both new figures were visually inspected; the rebuilt article and
-news pass the 10-page/94-image caption/lightbox checks. Package-archive and
-GitHub publication evidence will be recorded after completion.
+news pass the 10-page/94-image caption/lightbox checks. The local browser
+also verifies both enlarged figures and their complete numbered captions.
+
+Source `d10f33802106b2201cbb09b9731863309ac193ae` is committed and pushed.
+The checked archive is
+`/private/tmp/influ2-n09-check.DM6EUe/influ2_1.1.0.tar.gz`, with SHA256
+`6523349695f29c5cc8a23afdd8888cb883c64b946b0bb6566b1732070d770c4c`.
+All 176 comparable tracked shipped files match that source; generated
+DESCRIPTION metadata is excluded from the comparison. Mac R 4.6.1
+`--as-cran --no-manual` passes with zero errors, zero warnings, and one
+existing incoming NOTE (new submission/optional tinyVAST). DHARMa is unavailable
+locally, so `_R_CHECK_FORCE_SUGGESTS_=false` was used; no PDF-manual or full
+optional-dependency claim is made. All ten vignettes build and rebuild.
+Archive tests pass 6,279 assertions with eight intentional CRAN-mode visual
+groups skipped. The 76 new expectations also pass separately against an
+isolated installation of the archive, using the installed article source.
+The checked archive is installed in the normal Mac R library.
+
+GitHub coverage run `34896111823` passes at 96.05%, with 6,220 assertions and
+zero failures or warnings. Its bare installation omits vignettes, so the three
+new article-only test groups skip there; they are exercised by source/archive
+testing, not counted as covered by that run. pkgdown run `34896111869` passes
+the complete site build and 10-page/97-image caption/lightbox checks. Pages
+run `34897061607` publishes revision
+`1dc85b89ebe0d60f3a552ad4287178f63abbce79`. Live browser inspection verifies
+the new article section, both comparison figures, and both complete enlarged
+captions. Ubuntu release in `34896111892` has passed; Windows release remains
+in progress at this entry.
 
 The guidance explicitly distinguishes exploratory patterns from calibrated
 fitted-model tests, response ECDFs from PIT ECDFs, and residual-implied effects
