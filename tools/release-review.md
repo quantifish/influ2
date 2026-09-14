@@ -5,6 +5,29 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Residual interpretation review: 14 September 2026
+
+The maintainer authorised a review of saved N09 results, with no new model
+fitting or changed defaults. The [decision note](n09/interpretation-review.md)
+also distinguishes the completed IV01 implied-effect study from PIT diagnostics.
+A [read-only companion](n09/review-results.R) reproduces summary means, crossing
+rates and Monte Carlo intervals, paired omitted/full contrasts, and seed/count
+sensitivity from the frozen records. The companion and both frozen-result
+test files pass; both artefact hashes and the N09 rank/conditioning/simulation
+source hashes are unchanged. No new calculation defect was identified in this
+bounded review, and no production calculation, vignette, or default was changed.
+
+The main result is that pooled distributional agreement can coexist with
+substantial omitted-covariate or within-year spatial structure. The recommendation
+is to keep the existing exploratory defaults, clarify the question answered by
+each conditioning scheme, and consider a worked covariate/spatial residual example
+using existing saved objects. IV01 intervals remain conditional localisation
+tools, not general interaction tests. Proposed guidance and further development
+still need the maintainer's and Nicholas's decisions; wider N09 calibration is
+not marked complete. The review files are excluded developer material, so no
+new package archive, site publication, CRAN upload, or win-builder run is needed
+for this note. Final release validation and the parked legacy review remain.
+
 ## Two regional CPUE series: 14 September 2026
 
 The maintainer resumed issue #18. The new `regional-cpue` article fits one
