@@ -5,6 +5,30 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Worked residual-pattern examples: 15 September 2026
+
+The maintainer approved the bounded follow-up to the interpretation review.
+The Residual diagnostics article now compares full and omitted-covariate
+glmmTMB Q-Q/residual plots and full/omitted-yearly-field sdmTMB maps. All 480
+observations per candidate and all six spatial years are retained, with shared
+scales and explicit fitted-effect conditioning. The protocol-selected saved
+examples are reused without new study fitting or response simulation. Runtime
+calculations, default panels, conditioning defaults, and both frozen validation
+artefacts are unchanged.
+
+The new article-chunk tests pass 76 expectations, covering row permutations,
+misalignment guards, unchanged ranks/RNG, point counts, all 12 spatial facets,
+and common scales. The full local regression suite and read-only saved-result
+audit pass. Both new figures were visually inspected; the rebuilt article and
+news pass the 10-page/94-image caption/lightbox checks. Package-archive and
+GitHub publication evidence will be recorded after completion.
+
+The guidance explicitly distinguishes exploratory patterns from calibrated
+fitted-model tests, response ECDFs from PIT ECDFs, and residual-implied effects
+from grouped PIT summaries. Nicholas's scientific review, broader calibration,
+and a general map/autocorrelation API remain separate; no CRAN or win-builder
+submission was made.
+
 ## Residual interpretation review: 14 September 2026
 
 The maintainer authorised a review of saved N09 results, with no new model

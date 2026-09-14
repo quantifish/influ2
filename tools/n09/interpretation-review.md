@@ -2,6 +2,23 @@
 
 14 September 2026. Review baseline: `52d6c6e4d56ff2971c2e4c7a0f8aba6abebf641d`.
 
+## Follow-up: 15 September 2026
+
+The maintainer accepted the bounded practical follow-up recommended below:
+retain defaults, clarify interpretation, and demonstrate omitted covariate
+and yearly spatial patterns using the existing saved N09 objects. The
+[Residual diagnostics article](../../vignettes/residual-diagnostics.Rmd#what-pooled-checks-can-miss)
+now compares Q-Q and covariate plots and maps all six spatial years, with
+common scales and guarded row matching. The examples use the protocol-selected
+first eligible replicate; they are not additional calibration experiments.
+New tests and the full local regression suite pass, both frozen artefacts and
+the core calculation hashes are unchanged, and no study fitting or simulation
+was rerun. Nicholas's scientific review is still pending. Broader calibration,
+held-out checks, and a general spatial-diagnostic API remain separate proposals.
+
+The original review below is retained as the dated recommendation and evidence
+record; its references to unaccepted recommendations describe 14 September.
+
 ## Recommendation
 
 Keep the four-panel overview and current conditioning defaults for now. Present

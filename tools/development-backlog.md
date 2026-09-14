@@ -1,6 +1,6 @@
 # Development ideas and decisions
 
-Last reviewed: 14 September 2026.
+Last reviewed: 15 September 2026.
 
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records
@@ -43,14 +43,16 @@ used influ2 revision `7bb976c`.
 | N06 | Make spatial and mixed-effect conditioning explicit — **Completed, 11 September** | `conditioning` exposes backend defaults and supported fitted, single conditional-draw, new-effect, and posterior-predictive targets. Independent native objectives protect fits; sdmTMB/tinyVAST share one joint draw across all response batches, with matching probabilities and explicit delta components. glmmTMB supports fitted effects and new effects, including protection against externally changed simulation controls. Native replay, batching, RNG, field/component, and guard tests pass. Shared draws require converged, unprofiled ML fits, not REML. Worked spatial comparisons are rendered. PR #26 passed both release platforms, coverage, and website checks and was merged; see the [audit](residual-conditioning-audit.md). Existing defaults remain; broader calibration validation is N09. |
 | N07 | Optional response-simulation retention — **Candidate** | Agree summary-only, in-memory, and potentially on-disk modes, draw/row subsetting, and memory warnings. Disk storage does not remove the cost of materialising a full matrix for another package. Keep compact retention as the default. |
 | N08 | DHARMa and response-simulation bayesplot bridges — **Candidate** | Reuse explicit retained or supplied simulations, with response/component metadata. Let `DHARMa::createDHARMa()` calculate its own residuals rather than replacing them with influ2 ranks. Test supported dependency interfaces, make dependencies optional, and warn before large exports. Coordinate with G02. |
-| N09 | Clarify finite-simulation calibration and diagnostic targets — **First increment and plotting correction completed, 12 September; interpretation review prepared, 14 September; maintainer/Nicholas decisions pending** | 100 NB2 datasets per backend, 500 eligible glmmTMB/sdmTMB fits, and 1,960 diagnostic records cover omitted terms, conditioning, known-truth controls, and paired sensitivity. Compact results and the Residual validation article are reproducible via the [protocol](n09/protocol.md). The separately approved bayesplot 1.16.0 grid correction aligns both optional PIT plots without changing the interval calculation, stored ranks, defaults, or frozen study. The [follow-up control](n09/check-pit-alignment.R) reproduces 4.77% independent-uniform crossings instead of 12.46%. The [interpretation review](n09/interpretation-review.md) and read-only numerical companion recommend retaining defaults, clarifying exploratory limits, and considering a bounded worked covariate/spatial residual example. These are recommendations, not approved new implementation or universal calibration. |
+| N09 | Clarify finite-simulation calibration and diagnostic targets — **First increment and plotting correction completed, 12 September; interpretation review, 14 September; approved worked examples completed, 15 September** | 100 NB2 datasets per backend, 500 eligible glmmTMB/sdmTMB fits, and 1,960 diagnostic records cover omitted terms, conditioning, known-truth controls, and paired sensitivity. Compact results and the Residual validation article are reproducible via the [protocol](n09/protocol.md). The separately approved bayesplot 1.16.0 grid correction aligns both optional PIT plots without changing the interval calculation, stored ranks, defaults, or frozen study. The [follow-up control](n09/check-pit-alignment.R) reproduces 4.77% independent-uniform crossings instead of 12.46%. Following the [interpretation review](n09/interpretation-review.md), the maintainer approved practical guidance and saved-data covariate/spatial examples in the Residual diagnostics article. Guarded row matching, common scales, and all six spatial years are tested; no study was rerun or default changed. Nicholas's scientific review and broader calibration remain open. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
-Current priority: discuss the [N09/IV01 interpretation review](n09/interpretation-review.md)
-with the maintainer and Nicholas. The saved-result audit and paired descriptive
-contrasts are complete, with no new fitting or simulation. Decide on the proposed
-practical guidance and whether to commission the bounded covariate/spatial example;
-neither changes defaults or establishes calibrated fitted-model tests. The approved
+Current priority: Nicholas's review of the [N09/IV01 interpretation review](n09/interpretation-review.md)
+and the implemented practical guidance and worked covariate/spatial examples in
+the Residual diagnostics article. The maintainer approved this bounded follow-up;
+it reuses saved results without new study fitting or simulation. The examples
+do not change defaults or establish calibrated fitted-model tests. Broader
+calibration and a general map/autocorrelation API (G02) need separate agreement.
+The approved
 Gamma(log) adapter is implemented and numerically verified against the saved BNS
 positive GAMs. Existing conditioning defaults remain unchanged.
 N07 retention and N08 bridges are still candidates; N02 counters were passed

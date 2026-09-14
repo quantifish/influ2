@@ -1,5 +1,11 @@
 # influ2 1.1.0
 
+* Added worked omitted-covariate and year-specific spatial residual examples
+  to the Residual diagnostics article, reusing saved N09 results without model
+  fitting or response simulation. Shared scales, guarded row matching, and
+  explicit conditioning illustrate patterns that pooled checks can miss.
+  The diagnostic defaults and frozen validation results are unchanged.
+
 * Added a worked Regional CPUE indices article (#18): one negative-binomial
   glmmTMB model, four areas, and two fixed-reference regional series, using
   the existing index API. It demonstrates interaction-supported trends,
