@@ -14,6 +14,9 @@ models, see [Residual
 validation](https://www.quantifish.co.nz/influ2/articles/residual-validation.md).
 That study distinguishes conditioning effects, omitted structure, and
 finite-simulation behaviour; it does not change the defaults used here.
+The worked examples in [What pooled checks can
+miss](#what-pooled-checks-can-miss) reuse its saved residuals to examine
+an omitted covariate and year-specific spatial patterns.
 
 This article uses the same **simulated lobster CPUE** example as
 [Influence
@@ -28,7 +31,7 @@ plots or p-values into automatic selection rules.
 | [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md) then [`plot()`](https://rdrr.io/r/graphics/plot.default.html) | How do the overall response distribution, fitted-value patterns, and fishing-year residual distributions compare with model simulations? | Simulation conditioning differs between backends; the panels are exploratory, not a calibrated pass/fail test. |
 | [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md) | Does residual behaviour change with the predictive mean? | Reuses generalised residuals and matching predictive means; it is not a predictive interval plot. |
 | [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md) | Do groups show generalised residual departures through time? | Mean normal-score departures, not implied coefficients or a fitted interaction. |
-| [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md) then [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | What local annual effect adjustment is suggested by each group? | Holds the original model fixed; initial Gaussian/log-response, Poisson, and NB2 support only. |
+| [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md) then [`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md) | What local annual effect adjustment is suggested by each group? | Holds the original model fixed; Gaussian/log-response, Poisson, NB2, and Gamma support for the documented models and links. Conditional intervals are not general interaction tests. |
 | `plot(checks, type = "qq")` | How do simulation-based quantile residuals compare with their normal reference? | Uses a precomputed `influ_residuals` object; the ribbon is a nominal reference, not a calibrated model-specific test. |
 
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
@@ -114,6 +117,15 @@ variable:
     observed-versus-simulated ECDF, including zero catches, with a
     pointwise predictive band. The examples immediately below are count
     models, so their fourth panel remains the CDF.
+
+Read these as a starting set of checks, not an all-clear for the model.
+A plausible Q-Q plot can coexist with residual association with a
+covariate that is not on the fitted-value axis. Year effects can absorb
+annual shifts without removing within-year patterns, and a response ECDF
+discards the locations of observations. Inspect relevant covariates and
+spatial structure separately; changing the Q-Q panel to a PIT ECDF
+changes the view, not the information in the residuals. The [saved
+examples below](#what-pooled-checks-can-miss) show why.
 
 For this overview, use **glmmTMB mixed models** with a monthly random
 intercept, as in the [main
@@ -488,6 +500,17 @@ check the recorded scheme:
 | tinyVAST  | `"fitted"`, `"conditional_draw"`                             |
 | brms      | `"posterior_predictive"`                                     |
 
+Choose the scientific question before comparing the appearance of the
+plots. For departures within the observed vessels or fitted fields,
+explicitly selecting `"fitted"` is a useful starting question, not a
+validation of the latent structure. `"new_effects"` instead asks about
+replication with new latent effects, while `"conditional_draw"` explores
+one approximate conditional latent realisation. Neither is simply a way
+to make the Q-Q plot look better. The existing defaults remain
+unchanged, and brms posterior predictive checks are not interchangeable
+with these fixed-parameter checks. See the native sdmTMB guidance
+[below](#sdmtmb) for its conditional-draw recommendation.
+
 For example, keep the fitted monthly effects while generating new
 observations from the already fitted lobster model:
 
@@ -852,12 +875,12 @@ or unrequested binomial intervals.
 
 ## Generalised residuals against fitted values and predictors
 
-All maintained influ2 residual plots use the same simulation-based
-normal-score rank residuals. These incorporate the fitted response
-distribution, including its discrete outcomes and supported hurdle/delta
-structure. They are not native Pearson or deviance residuals. Positive
-scores identify observations high in their predictive distributions;
-negative scores identify low observations.
+The PIT displays in this section reuse simulation-based normal-score
+rank residuals. These incorporate the fitted response distribution,
+including its discrete outcomes and supported hurdle/delta structure.
+They are not native Pearson or deviance residuals. Positive scores
+identify observations high in their predictive distributions; negative
+scores identify low observations.
 
 Calculate once, then reuse the stored object for different views. The
 fitted axis is the predictive mean from the **same simulations**, with
@@ -925,6 +948,214 @@ effects. Smooth trends are descriptive, not tests.
 For real fisheries, inspect vessel, gear, year, season, and location.
 Sparse regions and changing fleet composition deserve attention. These
 are in-sample diagnostics, not independent validation observations.
+
+## What pooled checks can miss
+
+These two examples reuse the **saved N09 validation results**, not the
+lobster models above. Both use simulated NB2 responses per standardised
+sampling unit: they can represent count CPUE, not necessarily total
+catch. The glmmTMB model has vessel random intercepts; the sdmTMB model
+has persistent spatial and independent yearly spatial fields. Each has
+480 observations across six years. The selected dataset is the first
+eligible replicate under the study’s fixed rule, chosen before
+inspecting plots, not a seed selected for a dramatic result.
+
+No glmmTMB or sdmTMB installation, model fitting, or response simulation
+is needed to run this section. Both comparisons explicitly use
+**fitted-effect conditioning**. Each fitted candidate has its own saved
+PIT values; within a candidate, the different displays reuse exactly
+those same values.
+
+``` r
+
+validation <- readRDS(system.file(
+  "extdata", "n09-validation.rds", package = "influ2"
+))
+mixed_example <- validation$examples$glmmTMB
+spatial_example <- validation$examples$sdmTMB
+```
+
+Match diagnostic rows back to their source data using identifiers, not
+their current positions. This small article-local helper also checks the
+response and year; it stops on missing or duplicate identifiers instead
+of silently mapping a residual to the wrong observation. Keep stable row
+identifiers when preparing your own model data.
+
+``` r
+
+attach_covariates <- function(checks, data, columns) {
+  observations <- checks$observations
+  stopifnot(
+    !anyNA(observations$row), !anyDuplicated(observations$row),
+    all(nzchar(observations$row)), !anyDuplicated(rownames(data)),
+    all(columns %in% names(data)), !any(columns %in% names(observations))
+  )
+  rows <- match(observations$row, rownames(data))
+  stopifnot(
+    !anyNA(rows),
+    isTRUE(all.equal(observations$observed,
+      data[[checks$metadata$response]][rows], check.attributes = FALSE)),
+    identical(as.character(observations$year),
+      as.character(data[[checks$metadata$year]][rows]))
+  )
+  out <- cbind(observations, data[rows, columns, drop = FALSE])
+  rownames(out) <- NULL
+  out
+}
+```
+
+### A covariate pattern hidden by pooling
+
+The full glmmTMB candidate includes the covariate `x`; the other omits
+it but retains the year and vessel terms. `x` is a simulated continuous
+predictor whose sampling distribution shifts through time. It is not an
+estimated residual or a transformed response. Compare the top and bottom
+rows below: the Q-Q display pools observations, whereas the covariate
+display keeps their relationship to `x`. All four panels use the same
+residual limits and include every observation.
+
+``` r
+
+mixed_checks <- mixed_example$checks[c("full:fitted", "omit_x:fitted")]
+names(mixed_checks) <- c("Full model", "Omit covariate")
+covariate_data <- do.call(rbind, lapply(names(mixed_checks), function(label) {
+  out <- attach_covariates(mixed_checks[[label]], mixed_example$data, "x")
+  out$model <- label
+  out
+}))
+covariate_data$model <- factor(covariate_data$model, levels = names(mixed_checks))
+residual_limits <- c(-1, 1) * ceiling(max(abs(covariate_data$residual)))
+```
+
+``` r
+
+qq_panels <- lapply(names(mixed_checks), function(label) {
+  plot(mixed_checks[[label]], type = "qq") +
+    coord_cartesian(ylim = residual_limits) + labs(title = label)
+})
+covariate_panels <- lapply(names(mixed_checks), function(label) {
+  ggplot(subset(covariate_data, model == label), aes(x, residual)) +
+    geom_hline(yintercept = 0, linetype = 3, colour = "grey45") +
+    geom_point(alpha = 0.35, size = 0.9, colour = "grey30") +
+    geom_smooth(method = "loess", formula = y ~ x, se = FALSE,
+      colour = "purple4") +
+    coord_cartesian(ylim = residual_limits) +
+    labs(x = "Simulated covariate x", y = "Normal-score PIT residual")
+})
+covariate_comparison <- patchwork::wrap_plots(
+  c(qq_panels, covariate_panels), ncol = 2
+)
+covariate_comparison
+```
+
+![Q-Q plots above residual-versus-covariate plots compare full and
+omitted-covariate glmmTMB models, exposing the association hidden by
+pooling.](residual-diagnostics_files/figure-html/residual-n09-covariate-1.png)
+
+The preselected N09 glmmTMB dataset: full model (left) and the same
+model omitting the generating covariate (right). Top panels show
+normal-score PIT Q-Q plots with pointwise independent-uniform reference
+ribbons; bottom panels show those same residuals against the simulated
+covariate x. Purple curves are descriptive loess smooths without
+inferential intervals. All panels share residual limits, and all 480
+observations per candidate are retained. Residuals were previously
+calculated with 499 simulations conditional on each candidate’s fitted
+vessel effects and parameters. Neither the reference ribbons nor the
+smooths provide a calibrated test, and no fits or simulations are
+repeated here.
+
+Across all 100 N09 glmmTMB datasets, the omitted-covariate model’s
+fitted-effect residuals had mean Spearman correlation 0.613 with `x`,
+but only 0.012 with the predictive mean. None crossed the study’s pooled
+independent-uniform DKW reference. Those are repeated-study summaries,
+not statistics calculated from this one illustration, and the crossing
+count is not a calibrated rejection rate. The [validation
+article](https://www.quantifish.co.nz/influ2/articles/residual-validation.html#structure-can-remain-when-the-marginal-distribution-looks-plausible)
+reports the complete comparisons.
+
+### Spatial patterns within each year
+
+Keep the generating covariate in both sdmTMB candidates, but remove the
+yearly spatial field from one. Both retain the persistent spatial field.
+The same 80 stations are observed in each of six years. Match
+coordinates to diagnostic rows and map each year’s **unaggregated
+normal-score PIT residuals**.
+
+``` r
+
+spatial_checks <- spatial_example$checks[c("full:fitted", "omit_st:fitted")]
+names(spatial_checks) <- c("Full model", "Omit yearly field")
+spatial_data <- do.call(rbind, lapply(names(spatial_checks), function(label) {
+  out <- attach_covariates(spatial_checks[[label]], spatial_example$data,
+    c("station", "X", "Y"))
+  out$model <- label
+  out
+}))
+spatial_data$model <- factor(spatial_data$model, levels = names(spatial_checks))
+colour_limit <- ceiling(max(abs(spatial_data$residual)))
+```
+
+``` r
+
+spatial_comparison <- ggplot(spatial_data, aes(X, Y, fill = residual)) +
+  geom_point(shape = 21, size = 1.6, colour = "grey45", stroke = 0.15) +
+  facet_grid(model ~ year, labeller = labeller(model = label_wrap_gen(12))) +
+  scale_fill_gradient2(low = "#2166AC", mid = "#F7F7F7", high = "#B2182B",
+    midpoint = 0, limits = c(-colour_limit, colour_limit)) +
+  scale_x_continuous(breaks = c(25, 75)) +
+  scale_y_continuous(breaks = c(0, 50, 100)) +
+  coord_equal(xlim = c(0, 100), ylim = c(0, 100), expand = FALSE) +
+  labs(x = "Simulated X coordinate", y = "Simulated Y coordinate",
+    fill = "Normal-score PIT residual") +
+  theme(legend.position = "bottom", strip.text.y = element_text(angle = 0),
+    panel.grid.minor = element_blank())
+spatial_comparison
+```
+
+![Twelve common-scale maps compare full and omitted-yearly-field sdmTMB
+residuals across six years, showing the location and sign of within-year
+departures.](residual-diagnostics_files/figure-html/residual-n09-spatial-1.png)
+
+Year-specific residual maps for the preselected N09 sdmTMB dataset,
+comparing the full model (top row) with a candidate omitting the yearly
+spatial field (bottom row). Both retain the covariate and persistent
+spatial field. Each panel shows the same 80 sampled stations, with equal
+coordinate aspect ratio, common coordinate limits, and a single
+symmetric colour scale for all 12 panels. Blue and red indicate negative
+and positive normal-score PIT residuals, not automatic pass/fail
+classifications; point sizes are constant. All residuals come from the
+saved 499-simulation fitted-field checks. Points are not interpolated,
+aggregated, or converted into a new fitted surface. This is an
+exploratory view of within-year structure, not a calibrated spatial test
+or an out-of-sample assessment.
+
+These are simulated coordinates in the study’s 100-by-100 domain, not
+longitude, latitude, or an observed fishery map. Both candidates are
+in-sample fits. In the 100-dataset study, omitting the yearly field
+raised the mean within-year neighbour score from -0.105 to 0.190 under
+fitted-effect conditioning, despite 0/100 pooled DKW-reference crossings
+for the omitted-field candidate. The neighbour score is descriptive, not
+a p-value or a threshold to apply to another fishery.
+
+This interpretation depends on conditioning: N09 new-effect residuals
+retained positive spatial association even for the full model. Do not
+compare maps from different schemes as if they answer the same question,
+or select a scheme because it produces the least pattern. For real data,
+check coordinate projection and units, repeated stations, temporal
+spacing, and sampling coverage. Aggregating observations would require a
+separately defined diagnostic; simply averaging these scores would not
+produce PIT residuals for an aggregated response.
+
+**Practical next step:** investigate a visible, scientifically plausible
+pattern with an explicit candidate model or an appropriately designed
+validation check. Do not add a term solely to erase a plotted pattern.
+The standard four-panel layout is unchanged; these are supplementary
+views, not a new general mapping or autocorrelation API. The separate
+[residual-implied
+effects](https://www.quantifish.co.nz/influ2/articles/implied-effects.md)
+workflow estimates local conditional likelihood adjustments, rather than
+adding PIT scores to coefficients or treating these maps as interaction
+estimates.
 
 ## Grouped PIT departures and residual-implied effects
 
