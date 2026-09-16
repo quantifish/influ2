@@ -32,9 +32,19 @@ unchanged text, ordering, and non-CDI images. All embedded CDI image hashes
 match the new manifest; protected fit/assessment inputs and numerical summaries
 are unchanged. Private display outputs and pre-render backups are in
 `bns_plenary_cdi_spacing_2026-09-16`; scripts 167/168 regenerate and verify them.
-The existing GitHub check/publication follow-up is to track this new source
-revision. This local plotting validation is not a fresh full CRAN check or
-scientific sign-off, and no CRAN or win-builder submission was performed.
+Source `0d4af6148fe692d5f68ca166cb4c10f79932fa76` is committed and pushed.
+GitHub R-CMD-check `35073853276` completed successfully on Ubuntu release
+and Windows release: both report `Status: OK`, with 7,206 passing assertions,
+zero failures, zero warnings, and zero skips. Coverage run `35073853268` and
+pkgdown run `35073853259` also passed. The website build validated ten rendered
+pages and 101 plotted images, including lightbox caption/alt and keyboard checks.
+Pages deployment `35074746035` successfully published gh-pages commit
+`eaa2449a4d1604f8b5f277caabf4f4968486a15f`, built from that source revision.
+Direct HTTP checks of the live main article and `plot.influ_diag` reference
+confirm the draw-time, regular-spacing text; the search renderer's stale article
+cache was not used as publication evidence. The completed follow-up is paused.
+These results are not a fresh full local CRAN check or scientific sign-off,
+and no CRAN or win-builder submission was performed.
 
 ## Shared CDI axis labels: 16 September 2026 (initial spacing, superseded)
 
