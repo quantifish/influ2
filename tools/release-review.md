@@ -119,6 +119,30 @@ fit/assessment-input hashes remain unchanged. Native reduced fits, tables, and
 visually checked figures are back on the Mac, with a private BNS hand-off note.
 These private fisheries data and fits are not included in influ2 or GitHub.
 
+The final archive of feature source `a6ddd1e9b9c46759d796cdc8cf6ee6b57f6edc45`
+is `/private/tmp/influ2-release-check.Fd9LDS/influ2_1.1.0.tar.gz`, SHA256
+`2b1d0697bde9634998912d143135c216175c61f72136f06c142e594e1f93fc9d`.
+All 188 tracked package code/help/test/vignette/extdata files match. Mac
+R 4.6.1 `--as-cran --no-manual` passes with zero errors, zero warnings, and
+one existing incoming NOTE; DHARMa is unavailable locally and force-Suggests
+was disabled. All ten vignettes build and rebuild. Archive tests pass 7,107
+assertions with eight intentional visual groups skipped. Instrumented local
+coverage is 95.88%; GitHub coverage `35067240468` is 95.89%, with no failures
+or warnings (three source-vignette tests unavailable in its installation).
+Those source tests pass locally and in the archive. Local numbered-caption
+and lightbox checks pass for ten pages and 98 plotted images. The package is
+installed in the normal Mac library and the separate BNS step runtime.
+Read-only installed-package verification independently checks all 18 BNS
+stage/component point contrasts to within 2.4e-12 of native coefficient
+arithmetic. All 23 protected files remain unchanged.
+
+pkgdown `35067240463` and Pages deployment `35068130123` passed. Fresh HTTP
+requests verified the live paired-delta step section and native implied-effect
+article. Release-platform run `35067240507` is still running at hand-off.
+Coverage/publication completion does not stand in for those remaining checks.
+Subsequent release-record-only commits are excluded from the package archive
+and skip redundant CI; the checked code source remains `a6ddd1e`.
+
 ## Worked residual-pattern examples: 15 September 2026
 
 The maintainer approved the bounded follow-up to the interpretation review.

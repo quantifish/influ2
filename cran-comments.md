@@ -1,3 +1,38 @@
+## Native implied effects and paired delta steps: 16 September 2026
+
+Feature source `a6ddd1e9b9c46759d796cdc8cf6ee6b57f6edc45` includes native
+tinyVAST/brms residual-implied support (`2bf0d55`) and paired sdmTMB delta
+step refits. Supported families, conditional-likelihood interval meanings,
+component choices, and unsupported structures are documented explicitly.
+Public examples and native brms fixtures contain simulated data only. Tests
+and vignettes do not refit the fixture MCMC. Private BNS data/fits are excluded.
+
+Final archive: `/private/tmp/influ2-release-check.Fd9LDS/influ2_1.1.0.tar.gz`.
+SHA256: `2b1d0697bde9634998912d143135c216175c61f72136f06c142e594e1f93fc9d`.
+All 188 tracked code, help, test, vignette, and extdata files match this archive.
+Mac arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completed with zero
+errors, zero warnings, and one existing incoming NOTE (new submission and
+optional tinyVAST, available from its declared additional repository).
+DHARMa was unavailable locally, so `_R_CHECK_FORCE_SUGGESTS_=false` was used.
+This does not claim a PDF-manual or complete optional-dependency check.
+All ten vignettes built and rebuilt. CRAN-mode tests passed 7,107 assertions
+with eight deliberately skipped visual groups, no failures, and no warnings.
+The full local instrumented suite also passed; measured coverage was 95.88%.
+The checked archive is installed in the normal Mac library and a separate BNS
+runtime. The source/example figures were visually reviewed, and ten-page/
+98-image numbered-caption/lightbox checks passed.
+
+GitHub coverage `35067240468` passed with 95.89% coverage, 7,048 assertions,
+no failures or warnings, and three article-source checks skipped because the
+source vignette is absent from that instrumented installation. Those checks
+passed locally and in the source archive. pkgdown `35067240463` and Pages
+deployment `35068130123` passed. Fresh HTTP checks verified the live joint-delta
+step example and native implied-effect article. Ubuntu/Windows release run
+`35067240507` is still running at this hand-off; completion is not yet claimed.
+No CRAN or win-builder submission has been made. Broader scientific
+review, remaining legacy triage, and the separately documented family/model
+limitations remain open release decisions.
+
 ## Regional CPUE example: 14 September 2026
 
 Source `27e28410e3941034092e2cb10798931a47a81193` adds the worked regional
