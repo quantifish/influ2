@@ -28,7 +28,11 @@ source vignette is absent from that instrumented installation. Those checks
 passed locally and in the source archive. pkgdown `35067240463` and Pages
 deployment `35068130123` passed. Fresh HTTP checks verified the live joint-delta
 step example and native implied-effect article. Ubuntu/Windows release run
-`35067240507` is still running at this hand-off; completion is not yet claimed.
+`35067240507` completed successfully on 16 September 2026. Both R 4.6.1 jobs
+report `Status: OK` and 7,124 passing assertions, with zero failures, warnings,
+or skips. Ubuntu's minimal-installation and saved-result checks also passed.
+Subsequent release-record-only commits change files excluded from the archive
+and use `[skip ci]`; the checked package code remains source `a6ddd1e`.
 No CRAN or win-builder submission has been made. Broader scientific
 review, remaining legacy triage, and the separately documented family/model
 limitations remain open release decisions.

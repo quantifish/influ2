@@ -138,8 +138,13 @@ arithmetic. All 23 protected files remain unchanged.
 
 pkgdown `35067240463` and Pages deployment `35068130123` passed. Fresh HTTP
 requests verified the live paired-delta step section and native implied-effect
-article. Release-platform run `35067240507` is still running at hand-off.
-Coverage/publication completion does not stand in for those remaining checks.
+article. Release-platform run `35067240507` completed successfully on both
+Ubuntu release and Windows release (R 4.6.1). Each reports `Status: OK` and
+7,124 passing assertions, with zero failures, warnings, or skips. Ubuntu's
+minimal-installation and saved-result checks also passed. The final Windows
+job completed at 07:40 UTC on 16 September 2026. Validation and publication
+are complete for this code source; the follow-up monitor is paused. This is
+not CRAN submission or scientific sign-off of the documented limitations.
 Subsequent release-record-only commits are excluded from the package archive
 and skip redundant CI; the checked code source remains `a6ddd1e`.
 
