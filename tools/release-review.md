@@ -24,8 +24,27 @@ hashes remain unchanged; no BNS files are written. Private outputs stay ignored.
 The existing implied-effect/Gamma tests and package-wide regression suite pass;
 the added spatial test separately exercises non-zero spatial and yearly fields.
 The new article figure is visually checked, and all local numbered-caption and
-lightbox tests pass. Final archive, installation, and CI evidence will be recorded
-after those checks finish; the 15 September archive below is not this revision.
+lightbox tests pass (10 pages, 95 plotted images).
+
+Source `9acc389b47c016be60096082cdcb16be9406b81d` is committed and pushed.
+The vignette-built archive is
+`/private/tmp/influ2-delta-check.fzDEWo/influ2_1.1.0.tar.gz`, SHA256
+`689bea952e5c5072eed2e27397b204c974df67e589a9e98176062babd9679a6c`.
+All 162 tracked code/help/test/vignette sources match the archive. Mac R 4.6.1
+`--as-cran --no-manual` passes with zero errors, zero warnings, and one existing
+incoming NOTE (new submission/optional tinyVAST). All ten vignettes build and
+rebuild. Archive tests pass 6,447 assertions, with eight intentional CRAN-mode
+visual groups skipped. DHARMa is unavailable locally, so
+`_R_CHECK_FORCE_SUGGESTS_=false` was used; a PDF manual and full optional-dependency
+installation were not checked. Installed size is 6.6 MB, including 4.5 MB of docs.
+The archive is installed in the normal Mac R library; all three BNS target
+results replay identically from that installed package in a fresh R session.
+Older private BNS runtime libraries are not overwritten.
+
+GitHub runs `35057274060` (Ubuntu/Windows release), `35057274061` (coverage),
+and `35057274005` (pkgdown) were started for this source and are still pending
+at this hand-off. Site publication is not yet claimed. The 15 September check
+record below applies to the earlier revision, not this source.
 
 Remaining six-backend expansion, broader scientific calibration, Nicholas's
 review, and final legacy triage are not marked complete by this change. No CRAN
