@@ -61,8 +61,15 @@ CDI intervals use the probabilities supplied to [influ()] (95%
   orientation and are explicitly labelled as such.
   Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
   name remains on the horizontal axis rather than lengthening the y label.
+  Logit-scale panels use "Effect (log-odds)" (or "Effect (log-odds of zero)"
+  for zero-probability components). This shorter label does not change the
+  selected centring or component orientation.
   Short term labels (including months) are horizontal on the upper fitted-
-  effect axis and the lower composition axis. The influence panel's focus
+  effect axis and the lower composition axis, for fixed and random effects.
+  Both axes label the same at most 20 levels, including the first and last;
+  all coefficients and composition columns remain plotted. Longer labels
+  are angled and justified for their respective top or bottom axis.
+  The influence panel's focus
   labels are on the right, with the same level ordering as the composition.
   The proportion legend has one column and at most four reference bubbles.
 }

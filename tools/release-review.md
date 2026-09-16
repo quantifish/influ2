@@ -5,6 +5,27 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Shared CDI axis labels: 16 September 2026
+
+The maintainer approved the compact encounter label `Effect (log-odds)` and
+horizontal short category labels with matching upper/lower positions. The
+shared CDI plot retains all coefficient and composition rows, thinning only
+the displayed labels to at most 20, including both ends. Positive ratio plots
+retain `Relative Effect`; zero-probability components remain explicitly
+labelled `Effect (log-odds of zero)`. Longer labels use position-aware angled
+axis guides. Centring, scales, uncertainty, and all calculated values are
+unchanged.
+
+The CDI and visual-regression suites pass, including fixed and random vessel
+effects, brms, spatial backends, unchanged monthly snapshots, and a new dense
+encounter snapshot. The package is installed locally. All 41 BNS CDI figures
+were regenerated from frozen summaries without fitting. Thirty images change;
+eleven already-correct images remain byte-identical. The rebuilt 167-slide
+presentation has identical text/order and unchanged non-CDI figures. All 41
+embedded CDI images match the new manifest, and protected fit/assessment-input
+checksums are unchanged. GitHub checks and website publication follow the
+new commit; earlier release checks do not stand in for this source revision.
+
 ## Delta-lognormal implied diagnostics: 16 September 2026
 
 The maintainer requested native sdmTMB support to unblock BNS 2, then extended

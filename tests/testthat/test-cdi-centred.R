@@ -136,6 +136,15 @@ test_that("CDI plotting defaults and model-coded option use their stated scale",
 })
 
 test_that("CDI labels respect link and zero-probability component orientation", {
+  encounter <- .cdi_summary_row("long_vessel_name", "V001", .2, -.1,
+    family_spec = .new_family_spec("binomial", "logit"),
+    method = "none", probs = c(.025, .975))
+  for (reference in c("centred", "model")) {
+    display <- .cdi_plot_coefficients(encounter, "long_vessel_name", reference, "auto")
+    expect_identical(display$label, "Effect (log-odds)")
+    expect_equal(display$data$estimate,
+      if (reference == "centred") encounter$centred_estimate else encounter$estimate)
+  }
   for (link in c("identity", "logit", "probit", "cloglog")) {
     spec <- .new_family_spec(if (link == "identity") "gaussian" else "binomial",
       link, complement = link != "identity")
@@ -156,6 +165,8 @@ test_that("CDI labels respect link and zero-probability component orientation", 
   extra_zero$component <- "response:zero_probability:group_level"
   expect_match(.cdi_plot_coefficients(extra_zero, "month", "centred", "auto")$label,
     "log-odds of zero")
+  expect_identical(.cdi_plot_coefficients(extra_zero, "month", "centred", "auto")$label,
+    "Effect (log-odds of zero)")
 })
 
 test_that("CDI does not silently overlay different model components", {

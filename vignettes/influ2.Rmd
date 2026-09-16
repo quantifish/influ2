@@ -259,6 +259,13 @@ Supplying `reference_data` and, optionally, `reference_weights` changes both
 the influence reference and the CDI centring to that explicit distribution.
 The bubbles continue to show the observed sampling distribution.
 
+For encounter models with a logit link, the upper panel is labelled
+"Effect (log-odds)" and remains centred on zero by default. Positive log-link
+models retain "Relative Effect". Short category labels are horizontal for
+both fixed and random effects. When there are many levels (for example,
+vessels), both panels label the same selection of at most 20 levels, including
+the first and last. All coefficients and bubbles remain plotted.
+
 ```{r lobster-cdi-options, eval=FALSE}
 # Centred relative month effects, with 95% confidence intervals.
 plot(glm_diagnostic, type = "cdi", term = "month")

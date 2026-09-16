@@ -117,7 +117,9 @@
         paste(link, "scale")
       )
     }
-    label <- if (coefficient_reference == "centred") {
+    label <- if (identical(link, "logit")) {
+      "Effect"
+    } else if (coefficient_reference == "centred") {
       paste("Centred", term, "effect")
     } else paste(term, "contribution")
     if (length(units)) label <- paste0(label, " (", units, ")")
@@ -174,11 +176,10 @@
   composition$term_level <- factor(composition$term_level, levels = term_levels)
   composition$focus_level <- factor(composition$level, levels = focus_levels)
   effects$focus_level <- factor(effects$level, levels = focus_levels)
-  # Months and other short categorical labels read cleanly horizontally.
-  # Retain angled labels for the longer bin labels used by continuous terms.
-  label_angle <- if (length(term_levels) <= 12L &&
-      max(nchar(term_levels)) <= 6L) 0 else 45
-  label_hjust <- if (label_angle == 0) 0.5 else 1
+  # Thin labels only: every coefficient and composition column retains its
+  # original position. Use identical breaks above and below, including ends.
+  term_breaks <- .cdi_axis_breaks(term_levels)
+  label_angle <- if (max(nchar(term_breaks)) <= 6L) 0 else 45
 
   coefficient_plot <- ggplot2::ggplot(
     coefficients,
@@ -199,11 +200,12 @@
       na.rm = TRUE
     ) +
     ggplot2::geom_point(colour = "purple4", size = 1.8) +
-    ggplot2::scale_x_discrete(limits = term_levels, position = "top") +
+    ggplot2::scale_x_discrete(limits = term_levels, breaks = term_breaks,
+      position = "top", guide = ggplot2::guide_axis(angle = label_angle)) +
     ggplot2::labs(x = NULL, y = coefficient_display$label) +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle = label_angle, hjust = label_hjust),
+      axis.text.x = ggplot2::element_text(angle = label_angle),
       legend.position = "none",
       plot.margin = ggplot2::margin(b = 1, r = 1, unit = "mm")
     )
@@ -220,7 +222,8 @@
     )
   ) +
     ggplot2::geom_point(colour = "purple4", fill = "purple", alpha = 0.65) +
-    ggplot2::scale_x_discrete(limits = term_levels) +
+    ggplot2::scale_x_discrete(limits = term_levels, breaks = term_breaks,
+      guide = ggplot2::guide_axis(angle = label_angle)) +
     ggplot2::scale_y_discrete(limits = focus_levels) +
     ggplot2::scale_size_area(max_size = 10, breaks = .cdi_proportion_breaks) +
     ggplot2::guides(size = ggplot2::guide_legend(
@@ -237,7 +240,7 @@
   distribution_plot <- distribution_with_legend +
     ggplot2::theme(
       legend.position = "none",
-      axis.text.x = ggplot2::element_text(angle = label_angle, hjust = label_hjust),
+      axis.text.x = ggplot2::element_text(angle = label_angle),
       plot.margin = ggplot2::margin(t = 1, r = 1, unit = "mm")
     )
 
@@ -280,6 +283,10 @@
       heights = c(1, 2),
       widths = c(2, 1)
     )
+}
+
+.cdi_axis_breaks <- function(levels) {
+  levels[unique(round(seq(1L, length(levels), length.out = min(20L, length(levels)))))]
 }
 
 .cdi_proportion_breaks <- function(limits) {
@@ -330,8 +337,15 @@
 #'   orientation and are explicitly labelled as such.
 #'   Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
 #'   name remains on the horizontal axis rather than lengthening the y label.
+#'   Logit-scale panels use "Effect (log-odds)" (or "Effect (log-odds of zero)"
+#'   for zero-probability components). This shorter label does not change the
+#'   selected centring or component orientation.
 #'   Short term labels (including months) are horizontal on the upper fitted-
-#'   effect axis and the lower composition axis. The influence panel's focus
+#'   effect axis and the lower composition axis, for fixed and random effects.
+#'   Both axes label the same at most 20 levels, including the first and last;
+#'   all coefficients and composition columns remain plotted. Longer labels
+#'   are angled and justified for their respective top or bottom axis.
+#'   The influence panel's focus
 #'   labels are on the right, with the same level ordering as the composition.
 #'   The proportion legend has one column and at most four reference bubbles.
 #'
