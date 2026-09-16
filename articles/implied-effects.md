@@ -652,6 +652,10 @@ positive_mean <- exp(1 + .1 * delta_data$year_scaled + .3 * delta_data$x +
   delta_data$log_effort + .15 * delta_data$year_scaled * (delta_data$area == "B"))
 delta_data$response <- rbinom(nrow(delta_data), 1, probability) *
   rlnorm(nrow(delta_data), log(positive_mean) - .6^2 / 2, .6)
+```
+
+``` r
+
 delta_fit <- sdmTMB::sdmTMB(
   list(response ~ year_scaled + area + x, response ~ year + area + x),
   data = delta_data, offset = delta_data$log_effort,
@@ -722,6 +726,155 @@ source-qualified event data, that may require both source ID and event
 key. The adapter checks the supplied values and original native
 likelihood rows before selecting positives.
 
+## tinyVAST: the same component interface
+
+tinyVAST uses the same log-arithmetic-mean parameterisation for its
+lognormal component. Its native observation predictor retains any fitted
+spatial, spatiotemporal, random-effect, and smooth contributions. The
+small example below uses the same simulated data and a covariate effect
+in each component. The regression tests separately verify non-zero
+spatial and yearly fields; neither field is switched off to calculate
+the implied effects.
+
+``` r
+
+tiny_fit <- tinyVAST::tinyVAST(
+  response ~ year_scaled + area + x,
+  delta_options = list(formula = ~year + area + x + offset(log_effort)),
+  data = delta_data, family = tinyVAST::delta_lognormal(), spatial_domain = NULL
+)
+tiny_positive <- implied_effects(tiny_fit, year = "year", groups = "area",
+  component = "positive")
+tiny_encounter <- implied_effects(tiny_fit, year = "year", groups = "area",
+  year_term = "year_scaled", component = "encounter")
+tiny_combined <- implied_effects(tiny_fit, year = "year", groups = "area",
+  component = "combined")
+```
+
+``` r
+
+plot(tiny_positive, ncol = 2)
+```
+
+![Two area panels comparing tinyVAST positive-component implied
+trajectories with their fixed
+baselines.](implied-effects_files/figure-html/implied-tiny-plot-1.png)
+
+Positive-component residual-implied effects from the simulated tinyVAST
+delta-lognormal fit. Only positive observations inform the adjustments.
+The fitted covariate effect and offset remain fixed, and the grey
+baseline contains centred year and area terms. Bars are conditional
+profile-likelihood intervals, not full-model uncertainty.
+
+## brms: choose and record a fixed posterior reference
+
+The default question is unchanged: what **local likelihood adjustment**
+is suggested when the original fit is held fixed? For brms, we first
+take the posterior mean of each parameter, then calculate native
+predictors. This is not the same as averaging predicted responses
+through a nonlinear link. All fitted group-level effects, smooths,
+offsets, and dispersion predictors remain in those calculations. Nothing
+is refitted.
+
+Use `draw_id` to repeat the diagnostic at **one joint posterior draw**,
+retaining that draw’s parameter dependence. This provides a sensitivity
+check, not a posterior distribution for a newly fitted interaction. The
+default mean reference does not preserve posterior dependence, and
+neither option’s profile intervals are Bayesian credible intervals.
+Labels and result metadata state this explicitly. We avoid an
+observations-by-all-draws prediction array; native brms preparation can
+still materialise its parameter draws. Check the original MCMC
+convergence before interpreting either option.
+
+Here is the reproducible fitting and calculation recipe for a small,
+simulated hurdle-lognormal example with a vessel effect and varying
+log-scale SD. In brms, `hu` is the probability of **zero**, so influ2
+negates its predictor and selected baseline coefficients for the
+encounter display. brms `mu` is mean log response; the native lognormal
+likelihood is used with the correct mean correction.
+
+``` r
+
+# Fit once; this is not run when the article is built.
+simulated_data <- read.csv(system.file("extdata", "brms-implied-data.csv",
+  package = "influ2"), colClasses = c(year = "factor", area = "factor", vessel = "factor"))
+priors <- c(brms::set_prior("normal(0, 2)", class = "b"),
+  brms::set_prior("exponential(2)", class = "sd"),
+  brms::set_prior("exponential(2)", class = "sd", dpar = "hu"),
+  brms::set_prior("exponential(2)", class = "sds"),
+  brms::set_prior("normal(0, 1)", class = "b", dpar = "sigma"),
+  brms::set_prior("normal(0, 2)", class = "b", dpar = "hu"))
+bayes_fit <- brms::brm(
+  brms::bf(delta ~ year + area + s(x, k = 4) + offset(effort) + (1 | vessel),
+    hu ~ year_scaled + area + x + (1 | vessel), sigma ~ x),
+  data = simulated_data, family = brms::hurdle_lognormal(),
+  prior = priors, init = 0, chains = 4, cores = 2, iter = 2000,
+  seed = 16092026, control = list(adapt_delta = .999, max_treedepth = 12)
+)
+bayes_positive <- implied_effects(bayes_fit, year = "year", groups = "area",
+  component = "positive")
+bayes_encounter <- implied_effects(bayes_fit, year = "year", groups = "area",
+  year_term = "year_scaled", component = "encounter")
+bayes_combined <- implied_effects(bayes_fit, year = "year", groups = "area",
+  component = "combined")
+one_draw <- implied_effects(bayes_fit, year = "year", groups = "area",
+  component = "positive", draw_id = 17)
+```
+
+The executed figure below is stored as compact diagnostic tables from
+the genuine fitted model, not as posterior prediction arrays. The
+complete [reproduction
+script](https://github.com/quantifish/influ2/blob/master/tools/implied-validation/build-brms-fixtures.R)
+defines the simulated data, priors, sampling controls, and MCMC checks.
+The [export
+script](https://github.com/quantifish/influ2/blob/master/tools/implied-validation/export-brms-example.R)
+calculates the displayed results from the retained fit. The native
+validation tests use a small subset of genuine joint draws; no MCMC or
+compilation is required by package tests or this article.
+
+``` r
+
+bayes_example <- readRDS(system.file("extdata", "brms-implied-example.rds",
+  package = "influ2"))
+bayes_example$metadata
+#> $n
+#> [1] 240
+#> 
+#> $posterior_draws
+#> [1] 4000
+#> 
+#> $max_rhat
+#> [1] 1.008272
+#> 
+#> $min_bulk_ESS
+#> [1] 739.0222
+#> 
+#> $reference
+#> [1] "Posterior-mean parameters; conditional likelihood intervals, not credible intervals"
+#> 
+#> $brms_version
+#> [1] "2.23.0"
+```
+
+``` r
+
+patchwork::wrap_plots(plot(bayes_example$encounter, ncol = 2),
+  plot(bayes_example$positive, ncol = 2), plot(bayes_example$combined, ncol = 2),
+  ncol = 1)
+```
+
+![brms encounter, positive, and combined implied trajectories, with
+explicit fixed-reference uncertainty
+labels.](implied-effects_files/figure-html/implied-brms-plot-1.png)
+
+Three views of the same simulated brms hurdle-lognormal model,
+calculated at posterior-mean parameters: encounter effects (top),
+positive effects (middle), and combined expected response (bottom). The
+positive component has observation-specific log-scale SD. Bars are
+conditional likelihood intervals, not Bayesian credible intervals. The
+combined display retains each area’s original observation mix and is not
+a standardised CPUE index.
+
 ## Interpretation, uncertainty, and scope
 
 The current adapters support `lm`, GLM, GAM, and ML glmmTMB for Gaussian
@@ -743,13 +896,23 @@ lognormal(log), and explicit encounter, positive, and combined views of
 standard delta-lognormal fits. It does not reinterpret Poisson-link
 delta models or mixture families.
 
-Other families, other direct lognormal parameterisations, brms,
-tinyVAST, non-unit weights, and year interactions currently fail
-explicitly for this **new implied-effect calculation**. They remain
-supported where documented by the existing PIT diagnostics and other
-influ2 functions. Joint hurdle/delta models outside the validated sdmTMB
-route require separate adapters; a positive-component calculation is
-never silently substituted for a combined-response diagnostic.
+tinyVAST and brms additionally support Gaussian, Poisson, NB2, Gamma,
+Bernoulli, and lognormal, with identity for Gaussian, logit for
+Bernoulli, and log links for Poisson/NB2/Gamma. tinyVAST lognormal uses
+a log-mean link; brms uses its identity link for log-location. Both
+expose the three joint lognormal views demonstrated above. brms permits
+observation-specific dispersion, held fixed during each local
+adjustment. tinyVAST requires ML, one response, and one family.
+
+Other families, other direct lognormal parameterisations, non-unit
+weights, and year interactions currently fail explicitly for this **new
+implied-effect calculation**. They remain supported where documented by
+the existing PIT diagnostics and other influ2 functions. Joint
+hurdle/delta models outside these validated lognormal routes require
+separate adapters. brms multivariate/nonlinear, censored/truncated,
+autocorrelated, Gaussian-process, and special-predictor structures also
+require separate validation. A positive-component calculation is never
+silently substituted for a combined-response diagnostic.
 
 The tests independently reconstruct the historical recipe, check
 log-response agreement, compare NB2 and Gamma shifts and profile

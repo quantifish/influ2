@@ -2,6 +2,18 @@
 
 ## influ2 1.1.0
 
+- Residual-implied effects now include tinyVAST and brms adapters for
+  Gaussian, Poisson, NB2, Gamma, Bernoulli, and lognormal responses with
+  validated links. Standard tinyVAST delta-lognormal and brms
+  hurdle-lognormal fits expose explicit encounter, positive, and
+  combined views. Native spatial fields, random effects, smooths,
+  offsets, and dispersion are retained. brms defaults to fixed
+  posterior-mean parameters; `draw_id` selects one joint posterior
+  state. Labels explicitly identify conditional likelihood intervals,
+  not Bayesian credible intervals. Native-likelihood tests use small
+  saved genuine posterior fixtures; no MCMC is run by diagnostics,
+  tests, or vignettes.
+
 - Added explicit encounter, positive, and combined residual-implied
   diagnostics for standard delta-lognormal sdmTMB fits, plus
   single-response Bernoulli(logit) and lognormal(log) support. Native

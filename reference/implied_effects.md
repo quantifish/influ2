@@ -21,7 +21,8 @@ implied_effects(
   interval = c("auto", "descriptive", "none"),
   traditional_scale = c("log_response", "standardised", "standardized"),
   component = NULL,
-  year_term = NULL
+  year_term = NULL,
+  draw_id = NULL
 )
 
 # S3 method for class 'influ_implied'
@@ -39,10 +40,13 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
   support Gaussian identity-link models (including an explicitly logged
   response), Poisson, NB2, and Gamma log-link models. ML `sdmTMB`
   Bernoulli(logit), lognormal(log), and standard delta-lognormal fits
-  are also supported with explicit joint-component selection. Other
-  families, backends, joint components, non-unit case weights, and year
-  interactions fail explicitly rather than substitute another
-  calculation.
+  are also supported with explicit joint-component selection. ML
+  `tinyVAST` and native `brms` fits support Gaussian, Poisson, NB2,
+  Gamma, Bernoulli, and lognormal responses with the links described
+  below, plus standard tinyVAST delta-lognormal and brms
+  hurdle-lognormal components. Other families, backends, joint
+  components, non-unit case weights, and year interactions fail
+  explicitly rather than substitute another calculation.
 
 - data:
 
@@ -105,21 +109,29 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 - component:
 
   `NULL` for a single-response fit. A joint standard delta-lognormal
-  `sdmTMB` fit requires `"positive"`, `"encounter"`, or `"combined"`.
-  Only positive observations inform the positive adjustment and its
-  `min_n`; encounter uses all rows. The combined display uses both
-  adjustments and reports expected response, not a coefficient.
-  `"conditional"` may explicitly select a single-response fit. No joint
-  component is selected automatically.
+  `sdmTMB`/`tinyVAST` or hurdle-lognormal `brms` fit requires
+  `"positive"`, `"encounter"`, or `"combined"`. Only positive
+  observations inform the positive adjustment and its `min_n`; encounter
+  uses all rows. The combined display uses both adjustments and reports
+  expected response, not a coefficient. `"conditional"` may explicitly
+  select a single-response fit. No joint component is selected
+  automatically.
 
 - year_term:
 
-  For sdmTMB component effects, the original fixed annual predictor
-  column, defaulting to `year`. For example, use `year = "year_factor"`
-  and `year_term = "year_scaled"` if the encounter formula uses a
-  continuous annual trend. The predictor must be constant within each
-  requested year. Not used for combined implied responses, which do not
-  have a term baseline.
+  For sdmTMB, tinyVAST, or brms effects, the original fixed annual
+  predictor column, defaulting to `year`. For example, use
+  `year = "year_factor"` and `year_term = "year_scaled"` if the
+  encounter formula uses a continuous annual trend. The predictor must
+  be constant within each requested year. Not used for combined implied
+  responses, which do not have a term baseline.
+
+- draw_id:
+
+  For brms only, one positive integer identifying a joint posterior
+  draw. `NULL` uses native posterior-mean parameters before predicting.
+  Both options condition on a single parameter state; neither propagates
+  posterior uncertainty or produces Bayesian credible intervals.
 
 - x:
 
@@ -176,8 +188,8 @@ needed here: use
 [`plot_grouped_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.md)
 for their zero-centred grouped PIT summaries.
 
-For sdmTMB lognormal(log), eta is log(arithmetic mean), and the native
-dispersion sigma is the log-scale SD. The local likelihood is
+For sdmTMB and tinyVAST lognormal(log), eta is log(arithmetic mean), and
+the native dispersion sigma is the log-scale SD. The local likelihood is
 `dlnorm(response, eta + delta - sigma^2/2, sigma)`. Offsets, vessel
 effects, and spatial and spatiotemporal fields remain at their fitted
 values. Baselines are centred over all original fitted rows, including
@@ -189,6 +201,33 @@ supplied data are checked before selecting positive rows. Poisson-link
 delta and mixture families fail explicitly. Bernoulli(logit) encounter
 shifts use all observations; all-zero or all-one strata have infinite
 shifts and are retained as flagged boundary results.
+
+tinyVAST uses native fitted predictors, including spatial and yearly
+fields, and native log-SD, Gaussian SD, NB2 size, or squared Gamma CV.
+Only one response and one family are supported. Bernoulli models require
+unit trials.
+
+brms uses
+[`brms::prepare_predictions()`](https://paulbuerkner.com/brms/reference/prepare_predictions.html)
+with all fitted group-level effects, smooths, offsets, and
+distributional parameters retained. The default collapses parameters
+before predicting, not response predictions after nonlinear
+transformations. `draw_id` instead selects one coherent joint posterior
+state for sensitivity comparisons. Neither creates an
+observations-by-all-draws prediction array; native preparation may still
+materialise the parameter draws. Original posterior convergence must be
+checked separately. The output records its reference and conditioning.
+brms lognormal/hurdle-lognormal requires its native identity link for
+log-location mu. Internally, eta = mu + sigma^2/2 aligns the common
+log-arithmetic-mean likelihood; sigma can vary between observations but
+is held fixed during each adjustment. The fixed-term baseline contains
+the selected mu terms, not sigma terms. For encounter, both the
+predictor and baseline coefficients of hu are negated, since hu is the
+zero probability. Gaussian requires identity, Bernoulli requires logit,
+and Poisson, NB2, and Gamma require log links. Multivariate/nonlinear
+models, response additions (weights, censoring, truncation, or trials),
+autocorrelation, Gaussian-process terms, and special predictors need
+separate adapters.
 
 Combined delta-lognormal displays estimate both shifts separately, then
 average
@@ -208,11 +247,11 @@ totals with an effort offset, the display remains in those totals'
 units, not per-unit-effort units. Traditional/descriptive options do not
 apply to combined responses.
 
-Other directly parameterised lognormal backends are not yet supported.
-In particular, glmmTMB parameterises lognormal mean and SD on the
-response scale; holding that SD fixed is not the same as a constant
-log-SD shift. Use a Gaussian model of log(response) for the demonstrated
-equivalence, not an automatic reinterpretation of another fitted family.
+glmmTMB direct lognormal is not yet supported: it parameterises mean and
+SD on the response scale; holding that SD fixed is not the same as a
+constant log-SD shift. Use a Gaussian model of log(response) for the
+demonstrated equivalence, not an automatic reinterpretation of another
+fitted family.
 
 ## References
 

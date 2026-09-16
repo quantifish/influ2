@@ -896,8 +896,9 @@ distributed with the example.</p>
 <span><span class="va">positive_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">.1</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">+</span> <span class="fl">.3</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span></span>
 <span>  <span class="va">delta_data</span><span class="op">$</span><span class="va">log_effort</span> <span class="op">+</span> <span class="fl">.15</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">*</span> <span class="op">(</span><span class="va">delta_data</span><span class="op">$</span><span class="va">area</span> <span class="op">==</span> <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">delta_data</span><span class="op">$</span><span class="va">response</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">probability</span><span class="op">)</span> <span class="op">*</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">positive_mean</span><span class="op">)</span> <span class="op">-</span> <span class="fl">.6</span><span class="op">^</span><span class="fl">2</span> <span class="op">/</span> <span class="fl">2</span>, <span class="fl">.6</span><span class="op">)</span></span>
-<span><span class="va">delta_fit</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html" class="external-link">sdmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">positive_mean</span><span class="op">)</span> <span class="op">-</span> <span class="fl">.6</span><span class="op">^</span><span class="fl">2</span> <span class="op">/</span> <span class="fl">2</span>, <span class="fl">.6</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">delta_fit</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html" class="external-link">sdmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="va">year_scaled</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span>, <span class="va">response</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">delta_data</span>, offset <span class="op">=</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">log_effort</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/families.html" class="external-link">delta_lognormal</a></span><span class="op">(</span><span class="op">)</span>, spatial <span class="op">=</span> <span class="st">"off"</span>, silent <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -916,7 +917,7 @@ fitted observations</strong>, including zeros. Where area or target is
 only a grouping variable, without a fixed main effect, the baseline is
 year-only; no group coefficient is invented. A target random effect
 stays in the fitted predictor, not in the fixed-term baseline.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">encounter</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">positive</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">combined</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -960,6 +961,137 @@ source ID and event key. The adapter checks the supplied values and
 original native likelihood rows before selecting positives.</p>
 </div>
 <div class="section level2">
+<h2 id="tinyvast-the-same-component-interface">tinyVAST: the same component interface<a class="anchor" aria-label="anchor" href="#tinyvast-the-same-component-interface"></a>
+</h2>
+<p>tinyVAST uses the same log-arithmetic-mean parameterisation for its
+lognormal component. Its native observation predictor retains any fitted
+spatial, spatiotemporal, random-effect, and smooth contributions. The
+small example below uses the same simulated data and a covariate effect
+in each component. The regression tests separately verify non-zero
+spatial and yearly fields; neither field is switched off to calculate
+the implied effects.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tiny_fit</span> <span class="op">&lt;-</span> <span class="fu">tinyVAST</span><span class="fu">::</span><span class="fu"><a href="https://vast-lib.github.io/tinyVAST/reference/tinyVAST.html" class="external-link">tinyVAST</a></span><span class="op">(</span></span>
+<span>  <span class="va">response</span> <span class="op">~</span> <span class="va">year_scaled</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span>,</span>
+<span>  delta_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="op">~</span><span class="va">year</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="va">log_effort</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">delta_data</span>, family <span class="op">=</span> <span class="fu">tinyVAST</span><span class="fu">::</span><span class="fu"><a href="https://vast-lib.github.io/tinyVAST/reference/families.html" class="external-link">delta_lognormal</a></span><span class="op">(</span><span class="op">)</span>, spatial_domain <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">tiny_positive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">tiny_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"positive"</span><span class="op">)</span></span>
+<span><span class="va">tiny_encounter</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">tiny_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  year_term <span class="op">=</span> <span class="st">"year_scaled"</span>, component <span class="op">=</span> <span class="st">"encounter"</span><span class="op">)</span></span>
+<span><span class="va">tiny_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">tiny_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tiny_positive</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="implied-effects_files/figure-html/implied-tiny-plot-1.png" class="r-plt" alt="Two area panels comparing tinyVAST positive-component implied trajectories with their fixed baselines." width="1056"><p class="caption">
+Positive-component residual-implied effects from the simulated tinyVAST
+delta-lognormal fit. Only positive observations inform the adjustments.
+The fitted covariate effect and offset remain fixed, and the grey
+baseline contains centred year and area terms. Bars are conditional
+profile-likelihood intervals, not full-model uncertainty.
+</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="brms-choose-and-record-a-fixed-posterior-reference">brms: choose and record a fixed posterior reference<a class="anchor" aria-label="anchor" href="#brms-choose-and-record-a-fixed-posterior-reference"></a>
+</h2>
+<p>The default question is unchanged: what <strong>local likelihood
+adjustment</strong> is suggested when the original fit is held fixed?
+For brms, we first take the posterior mean of each parameter, then
+calculate native predictors. This is not the same as averaging predicted
+responses through a nonlinear link. All fitted group-level effects,
+smooths, offsets, and dispersion predictors remain in those
+calculations. Nothing is refitted.</p>
+<p>Use <code>draw_id</code> to repeat the diagnostic at <strong>one
+joint posterior draw</strong>, retaining that draw’s parameter
+dependence. This provides a sensitivity check, not a posterior
+distribution for a newly fitted interaction. The default mean reference
+does not preserve posterior dependence, and neither option’s profile
+intervals are Bayesian credible intervals. Labels and result metadata
+state this explicitly. We avoid an observations-by-all-draws prediction
+array; native brms preparation can still materialise its parameter
+draws. Check the original MCMC convergence before interpreting either
+option.</p>
+<p>Here is the reproducible fitting and calculation recipe for a small,
+simulated hurdle-lognormal example with a vessel effect and varying
+log-scale SD. In brms, <code>hu</code> is the probability of
+<strong>zero</strong>, so influ2 negates its predictor and selected
+baseline coefficients for the encounter display. brms <code>mu</code> is
+mean log response; the native lognormal likelihood is used with the
+correct mean correction.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Fit once; this is not run when the article is built.</span></span>
+<span><span class="va">simulated_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"brms-implied-data.csv"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"influ2"</span><span class="op">)</span>, colClasses <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>year <span class="op">=</span> <span class="st">"factor"</span>, area <span class="op">=</span> <span class="st">"factor"</span>, vessel <span class="op">=</span> <span class="st">"factor"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">priors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 2)"</span>, class <span class="op">=</span> <span class="st">"b"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"exponential(2)"</span>, class <span class="op">=</span> <span class="st">"sd"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"exponential(2)"</span>, class <span class="op">=</span> <span class="st">"sd"</span>, dpar <span class="op">=</span> <span class="st">"hu"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"exponential(2)"</span>, class <span class="op">=</span> <span class="st">"sds"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 1)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, dpar <span class="op">=</span> <span class="st">"sigma"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 2)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, dpar <span class="op">=</span> <span class="st">"hu"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bayes_fit</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brm.html" class="external-link">brm</a></span><span class="op">(</span></span>
+<span>  <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brmsformula.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">delta</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">4</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/offset.html" class="external-link">offset</a></span><span class="op">(</span><span class="va">effort</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">vessel</span><span class="op">)</span>,</span>
+<span>    <span class="va">hu</span> <span class="op">~</span> <span class="va">year_scaled</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">vessel</span><span class="op">)</span>, <span class="va">sigma</span> <span class="op">~</span> <span class="va">x</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">simulated_data</span>, family <span class="op">=</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brmsfamily.html" class="external-link">hurdle_lognormal</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  prior <span class="op">=</span> <span class="va">priors</span>, init <span class="op">=</span> <span class="fl">0</span>, chains <span class="op">=</span> <span class="fl">4</span>, cores <span class="op">=</span> <span class="fl">2</span>, iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">16092026</span>, control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta <span class="op">=</span> <span class="fl">.999</span>, max_treedepth <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">bayes_positive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">bayes_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"positive"</span><span class="op">)</span></span>
+<span><span class="va">bayes_encounter</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">bayes_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  year_term <span class="op">=</span> <span class="st">"year_scaled"</span>, component <span class="op">=</span> <span class="st">"encounter"</span><span class="op">)</span></span>
+<span><span class="va">bayes_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">bayes_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span>
+<span><span class="va">one_draw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">bayes_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"positive"</span>, draw_id <span class="op">=</span> <span class="fl">17</span><span class="op">)</span></span></code></pre></div>
+<p>The executed figure below is stored as compact diagnostic tables from
+the genuine fitted model, not as posterior prediction arrays. The
+complete <a href="https://github.com/quantifish/influ2/blob/master/tools/implied-validation/build-brms-fixtures.R" class="external-link">reproduction
+script</a> defines the simulated data, priors, sampling controls, and
+MCMC checks. The <a href="https://github.com/quantifish/influ2/blob/master/tools/implied-validation/export-brms-example.R" class="external-link">export
+script</a> calculates the displayed results from the retained fit. The
+native validation tests use a small subset of genuine joint draws; no
+MCMC or compilation is required by package tests or this article.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bayes_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"brms-implied-example.rds"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"influ2"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bayes_example</span><span class="op">$</span><span class="va">metadata</span></span>
+<span><span class="co">#&gt; $n</span></span>
+<span><span class="co">#&gt; [1] 240</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $posterior_draws</span></span>
+<span><span class="co">#&gt; [1] 4000</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $max_rhat</span></span>
+<span><span class="co">#&gt; [1] 1.008272</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $min_bulk_ESS</span></span>
+<span><span class="co">#&gt; [1] 739.0222</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $reference</span></span>
+<span><span class="co">#&gt; [1] "Posterior-mean parameters; conditional likelihood intervals, not credible intervals"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $brms_version</span></span>
+<span><span class="co">#&gt; [1] "2.23.0"</span></span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bayes_example</span><span class="op">$</span><span class="va">encounter</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bayes_example</span><span class="op">$</span><span class="va">positive</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">bayes_example</span><span class="op">$</span><span class="va">combined</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="implied-effects_files/figure-html/implied-brms-plot-1.png" class="r-plt" alt="brms encounter, positive, and combined implied trajectories, with explicit fixed-reference uncertainty labels." width="1056"><p class="caption">
+Three views of the same simulated brms hurdle-lognormal model,
+calculated at posterior-mean parameters: encounter effects (top),
+positive effects (middle), and combined expected response (bottom). The
+positive component has observation-specific log-scale SD. Bars are
+conditional likelihood intervals, not Bayesian credible intervals. The
+combined display retains each area’s original observation mix and is not
+a standardised CPUE index.
+</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="interpretation-uncertainty-and-scope">Interpretation, uncertainty, and scope<a class="anchor" aria-label="anchor" href="#interpretation-uncertainty-and-scope"></a>
 </h2>
 <p>The current adapters support <code>lm</code>, GLM, GAM, and ML
@@ -978,14 +1110,23 @@ further development, not something these bars already provide.</p>
 lognormal(log), and explicit encounter, positive, and combined views of
 standard delta-lognormal fits. It does not reinterpret Poisson-link
 delta models or mixture families.</p>
-<p>Other families, other direct lognormal parameterisations, brms,
-tinyVAST, non-unit weights, and year interactions currently fail
-explicitly for this <strong>new implied-effect calculation</strong>.
-They remain supported where documented by the existing PIT diagnostics
-and other influ2 functions. Joint hurdle/delta models outside the
-validated sdmTMB route require separate adapters; a positive-component
-calculation is never silently substituted for a combined-response
-diagnostic.</p>
+<p>tinyVAST and brms additionally support Gaussian, Poisson, NB2, Gamma,
+Bernoulli, and lognormal, with identity for Gaussian, logit for
+Bernoulli, and log links for Poisson/NB2/Gamma. tinyVAST lognormal uses
+a log-mean link; brms uses its identity link for log-location. Both
+expose the three joint lognormal views demonstrated above. brms permits
+observation-specific dispersion, held fixed during each local
+adjustment. tinyVAST requires ML, one response, and one family.</p>
+<p>Other families, other direct lognormal parameterisations, non-unit
+weights, and year interactions currently fail explicitly for this
+<strong>new implied-effect calculation</strong>. They remain supported
+where documented by the existing PIT diagnostics and other influ2
+functions. Joint hurdle/delta models outside these validated lognormal
+routes require separate adapters. brms multivariate/nonlinear,
+censored/truncated, autocorrelated, Gaussian-process, and
+special-predictor structures also require separate validation. A
+positive-component calculation is never silently substituted for a
+combined-response diagnostic.</p>
 <p>The tests independently reconstruct the historical recipe, check
 log-response agreement, compare NB2 and Gamma shifts and profile
 endpoints with native density calculations, and cover offsets, fitted
