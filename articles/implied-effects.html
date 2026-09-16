@@ -240,9 +240,9 @@ package is unavailable. This equality is not a promise that every
 lognormal parameterisation behaves identically. For example, glmmTMB’s
 directly specified <code>lognormal()</code> family models mean and SD on
 the response scale: holding that SD fixed is different from holding
-log-scale SD fixed. This first implied-effect implementation therefore
-supports the explicit Gaussian-log-response route, not an automatic
-conversion of directly parameterised lognormal models.</p>
+log-scale SD fixed. The Gaussian-log-response route above and the native
+sdmTMB lognormal route below are supported; other directly parameterised
+lognormal families are not automatically converted.</p>
 </div>
 <div class="section level3">
 <h3 id="reproduce-the-actual-historical-standardised-residual-recipe">Reproduce the actual historical standardised-residual recipe<a class="anchor" aria-label="anchor" href="#reproduce-the-actual-historical-standardised-residual-recipe"></a>
@@ -271,7 +271,7 @@ fixed-effect fit with a mixed model.</p>
 <span>    std_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">standardised</span><span class="op">[</span><span class="va">keep</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">keep</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">estimate</span> <span class="op">-</span> <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">estimate</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.110223e-16</span></span>
+<span><span class="co">#&gt; [1] 2.220446e-16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">estimate</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">std_error</span>, <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">std_error</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -316,19 +316,19 @@ means by <code>exp(delta)</code>.</p>
 <span><span class="va">nb_implied</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">nb_fit</span>, groups <span class="op">=</span> <span class="st">"season"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">nb_implied</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   level        group   n    baseline  adjustment    estimate  std_error</span></span>
-<span><span class="co">#&gt; 1  2000 Early season 153  0.23187513  0.19752093  0.42939606 0.05137036</span></span>
-<span><span class="co">#&gt; 2  2001 Early season 143  0.21491857  0.12104119  0.33595976 0.05376133</span></span>
-<span><span class="co">#&gt; 3  2002 Early season 154  0.17412706  0.18936452  0.36349158 0.05169645</span></span>
-<span><span class="co">#&gt; 4  2003 Early season 160  0.09752276  0.13935863  0.23688140 0.05120521</span></span>
-<span><span class="co">#&gt; 5  2004 Early season  90 -0.06401782  0.13669585  0.07267802 0.06914226</span></span>
-<span><span class="co">#&gt; 6  2005 Early season  67 -0.13942676 -0.02277388 -0.16220063 0.08505897</span></span>
-<span><span class="co">#&gt;        lower      upper status</span></span>
-<span><span class="co">#&gt; 1  0.3296594 0.53107317     ok</span></span>
-<span><span class="co">#&gt; 2  0.2315614 0.44235340     ok</span></span>
-<span><span class="co">#&gt; 3  0.2630781 0.46577037     ok</span></span>
-<span><span class="co">#&gt; 4  0.1373659 0.33813076     ok</span></span>
-<span><span class="co">#&gt; 5 -0.0614247 0.20971555     ok</span></span>
-<span><span class="co">#&gt; 6 -0.3275419 0.00607389     ok</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  2000 Early season 153  0.23187481  0.19752139  0.42939619 0.05137036</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143  0.21491937  0.12104052  0.33595989 0.05376133</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154  0.17412683  0.18936487  0.36349170 0.05169645</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160  0.09752318  0.13935836  0.23688154 0.05120520</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90 -0.06401734  0.13669553  0.07267819 0.06914226</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67 -0.13942674 -0.02277379 -0.16220053 0.08505896</span></span>
+<span><span class="co">#&gt;         lower      upper status</span></span>
+<span><span class="co">#&gt; 1  0.32965956 0.53107330     ok</span></span>
+<span><span class="co">#&gt; 2  0.23156150 0.44235353     ok</span></span>
+<span><span class="co">#&gt; 3  0.26307818 0.46577048     ok</span></span>
+<span><span class="co">#&gt; 4  0.13736603 0.33813090     ok</span></span>
+<span><span class="co">#&gt; 5 -0.06142452 0.20971571     ok</span></span>
+<span><span class="co">#&gt; 6 -0.32754176 0.00607398     ok</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">nb_implied</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -837,6 +837,129 @@ link are required. An entire joint delta model is not silently replaced
 by its positive Gamma component.</p>
 </div>
 <div class="section level2">
+<h2 id="delta-lognormal-models-three-distinct-views">Delta-lognormal models: three distinct views<a class="anchor" aria-label="anchor" href="#delta-lognormal-models-three-distinct-views"></a>
+</h2>
+<p>A standard delta-lognormal sdmTMB model has an encounter process and
+a positive-response process. Explicitly select which question to
+ask:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Component</th>
+<th>Local adjustment</th>
+<th>Display and observations</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>"encounter"</code></td>
+<td>A log-odds shift in the Bernoulli likelihood</td>
+<td>Implied encounter effect; all observations</td>
+</tr>
+<tr class="even">
+<td><code>"positive"</code></td>
+<td>A log-mean shift in the positive lognormal likelihood</td>
+<td>Implied positive effect; positive observations only</td>
+</tr>
+<tr class="odd">
+<td><code>"combined"</code></td>
+<td>Both shifts, estimated separately</td>
+<td>Implied expected response over the original stratum rows, including
+zeros</td>
+</tr>
+</tbody>
+</table>
+<p>This is not the same as switching a PIT residual plot between
+components. These calculations use the original native likelihood and
+hold all fitted parameters, offsets, random effects, and spatial and
+spatiotemporal fields fixed.</p>
+<p>For sdmTMB, the positive linear predictor is <strong>log arithmetic
+mean</strong>, not the mean of log response. If its fitted log-scale SD
+is <code>sigma</code>, the lognormal likelihood uses
+<code>meanlog = eta + adjustment - sigma^2 / 2</code>. Omitting that
+correction would shift the result by <code>sigma^2 / 2</code>.</p>
+<p>The following small simulated example uses different annual
+specifications in the two components, as can occur in an applied CPUE
+model. No fisheries assessment data or saved assessment fit is
+distributed with the example.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">927</span><span class="op">)</span></span>
+<span><span class="va">delta_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fl">2011</span><span class="op">:</span><span class="fl">2016</span><span class="op">)</span>,</span>
+<span>  area <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span><span class="op">)</span>, record <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">60</span><span class="op">)</span></span>
+<span><span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">$</span><span class="va">year</span><span class="op">)</span> <span class="op">-</span> <span class="fl">3.5</span></span>
+<span><span class="va">delta_data</span><span class="op">$</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">delta_data</span><span class="op">$</span><span class="va">log_effort</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span></span>
+<span><span class="va">probability</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="fl">.4</span> <span class="op">+</span> <span class="fl">.2</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">+</span> <span class="fl">.3</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="va">positive_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">.1</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">+</span> <span class="fl">.3</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span></span>
+<span>  <span class="va">delta_data</span><span class="op">$</span><span class="va">log_effort</span> <span class="op">+</span> <span class="fl">.15</span> <span class="op">*</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">*</span> <span class="op">(</span><span class="va">delta_data</span><span class="op">$</span><span class="va">area</span> <span class="op">==</span> <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">delta_data</span><span class="op">$</span><span class="va">response</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="fl">1</span>, <span class="va">probability</span><span class="op">)</span> <span class="op">*</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">positive_mean</span><span class="op">)</span> <span class="op">-</span> <span class="fl">.6</span><span class="op">^</span><span class="fl">2</span> <span class="op">/</span> <span class="fl">2</span>, <span class="fl">.6</span><span class="op">)</span></span>
+<span><span class="va">delta_fit</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html" class="external-link">sdmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="va">year_scaled</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span>, <span class="va">response</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">area</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">delta_data</span>, offset <span class="op">=</span> <span class="va">delta_data</span><span class="op">$</span><span class="va">log_effort</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/families.html" class="external-link">delta_lognormal</a></span><span class="op">(</span><span class="op">)</span>, spatial <span class="op">=</span> <span class="st">"off"</span>, silent <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">encounter</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">delta_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"encounter"</span>, year_term <span class="op">=</span> <span class="st">"year_scaled"</span><span class="op">)</span></span>
+<span><span class="va">positive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">delta_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"positive"</span><span class="op">)</span></span>
+<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">delta_fit</span>, year <span class="op">=</span> <span class="st">"year"</span>, groups <span class="op">=</span> <span class="st">"area"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span></code></pre></div>
+<p><code>year_term</code> identifies the continuous annual predictor in
+the encounter formula; the plots still use the original fishing-year
+labels. Positive effects use that component’s separate annual
+coefficients. Component baselines are centred over <strong>all original
+fitted observations</strong>, including zeros. Where area or target is
+only a grouping variable, without a fixed main effect, the baseline is
+year-only; no group coefficient is invented. A target random effect
+stays in the fitted predictor, not in the fixed-term baseline.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">encounter</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">positive</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">combined</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="implied-effects_files/figure-html/implied-delta-components-1.png" class="r-plt" alt="Encounter, positive, and combined delta-lognormal implied diagnostics, with distinct log-odds, log-effect, and response scales." width="1056"><p class="caption">
+Three explicitly selected views of one simulated delta-lognormal fit.
+Encounter (top) and positive (middle) panels show effect-scale
+adjustments added to their respective fixed annual and area baselines.
+Combined panels (bottom) compare fitted and implied expected responses
+over the original observations in each area-year, retaining exposure and
+sampling composition. These panels have different units and must not be
+compared by numerical height. Bars are 95% conditional
+profile-likelihood intervals; they omit uncertainty in the original
+fitted model. Combined responses are not standardised CPUE indices.
+</p>
+</div>
+<p>The combined display uses both locally estimated shifts and averages
+their combined expected responses over the original stratum rows. It
+does <strong>not</strong> force the same adjustment on both components.
+Its intervals profile over the possible allocation between encounter and
+positive changes, while all original model parameters remain fixed. The
+combined table also retains <code>encounter_adjustment</code>,
+<code>positive_adjustment</code>, and <code>n_positive</code>;
+<code>adjustment</code> is the log ratio of the implied mean to the
+fitted mean. Its <code>std_error</code> is a conditional delta-method SE
+on the response scale, whereas its plotted bounds use profile
+likelihood.</p>
+<p>In a response-total model with an effort offset, this combined plot
+remains in response-total units. Changing effort or sampling composition
+can change these group means: use <code><a href="../reference/cpue_index.html">cpue_index()</a></code> for a
+standardised index. Encounter uses all records; positive effects require
+<code>min_n</code> positive records. Combined displays require enough
+records for both components. All-zero and all-positive encounter strata
+have boundary shifts; unsupported results remain flagged and break
+lines, rather than being repaired with pseudocounts. None of these
+checks substitutes for the combined-response PIT diagnostics.</p>
+<p>If grouping information is supplied separately, provide <strong>the
+full original joint fitting data</strong>, not just positive rows.
+Preserve original row names and check joins using a genuinely unique
+observation key. For source-qualified event data, that may require both
+source ID and event key. The adapter checks the supplied values and
+original native likelihood rows before selecting positives.</p>
+</div>
+<div class="section level2">
 <h2 id="interpretation-uncertainty-and-scope">Interpretation, uncertainty, and scope<a class="anchor" aria-label="anchor" href="#interpretation-uncertainty-and-scope"></a>
 </h2>
 <p>The current adapters support <code>lm</code>, GLM, GAM, and ML
@@ -851,14 +974,18 @@ one-SE bars also ignore dependence. Neither should be read as full
 uncertainty in a regional index or an interaction. A suitable
 refit/bootstrap or explicitly defined posterior propagation would be a
 further development, not something these bars already provide.</p>
-<p>Other families, direct lognormal parameterisations, brms, sdmTMB,
+<p>The sdmTMB adapter additionally supports Bernoulli(logit),
+lognormal(log), and explicit encounter, positive, and combined views of
+standard delta-lognormal fits. It does not reinterpret Poisson-link
+delta models or mixture families.</p>
+<p>Other families, other direct lognormal parameterisations, brms,
 tinyVAST, non-unit weights, and year interactions currently fail
 explicitly for this <strong>new implied-effect calculation</strong>.
 They remain supported where documented by the existing PIT diagnostics
-and other influ2 functions. Joint hurdle/delta models require separate
-decisions about encounter, positive-response, and combined-response
-shifts; a positive-component calculation is never silently substituted
-for a combined-response diagnostic.</p>
+and other influ2 functions. Joint hurdle/delta models outside the
+validated sdmTMB route require separate adapters; a positive-component
+calculation is never silently substituted for a combined-response
+diagnostic.</p>
 <p>The tests independently reconstruct the historical recipe, check
 log-response agreement, compare NB2 and Gamma shifts and profile
 endpoints with native density calculations, and cover offsets, fitted

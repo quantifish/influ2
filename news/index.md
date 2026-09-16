@@ -2,6 +2,17 @@
 
 ## influ2 1.1.0
 
+- Added explicit encounter, positive, and combined residual-implied
+  diagnostics for standard delta-lognormal sdmTMB fits, plus
+  single-response Bernoulli(logit) and lognormal(log) support. Native
+  offsets, vessel effects, spatial fields, spatiotemporal fields, and
+  dispersion remain fixed. An explicit `year_term` handles components
+  with different annual specifications. Combined displays show
+  original-observation expected responses, not implied coefficients or
+  standardised indices; conditional profile intervals allow both
+  component adjustments. Sparse, empty, and boundary strata remain
+  explicit.
+
 - Added worked omitted-covariate and year-specific spatial residual
   examples to the Residual diagnostics article, reusing saved N09
   results without model fitting or response simulation. Shared scales,

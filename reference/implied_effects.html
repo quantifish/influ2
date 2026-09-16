@@ -71,7 +71,9 @@ abundance indices. Calculate once and plot the compact result repeatedly.</p>
 <span>  min_n <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"descriptive"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
-<span>  traditional_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"log_response"</span>, <span class="st">"standardised"</span>, <span class="st">"standardized"</span><span class="op">)</span></span>
+<span>  traditional_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"log_response"</span>, <span class="st">"standardised"</span>, <span class="st">"standardized"</span><span class="op">)</span>,</span>
+<span>  component <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  year_term <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_implied'</span></span>
@@ -86,10 +88,12 @@ abundance indices. Calculate once and plot the compact result repeatedly.</p>
 
 
 <dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>A retained <code>lm</code>, GLM, <code>mgcv</code> GAM, or ML <code>glmmTMB</code> fit. This
-first implementation supports Gaussian identity-link models (including
+<dd><p>A retained <code>lm</code>, GLM, <code>mgcv</code> GAM, or ML <code>glmmTMB</code> fit. These
+adapters support Gaussian identity-link models (including
 an explicitly logged response), Poisson, NB2, and Gamma log-link models.
-Other families, backends, joint models, non-unit case weights, and year
+ML <code>sdmTMB</code> Bernoulli(logit), lognormal(log), and standard delta-lognormal
+fits are also supported with explicit joint-component selection.
+Other families, backends, joint components, non-unit case weights, and year
 interactions fail explicitly rather than substitute another calculation.</p></dd>
 
 
@@ -117,7 +121,10 @@ for a Gaussian model of <code>log(response)</code>; see <code>traditional_scale<
 year and group, where the group main effect is present. <code>"year"</code> adds only
 the year contribution. Terms are centred over all fitted observations,
 not separately within panels. An additive fixed year term is required.
-Random effects and smooths remain in fitted predictions, not the baseline.</p></dd>
+Random effects and smooths remain in fitted predictions, not the baseline.
+For <code>component = "combined"</code>, this term-baseline choice does not apply:
+the baseline is the fitted arithmetic response mean over each stratum's
+original observation rows, without centring or reference-grid standardisation.</p></dd>
 
 
 <dt id="arg-min-n">min_n<a class="anchor" aria-label="anchor" href="#arg-min-n"></a></dt>
@@ -142,6 +149,24 @@ residuals. <code>"standardised"</code> (or <code>"standardized"</code>) reproduc
 analyser GLM convention: native <code><a href="https://rdrr.io/r/stats/influence.measures.html" class="external-link">rstandard()</a></code> residuals, globally centred,
 added to term contributions. This latter display mixes scales, is retained
 only for comparison, and is restricted to plain Gaussian log-response GLMs.</p></dd>
+
+
+<dt id="arg-component">component<a class="anchor" aria-label="anchor" href="#arg-component"></a></dt>
+<dd><p><code>NULL</code> for a single-response fit. A joint standard
+delta-lognormal <code>sdmTMB</code> fit requires <code>"positive"</code>, <code>"encounter"</code>, or
+<code>"combined"</code>. Only positive observations inform the positive adjustment
+and its <code>min_n</code>; encounter uses all rows. The combined display uses both
+adjustments and reports expected response, not a coefficient.
+<code>"conditional"</code> may explicitly select a single-response
+fit. No joint component is selected automatically.</p></dd>
+
+
+<dt id="arg-year-term">year_term<a class="anchor" aria-label="anchor" href="#arg-year-term"></a></dt>
+<dd><p>For sdmTMB component effects, the original fixed annual
+predictor column, defaulting to <code>year</code>. For example, use <code>year = "year_factor"</code>
+and <code>year_term = "year_scaled"</code> if the encounter formula uses a continuous
+annual trend. The predictor must be constant within each requested year.
+Not used for combined implied responses, which do not have a term baseline.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
@@ -193,8 +218,34 @@ finite correction. Their points/bars are omitted from the plot. Empty and
 sparse cells, and missing numeric years, break trajectories. Existing <code>influ_residuals</code> objects do not
 contain the native likelihood needed here: use <code><a href="plot_grouped_residuals.html">plot_grouped_residuals()</a></code>
 for their zero-centred grouped PIT summaries.</p>
-<p>Directly parameterised lognormal families are not supported in this first
-increment. In particular, glmmTMB parameterises lognormal mean and SD on
+<p>For sdmTMB lognormal(log), eta is log(arithmetic mean), and the native
+dispersion sigma is the log-scale SD. The local likelihood is
+<code>dlnorm(response, eta + delta - sigma^2/2, sigma)</code>. Offsets, vessel effects,
+and spatial and spatiotemporal fields remain at their fitted values.
+Baselines are centred over all original fitted rows, including zeros in a
+joint fit; only positive rows contribute to its local adjustments. A group
+without a fixed main effect uses the year-only baseline, not a fabricated
+group coefficient. Zero-only strata remain in the table as empty positive
+strata. Native likelihood observations and supplied data are checked before
+selecting positive rows. Poisson-link delta and mixture families fail explicitly.
+Bernoulli(logit) encounter shifts use all observations; all-zero or all-one
+strata have infinite shifts and are retained as flagged boundary results.</p>
+<p>Combined delta-lognormal displays estimate both shifts separately, then
+average <code>plogis(eta_encounter + delta_encounter) * exp(eta_positive + delta_positive)</code> over the stratum's original rows, including zero responses.
+Both components must satisfy <code>min_n</code>, with at least one zero and one positive
+observation. Unsupported strata remain flagged. The <code>estimate</code>, <code>baseline</code>,
+and interval bounds are on the response scale; <code>adjustment</code> is their log
+mean ratio. Separate component shifts and positive counts are also retained.
+Profile intervals maximise the joint conditional likelihood over how both
+shifts contribute to the derived mean; <code>std_error</code> is its conditional
+delta-method SE. No equal-shift constraint is imposed. These observed-mix
+means retain exposure and sampling composition: they are not CPUE indices,
+regional standardisations, or area-integrated abundance. In a model of
+response totals with an effort offset, the display remains in those totals'
+units, not per-unit-effort units. Traditional/descriptive options do not
+apply to combined responses.</p>
+<p>Other directly parameterised lognormal backends are not yet supported.
+In particular, glmmTMB parameterises lognormal mean and SD on
 the response scale; holding that SD fixed is not the same as a constant
 log-SD shift. Use a Gaussian model of log(response) for the demonstrated
 equivalence, not an automatic reinterpretation of another fitted family.</p>

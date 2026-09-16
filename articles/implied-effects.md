@@ -145,10 +145,10 @@ The optional `glmmTMB` examples are skipped if that package is
 unavailable. This equality is not a promise that every lognormal
 parameterisation behaves identically. For example, glmmTMB’s directly
 specified `lognormal()` family models mean and SD on the response scale:
-holding that SD fixed is different from holding log-scale SD fixed. This
-first implied-effect implementation therefore supports the explicit
-Gaussian-log-response route, not an automatic conversion of directly
-parameterised lognormal models.
+holding that SD fixed is different from holding log-scale SD fixed. The
+Gaussian-log-response route above and the native sdmTMB lognormal route
+below are supported; other directly parameterised lognormal families are
+not automatically converted.
 
 ### Reproduce the actual historical standardised-residual recipe
 
@@ -177,7 +177,7 @@ manual <- do.call(rbind, lapply(seq_len(nrow(historical$table)), function(j) {
     std_error = sd(standardised[keep]) / sqrt(sum(keep)))
 }))
 max(abs(manual$estimate - historical$table$estimate))
-#> [1] 1.110223e-16
+#> [1] 2.220446e-16
 stopifnot(isTRUE(all.equal(manual$estimate, historical$table$estimate, tolerance = 1e-10)))
 stopifnot(isTRUE(all.equal(manual$std_error, historical$table$std_error, tolerance = 1e-10)))
 ```
@@ -228,19 +228,19 @@ nb_fit <- glmmTMB::glmmTMB(
 nb_implied <- implied_effects(nb_fit, groups = "season")
 head(as.data.frame(nb_implied))
 #>   level        group   n    baseline  adjustment    estimate  std_error
-#> 1  2000 Early season 153  0.23187513  0.19752093  0.42939606 0.05137036
-#> 2  2001 Early season 143  0.21491857  0.12104119  0.33595976 0.05376133
-#> 3  2002 Early season 154  0.17412706  0.18936452  0.36349158 0.05169645
-#> 4  2003 Early season 160  0.09752276  0.13935863  0.23688140 0.05120521
-#> 5  2004 Early season  90 -0.06401782  0.13669585  0.07267802 0.06914226
-#> 6  2005 Early season  67 -0.13942676 -0.02277388 -0.16220063 0.08505897
-#>        lower      upper status
-#> 1  0.3296594 0.53107317     ok
-#> 2  0.2315614 0.44235340     ok
-#> 3  0.2630781 0.46577037     ok
-#> 4  0.1373659 0.33813076     ok
-#> 5 -0.0614247 0.20971555     ok
-#> 6 -0.3275419 0.00607389     ok
+#> 1  2000 Early season 153  0.23187481  0.19752139  0.42939619 0.05137036
+#> 2  2001 Early season 143  0.21491937  0.12104052  0.33595989 0.05376133
+#> 3  2002 Early season 154  0.17412683  0.18936487  0.36349170 0.05169645
+#> 4  2003 Early season 160  0.09752318  0.13935836  0.23688154 0.05120520
+#> 5  2004 Early season  90 -0.06401734  0.13669553  0.07267819 0.06914226
+#> 6  2005 Early season  67 -0.13942674 -0.02277379 -0.16220053 0.08505896
+#>         lower      upper status
+#> 1  0.32965956 0.53107330     ok
+#> 2  0.23156150 0.44235353     ok
+#> 3  0.26307818 0.46577048     ok
+#> 4  0.13736603 0.33813090     ok
+#> 5 -0.06142452 0.20971571     ok
+#> 6 -0.32754176 0.00607398     ok
 ```
 
 ``` r
@@ -613,6 +613,115 @@ study above does not supply that calibration. Strictly positive
 responses and a log link are required. An entire joint delta model is
 not silently replaced by its positive Gamma component.
 
+## Delta-lognormal models: three distinct views
+
+A standard delta-lognormal sdmTMB model has an encounter process and a
+positive-response process. Explicitly select which question to ask:
+
+| Component | Local adjustment | Display and observations |
+|----|----|----|
+| `"encounter"` | A log-odds shift in the Bernoulli likelihood | Implied encounter effect; all observations |
+| `"positive"` | A log-mean shift in the positive lognormal likelihood | Implied positive effect; positive observations only |
+| `"combined"` | Both shifts, estimated separately | Implied expected response over the original stratum rows, including zeros |
+
+This is not the same as switching a PIT residual plot between
+components. These calculations use the original native likelihood and
+hold all fitted parameters, offsets, random effects, and spatial and
+spatiotemporal fields fixed.
+
+For sdmTMB, the positive linear predictor is **log arithmetic mean**,
+not the mean of log response. If its fitted log-scale SD is `sigma`, the
+lognormal likelihood uses `meanlog = eta + adjustment - sigma^2 / 2`.
+Omitting that correction would shift the result by `sigma^2 / 2`.
+
+The following small simulated example uses different annual
+specifications in the two components, as can occur in an applied CPUE
+model. No fisheries assessment data or saved assessment fit is
+distributed with the example.
+
+``` r
+
+set.seed(927)
+delta_data <- expand.grid(year = factor(2011:2016),
+  area = factor(c("A", "B")), record = 1:60)
+delta_data$year_scaled <- as.numeric(delta_data$year) - 3.5
+delta_data$x <- runif(nrow(delta_data), -1, 1)
+delta_data$log_effort <- runif(nrow(delta_data), -.4, .4)
+probability <- plogis(.4 + .2 * delta_data$year_scaled + .3 * delta_data$x)
+positive_mean <- exp(1 + .1 * delta_data$year_scaled + .3 * delta_data$x +
+  delta_data$log_effort + .15 * delta_data$year_scaled * (delta_data$area == "B"))
+delta_data$response <- rbinom(nrow(delta_data), 1, probability) *
+  rlnorm(nrow(delta_data), log(positive_mean) - .6^2 / 2, .6)
+delta_fit <- sdmTMB::sdmTMB(
+  list(response ~ year_scaled + area + x, response ~ year + area + x),
+  data = delta_data, offset = delta_data$log_effort,
+  family = sdmTMB::delta_lognormal(), spatial = "off", silent = TRUE
+)
+encounter <- implied_effects(delta_fit, year = "year", groups = "area",
+  component = "encounter", year_term = "year_scaled")
+positive <- implied_effects(delta_fit, year = "year", groups = "area",
+  component = "positive")
+combined <- implied_effects(delta_fit, year = "year", groups = "area",
+  component = "combined")
+```
+
+`year_term` identifies the continuous annual predictor in the encounter
+formula; the plots still use the original fishing-year labels. Positive
+effects use that component’s separate annual coefficients. Component
+baselines are centred over **all original fitted observations**,
+including zeros. Where area or target is only a grouping variable,
+without a fixed main effect, the baseline is year-only; no group
+coefficient is invented. A target random effect stays in the fitted
+predictor, not in the fixed-term baseline.
+
+``` r
+
+patchwork::wrap_plots(plot(encounter, ncol = 2), plot(positive, ncol = 2),
+  plot(combined, ncol = 2), ncol = 1)
+```
+
+![Encounter, positive, and combined delta-lognormal implied diagnostics,
+with distinct log-odds, log-effect, and response
+scales.](implied-effects_files/figure-html/implied-delta-components-1.png)
+
+Three explicitly selected views of one simulated delta-lognormal fit.
+Encounter (top) and positive (middle) panels show effect-scale
+adjustments added to their respective fixed annual and area baselines.
+Combined panels (bottom) compare fitted and implied expected responses
+over the original observations in each area-year, retaining exposure and
+sampling composition. These panels have different units and must not be
+compared by numerical height. Bars are 95% conditional
+profile-likelihood intervals; they omit uncertainty in the original
+fitted model. Combined responses are not standardised CPUE indices.
+
+The combined display uses both locally estimated shifts and averages
+their combined expected responses over the original stratum rows. It
+does **not** force the same adjustment on both components. Its intervals
+profile over the possible allocation between encounter and positive
+changes, while all original model parameters remain fixed. The combined
+table also retains `encounter_adjustment`, `positive_adjustment`, and
+`n_positive`; `adjustment` is the log ratio of the implied mean to the
+fitted mean. Its `std_error` is a conditional delta-method SE on the
+response scale, whereas its plotted bounds use profile likelihood.
+
+In a response-total model with an effort offset, this combined plot
+remains in response-total units. Changing effort or sampling composition
+can change these group means: use
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+for a standardised index. Encounter uses all records; positive effects
+require `min_n` positive records. Combined displays require enough
+records for both components. All-zero and all-positive encounter strata
+have boundary shifts; unsupported results remain flagged and break
+lines, rather than being repaired with pseudocounts. None of these
+checks substitutes for the combined-response PIT diagnostics.
+
+If grouping information is supplied separately, provide **the full
+original joint fitting data**, not just positive rows. Preserve original
+row names and check joins using a genuinely unique observation key. For
+source-qualified event data, that may require both source ID and event
+key. The adapter checks the supplied values and original native
+likelihood rows before selecting positives.
+
 ## Interpretation, uncertainty, and scope
 
 The current adapters support `lm`, GLM, GAM, and ML glmmTMB for Gaussian
@@ -629,14 +738,18 @@ regional index or an interaction. A suitable refit/bootstrap or
 explicitly defined posterior propagation would be a further development,
 not something these bars already provide.
 
-Other families, direct lognormal parameterisations, brms, sdmTMB,
+The sdmTMB adapter additionally supports Bernoulli(logit),
+lognormal(log), and explicit encounter, positive, and combined views of
+standard delta-lognormal fits. It does not reinterpret Poisson-link
+delta models or mixture families.
+
+Other families, other direct lognormal parameterisations, brms,
 tinyVAST, non-unit weights, and year interactions currently fail
 explicitly for this **new implied-effect calculation**. They remain
 supported where documented by the existing PIT diagnostics and other
-influ2 functions. Joint hurdle/delta models require separate decisions
-about encounter, positive-response, and combined-response shifts; a
-positive-component calculation is never silently substituted for a
-combined-response diagnostic.
+influ2 functions. Joint hurdle/delta models outside the validated sdmTMB
+route require separate adapters; a positive-component calculation is
+never silently substituted for a combined-response diagnostic.
 
 The tests independently reconstruct the historical recipe, check
 log-response agreement, compare NB2 and Gamma shifts and profile
