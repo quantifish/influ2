@@ -1,6 +1,6 @@
 # Development ideas and decisions
 
-Last reviewed: 15 September 2026.
+Last reviewed: 16 September 2026.
 
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records
@@ -57,6 +57,31 @@ Gamma(log) adapter is implemented and numerically verified against the saved BNS
 positive GAMs. Existing conditioning defaults remain unchanged.
 N07 retention and N08 bridges are still candidates; N02 counters were passed
 over and remain unimplemented. Resume these only after further discussion.
+
+### Residual-implied backend extension: BNS 2 increment, 16 September
+
+The maintainer prioritised the saved BNS 2 joint delta-lognormal sdmTMB fit,
+then explicitly requested encounter, positive, and combined views. These now
+use the native observation likelihood at the saved joint mode. Component
+effects retain centred annual/group baselines; a separate `year_term` handles
+an encounter trend alongside positive-component annual factors. The combined
+view estimates both shifts and displays their implied expected response over
+the original stratum rows. Its conditional profile intervals allow either
+component to account for the change, without an equal-shift constraint.
+It is not a single coefficient, standardised index, or replacement for PIT checks.
+
+Numerical tests and the read-only BNS integration runner cover native lognormal
+parameterisation, offsets, vessel/spatial/yearly fields, all-row versus
+positive-row counts, source-qualified grouping alignment, and support/boundary
+guards. Private BNS results stay ignored under `data-raw/bns2-implied-review/`;
+the BNS task will update its own presentation after this hand-off. No assessment
+inputs, fits, indices, or CVs are changed. See `tools/implied-validation/validate-bns2.R`.
+
+The earlier request for all six implied-effect backends remains **partly open**:
+brms, tinyVAST, and additional family/component adapters still need implementation
+and validation. This bounded sdmTMB extension does not complete Nicholas's
+independent scientific review, fitted-model interval calibration, or the parked
+legacy review. Existing Gamma implied-effect and PIT behaviour is unchanged.
 
 ### IV01 implied-effect follow-up: completed bounded study, 12 September
 

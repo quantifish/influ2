@@ -16,7 +16,9 @@ implied_effects(
   min_n = 10L,
   level = 0.95,
   interval = c("auto", "descriptive", "none"),
-  traditional_scale = c("log_response", "standardised", "standardized")
+  traditional_scale = c("log_response", "standardised", "standardized"),
+  component = NULL,
+  year_term = NULL
 )
 
 \method{print}{influ_implied}(x, ...)
@@ -24,10 +26,12 @@ implied_effects(
 \method{as.data.frame}{influ_implied}(x, row.names = NULL, optional = FALSE, ...)
 }
 \arguments{
-\item{model}{A retained \code{lm}, GLM, \code{mgcv} GAM, or ML \code{glmmTMB} fit. This
-first implementation supports Gaussian identity-link models (including
+\item{model}{A retained \code{lm}, GLM, \code{mgcv} GAM, or ML \code{glmmTMB} fit. These
+adapters support Gaussian identity-link models (including
 an explicitly logged response), Poisson, NB2, and Gamma log-link models.
-Other families, backends, joint models, non-unit case weights, and year
+ML \code{sdmTMB} Bernoulli(logit), lognormal(log), and standard delta-lognormal
+fits are also supported with explicit joint-component selection.
+Other families, backends, joint components, non-unit case weights, and year
 interactions fail explicitly rather than substitute another calculation.}
 
 \item{data}{Original model data with original row names, if needed to
@@ -45,7 +49,10 @@ for a Gaussian model of \code{log(response)}; see \code{traditional_scale}.}
 year and group, where the group main effect is present. \code{"year"} adds only
 the year contribution. Terms are centred over all fitted observations,
 not separately within panels. An additive fixed year term is required.
-Random effects and smooths remain in fitted predictions, not the baseline.}
+Random effects and smooths remain in fitted predictions, not the baseline.
+For \code{component = "combined"}, this term-baseline choice does not apply:
+the baseline is the fitted arithmetic response mean over each stratum's
+original observation rows, without centring or reference-grid standardisation.}
 
 \item{min_n}{Minimum records in a year-by-group stratum. Sparse and empty
 strata remain in the table with an explicit status, but are not plotted.}
@@ -62,6 +69,20 @@ residuals. \code{"standardised"} (or \code{"standardized"}) reproduces the histo
 analyser GLM convention: native \code{rstandard()} residuals, globally centred,
 added to term contributions. This latter display mixes scales, is retained
 only for comparison, and is restricted to plain Gaussian log-response GLMs.}
+
+\item{component}{\code{NULL} for a single-response fit. A joint standard
+delta-lognormal \code{sdmTMB} fit requires \code{"positive"}, \code{"encounter"}, or
+\code{"combined"}. Only positive observations inform the positive adjustment
+and its \code{min_n}; encounter uses all rows. The combined display uses both
+adjustments and reports expected response, not a coefficient.
+\code{"conditional"} may explicitly select a single-response
+fit. No joint component is selected automatically.}
+
+\item{year_term}{For sdmTMB component effects, the original fixed annual
+predictor column, defaulting to \code{year}. For example, use \code{year = "year_factor"}
+and \code{year_term = "year_scaled"} if the encounter formula uses a continuous
+annual trend. The predictor must be constant within each requested year.
+Not used for combined implied responses, which do not have a term baseline.}
 
 \item{x}{An `influ_implied` result.}
 
@@ -111,8 +132,36 @@ sparse cells, and missing numeric years, break trajectories. Existing \code{infl
 contain the native likelihood needed here: use \code{\link[=plot_grouped_residuals]{plot_grouped_residuals()}}
 for their zero-centred grouped PIT summaries.
 
-Directly parameterised lognormal families are not supported in this first
-increment. In particular, glmmTMB parameterises lognormal mean and SD on
+For sdmTMB lognormal(log), eta is log(arithmetic mean), and the native
+dispersion sigma is the log-scale SD. The local likelihood is
+\code{dlnorm(response, eta + delta - sigma^2/2, sigma)}. Offsets, vessel effects,
+and spatial and spatiotemporal fields remain at their fitted values.
+Baselines are centred over all original fitted rows, including zeros in a
+joint fit; only positive rows contribute to its local adjustments. A group
+without a fixed main effect uses the year-only baseline, not a fabricated
+group coefficient. Zero-only strata remain in the table as empty positive
+strata. Native likelihood observations and supplied data are checked before
+selecting positive rows. Poisson-link delta and mixture families fail explicitly.
+Bernoulli(logit) encounter shifts use all observations; all-zero or all-one
+strata have infinite shifts and are retained as flagged boundary results.
+
+Combined delta-lognormal displays estimate both shifts separately, then
+average \code{plogis(eta_encounter + delta_encounter) * exp(eta_positive + delta_positive)} over the stratum's original rows, including zero responses.
+Both components must satisfy \code{min_n}, with at least one zero and one positive
+observation. Unsupported strata remain flagged. The \code{estimate}, \code{baseline},
+and interval bounds are on the response scale; \code{adjustment} is their log
+mean ratio. Separate component shifts and positive counts are also retained.
+Profile intervals maximise the joint conditional likelihood over how both
+shifts contribute to the derived mean; \code{std_error} is its conditional
+delta-method SE. No equal-shift constraint is imposed. These observed-mix
+means retain exposure and sampling composition: they are not CPUE indices,
+regional standardisations, or area-integrated abundance. In a model of
+response totals with an effort offset, the display remains in those totals'
+units, not per-unit-effort units. Traditional/descriptive options do not
+apply to combined responses.
+
+Other directly parameterised lognormal backends are not yet supported.
+In particular, glmmTMB parameterises lognormal mean and SD on
 the response scale; holding that SD fixed is not the same as a constant
 log-SD shift. Use a Gaussian model of log(response) for the demonstrated
 equivalence, not an automatic reinterpretation of another fitted family.

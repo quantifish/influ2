@@ -49,6 +49,21 @@ plot_implied_residuals <- function(fit, colour = "purple4", ncol = 3L, ...) {
   band <- switch(m$interval, conditional_profile = paste0(100 * m$level, "% conditional profile intervals"),
     descriptive = "Mean +/- one descriptive SE", none = "Intervals omitted")
   baseline <- if (m$baseline == "year_group") "Year + available group main effect" else "Year effect"
+  if (m$component %in% c("positive", "encounter")) {
+    title <- paste(title, paste0("(", m$component, " component)"))
+    if (isFALSE(m$baseline_group_present)) baseline <- "Year effect; no fixed group main effect"
+  }
+  combined <- identical(m$component, "combined")
+  if (combined) {
+    title <- "Residual-implied response (combined delta model)"
+    baseline <- "Original observation mix; not a standardised index"
+  }
+  caption <- paste("Grey: fixed baseline. Original model held fixed; not a refitted interaction.",
+    sum(!usable), "empty, sparse, or boundary strata omitted.")
+  if (identical(m$component, "positive")) caption <- paste(caption, "Positive observations only; not the combined delta response.")
+  if (identical(m$component, "encounter")) caption <- paste(caption, "Encounter component; all observations.")
+  if (combined) caption <- paste("Grey: fitted stratum mean; purple: both component shifts applied.",
+    "Original fit held fixed;", sum(!usable), "unsupported strata omitted.")
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$x, group = .data$segment)) +
     ggplot2::geom_line(data = shown, ggplot2::aes(y = .data$baseline), colour = "grey55") +
     ggplot2::geom_hline(yintercept = 0, linetype = 3, colour = "grey75") +
@@ -62,10 +77,9 @@ plot_implied_residuals <- function(fit, colour = "purple4", ncol = 3L, ...) {
     ggplot2::facet_wrap(~group, ncol = ncol) +
     ggplot2::labs(x = m$year, y = if (m$method == "traditional" && m$traditional_scale == "standardised") {
       "Term + standardised residual (mixed scales)"
-    } else if (m$log_response || m$link == "log") "Implied effect (log scale)" else "Implied effect (response scale)",
+    } else if (combined) "Expected response" else if (m$link == "logit") "Implied effect (log-odds scale)" else if (m$log_response || m$link == "log") "Implied effect (log scale)" else "Implied effect (response scale)",
       title = title, subtitle = paste(baseline, "|", band), size = "Records",
-      caption = paste("Grey: fixed baseline. Original model held fixed; not a refitted interaction.",
-        sum(!usable), "empty, sparse, or boundary strata omitted."))
+      caption = caption)
   attr(p, "implied_metadata") <- m
   p
 }

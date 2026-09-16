@@ -5,6 +5,32 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Delta-lognormal implied diagnostics: 16 September 2026
+
+The maintainer requested native sdmTMB support to unblock BNS 2, then extended
+the request to encounter, positive, and combined diagnostics. All three are
+explicitly selected; none silently replaces another. Single-response sdmTMB
+Bernoulli(logit) and lognormal(log) also use the validated likelihood engine.
+The combined view is an original-observation expected response, not a term
+coefficient or CPUE index. Its profile intervals optimise over the two local
+component shifts while conditioning on the original fit. `year_term` supports
+different annual specifications in the components. The article demonstrates
+all three views using simulated data.
+
+The read-only BNS integration run reproduces the original native observation
+log likelihood to 2.4e-9 and checks both Statistical Area and target groupings,
+including source ID plus event key matching. Fit, preparation, and source-frame
+hashes remain unchanged; no BNS files are written. Private outputs stay ignored.
+The existing implied-effect/Gamma tests and package-wide regression suite pass;
+the added spatial test separately exercises non-zero spatial and yearly fields.
+The new article figure is visually checked, and all local numbered-caption and
+lightbox tests pass. Final archive, installation, and CI evidence will be recorded
+after those checks finish; the 15 September archive below is not this revision.
+
+Remaining six-backend expansion, broader scientific calibration, Nicholas's
+review, and final legacy triage are not marked complete by this change. No CRAN
+or win-builder submission is authorised or performed.
+
 ## Worked residual-pattern examples: 15 September 2026
 
 The maintainer approved the bounded follow-up to the interpretation review.

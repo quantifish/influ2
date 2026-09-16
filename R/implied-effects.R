@@ -5,11 +5,25 @@
 #' These exploratory trajectories are not refitted interactions or regional
 #' abundance indices. Calculate once and plot the compact result repeatedly.
 #'
-#' @param model A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. This
-#'   first implementation supports Gaussian identity-link models (including
+#' @param model A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. These
+#'   adapters support Gaussian identity-link models (including
 #'   an explicitly logged response), Poisson, NB2, and Gamma log-link models.
-#'   Other families, backends, joint models, non-unit case weights, and year
+#'   ML `sdmTMB` Bernoulli(logit), lognormal(log), and standard delta-lognormal
+#'   fits are also supported with explicit joint-component selection.
+#'   Other families, backends, joint components, non-unit case weights, and year
 #'   interactions fail explicitly rather than substitute another calculation.
+#' @param component `NULL` for a single-response fit. A joint standard
+#'   delta-lognormal `sdmTMB` fit requires `"positive"`, `"encounter"`, or
+#'   `"combined"`. Only positive observations inform the positive adjustment
+#'   and its `min_n`; encounter uses all rows. The combined display uses both
+#'   adjustments and reports expected response, not a coefficient.
+#'   `"conditional"` may explicitly select a single-response
+#'   fit. No joint component is selected automatically.
+#' @param year_term For sdmTMB component effects, the original fixed annual
+#'   predictor column, defaulting to `year`. For example, use `year = "year_factor"`
+#'   and `year_term = "year_scaled"` if the encounter formula uses a continuous
+#'   annual trend. The predictor must be constant within each requested year.
+#'   Not used for combined implied responses, which do not have a term baseline.
 #' @param data Original model data with original row names, if needed to
 #'   recover the year or grouping column. Values are checked against the fit.
 #' @param year Time column; `NULL` uses the usual automatic detection.
@@ -22,6 +36,9 @@
 #'   the year contribution. Terms are centred over all fitted observations,
 #'   not separately within panels. An additive fixed year term is required.
 #'   Random effects and smooths remain in fitted predictions, not the baseline.
+#'   For `component = "combined"`, this term-baseline choice does not apply:
+#'   the baseline is the fitted arithmetic response mean over each stratum's
+#'   original observation rows, without centring or reference-grid standardisation.
 #' @param min_n Minimum records in a year-by-group stratum. Sparse and empty
 #'   strata remain in the table with an explicit status, but are not plotted.
 #' @param level Conditional profile-likelihood interval coverage; default 0.95.
@@ -64,8 +81,37 @@
 #'   contain the native likelihood needed here: use [plot_grouped_residuals()]
 #'   for their zero-centred grouped PIT summaries.
 #'
-#'   Directly parameterised lognormal families are not supported in this first
-#'   increment. In particular, glmmTMB parameterises lognormal mean and SD on
+#'   For sdmTMB lognormal(log), eta is log(arithmetic mean), and the native
+#'   dispersion sigma is the log-scale SD. The local likelihood is
+#'   `dlnorm(response, eta + delta - sigma^2/2, sigma)`. Offsets, vessel effects,
+#'   and spatial and spatiotemporal fields remain at their fitted values.
+#'   Baselines are centred over all original fitted rows, including zeros in a
+#'   joint fit; only positive rows contribute to its local adjustments. A group
+#'   without a fixed main effect uses the year-only baseline, not a fabricated
+#'   group coefficient. Zero-only strata remain in the table as empty positive
+#'   strata. Native likelihood observations and supplied data are checked before
+#'   selecting positive rows. Poisson-link delta and mixture families fail explicitly.
+#'   Bernoulli(logit) encounter shifts use all observations; all-zero or all-one
+#'   strata have infinite shifts and are retained as flagged boundary results.
+#'
+#'   Combined delta-lognormal displays estimate both shifts separately, then
+#'   average `plogis(eta_encounter + delta_encounter) * exp(eta_positive +
+#'   delta_positive)` over the stratum's original rows, including zero responses.
+#'   Both components must satisfy `min_n`, with at least one zero and one positive
+#'   observation. Unsupported strata remain flagged. The `estimate`, `baseline`,
+#'   and interval bounds are on the response scale; `adjustment` is their log
+#'   mean ratio. Separate component shifts and positive counts are also retained.
+#'   Profile intervals maximise the joint conditional likelihood over how both
+#'   shifts contribute to the derived mean; `std_error` is its conditional
+#'   delta-method SE. No equal-shift constraint is imposed. These observed-mix
+#'   means retain exposure and sampling composition: they are not CPUE indices,
+#'   regional standardisations, or area-integrated abundance. In a model of
+#'   response totals with an effort offset, the display remains in those totals'
+#'   units, not per-unit-effort units. Traditional/descriptive options do not
+#'   apply to combined responses.
+#'
+#'   Other directly parameterised lognormal backends are not yet supported.
+#'   In particular, glmmTMB parameterises lognormal mean and SD on
 #'   the response scale; holding that SD fixed is not the same as a constant
 #'   log-SD shift. Use a Gaussian model of log(response) for the demonstrated
 #'   equivalence, not an automatic reinterpretation of another fitted family.
@@ -89,7 +135,8 @@
 implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     method = c("likelihood", "traditional"), baseline = c("year_group", "year"),
     min_n = 10L, level = .95, interval = c("auto", "descriptive", "none"),
-    traditional_scale = c("log_response", "standardised", "standardized")) {
+    traditional_scale = c("log_response", "standardised", "standardized"),
+    component = NULL, year_term = NULL) {
   method <- match.arg(method)
   baseline <- match.arg(baseline)
   interval <- match.arg(interval)
@@ -105,7 +152,14 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   if (!is.character(groups) || length(groups) != 1L || is.na(groups) || !nzchar(groups)) {
     stop("`groups` must name one original-data grouping column.", call. = FALSE)
   }
-  a <- .implied_adapter(model, data, year, groups, baseline)
+  if (!is.null(component)) component <- match.arg(component, c("conditional", "positive", "encounter", "combined"))
+  a <- .implied_adapter(model, data, year, groups, baseline, component, year_term)
+  if (identical(a$component, "combined")) {
+    if (method != "likelihood" || interval == "descriptive") {
+      stop("Combined implied responses require method = 'likelihood' and interval = 'auto' or 'none'.", call. = FALSE)
+    }
+    return(.implied_combined(a, groups, min_n, level, interval))
+  }
   if (method == "traditional" && !a$log_response) {
     stop("Traditional comparison requires a Gaussian identity-link model of log(response).", call. = FALSE)
   }
@@ -132,6 +186,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   table <- do.call(rbind, lapply(seq_len(nrow(grid)), function(j) {
     cell <- grid[j, ]
     i <- which(time$value == cell$level & group$value == cell$group)
+    if (!is.null(a$included)) i <- i[a$included[i]]
     n <- length(i)
     b <- if (n) mean(a$baseline[i]) else NA_real_
     shift <- se <- lo <- hi <- NA_real_
@@ -144,7 +199,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
         fitted <- .implied_shift(a$observed[i], a$eta[i], a$dispersion[i], a$family)
         shift <- fitted$shift
         se <- fitted$std_error
-        if (!is.finite(shift)) status <- "boundary_zero"
+        if (!is.finite(shift)) status <- if (shift > 0) "boundary_one" else "boundary_zero"
       }
       if (status == "ok" && actual_interval == "conditional_profile") {
         ci <- .implied_profile(shift, a$observed[i], a$eta[i], a$dispersion[i], a$family, level)
@@ -168,21 +223,38 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     conditioning = "Original parameters, smooths, offsets, and fitted random effects held fixed",
     traditional_scale = if (method == "traditional") traditional_scale else NULL,
     interval = actual_interval, level = if (actual_interval == "conditional_profile") level else NA_real_,
-    min_n = min_n, n = length(a$observed), component = "single fitted response",
+    min_n = min_n, n = if (is.null(a$included)) length(a$observed) else sum(a$included),
+    component = a$component %||% "single fitted response",
     format_version = 1L)
   if (a$family == "Gamma") {
     metadata$dispersion <- "Native fitted Gamma scale phi = variance / mean^2; shape = 1/phi"
   }
+  if (a$backend == "sdmTMB") {
+    if (a$family == "lognormal") metadata$dispersion <- "Native fitted log-scale SD; meanlog = eta - sigma^2/2"
+    metadata$n_total <- length(a$observed)
+    metadata$n_excluded <- sum(!a$included)
+    metadata$component_index <- a$component_index
+    metadata$baseline_population <- "All original fitted rows, including zeros in joint models"
+    metadata$baseline_group_present <- a$baseline_group_present
+    metadata$year_term <- a$year_term
+  }
   structure(list(table = table, metadata = metadata), class = "influ_implied")
 }
 
-.implied_adapter <- function(model, data, year, groups, baseline) {
+.implied_adapter <- function(model, data, year, groups, baseline, component = NULL, year_term = NULL) {
+  if (inherits(model, "sdmTMB")) {
+    return(.implied_sdmtmb_adapter(model, data, year, groups, baseline, component, year_term))
+  }
+  if (!is.null(year_term)) stop("`year_term` currently applies only to sdmTMB implied effects.", call. = FALSE)
+  if (!is.null(component) && component != "conditional") {
+    stop("This backend does not yet support component-specific implied effects.", call. = FALSE)
+  }
   if (inherits(model, "influ_residuals")) {
     stop("Stored PIT residuals do not contain the native likelihood. Supply the fitted model, or use plot_grouped_residuals() for grouped PIT departures.", call. = FALSE)
   }
   backend <- if (inherits(model, "glmmTMB")) "glmmTMB" else if (inherits(model, "gam")) "gam" else
     if (inherits(model, "glm")) "glm" else if (inherits(model, "lm")) "lm" else NA_character_
-  if (is.na(backend)) stop("Implied effects currently support lm, GLM, GAM, and glmmTMB single-response fits only.", call. = FALSE)
+  if (is.na(backend)) stop("Implied effects currently support lm, GLM, GAM, glmmTMB, and validated sdmTMB lognormal fits only.", call. = FALSE)
   .require_model_backend(model)
   if (backend == "lm" && is.null(model$model)) stop("A retained model frame is required.", call. = FALSE)
   frame <- .residual_model_frame(model)
@@ -294,6 +366,12 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
 
 .implied_loglik <- function(delta, y, eta, dispersion, family) {
   z <- eta + delta
+  if (family == "binomial") {
+    # Bernoulli/logit likelihood, stable in both tails.
+    softplus <- function(x) pmax(x, 0) + log1p(exp(-abs(x)))
+    return(sum(-y * softplus(-z) - (1 - y) * softplus(z)))
+  }
+  if (family == "lognormal") return(sum(stats::dlnorm(y, z - dispersion^2 / 2, dispersion, log = TRUE)))
   if (family == "gaussian") return(sum(stats::dnorm(y, z, dispersion, log = TRUE)))
   if (family == "poisson") return(sum(y * z - exp(z) - lgamma(y + 1)))
   if (family == "Gamma") {
@@ -312,6 +390,20 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
 }
 
 .implied_shift <- function(y, eta, dispersion, family) {
+  if (family == "binomial") {
+    if (all(y == 0)) return(list(shift = -Inf, std_error = NA_real_))
+    if (all(y == 1)) return(list(shift = Inf, std_error = NA_real_))
+    score <- function(delta) sum(y - stats::plogis(eta + delta))
+    bounds <- c(-max(eta) - 40, -min(eta) + 40)
+    delta <- stats::uniroot(score, bounds, tol = 1e-10)$root
+    p <- stats::plogis(eta + delta)
+    return(list(shift = delta, std_error = 1 / sqrt(sum(p * (1 - p)))))
+  }
+  if (family == "lognormal") {
+    w <- 1 / dispersion^2
+    return(list(shift = sum(w * (log(y) - eta + dispersion^2 / 2)) / sum(w),
+      std_error = sqrt(1 / sum(w))))
+  }
   if (family == "gaussian") {
     w <- 1 / dispersion^2
     return(list(shift = sum(w * (y - eta)) / sum(w), std_error = sqrt(1 / sum(w))))
@@ -347,6 +439,11 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
 }
 
 .implied_profile <- function(delta, y, eta, dispersion, family, level) {
+  if (family == "lognormal") {
+    # Exact quadratic profile in delta; avoids subtracting large log likelihoods.
+    se <- sqrt(1 / sum(1 / rep_len(dispersion, length(y))^2))
+    return(delta + c(-1, 1) * stats::qnorm((1 + level) / 2) * se)
+  }
   if (family == "Gamma") {
     # Profile relative to the exact optimum: no subtraction of large log
     # likelihoods and no dependence on an extreme original linear predictor.

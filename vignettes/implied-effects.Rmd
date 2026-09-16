@@ -19,6 +19,7 @@ library(influ2)
 library(ggplot2)
 theme_set(theme_bw())
 has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)
+has_sdmTMB <- requireNamespace("sdmTMB", quietly = TRUE)
 ```
 
 ## Restore the original question
@@ -137,9 +138,9 @@ The optional `glmmTMB` examples are skipped if that package is unavailable.
 This equality is not a promise that every lognormal parameterisation behaves
 identically. For example, glmmTMB's directly specified `lognormal()` family
 models mean and SD on the response scale: holding that SD fixed is different
-from holding log-scale SD fixed. This first implied-effect implementation
-therefore supports the explicit Gaussian-log-response route, not an automatic
-conversion of directly parameterised lognormal models.
+from holding log-scale SD fixed. The Gaussian-log-response route above and the
+native sdmTMB lognormal route below are supported; other directly parameterised
+lognormal families are not automatically converted.
 
 ### Reproduce the actual historical standardised-residual recipe
 
@@ -446,6 +447,93 @@ interval coverage. The NB2 study above does not supply that calibration.
 Strictly positive responses and a log link are required. An entire joint delta
 model is not silently replaced by its positive Gamma component.
 
+## Delta-lognormal models: three distinct views
+
+A standard delta-lognormal sdmTMB model has an encounter process and a
+positive-response process. Explicitly select which question to ask:
+
+| Component | Local adjustment | Display and observations |
+|---|---|---|
+| `"encounter"` | A log-odds shift in the Bernoulli likelihood | Implied encounter effect; all observations |
+| `"positive"` | A log-mean shift in the positive lognormal likelihood | Implied positive effect; positive observations only |
+| `"combined"` | Both shifts, estimated separately | Implied expected response over the original stratum rows, including zeros |
+
+This is not the same as switching a PIT residual plot between components.
+These calculations use the original native likelihood and hold all fitted
+parameters, offsets, random effects, and spatial and spatiotemporal fields fixed.
+
+For sdmTMB, the positive linear predictor is **log arithmetic mean**, not the
+mean of log response. If its fitted log-scale SD is `sigma`, the lognormal
+likelihood uses `meanlog = eta + adjustment - sigma^2 / 2`. Omitting that
+correction would shift the result by `sigma^2 / 2`.
+
+The following small simulated example uses different annual specifications
+in the two components, as can occur in an applied CPUE model. No fisheries
+assessment data or saved assessment fit is distributed with the example.
+
+```{r implied-delta-model, eval=has_sdmTMB}
+set.seed(927)
+delta_data <- expand.grid(year = factor(2011:2016),
+  area = factor(c("A", "B")), record = 1:60)
+delta_data$year_scaled <- as.numeric(delta_data$year) - 3.5
+delta_data$x <- runif(nrow(delta_data), -1, 1)
+delta_data$log_effort <- runif(nrow(delta_data), -.4, .4)
+probability <- plogis(.4 + .2 * delta_data$year_scaled + .3 * delta_data$x)
+positive_mean <- exp(1 + .1 * delta_data$year_scaled + .3 * delta_data$x +
+  delta_data$log_effort + .15 * delta_data$year_scaled * (delta_data$area == "B"))
+delta_data$response <- rbinom(nrow(delta_data), 1, probability) *
+  rlnorm(nrow(delta_data), log(positive_mean) - .6^2 / 2, .6)
+delta_fit <- sdmTMB::sdmTMB(
+  list(response ~ year_scaled + area + x, response ~ year + area + x),
+  data = delta_data, offset = delta_data$log_effort,
+  family = sdmTMB::delta_lognormal(), spatial = "off", silent = TRUE
+)
+encounter <- implied_effects(delta_fit, year = "year", groups = "area",
+  component = "encounter", year_term = "year_scaled")
+positive <- implied_effects(delta_fit, year = "year", groups = "area",
+  component = "positive")
+combined <- implied_effects(delta_fit, year = "year", groups = "area",
+  component = "combined")
+```
+
+`year_term` identifies the continuous annual predictor in the encounter formula;
+the plots still use the original fishing-year labels. Positive effects use that
+component's separate annual coefficients. Component baselines are centred over
+**all original fitted observations**, including zeros. Where area or target is
+only a grouping variable, without a fixed main effect, the baseline is year-only;
+no group coefficient is invented. A target random effect stays in the fitted
+predictor, not in the fixed-term baseline.
+
+```{r implied-delta-components, eval=has_sdmTMB, fig.height=8, fig.cap="Three explicitly selected views of one simulated delta-lognormal fit. Encounter (top) and positive (middle) panels show effect-scale adjustments added to their respective fixed annual and area baselines. Combined panels (bottom) compare fitted and implied expected responses over the original observations in each area-year, retaining exposure and sampling composition. These panels have different units and must not be compared by numerical height. Bars are 95% conditional profile-likelihood intervals; they omit uncertainty in the original fitted model. Combined responses are not standardised CPUE indices.", fig.alt="Encounter, positive, and combined delta-lognormal implied diagnostics, with distinct log-odds, log-effect, and response scales."}
+patchwork::wrap_plots(plot(encounter, ncol = 2), plot(positive, ncol = 2),
+  plot(combined, ncol = 2), ncol = 1)
+```
+
+The combined display uses both locally estimated shifts and averages their
+combined expected responses over the original stratum rows. It does **not**
+force the same adjustment on both components. Its intervals profile over the
+possible allocation between encounter and positive changes, while all original
+model parameters remain fixed. The combined table also retains
+`encounter_adjustment`, `positive_adjustment`, and `n_positive`; `adjustment` is
+the log ratio of the implied mean to the fitted mean. Its `std_error` is a
+conditional delta-method SE on the response scale, whereas its plotted bounds
+use profile likelihood.
+
+In a response-total model with an effort offset, this combined plot remains in
+response-total units. Changing effort or sampling composition can change these
+group means: use `cpue_index()` for a standardised index. Encounter uses all
+records; positive effects require `min_n` positive records. Combined displays
+require enough records for both components. All-zero and all-positive encounter
+strata have boundary shifts; unsupported results remain flagged and break lines,
+rather than being repaired with pseudocounts. None of these checks substitutes
+for the combined-response PIT diagnostics.
+
+If grouping information is supplied separately, provide **the full original
+joint fitting data**, not just positive rows. Preserve original row names and
+check joins using a genuinely unique observation key. For source-qualified event
+data, that may require both source ID and event key. The adapter checks the
+supplied values and original native likelihood rows before selecting positives.
+
 ## Interpretation, uncertainty, and scope
 
 The current adapters support `lm`, GLM, GAM, and ML glmmTMB for Gaussian
@@ -461,12 +549,15 @@ index or an interaction. A suitable refit/bootstrap or explicitly defined
 posterior propagation would be a further development, not something these
 bars already provide.
 
-Other families, direct lognormal parameterisations, brms, sdmTMB, tinyVAST,
+The sdmTMB adapter additionally supports Bernoulli(logit), lognormal(log), and
+explicit encounter, positive, and combined views of standard delta-lognormal
+fits. It does not reinterpret Poisson-link delta models or mixture families.
+
+Other families, other direct lognormal parameterisations, brms, tinyVAST,
 non-unit weights, and year interactions currently fail explicitly for this
 **new implied-effect calculation**. They remain supported where documented by
 the existing PIT diagnostics and other influ2 functions. Joint hurdle/delta
-models require separate decisions about encounter, positive-response, and
-combined-response shifts; a positive-component calculation is never silently
+models outside the validated sdmTMB route require separate adapters; a positive-component calculation is never silently
 substituted for a combined-response diagnostic.
 
 The tests independently reconstruct the historical recipe, check log-response

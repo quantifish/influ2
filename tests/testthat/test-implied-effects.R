@@ -170,7 +170,9 @@ test_that("alignment, support, and explicit failure boundaries are enforced", {
   expect_error(implied_effects(m, groups = "area", min_n = 0), "integer of at least")
   expect_error(implied_effects(m, groups = "area", level = 1), "between zero and one")
   expect_error(implied_effects(m, groups = "area", traditional_scale = "log_response"), "only to method")
-  expect_error(implied_effects(structure(list(), class = "sdmTMB")), "currently support")
+  if (requireNamespace("sdmTMB", quietly = TRUE)) {
+    expect_error(implied_effects(structure(list(), class = "sdmTMB")), "complete retained")
+  }
   expect_error(implied_effects(structure(list(), class = "influ_residuals")), "plot_grouped_residuals")
   interaction <- glm(log(cpue) ~ year * area + x, data = d)
   expect_error(implied_effects(interaction, groups = "area"), "year interactions")
