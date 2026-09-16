@@ -71,6 +71,7 @@ model; its field is not added to the plotted index.</p>
 <span>  probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.975</span><span class="op">)</span>,</span>
 <span>  keep_fits <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  refit_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  year_term <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -135,6 +136,13 @@ Execution-only controls (<code>seed</code>, <code>cores</code>, <code>refresh</c
 do not by themselves force an otherwise unchanged original fit to rerun.</p></dd>
 
 
+<dt id="arg-year-term">year_term<a class="anchor" aria-label="anchor" href="#arg-year-term"></a></dt>
+<dd><p>For joint sdmTMB models, the annual predictor in each
+component, e.g. <code>c(occurrence = "year_scaled", positive = "year_factor")</code>.
+Defaults to <code>year</code> in both. Each predictor must be constant within each
+plotted year and enter its formula as an additive fixed term.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Arguments passed to <code><a href="influ.html">influ()</a></code> for fitted-model inputs, such as
 <code>uncertainty = "none"</code>, <code>weights</code>, or <code>reference_data</code>. All steps use the
@@ -159,7 +167,21 @@ explicit steps or already-fitted models when a structure cannot be updated
 safely. Refits use the original analysis rows and report convergence problems.
 Native <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> methods are used where available. <code>tinyVAST</code> has no such
 method, so its refits reconstruct the recorded fitting call with the locked
-data, stored spatial domain, and requested process settings.</p>
+data, stored spatial domain, and requested process settings.
+Joint sdmTMB refits likewise reconstruct the saved call, because its native
+update method does not update paired formulas. Supply explicit stages such as
+<code>list(Baseline = list(formula = list(~ year, ~ year), spatial = "off", spatiotemporal = "off"), Full = list(formula = model$formula))</code>.
+Supported joint step indices are standard delta-Gamma and delta-lognormal
+with logit/log links. Choose <code>component = "occurrence"</code>, <code>"positive"</code>, or
+<code>"unconditional_mean"</code>. The last combines both annual terms using their joint
+covariance; it is not an area-integrated index. Positive-component
+contrasts are ratios; occurrence contrasts are probability differences at
+the fixed-effect reference. Non-year covariates use each fit's common
+observed/reference design, not individual fitted random-effect modes.
+Positive-component effort
+offsets are preserved in refitting and cancel from log-link annual ratios.
+Field modes are not added to these fixed-year contrasts. This narrower
+calculation does not enable the full offset-dependent influence decomposition.</p>
 <p>Each curve uses the centring and uncertainty supplied by <code><a href="influ.html">influ()</a></code>. No extra
 plug-in rescaling is applied. With the same data and focus reference, all
 steps use the same contrast definition. A change between steps depends on

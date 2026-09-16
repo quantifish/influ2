@@ -231,6 +231,88 @@ contrasts from refitted models. They are not area-weighted abundance
 indices, and the `qcs_grid` used for the maps is not integrated to
 create this plot.
 
+### Joint delta step plots
+
+A delta model can use different formulas and different annual predictors
+in its two components, as described in the [sdmTMB delta-model
+guide](https://sdmtmb.github.io/sdmTMB/articles/delta-models.html). For
+example, the encounter component may have a linear annual trend while
+the positive component has a factor year effect. Set `year` to the
+common plotting variable and `year_term` to the annual predictor in each
+formula. Each predictor must be constant within a plotted year. The
+linear encounter trend remains linear on its link scale: this interface
+does not turn it into free annual coefficients.
+
+This small simulated example illustrates the paired-formula interface.
+It does not fit spatial fields; explicit field stages can be specified
+as above.
+
+``` r
+
+set.seed(618)
+n <- 360
+delta_data <- data.frame(
+  year = factor(rep(2001:2004, each = n / 4)),
+  x = rnorm(n), X = runif(n), Y = runif(n), log_effort = runif(n, 0.2, 1.3)
+)
+delta_data$year_scaled <- (as.integer(delta_data$year) - 2.5) / 2
+delta_data$response <- with(delta_data,
+  rbinom(n, 1, plogis(0.6 - 0.5 * year_scaled + 0.4 * x)) *
+    rlnorm(n, 0.5 + 0.2 * as.integer(year) + 0.5 * x + log_effort, 0.5)
+)
+delta_mesh <- sdmTMB::make_mesh(delta_data, c("X", "Y"), n_knots = 10)
+delta_model <- sdmTMB::sdmTMB(
+  list(response ~ year_scaled + x, response ~ year + x),
+  data = delta_data, mesh = delta_mesh,
+  family = sdmTMB::delta_lognormal(), offset = "log_effort",
+  spatial = "off", spatiotemporal = "off"
+)
+delta_steps <- influ_steps(
+  delta_model, year = "year",
+  year_term = c(occurrence = "year_scaled", positive = "year"),
+  component = "unconditional_mean", refit = TRUE,
+  steps = list(
+    "Year terms" = list(formula = list(~year_scaled, ~year),
+                        spatial = "off", spatiotemporal = "off"),
+    "Add covariate" = list(formula = delta_model$formula)
+  ),
+  ndraws = 1000, seed = 13
+)
+```
+
+``` r
+
+plot_step(delta_steps)
+```
+
+![Combined annual-effect contrasts from a simulated delta-lognormal
+model with different year terms in its two components. The first stage
+fits only annual terms; the second reuses the full fit with the
+additional covariate. Effort offsets are preserved. Shading shows
+pointwise 95% intervals from the joint fixed-effect covariance, not
+uncertainty in the difference between models. These are not
+area-integrated
+indices.](spatial-spatiotemporal_files/figure-html/delta-step-plot-1.png)
+
+Combined annual-effect contrasts from a simulated delta-lognormal model
+with different year terms in its two components. The first stage fits
+only annual terms; the second reuses the full fit with the additional
+covariate. Effort offsets are preserved. Shading shows pointwise 95%
+intervals from the joint fixed-effect covariance, not uncertainty in the
+difference between models. These are not area-integrated indices.
+
+Use `component = "positive"` for positive-component annual ratios, or
+`"occurrence"` for encounter-probability differences relative to the
+common fixed-effect reference. `"unconditional_mean"` changes both
+annual terms together, combining their joint covariance. Other
+covariates remain at each model’s weighted fixed-effect reference;
+latent-field modes are not added. With standard logit/log delta models,
+the positive log-link effort offset cancels from these ratios, but
+remains in every refit’s likelihood. This does not remove the separate
+restrictions on full offset-dependent CDI plots. Paired refits currently
+support standard delta-Gamma and delta-lognormal families. Save the
+calculated sequence: plotting it again never refits models.
+
 ## tinyVAST
 
 ### Simulated spatiotemporal process

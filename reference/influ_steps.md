@@ -19,6 +19,7 @@ influ_steps(
   probs = c(0.025, 0.975),
   keep_fits = FALSE,
   refit_args = list(),
+  year_term = NULL,
   ...
 )
 
@@ -84,6 +85,13 @@ summary(object, ...)
   `verbose`) do not by themselves force an otherwise unchanged original
   fit to rerun.
 
+- year_term:
+
+  For joint sdmTMB models, the annual predictor in each component, e.g.
+  `c(occurrence = "year_scaled", positive = "year_factor")`. Defaults to
+  `year` in both. Each predictor must be constant within each plotted
+  year and enter its formula as an additive fixed term.
+
 - ...:
 
   Arguments passed to
@@ -112,7 +120,22 @@ original analysis rows and report convergence problems. Native
 [`update()`](https://rdrr.io/r/stats/update.html) methods are used where
 available. `tinyVAST` has no such method, so its refits reconstruct the
 recorded fitting call with the locked data, stored spatial domain, and
-requested process settings.
+requested process settings. Joint sdmTMB refits likewise reconstruct the
+saved call, because its native update method does not update paired
+formulas. Supply explicit stages such as
+`list(Baseline = list(formula = list(~ year, ~ year), spatial = "off", spatiotemporal = "off"), Full = list(formula = model$formula))`.
+Supported joint step indices are standard delta-Gamma and
+delta-lognormal with logit/log links. Choose `component = "occurrence"`,
+`"positive"`, or `"unconditional_mean"`. The last combines both annual
+terms using their joint covariance; it is not an area-integrated index.
+Positive-component contrasts are ratios; occurrence contrasts are
+probability differences at the fixed-effect reference. Non-year
+covariates use each fit's common observed/reference design, not
+individual fitted random-effect modes. Positive-component effort offsets
+are preserved in refitting and cancel from log-link annual ratios. Field
+modes are not added to these fixed-year contrasts. This narrower
+calculation does not enable the full offset-dependent influence
+decomposition.
 
 Each curve uses the centring and uncertainty supplied by
 [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md). No

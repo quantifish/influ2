@@ -294,6 +294,76 @@ contrasts from refitted models. They are not area-weighted abundance
 indices, and the <code>qcs_grid</code> used for the maps is not
 integrated to create this plot.</p>
 </div>
+<div class="section level3">
+<h3 id="joint-delta-step-plots">Joint delta step plots<a class="anchor" aria-label="anchor" href="#joint-delta-step-plots"></a>
+</h3>
+<p>A delta model can use different formulas and different annual
+predictors in its two components, as described in the <a href="https://sdmtmb.github.io/sdmTMB/articles/delta-models.html" class="external-link">sdmTMB
+delta-model guide</a>. For example, the encounter component may have a
+linear annual trend while the positive component has a factor year
+effect. Set <code>year</code> to the common plotting variable and
+<code>year_term</code> to the annual predictor in each formula. Each
+predictor must be constant within a plotted year. The linear encounter
+trend remains linear on its link scale: this interface does not turn it
+into free annual coefficients.</p>
+<p>This small simulated example illustrates the paired-formula
+interface. It does not fit spatial fields; explicit field stages can be
+specified as above.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">618</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">360</span></span>
+<span><span class="va">delta_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2001</span><span class="op">:</span><span class="fl">2004</span>, each <span class="op">=</span> <span class="va">n</span> <span class="op">/</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, X <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, Y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, log_effort <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0.2</span>, <span class="fl">1.3</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">delta_data</span><span class="op">$</span><span class="va">year_scaled</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">delta_data</span><span class="op">$</span><span class="va">year</span><span class="op">)</span> <span class="op">-</span> <span class="fl">2.5</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span></span>
+<span><span class="va">delta_data</span><span class="op">$</span><span class="va">response</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">delta_data</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="fl">0.6</span> <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">year_scaled</span> <span class="op">+</span> <span class="fl">0.4</span> <span class="op">*</span> <span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0.5</span> <span class="op">+</span> <span class="fl">0.2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="va">log_effort</span>, <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">delta_mesh</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/make_mesh.html" class="external-link">make_mesh</a></span><span class="op">(</span><span class="va">delta_data</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span>, n_knots <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">delta_model</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html" class="external-link">sdmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">response</span> <span class="op">~</span> <span class="va">year_scaled</span> <span class="op">+</span> <span class="va">x</span>, <span class="va">response</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">x</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">delta_data</span>, mesh <span class="op">=</span> <span class="va">delta_mesh</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/families.html" class="external-link">delta_lognormal</a></span><span class="op">(</span><span class="op">)</span>, offset <span class="op">=</span> <span class="st">"log_effort"</span>,</span>
+<span>  spatial <span class="op">=</span> <span class="st">"off"</span>, spatiotemporal <span class="op">=</span> <span class="st">"off"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">delta_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
+<span>  <span class="va">delta_model</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  year_term <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>occurrence <span class="op">=</span> <span class="st">"year_scaled"</span>, positive <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"unconditional_mean"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  steps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Year terms"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">~</span><span class="va">year_scaled</span>, <span class="op">~</span><span class="va">year</span><span class="op">)</span>,</span>
+<span>                        spatial <span class="op">=</span> <span class="st">"off"</span>, spatiotemporal <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span>,</span>
+<span>    <span class="st">"Add covariate"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">delta_model</span><span class="op">$</span><span class="va">formula</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  ndraws <span class="op">=</span> <span class="fl">1000</span>, seed <span class="op">=</span> <span class="fl">13</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">delta_steps</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="spatial-spatiotemporal_files/figure-html/delta-step-plot-1.png" class="r-plt" alt="Combined annual-effect contrasts from a simulated delta-lognormal model with different year terms in its two components. The first stage fits only annual terms; the second reuses the full fit with the additional covariate. Effort offsets are preserved. Shading shows pointwise 95% intervals from the joint fixed-effect covariance, not uncertainty in the difference between models. These are not area-integrated indices." width="768"><p class="caption">
+Combined annual-effect contrasts from a simulated delta-lognormal model
+with different year terms in its two components. The first stage fits
+only annual terms; the second reuses the full fit with the additional
+covariate. Effort offsets are preserved. Shading shows pointwise 95%
+intervals from the joint fixed-effect covariance, not uncertainty in the
+difference between models. These are not area-integrated indices.
+</p>
+</div>
+<p>Use <code>component = "positive"</code> for positive-component annual
+ratios, or <code>"occurrence"</code> for encounter-probability
+differences relative to the common fixed-effect reference.
+<code>"unconditional_mean"</code> changes both annual terms together,
+combining their joint covariance. Other covariates remain at each
+model’s weighted fixed-effect reference; latent-field modes are not
+added. With standard logit/log delta models, the positive log-link
+effort offset cancels from these ratios, but remains in every refit’s
+likelihood. This does not remove the separate restrictions on full
+offset-dependent CDI plots. Paired refits currently support standard
+delta-Gamma and delta-lognormal families. Save the calculated sequence:
+plotting it again never refits models.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="tinyvast">tinyVAST<a class="anchor" aria-label="anchor" href="#tinyvast"></a>
@@ -307,7 +377,7 @@ uses a Poisson response, and adds changing spatial coverage so that an
 influence diagnostic has a sampling pattern to detect. The known process
 contains a persistent spatial field and an AR(1) spatiotemporal
 field.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">101</span><span class="op">)</span></span>
 <span><span class="va">n_x</span> <span class="op">&lt;-</span> <span class="va">n_y</span> <span class="op">&lt;-</span> <span class="fl">7</span></span>
 <span><span class="va">n_time</span> <span class="op">&lt;-</span> <span class="fl">6</span></span>
@@ -366,7 +436,7 @@ field.</p>
 <p>The observation window shifts from left to right through time. That
 imbalance allows the persistent field to affect temporal summaries even
 though the field itself does not change through time.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">tiny_data</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">x</span>, <span class="va">ycoord</span>, colour <span class="op">=</span> <span class="va">count</span>, size <span class="op">=</span> <span class="va">count</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_point</span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">coord_equal</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -386,7 +456,7 @@ Changing spatial coverage in the simulated tinyVAST example.
 <p>The structural-equation strings match the official
 <code>tinyVAST</code> notation: one persistent spatial variance, plus an
 AR(1) spatiotemporal process.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_mesh</span> <span class="op">&lt;-</span> <span class="fu">fmesher</span><span class="fu">::</span><span class="fu"><a href="https://inlabru-org.github.io/fmesher/reference/fm_mesh_2d.html" class="external-link">fm_mesh_2d</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_data</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"ycoord"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="fl">1</span></span>
@@ -429,7 +499,7 @@ AR(1) spatiotemporal process.</p>
 <span><span class="co">#&gt;                 5</span></span>
 <span><span class="co">#&gt;                 6</span></span>
 <span><span class="co">#&gt;                 6</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tiny_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/tinyvast-components-1.png" class="r-plt" alt="Fixed, spatial, and spatiotemporal influence components from the tinyVAST model." width="768"><p class="caption">
@@ -444,7 +514,7 @@ tinyVAST model.
 <p><code><a href="https://vast-lib.github.io/tinyVAST/reference/project.html" class="external-link">tinyVAST::project()</a></code> exposes the same latent components
 used by the adapter. The combined map below is calculated on the link
 scale before applying the inverse link.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_mapping_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">tiny_grid</span>, <span class="va">time</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">tiny_mapping_grid</span><span class="op">$</span><span class="va">spatial</span> <span class="op">&lt;-</span> <span class="fu">tinyVAST</span><span class="fu">::</span><span class="fu"><a href="https://vast-lib.github.io/tinyVAST/reference/project.html" class="external-link">project</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>,</span>
@@ -506,7 +576,7 @@ requests a variance field, so it is not a field-off setting. The final
 step uses the persistent spatial and AR(1) spatiotemporal strings
 defined above. The observation data and spatial mesh stay the same
 throughout, and <code>factor(time)</code> is retained in every step.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>,</span>
 <span>  year <span class="op">=</span> <span class="st">"time"</span>,</span>
@@ -542,7 +612,7 @@ throughout, and <code>factor(time)</code> is retained in every step.</p>
 <span><span class="co">#&gt;        1                Year only tinyVAST        refitted</span></span>
 <span><span class="co">#&gt;        2        Add spatial field tinyVAST        refitted</span></span>
 <span><span class="co">#&gt;        3 Add spatiotemporal field tinyVAST reused original</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">tiny_steps</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/tinyvast-refitted-step-plot-1.png" class="r-plt" alt="Three sequential tinyVAST model panels showing how the centred year-effect ratios change as persistent and time-varying fields are added." width="768"><p class="caption">
@@ -589,7 +659,7 @@ simulation batch. <code>"new_effects"</code> instead generates new
 processes at fitted distribution parameters, following native
 <code>re_form = NA</code> (fitted smooths remain fixed). These are
 diagnostic targets, not competing estimates of the CPUE index.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcod_residuals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fitted"</span>, <span class="st">"conditional_draw"</span>, <span class="st">"new_effects"</span><span class="op">)</span>,</span>
 <span>  <span class="kw">function</span><span class="op">(</span><span class="va">scheme</span><span class="op">)</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
@@ -598,7 +668,7 @@ diagnostic targets, not competing estimates of the CPUE index.</p>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">pcod_residuals</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fitted"</span>, <span class="st">"conditional_draw"</span>, <span class="st">"new_effects"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pcod_residuals</span><span class="op">$</span><span class="va">fitted</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Fitted effects"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pcod_residuals</span><span class="op">$</span><span class="va">conditional_draw</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -628,7 +698,7 @@ not silently change previous results. Neither sampling nor the
 <code>qnorm(PIT)</code> transformation makes these fitted-data checks
 universally calibrated. Inspect sensitivity to a preselected set of
 seeds; do not keep only the most favourable draw.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pcod_residuals</span><span class="op">$</span><span class="va">conditional_draw</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/sdmtmb-conditioning-overview-1.png" class="r-plt" alt="Four-panel residual overview for Pacific cod, using one shared conditional spatial and spatiotemporal draw and matching encounter probabilities." width="1056"><p class="caption">
@@ -663,14 +733,14 @@ a positive-only diagnostic.</p>
 </h3>
 <p>The same two conditional choices work for the simulated spatial and
 AR(1) spatiotemporal model above:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_fitted_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"fitted"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">tiny_draw_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tiny_fitted_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Fitted effects"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tiny_draw_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"One conditional draw"</span><span class="op">)</span>,</span>
@@ -718,7 +788,7 @@ above is binomial, so its standardised response is a mean
 <strong>encounter probability</strong>, not catch density. Its
 area-integrated response is expected encounter-weighted area, not
 biomass or an estimate of the number of fish.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcod_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">pcod_model</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  reference_data <span class="op">=</span> <span class="va">qcs_grid</span>, uncertainty <span class="op">=</span> <span class="st">"none"</span>, batch_size <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  units <span class="op">=</span> <span class="st">"encounter probability"</span><span class="op">)</span></span>
@@ -863,7 +933,7 @@ biomass or an estimate of the number of fish.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">pcod_area</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/sdmtmb-area-plot-1.png" class="r-plt" alt="Pacific cod encounter-weighted area over the fixed Queen Charlotte Sound grid. Each cell contributes its 4 km² area times its fitted encounter probability, including persistent and spatiotemporal fields. The pointwise 95% intervals propagate joint Gaussian parameter and field uncertainty; this is not a biomass index or a Laplace bias-corrected estimate." width="768"><p class="caption">
@@ -891,7 +961,7 @@ its Poisson mean as expected fish per km². That is an explicit
 simulation convention, not a general conversion from raw fishery counts
 to density. The total covers the same 49 cells each year, irrespective
 of which cells were sampled.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">tiny_grid</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"ycoord"</span>, <span class="st">"var"</span>, <span class="st">"dist"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">tiny_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">tiny_model</span>, year <span class="op">=</span> <span class="st">"time"</span>,</span>
 <span>  reference_data <span class="op">=</span> <span class="va">tiny_reference</span>, units <span class="op">=</span> <span class="st">"fish/km^2"</span>,</span>
@@ -1000,7 +1070,7 @@ of which cells were sampled.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">tiny_total</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="spatial-spatiotemporal_files/figure-html/tinyvast-area-plot-1.png" class="r-plt" alt="Expected fish over the fixed 49 km² simulated domain, including the fitted tinyVAST persistent and AR(1) spatiotemporal fields. Pointwise 95% intervals use shared joint Gaussian parameter/field draws. These are plug-in expected-response totals, not Laplace bias-corrected totals or predictive intervals for new counts." width="768"><p class="caption">
@@ -1045,7 +1115,7 @@ with different families. <code>influ2</code> keeps the common schema and
 prefixes each component with its response name. This small non-spatial
 example isolates that interface; the same response labels are used when
 spatial and spatiotemporal terms are added.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multivariate_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span></span>
 <span>    <span class="va">tiny_data</span>,</span>
