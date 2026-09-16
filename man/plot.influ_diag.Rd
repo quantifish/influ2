@@ -67,7 +67,8 @@ CDI intervals use the probabilities supplied to [influ()] (95%
   Short term labels (including months) are horizontal on the upper fitted-
   effect axis and the lower composition axis, for fixed and random effects.
   Both axes label the same at most 20 levels, including the first and last;
-  all coefficients and composition columns remain plotted. Longer labels
+  overlap protection can omit further labels on narrow outputs, without
+  removing any coefficients or composition columns. Longer labels
   are angled and justified for their respective top or bottom axis.
   The influence panel's focus
   labels are on the right, with the same level ordering as the composition.

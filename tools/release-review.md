@@ -10,7 +10,9 @@ is a separate, later step authorised by the maintainer.
 The maintainer approved the compact encounter label `Effect (log-odds)` and
 horizontal short category labels with matching upper/lower positions. The
 shared CDI plot retains all coefficient and composition rows, thinning only
-the displayed labels to at most 20, including both ends. Positive ratio plots
+the displayed labels to at most 20, including both ends. Dense axes also use
+overlap protection on narrow output devices, with matching upper/lower labels.
+Positive ratio plots
 retain `Relative Effect`; zero-probability components remain explicitly
 labelled `Effect (log-odds of zero)`. Longer labels use position-aware angled
 axis guides. Centring, scales, uncertainty, and all calculated values are

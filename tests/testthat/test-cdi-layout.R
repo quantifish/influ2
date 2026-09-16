@@ -78,6 +78,8 @@ test_that("fixed and random CDI axes share breaks without discarding vessels", {
     expect_identical(top$breaks, bottom$breaks)
     expect_length(top$limits, 41L)
     expect_length(top$breaks, 20L)
+    expect_true(top$guide$params$check.overlap)
+    expect_true(bottom$guide$params$check.overlap)
     expect_equal(p[[1]]$theme$axis.text.x$angle, 0)
     expect_equal(p[[3]]$theme$axis.text.x$angle, 0)
     expect_equal(nrow(p[[1]]$data), 41L)

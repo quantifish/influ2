@@ -180,6 +180,7 @@
   # original position. Use identical breaks above and below, including ends.
   term_breaks <- .cdi_axis_breaks(term_levels)
   label_angle <- if (max(nchar(term_breaks)) <= 6L) 0 else 45
+  protect_overlap <- length(term_levels) > 20L
 
   coefficient_plot <- ggplot2::ggplot(
     coefficients,
@@ -201,7 +202,8 @@
     ) +
     ggplot2::geom_point(colour = "purple4", size = 1.8) +
     ggplot2::scale_x_discrete(limits = term_levels, breaks = term_breaks,
-      position = "top", guide = ggplot2::guide_axis(angle = label_angle)) +
+      position = "top", guide = ggplot2::guide_axis(angle = label_angle,
+        check.overlap = protect_overlap)) +
     ggplot2::labs(x = NULL, y = coefficient_display$label) +
     ggplot2::theme_bw() +
     ggplot2::theme(
@@ -223,7 +225,7 @@
   ) +
     ggplot2::geom_point(colour = "purple4", fill = "purple", alpha = 0.65) +
     ggplot2::scale_x_discrete(limits = term_levels, breaks = term_breaks,
-      guide = ggplot2::guide_axis(angle = label_angle)) +
+      guide = ggplot2::guide_axis(angle = label_angle, check.overlap = protect_overlap)) +
     ggplot2::scale_y_discrete(limits = focus_levels) +
     ggplot2::scale_size_area(max_size = 10, breaks = .cdi_proportion_breaks) +
     ggplot2::guides(size = ggplot2::guide_legend(
@@ -343,7 +345,8 @@
 #'   Short term labels (including months) are horizontal on the upper fitted-
 #'   effect axis and the lower composition axis, for fixed and random effects.
 #'   Both axes label the same at most 20 levels, including the first and last;
-#'   all coefficients and composition columns remain plotted. Longer labels
+#'   overlap protection can omit further labels on narrow outputs, without
+#'   removing any coefficients or composition columns. Longer labels
 #'   are angled and justified for their respective top or bottom axis.
 #'   The influence panel's focus
 #'   labels are on the right, with the same level ordering as the composition.

@@ -264,7 +264,8 @@ For encounter models with a logit link, the upper panel is labelled
 models retain "Relative Effect". Short category labels are horizontal for
 both fixed and random effects. When there are many levels (for example,
 vessels), both panels label the same selection of at most 20 levels, including
-the first and last. All coefficients and bubbles remain plotted.
+the first and last. Overlap protection can omit additional labels on narrow
+outputs. All coefficients and bubbles remain plotted.
 
 ```{r lobster-cdi-options, eval=FALSE}
 # Centred relative month effects, with 95% confidence intervals.
