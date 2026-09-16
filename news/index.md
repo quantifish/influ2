@@ -2,6 +2,12 @@
 
 ## influ2 1.1.0
 
+- CDI encounter panels use the compact label “Effect (log-odds)” while
+  positive ratio panels retain “Relative Effect”. Shared
+  fixed/random-effect plots use horizontal short category labels and
+  matching upper/lower breaks (at most 20, including both ends), without
+  removing any plotted levels.
+
 - Joint sdmTMB step plots now support paired delta-Gamma/lognormal
   formulas, explicit annual predictors in each component, and encounter,
   positive, or combined fixed-year contrasts. Reduced stages preserve

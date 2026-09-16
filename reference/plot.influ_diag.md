@@ -80,9 +80,16 @@ component at a time; select \`component\` when a term occurs in several
 model components. Zero-probability components retain their fitted link
 orientation and are explicitly labelled as such. Ratio-scale CDI panels
 use the y-axis label "Relative Effect"; the term name remains on the
-horizontal axis rather than lengthening the y label. Short term labels
-(including months) are horizontal on the upper fitted- effect axis and
-the lower composition axis. The influence panel's focus labels are on
+horizontal axis rather than lengthening the y label. Logit-scale panels
+use "Effect (log-odds)" (or "Effect (log-odds of zero)" for
+zero-probability components). This shorter label does not change the
+selected centring or component orientation. Short term labels (including
+months) are horizontal on the upper fitted- effect axis and the lower
+composition axis, for fixed and random effects. Both axes label the same
+at most 20 levels, including the first and last; overlap protection can
+omit further labels on narrow outputs, without removing any coefficients
+or composition columns. Longer labels are angled and justified for their
+respective top or bottom axis. The influence panel's focus labels are on
 the right, with the same level ordering as the composition. The
 proportion legend has one column and at most four reference bubbles.
 

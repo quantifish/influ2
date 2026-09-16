@@ -366,6 +366,14 @@ factor level.</p>
 optionally, <code>reference_weights</code> changes both the influence
 reference and the CDI centring to that explicit distribution. The
 bubbles continue to show the observed sampling distribution.</p>
+<p>For encounter models with a logit link, the upper panel is labelled
+“Effect (log-odds)” and remains centred on zero by default. Positive
+log-link models retain “Relative Effect”. Short category labels are
+horizontal for both fixed and random effects. When there are many levels
+(for example, vessels), both panels label the same selection of at most
+20 levels, including the first and last. Overlap protection can omit
+additional labels on narrow outputs. All coefficients and bubbles remain
+plotted.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Centred relative month effects, with 95% confidence intervals.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">glm_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span>
