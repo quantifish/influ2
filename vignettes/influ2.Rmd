@@ -262,10 +262,12 @@ The bubbles continue to show the observed sampling distribution.
 For encounter models with a logit link, the upper panel is labelled
 "Effect (log-odds)" and remains centred on zero by default. Positive log-link
 models retain "Relative Effect". Short category labels are horizontal for
-both fixed and random effects. When there are many levels (for example,
-vessels), both panels label the same selection of at most 20 levels, including
-the first and last. Overlap protection can omit additional labels on narrow
-outputs. All coefficients and bubbles remain plotted.
+both fixed and random effects. Label spacing adapts to the rendered panel
+width and text size. Both panels label every category when they fit; otherwise,
+they label every second, third, or subsequent category, starting at the first.
+The last category is not forced into the labels if it falls outside that regular
+sequence. There is no fixed label-count limit: wider outputs can show more
+labels. All coefficients, bubbles, and category ticks remain plotted.
 
 ```{r lobster-cdi-options, eval=FALSE}
 # Centred relative month effects, with 95% confidence intervals.

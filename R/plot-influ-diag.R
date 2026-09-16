@@ -176,11 +176,10 @@
   composition$term_level <- factor(composition$term_level, levels = term_levels)
   composition$focus_level <- factor(composition$level, levels = focus_levels)
   effects$focus_level <- factor(effects$level, levels = focus_levels)
-  # Thin labels only: every coefficient and composition column retains its
-  # original position. Use identical breaks above and below, including ends.
-  term_breaks <- .cdi_axis_breaks(term_levels)
-  label_angle <- if (max(nchar(term_breaks)) <= 6L) 0 else 45
-  protect_overlap <- length(term_levels) > 20L
+  # Keep every level and tick. The paired guides select a regular label stride
+  # from the actual device space only when the figure is drawn.
+  label_angle <- if (max(nchar(term_levels)) <= 6L) 0 else 45
+  axis_state <- new.env(parent = emptyenv())
 
   coefficient_plot <- ggplot2::ggplot(
     coefficients,
@@ -201,9 +200,8 @@
       na.rm = TRUE
     ) +
     ggplot2::geom_point(colour = "purple4", size = 1.8) +
-    ggplot2::scale_x_discrete(limits = term_levels, breaks = term_breaks,
-      position = "top", guide = ggplot2::guide_axis(angle = label_angle,
-        check.overlap = protect_overlap)) +
+    ggplot2::scale_x_discrete(limits = term_levels, breaks = term_levels,
+      position = "top", guide = .cdi_axis_guide(label_angle, axis_state)) +
     ggplot2::labs(x = NULL, y = coefficient_display$label) +
     ggplot2::theme_bw() +
     ggplot2::theme(
@@ -224,8 +222,8 @@
     )
   ) +
     ggplot2::geom_point(colour = "purple4", fill = "purple", alpha = 0.65) +
-    ggplot2::scale_x_discrete(limits = term_levels, breaks = term_breaks,
-      guide = ggplot2::guide_axis(angle = label_angle, check.overlap = protect_overlap)) +
+    ggplot2::scale_x_discrete(limits = term_levels, breaks = term_levels,
+      guide = .cdi_axis_guide(label_angle, axis_state)) +
     ggplot2::scale_y_discrete(limits = focus_levels) +
     ggplot2::scale_size_area(max_size = 10, breaks = .cdi_proportion_breaks) +
     ggplot2::guides(size = ggplot2::guide_legend(
@@ -287,10 +285,6 @@
     )
 }
 
-.cdi_axis_breaks <- function(levels) {
-  levels[unique(round(seq(1L, length(levels), length.out = min(20L, length(levels)))))]
-}
-
 .cdi_proportion_breaks <- function(limits) {
   breaks <- pretty(limits, n = 5)
   breaks <- breaks[breaks > 0 & breaks >= limits[1] & breaks <= limits[2]]
@@ -344,9 +338,12 @@
 #'   selected centring or component orientation.
 #'   Short term labels (including months) are horizontal on the upper fitted-
 #'   effect axis and the lower composition axis, for fixed and random effects.
-#'   Both axes label the same at most 20 levels, including the first and last;
-#'   overlap protection can omit further labels on narrow outputs, without
-#'   removing any coefficients or composition columns. Longer labels
+#'   At drawing time, the paired axes measure the available width and their
+#'   label text. All labels are shown when they fit; otherwise every second,
+#'   third, or subsequent level is labelled, starting at the first level.
+#'   The last level is not forced onto an off-stride position. The same regular
+#'   spacing is used above and below, retaining every coefficient, composition
+#'   column, and tick. Wider output devices can show more labels. Longer labels
 #'   are angled and justified for their respective top or bottom axis.
 #'   The influence panel's focus
 #'   labels are on the right, with the same level ordering as the composition.

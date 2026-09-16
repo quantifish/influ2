@@ -2,8 +2,11 @@
 
 * CDI encounter panels use the compact label "Effect (log-odds)" while
   positive ratio panels retain "Relative Effect". Shared fixed/random-effect
-  plots use horizontal short category labels and matching upper/lower breaks
-  (at most 20, including both ends), without removing any plotted levels.
+  plots use horizontal short category labels. Matching upper/lower labels are
+  spaced automatically from the rendered text and panel width: all when they
+  fit, otherwise every second, third, or subsequent category. There is no
+  fixed label-count limit, and no plotted levels or ticks are removed. This
+  uses the public axis-guide extension API in ggplot2 >= 3.5.0.
 
 * Joint sdmTMB step plots now support paired delta-Gamma/lognormal formulas,
   explicit annual predictors in each component, and encounter, positive, or

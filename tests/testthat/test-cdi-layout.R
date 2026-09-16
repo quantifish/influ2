@@ -45,15 +45,22 @@ test_that("CDI size keys are positive, in range, and limited to four", {
   }
 })
 
-test_that("CDI label thinning preserves both ends and the supplied ordering", {
-  for (n in c(1L, 12L, 20L, 21L, 40L, 41L, 200L)) {
-    levels <- rev(sprintf("V%03d", seq_len(n)))
-    breaks <- .cdi_axis_breaks(levels)
-    expect_length(breaks, min(20L, n))
-    expect_identical(breaks[c(1, length(breaks))], levels[c(1, n)])
-    expect_false(is.unsorted(match(breaks, levels), strictly = TRUE))
-  }
+test_that("CDI labels use a regular stride without an arbitrary count limit", {
+  expect_identical(.cdi_regular_indices(numeric(), 4), integer())
+  expect_identical(.cdi_regular_indices(1, 4), 1L)
+  expect_identical(.cdi_regular_indices(1:41 * 10, 4), 1:41)
+  expect_identical(.cdi_regular_indices(1:22 * 4, 5), seq.int(1L, 22L, 2L))
+  expect_identical(.cdi_regular_indices(1:41 * 2, 4), seq.int(1L, 41L, 3L))
+  expect_identical(.cdi_regular_indices(1:41 * 2, c(4, 7)), seq.int(1L, 41L, 5L))
 })
+
+draw_cdi_axes <- function(p, width = 10) {
+  path <- tempfile(fileext = ".pdf")
+  grDevices::pdf(path, width = width, height = 7)
+  on.exit({ grDevices::dev.off(); unlink(path) })
+  print(p)
+  p[[1]]$scales$get_scales("x")$guide$cdi_state$drawn
+}
 
 dense_cdi_fixture <- function(random = FALSE) {
   d <- expand.grid(year = factor(2019:2022), vessel = factor(sprintf("V%03d", 1:41)),
@@ -77,9 +84,10 @@ test_that("fixed and random CDI axes share breaks without discarding vessels", {
     expect_identical(top$limits, bottom$limits)
     expect_identical(top$breaks, bottom$breaks)
     expect_length(top$limits, 41L)
-    expect_length(top$breaks, 20L)
-    expect_true(top$guide$params$check.overlap)
-    expect_true(bottom$guide$params$check.overlap)
+    expect_length(top$breaks, 41L)
+    expect_false(top$guide$params$check.overlap)
+    expect_false(bottom$guide$params$check.overlap)
+    expect_identical(top$guide$cdi_state, bottom$guide$cdi_state)
     expect_equal(p[[1]]$theme$axis.text.x$angle, 0)
     expect_equal(p[[3]]$theme$axis.text.x$angle, 0)
     expect_equal(nrow(p[[1]]$data), 41L)
@@ -90,7 +98,67 @@ test_that("fixed and random CDI axes share breaks without discarding vessels", {
     expect_equal(sort(unique(as.numeric(bottom_data$x))), seq_len(41L))
     expect_equal(p[[1]]$data$estimate,
       d$coefficients$centred_estimate[d$coefficients$term == term])
+    drawn <- draw_cdi_axes(p)
+    expect_identical(drawn$top$labels, drawn$bottom$labels)
+    expect_length(unique(diff(drawn$top$indices)), 1L)
   }
+})
+
+test_that("CDI label spacing responds to output width and survives serialisation", {
+  p <- plot(dense_cdi_fixture(), type = "cdi", term = "vessel")
+  counts <- vapply(c(7, 10, 14, 28), function(width) {
+    drawn <- draw_cdi_axes(p, width)
+    expect_length(drawn, 2L)
+    expect_identical(drawn$top$indices, drawn$bottom$indices)
+    expect_equal(drawn$top$positions_mm, drawn$bottom$positions_mm)
+    expect_length(unique(diff(drawn$top$indices)), 1L)
+    expect_true(all(diff(drawn$top$positions_mm[drawn$top$indices]) >=
+      drawn$top$label_width_mm + 1.5))
+    length(drawn$top$indices)
+  }, integer(1))
+  expect_false(is.unsorted(counts))
+  expect_lt(counts[1], counts[3])
+  expect_equal(counts[4], 41L)
+  path <- tempfile(fileext = ".rds")
+  on.exit(unlink(path))
+  saveRDS(p, path)
+  expect_identical(draw_cdi_axes(readRDS(path), 7)$top$indices,
+    draw_cdi_axes(p, 7)$top$indices)
+})
+
+test_that("CDI label measurement includes every label and both axis fonts", {
+  p <- plot(dense_cdi_fixture(), type = "cdi", term = "vessel")
+  original <- draw_cdi_axes(p, 14)
+  p[[3]] <- p[[3]] + ggplot2::theme(axis.text.x = ggplot2::element_text(size = 22))
+  large <- draw_cdi_axes(p, 14)
+  expect_identical(large$top$indices, large$bottom$indices)
+  expect_lt(length(large$top$indices), length(original$top$indices))
+  expect_gt(large$top$label_width_mm, original$top$label_width_mm)
+
+  state <- new.env(parent = emptyenv())
+  q <- ggplot2::ggplot(data.frame(x = factor(c("I", "MMMMMM")), y = 1:2),
+    ggplot2::aes(x, y)) + ggplot2::geom_point() +
+    ggplot2::scale_x_discrete(guide = .cdi_axis_guide(0, state))
+  path <- tempfile(fileext = ".pdf")
+  grDevices::pdf(path)
+  on.exit({ grDevices::dev.off(); unlink(path) })
+  print(q)
+  template <- state$templates$bottom
+  expected <- grid::convertWidth(grid::grobWidth(grid::textGrob("MMMMMM",
+    gp = template$gp)), "mm", valueOnly = TRUE)
+  expect_equal(state$drawn$bottom$label_width_mm, expected)
+})
+
+test_that("22 short statistical-area labels all fit at presentation size", {
+  d <- expand.grid(year = factor(2019:2022), area = factor(sprintf("%03d", 1:22)),
+    replicate = 1:3)
+  d$yes <- as.integer((as.integer(d$area) + as.integer(d$year) + d$replicate) %% 3L != 0L)
+  p <- plot(influ(stats::glm(yes ~ year + area, binomial(), d), focus = "year"),
+    type = "cdi", term = "area")
+  for (k in c(1, 3, 4)) p[[k]] <- p[[k]] + ggplot2::theme(text = ggplot2::element_text(size = 13))
+  drawn <- draw_cdi_axes(p, 14)
+  expect_identical(drawn$top$labels, levels(d$area))
+  expect_identical(drawn$top$labels, drawn$bottom$labels)
 })
 
 test_that("long CDI labels use position-aware angled axis guides", {
@@ -105,6 +173,9 @@ test_that("long CDI labels use position-aware angled axis guides", {
     expect_equal(p[[k]]$scales$get_scales("x")$guide$params$angle, 45)
     expect_s3_class(ggplot2::ggplotGrob(p[[k]]), "gtable")
   }
+  drawn <- draw_cdi_axes(p, 7)
+  expect_identical(drawn$top$indices, drawn$bottom$indices)
+  expect_length(unique(diff(drawn$top$indices)), 1L)
 })
 
 test_that("dense encounter CDI labels remain visually stable", {

@@ -5,7 +5,38 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
-## Shared CDI axis labels: 16 September 2026
+## Automatic regular CDI label spacing: 16 September 2026
+
+This supersedes the fixed 20-label cap and overlap suppression recorded below.
+The maintainer requested spacing based on the actual figure width, using regular
+category intervals. At draw time, the shared axis guides measure every label
+on the active device, allowing for the larger upper/lower text style. They
+retain all labels when they fit, or use a constant stride from the first level.
+The last label is not forced onto an irregular endpoint. All coefficients,
+composition columns, category ticks, and calculated values are retained.
+
+The CDI and visual-regression suites pass, including fixed/random effects,
+brms, spatial backends, device resizing, different font sizes, later wide
+labels, serialisation, and 22 short area labels without omissions. Only the
+intentionally changed dense-axis SVG was updated; monthly snapshots remain
+unchanged. The public guide API requires ggplot2 >= 3.5.0, now declared in
+DESCRIPTION. The non-visual CDI layout tests also pass with ggplot2 3.5.0 and
+patchwork 1.2.0 in an isolated temporary library; current-library tests include
+visual snapshots. The package is installed in the normal Mac R library.
+
+All 41 BNS CDI figures were regenerated from frozen summaries. Fifteen images
+change and 26 remain byte-identical to the previous display release. Slide 61
+shows all 22 area labels; slide 63 labels every second vessel (20 of 40 labels),
+with identical upper/lower positions. The rebuilt 167-slide presentation has
+unchanged text, ordering, and non-CDI images. All embedded CDI image hashes
+match the new manifest; protected fit/assessment inputs and numerical summaries
+are unchanged. Private display outputs and pre-render backups are in
+`bns_plenary_cdi_spacing_2026-09-16`; scripts 167/168 regenerate and verify them.
+The existing GitHub check/publication follow-up is to track this new source
+revision. This local plotting validation is not a fresh full CRAN check or
+scientific sign-off, and no CRAN or win-builder submission was performed.
+
+## Shared CDI axis labels: 16 September 2026 (initial spacing, superseded)
 
 The maintainer approved the compact encounter label `Effect (log-odds)` and
 horizontal short category labels with matching upper/lower positions. The
