@@ -10,20 +10,27 @@
 #'   an explicitly logged response), Poisson, NB2, and Gamma log-link models.
 #'   ML `sdmTMB` Bernoulli(logit), lognormal(log), and standard delta-lognormal
 #'   fits are also supported with explicit joint-component selection.
+#'   ML `tinyVAST` and native `brms` fits support Gaussian, Poisson, NB2, Gamma,
+#'   Bernoulli, and lognormal responses with the links described below, plus
+#'   standard tinyVAST delta-lognormal and brms hurdle-lognormal components.
 #'   Other families, backends, joint components, non-unit case weights, and year
 #'   interactions fail explicitly rather than substitute another calculation.
 #' @param component `NULL` for a single-response fit. A joint standard
-#'   delta-lognormal `sdmTMB` fit requires `"positive"`, `"encounter"`, or
+#'   delta-lognormal `sdmTMB`/`tinyVAST` or hurdle-lognormal `brms` fit requires `"positive"`, `"encounter"`, or
 #'   `"combined"`. Only positive observations inform the positive adjustment
 #'   and its `min_n`; encounter uses all rows. The combined display uses both
 #'   adjustments and reports expected response, not a coefficient.
 #'   `"conditional"` may explicitly select a single-response
 #'   fit. No joint component is selected automatically.
-#' @param year_term For sdmTMB component effects, the original fixed annual
+#' @param year_term For sdmTMB, tinyVAST, or brms effects, the original fixed annual
 #'   predictor column, defaulting to `year`. For example, use `year = "year_factor"`
 #'   and `year_term = "year_scaled"` if the encounter formula uses a continuous
 #'   annual trend. The predictor must be constant within each requested year.
 #'   Not used for combined implied responses, which do not have a term baseline.
+#' @param draw_id For brms only, one positive integer identifying a joint
+#'   posterior draw. `NULL` uses native posterior-mean parameters before
+#'   predicting. Both options condition on a single parameter state; neither
+#'   propagates posterior uncertainty or produces Bayesian credible intervals.
 #' @param data Original model data with original row names, if needed to
 #'   recover the year or grouping column. Values are checked against the fit.
 #' @param year Time column; `NULL` uses the usual automatic detection.
@@ -81,7 +88,7 @@
 #'   contain the native likelihood needed here: use [plot_grouped_residuals()]
 #'   for their zero-centred grouped PIT summaries.
 #'
-#'   For sdmTMB lognormal(log), eta is log(arithmetic mean), and the native
+#'   For sdmTMB and tinyVAST lognormal(log), eta is log(arithmetic mean), and the native
 #'   dispersion sigma is the log-scale SD. The local likelihood is
 #'   `dlnorm(response, eta + delta - sigma^2/2, sigma)`. Offsets, vessel effects,
 #'   and spatial and spatiotemporal fields remain at their fitted values.
@@ -93,6 +100,29 @@
 #'   selecting positive rows. Poisson-link delta and mixture families fail explicitly.
 #'   Bernoulli(logit) encounter shifts use all observations; all-zero or all-one
 #'   strata have infinite shifts and are retained as flagged boundary results.
+#'
+#'   tinyVAST uses native fitted predictors, including spatial and yearly fields,
+#'   and native log-SD, Gaussian SD, NB2 size, or squared Gamma CV. Only one
+#'   response and one family are supported. Bernoulli models require unit trials.
+#'
+#'   brms uses [brms::prepare_predictions()] with all fitted group-level effects,
+#'   smooths, offsets, and distributional parameters retained. The default
+#'   collapses parameters before predicting, not response predictions after
+#'   nonlinear transformations. `draw_id` instead selects one coherent joint
+#'   posterior state for sensitivity comparisons. Neither creates an
+#'   observations-by-all-draws prediction array; native preparation may still
+#'   materialise the parameter draws. Original posterior convergence must be
+#'   checked separately. The output records its reference and conditioning.
+#'   brms lognormal/hurdle-lognormal requires its native identity link for
+#'   log-location mu. Internally, eta = mu + sigma^2/2 aligns the common
+#'   log-arithmetic-mean likelihood; sigma can vary between observations but is
+#'   held fixed during each adjustment. The fixed-term baseline contains the
+#'   selected mu terms, not sigma terms. For encounter, both the predictor and
+#'   baseline coefficients of hu are negated, since hu is the zero probability.
+#'   Gaussian requires identity, Bernoulli requires logit, and Poisson, NB2,
+#'   and Gamma require log links. Multivariate/nonlinear models, response
+#'   additions (weights, censoring, truncation, or trials), autocorrelation,
+#'   Gaussian-process terms, and special predictors need separate adapters.
 #'
 #'   Combined delta-lognormal displays estimate both shifts separately, then
 #'   average `plogis(eta_encounter + delta_encounter) * exp(eta_positive +
@@ -110,8 +140,7 @@
 #'   units, not per-unit-effort units. Traditional/descriptive options do not
 #'   apply to combined responses.
 #'
-#'   Other directly parameterised lognormal backends are not yet supported.
-#'   In particular, glmmTMB parameterises lognormal mean and SD on
+#'   glmmTMB direct lognormal is not yet supported: it parameterises mean and SD on
 #'   the response scale; holding that SD fixed is not the same as a constant
 #'   log-SD shift. Use a Gaussian model of log(response) for the demonstrated
 #'   equivalence, not an automatic reinterpretation of another fitted family.
@@ -136,7 +165,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     method = c("likelihood", "traditional"), baseline = c("year_group", "year"),
     min_n = 10L, level = .95, interval = c("auto", "descriptive", "none"),
     traditional_scale = c("log_response", "standardised", "standardized"),
-    component = NULL, year_term = NULL) {
+    component = NULL, year_term = NULL, draw_id = NULL) {
   method <- match.arg(method)
   baseline <- match.arg(baseline)
   interval <- match.arg(interval)
@@ -153,7 +182,8 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     stop("`groups` must name one original-data grouping column.", call. = FALSE)
   }
   if (!is.null(component)) component <- match.arg(component, c("conditional", "positive", "encounter", "combined"))
-  a <- .implied_adapter(model, data, year, groups, baseline, component, year_term)
+  if (!is.null(draw_id) && !inherits(model, "brmsfit")) stop("`draw_id` applies only to brms implied effects.", call. = FALSE)
+  a <- .implied_adapter(model, data, year, groups, baseline, component, year_term, draw_id)
   if (identical(a$component, "combined")) {
     if (method != "likelihood" || interval == "descriptive") {
       stop("Combined implied responses require method = 'likelihood' and interval = 'auto' or 'none'.", call. = FALSE)
@@ -229,7 +259,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   if (a$family == "Gamma") {
     metadata$dispersion <- "Native fitted Gamma scale phi = variance / mean^2; shape = 1/phi"
   }
-  if (a$backend == "sdmTMB") {
+  if (a$backend %in% c("sdmTMB", "tinyVAST", "brms")) {
     if (a$family == "lognormal") metadata$dispersion <- "Native fitted log-scale SD; meanlog = eta - sigma^2/2"
     metadata$n_total <- length(a$observed)
     metadata$n_excluded <- sum(!a$included)
@@ -238,14 +268,21 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     metadata$baseline_group_present <- a$baseline_group_present
     metadata$year_term <- a$year_term
   }
+  if (a$backend == "brms") {
+    metadata$conditioning <- a$conditioning
+    metadata$reference <- a$reference
+    metadata$draw_id <- a$draw_id
+  }
   structure(list(table = table, metadata = metadata), class = "influ_implied")
 }
 
-.implied_adapter <- function(model, data, year, groups, baseline, component = NULL, year_term = NULL) {
+.implied_adapter <- function(model, data, year, groups, baseline, component = NULL, year_term = NULL, draw_id = NULL) {
   if (inherits(model, "sdmTMB")) {
     return(.implied_sdmtmb_adapter(model, data, year, groups, baseline, component, year_term))
   }
-  if (!is.null(year_term)) stop("`year_term` currently applies only to sdmTMB implied effects.", call. = FALSE)
+  if (inherits(model, "tinyVAST")) return(.implied_tinyvast_adapter(model, data, year, groups, baseline, component, year_term))
+  if (inherits(model, "brmsfit")) return(.implied_brms_adapter(model, data, year, groups, baseline, component, year_term, draw_id))
+  if (!is.null(year_term)) stop("`year_term` applies only to sdmTMB, tinyVAST, and brms implied effects.", call. = FALSE)
   if (!is.null(component) && component != "conditional") {
     stop("This backend does not yet support component-specific implied effects.", call. = FALSE)
   }
@@ -254,7 +291,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   }
   backend <- if (inherits(model, "glmmTMB")) "glmmTMB" else if (inherits(model, "gam")) "gam" else
     if (inherits(model, "glm")) "glm" else if (inherits(model, "lm")) "lm" else NA_character_
-  if (is.na(backend)) stop("Implied effects currently support lm, GLM, GAM, glmmTMB, and validated sdmTMB lognormal fits only.", call. = FALSE)
+  if (is.na(backend)) stop("Implied effects require a supported lm, GLM, GAM, glmmTMB, sdmTMB, tinyVAST, or brms fit.", call. = FALSE)
   .require_model_backend(model)
   if (backend == "lm" && is.null(model$model)) stop("A retained model frame is required.", call. = FALSE)
   frame <- .residual_model_frame(model)

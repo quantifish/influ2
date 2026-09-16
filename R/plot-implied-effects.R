@@ -64,6 +64,9 @@ plot_implied_residuals <- function(fit, colour = "purple4", ncol = 3L, ...) {
   if (identical(m$component, "encounter")) caption <- paste(caption, "Encounter component; all observations.")
   if (combined) caption <- paste("Grey: fitted stratum mean; purple: both component shifts applied.",
     "Original fit held fixed;", sum(!usable), "unsupported strata omitted.")
+  if (m$backend == "brms") caption <- paste(caption, "\n",
+    if (identical(m$reference, "joint_posterior_draw")) paste("Fixed joint posterior draw", m$draw_id) else "Fixed posterior-mean parameters",
+    "- not Bayesian credible intervals.")
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$x, group = .data$segment)) +
     ggplot2::geom_line(data = shown, ggplot2::aes(y = .data$baseline), colour = "grey55") +
     ggplot2::geom_hline(yintercept = 0, linetype = 3, colour = "grey75") +
@@ -102,6 +105,7 @@ print.influ_implied <- function(x, ...) {
   cat(x$metadata$backend, "|", x$metadata$response, "| grouped by", x$metadata$groups, "and", x$metadata$year, "\n")
   cat(sum(x$table$status == "ok"), "supported strata of", nrow(x$table), "|", x$metadata$interval, "\n")
   cat("Original fitted model held fixed; not a refitted interaction.\n")
+  if (x$metadata$backend == "brms") cat(x$metadata$conditioning, "\nNot Bayesian credible intervals.\n")
   invisible(x)
 }
 

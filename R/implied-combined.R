@@ -100,5 +100,11 @@
     std_error = "Conditional delta-method SE on response scale; bars use profile likelihood",
     averaging = "Equal weights over original stratum rows, including zero observations; not a standardised index",
     dispersion = "Native fitted positive-component log-scale SD", format_version = 1L)
+  if (a$backend == "brms") {
+    metadata$family <- "hurdle_lognormal"
+    metadata$conditioning <- a$conditioning
+    metadata$reference <- a$reference
+    metadata$draw_id <- a$draw_id
+  }
   structure(list(table = tab, metadata = metadata), class = "influ_implied")
 }

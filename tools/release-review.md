@@ -42,13 +42,48 @@ results replay identically from that installed package in a fresh R session.
 Older private BNS runtime libraries are not overwritten.
 
 GitHub runs `35057274060` (Ubuntu/Windows release), `35057274061` (coverage),
-and `35057274005` (pkgdown) were started for this source and are still pending
-at this hand-off. Site publication is not yet claimed. The 15 September check
-record below applies to the earlier revision, not this source.
+and `35057274005` (pkgdown) completed successfully, as did Pages deployment
+`35058038912`. These were rechecked before the subsequent tinyVAST/brms work.
 
 Remaining six-backend expansion, broader scientific calibration, Nicholas's
 review, and final legacy triage are not marked complete by this change. No CRAN
 or win-builder submission is authorised or performed.
+
+## tinyVAST and brms implied diagnostics: 16 September 2026
+
+The maintainer authorised completing, testing, and pushing both adapters.
+Validated single-response families are Gaussian(identity), Poisson(log),
+NB2(log), Gamma(log), Bernoulli(logit), and native lognormal: tinyVAST uses
+log arithmetic mean, whereas brms uses identity-linked log-location. Standard
+tinyVAST delta-lognormal and brms hurdle-lognormal have explicit encounter,
+positive, and combined routes. Component baselines still require additive
+fixed annual terms; an intercept-only encounter component can contribute to
+a combined display but does not invent a year coefficient for a component plot.
+
+Native density checks include non-zero tinyVAST spatial/yearly fields,
+smooths/random effects, offsets, brms distributional dispersion, and joint
+components. Both modelled and constant brms `hu` are tested: the latter is
+already a probability and must be logit-transformed before negating it.
+Native lognormal location/mean corrections are checked at zero and non-zero
+shifts. Local optima and profile endpoints are independently reconstructed.
+
+brms uses native posterior-mean parameters by default, or one selected joint
+draw. Conditional profile intervals do not become Bayesian credible intervals;
+all plots, printed results, help, and the article make this explicit. The
+native preparation avoids full observation-by-draw predictions, and results
+contain only compact tables/metadata. Genuine simulated-data posterior fixtures
+are generated once, reduced to 256 joint draws each, and stripped of compiled
+C++ modules. Each original four-chain fit passes R-hat < 1.02, bulk ESS > 100,
+and zero divergences. Native likelihoods replay after save/reload. No MCMC is
+run by tests or vignettes. Public example tables use the full 4,000-draw fit.
+
+Read-only replay confirms all six saved BNS 2 area/target component results
+are identical, with unchanged fit checksum. No BNS source or assessment output
+was changed. Both new figures were visually inspected; site-wide caption and
+lightbox tests pass for 10 pages and 97 images. Final archive and GitHub check
+results will be recorded below after completion. No CRAN/win-builder submission
+has been made; independent scientific calibration and the legacy review remain
+open.
 
 ## Worked residual-pattern examples: 15 September 2026
 

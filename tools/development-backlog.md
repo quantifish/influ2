@@ -77,11 +77,33 @@ guards. Private BNS results stay ignored under `data-raw/bns2-implied-review/`;
 the BNS task will update its own presentation after this hand-off. No assessment
 inputs, fits, indices, or CVs are changed. See `tools/implied-validation/validate-bns2.R`.
 
-The earlier request for all six implied-effect backends remains **partly open**:
-brms, tinyVAST, and additional family/component adapters still need implementation
-and validation. This bounded sdmTMB extension does not complete Nicholas's
-independent scientific review, fitted-model interval calibration, or the parked
-legacy review. Existing Gamma implied-effect and PIT behaviour is unchanged.
+### Residual-implied backend extension: tinyVAST and brms, 16 September
+
+The approved extension now provides implied-effect adapters across all six
+model classes, within explicit family/structure boundaries. tinyVAST and brms
+support Gaussian, Poisson, NB2, Gamma, Bernoulli, and lognormal responses with
+validated links. Standard tinyVAST delta-lognormal and brms hurdle-lognormal
+fits expose encounter, positive, and combined views. tinyVAST retains fitted
+spatial/yearly fields and smooth/random effects. brms retains native group
+effects, smooths, offsets, and distributional dispersion predictors.
+
+The brms default conditions on posterior-mean parameters, not mean predicted
+responses. `draw_id` selects one coherent joint posterior state for sensitivity.
+Neither option propagates posterior uncertainty into the local shifts; plot
+labels and metadata explicitly distinguish conditional likelihood intervals
+from credible intervals. Calculation avoids an observations-by-all-draws array,
+although native preparation can materialise the parameter draws. Tests compare
+native densities, shifted likelihoods, and profile endpoints, including brms
+log-location versus log-mean and zero-probability versus encounter orientation.
+Eight compact genuine-posterior fixtures require no test-time MCMC. The article
+uses compact results from the full checked posterior, plus a tinyVAST example.
+
+Additional families/joint structures, brms nonlinear, multivariate, censored,
+autocorrelated/GP models, and non-unit weights remain explicit limitations.
+This completes the requested class adapters, not Nicholas's independent
+scientific review, broader interval calibration, or the parked legacy review.
+Existing BNS results and PIT behaviour are unchanged. Validation/publication
+details are recorded in `tools/release-review.md`.
 
 ### IV01 implied-effect follow-up: completed bounded study, 12 September
 
