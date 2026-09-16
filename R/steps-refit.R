@@ -12,13 +12,66 @@
   if (backend == "sdmTMB" && is.list(formula) && length(formula) == 1L) {
     formula <- formula[[1L]]
   }
+  if (backend == "sdmTMB" && isTRUE(model$family$delta) &&
+      is.list(formula) && length(formula) == 2L &&
+      all(vapply(formula, function(f) inherits(f, "formula") && length(f) == 3L, logical(1)))) {
+    return(formula)
+  }
   if (!inherits(formula, "formula") || length(formula) != 3L) {
     stop("Step refitting requires one two-sided main formula; multivariate models need separately fitted steps.", call. = FALSE)
   }
   formula
 }
 
-.step_formula_text <- function(formula) paste(deparse(formula, width.cutoff = 500L), collapse = " ")
+.step_formulas <- function(formula) if (inherits(formula, "formula")) list(formula) else formula
+.step_formula_env <- function(formula) environment(.step_formulas(formula)[[1L]])
+.step_formula_vars <- function(formula) unique(unlist(lapply(.step_formulas(formula), all.vars)))
+.step_formula_text <- function(formula) paste(vapply(.step_formulas(formula),
+  function(f) paste(deparse(f, width.cutoff = 500L), collapse = " "), character(1)), collapse = " ; ")
+
+.step_year_terms <- function(formula, year, year_term = NULL) {
+  forms <- .step_formulas(formula)
+  if (is.null(year_term)) year_term <- rep(year, length(forms))
+  if (!is.character(year_term) || length(year_term) != length(forms) ||
+      anyNA(year_term) || any(!nzchar(year_term))) {
+    stop("`year_term` must name one annual predictor per formula, in component order.", call. = FALSE)
+  }
+  if (length(forms) == 2L && !is.null(names(year_term))) {
+    if (!setequal(names(year_term), c("occurrence", "positive"))) {
+      stop("Name paired `year_term` entries 'occurrence' and 'positive'.", call. = FALSE)
+    }
+    year_term <- year_term[c("occurrence", "positive")]
+  }
+  for (k in seq_along(forms)) .step_year_term(forms[[k]], year_term[[k]])
+  unname(year_term)
+}
+
+.step_update_formula <- function(original, supplied, year_term) {
+  forms <- .step_formulas(original)
+  updates <- .step_formulas(supplied)
+  if (!is.list(updates) || length(updates) != length(forms) ||
+      !all(vapply(updates, inherits, logical(1), "formula"))) {
+    stop("Every step formula must be an R formula object, or a paired list matching the delta components.", call. = FALSE)
+  }
+  result <- lapply(seq_along(forms), function(k) {
+    f <- stats::update.formula(forms[[k]], updates[[k]])
+    if (!identical(f[[2L]], forms[[k]][[2L]])) {
+      stop("Step refits must retain the original response.", call. = FALSE)
+    }
+    original_offsets <- .step_offset_terms(forms[[k]])
+    stage_offsets <- .step_offset_terms(f)
+    if (length(setdiff(stage_offsets, original_offsets))) {
+      stop("Step formulas must preserve the original offset expressions; changing effort offsets requires separately fitted models.", call. = FALSE)
+    }
+    offsets <- setdiff(original_offsets, stage_offsets)
+    if (length(offsets)) f <- stats::update.formula(f,
+      stats::as.formula(paste("~ . +", paste(offsets, collapse = " + "))))
+    environment(f) <- environment(forms[[k]])
+    .step_year_term(f, year_term[[k]])
+    f
+  })
+  if (inherits(original, "formula")) result[[1L]] else result
+}
 
 .step_settings_text <- function(args) {
   if (!length(args)) return("Original fitting settings")
@@ -92,7 +145,7 @@
 .step_locked_data <- function(model, formula, backend) {
   frame <- tryCatch(stats::model.frame(model), error = function(e) NULL)
   if (!is.data.frame(frame)) frame <- NULL
-  original <- tryCatch(eval(model$call$data, envir = environment(formula)), error = function(e) NULL)
+  original <- tryCatch(eval(model$call$data, envir = .step_formula_env(formula)), error = function(e) NULL)
   if (backend %in% c("brmsfit", "sdmTMB", "tinyVAST")) original <- model$data
   if (!is.data.frame(original)) original <- model$data
   if (!is.data.frame(original)) original <- frame
@@ -115,7 +168,7 @@
   # changed. Transformed-only variables require a separate matrix check below.
   raw_columns <- intersect(names(used), names(data))
   for (name in raw_columns) data[[name]] <- used[[name]]
-  required <- all.vars(formula)
+  required <- .step_formula_vars(formula)
   if (!all(required %in% names(data))) {
     stop("The original variables needed for refitting are unavailable in the stored data.", call. = FALSE)
   }
@@ -148,6 +201,22 @@
   # A stored frame establishes both fitted row order and the exact fitting
   # weights, including binomial trial weights before glm's internal expansion.
   weights <- if (!is.null(frame)) stats::model.weights(frame) else NULL
+  if (backend == "sdmTMB") {
+    # Native vectors are authoritative, including character-column offsets
+    # and saved calls whose original fitting environment no longer exists.
+    native_weights <- as.numeric(model$tmb_data$weights_i)
+    if (length(native_weights) == 2L * nrow(data) && isTRUE(model$family$delta)) {
+      if (!identical(native_weights[seq_len(nrow(data))],
+          native_weights[nrow(data) + seq_len(nrow(data))])) {
+        stop("Step refits cannot reproduce different likelihood weights between delta components.", call. = FALSE)
+      }
+      native_weights <- native_weights[seq_len(nrow(data))]
+    }
+    if (length(native_weights) != nrow(data) || length(model$offset) != nrow(data)) {
+      stop("Native sdmTMB weights and offset must align with the fitted rows.", call. = FALSE)
+    }
+    return(list(data = data, weights = native_weights, offset = as.numeric(model$offset)))
+  }
   evaluate_vector <- function(expression, name) {
     value <- tryCatch(eval(expression, envir = original, enclos = environment(formula)),
       error = function(e) stop("Cannot recover original ", name, " for locked refits.", call. = FALSE))
@@ -224,6 +293,25 @@
 }
 
 .step_refit_one <- function(model, formula, args, locked, backend) {
+  if (backend == "sdmTMB") {
+    # update.sdmTMB calls update.formula() on formula lists, which is invalid.
+    # Reconstruct the recorded call using retained data and mesh instead.
+    call <- model$call
+    if (is.null(call)) stop("sdmTMB refitting requires its original call.", call. = FALSE)
+    call[[1L]] <- quote(sdmTMB::sdmTMB)
+    call$formula <- formula
+    call$data <- locked$data
+    call$mesh <- model$spde
+    call$family <- model$family
+    call$offset <- locked$offset
+    call$weights <- locked$weights
+    call$previous_fit <- NULL
+    for (name in c("time", "spatial", "spatiotemporal", "reml", "control", "priors", "extra_time")) {
+      if (!is.null(model[[name]])) call[name] <- list(model[[name]])
+    }
+    for (name in names(args)) call[name] <- list(args[[name]])
+    return(eval(call, envir = .step_formula_env(formula)))
+  }
   if (backend == "brmsfit") {
     model$file <- NULL
     model$stan_args$file <- NULL
@@ -276,24 +364,17 @@
   if (!inherits(model, "negbin")) {
     extras <- c(extras, list(offset = locked$offset))
   }
-  if (backend == "sdmTMB") {
-    # update.sdmTMB removes NULL entries with [[<-, which fails when a call
-    # never contained the optional argument. Omitting those is equivalent.
-    extras <- extras[!vapply(names(extras), function(name) {
-      is.null(extras[[name]]) && !name %in% names(as.list(model$call))
-    }, logical(1))]
-  }
   do.call(stats::update, c(list(object = model, formula. = formula), extras))
 }
 
 .step_refit_models <- function(model, year, steps = NULL, refit_args = list(),
-                                process = NULL) {
+                                process = NULL, year_term = NULL) {
   backend <- .step_backend(model)
   formula <- .step_main_formula(model, backend)
   if (!is.character(year) || length(year) != 1L || !nzchar(year)) {
     stop("`year` must name the temporal variable for step refitting.", call. = FALSE)
   }
-  .step_year_term(formula, year)
+  year_terms <- .step_year_terms(formula, year, year_term)
   locked <- .step_locked_data(model, formula, backend)
   if (!year %in% names(locked$data)) stop("`year` is absent from the fitted data.", call. = FALSE)
   refit_args <- .step_validate_refit_args(refit_args)
@@ -306,12 +387,16 @@
     stop("`steps` must be a non-empty, uniquely named list of formulas or update-argument lists.", call. = FALSE)
   }
   if (!is.null(process) && !is.function(process)) stop("`process` must be a function.", call. = FALSE)
-  full_terms <- stats::terms(formula, keep.order = TRUE)
   same_formula <- function(x) {
-    tx <- stats::terms(x, keep.order = TRUE)
-    identical(attr(tx, "term.labels"), attr(full_terms, "term.labels")) &&
-      identical(attr(tx, "intercept"), attr(full_terms, "intercept")) &&
-      identical(.step_offset_terms(x), .step_offset_terms(formula))
+    full <- .step_formulas(formula)
+    stage <- .step_formulas(x)
+    all(vapply(seq_along(full), function(k) {
+      tx <- stats::terms(stage[[k]], keep.order = TRUE)
+      original <- stats::terms(full[[k]], keep.order = TRUE)
+      identical(attr(tx, "term.labels"), attr(original, "term.labels")) &&
+        identical(attr(tx, "intercept"), attr(original, "intercept")) &&
+        identical(.step_offset_terms(stage[[k]]), .step_offset_terms(full[[k]]))
+    }, logical(1)))
   }
   same_args <- function(args) {
     # Execution controls govern new fits; they do not change the model whose
@@ -339,32 +424,18 @@
   for (i in seq_along(steps)) {
     specification <- steps[[i]]
     if (inherits(specification, "formula")) specification <- list(formula = specification)
+    if (is.list(specification) && length(specification) == 2L &&
+        all(vapply(specification, inherits, logical(1), "formula")) && is.null(names(specification))) {
+      specification <- list(formula = specification)
+    }
     specification <- .step_validate_refit_args(specification)
     if (all(c("formula", "formula.") %in% names(specification))) {
       stop("Each step must use only one of `formula` and `formula.`.", call. = FALSE)
     }
     supplied_formula <- specification$formula %||% specification$formula. %||% formula
     specification$formula <- specification$formula. <- NULL
-    if (!inherits(supplied_formula, "formula")) {
-      stop("Every step formula must be an R formula object.", call. = FALSE)
-    }
-    stage_formula <- stats::update.formula(formula, supplied_formula)
-    if (!identical(stage_formula[[2L]], formula[[2L]])) {
-      stop("Step refits must retain the original response.", call. = FALSE)
-    }
-    original_offsets <- .step_offset_terms(formula)
-    stage_offsets <- .step_offset_terms(stage_formula)
-    if (length(setdiff(stage_offsets, original_offsets))) {
-      stop("Step formulas must preserve the original offset expressions; changing effort offsets requires separately fitted models.", call. = FALSE)
-    }
-    offsets <- setdiff(original_offsets, stage_offsets)
-    if (length(offsets)) {
-      stage_formula <- stats::update.formula(stage_formula,
-        stats::as.formula(paste("~ . +", paste(offsets, collapse = " + "))))
-    }
-    environment(stage_formula) <- environment(formula)
-    .step_year_term(stage_formula, year)
-    if (!all(all.vars(stage_formula) %in% names(locked$data))) {
+    stage_formula <- .step_update_formula(formula, supplied_formula, year_terms)
+    if (!all(.step_formula_vars(stage_formula) %in% names(locked$data))) {
       stop("Step formulas must use variables available in the locked analysis data.", call. = FALSE)
     }
     args <- utils::modifyList(refit_args, specification, keep.null = TRUE)

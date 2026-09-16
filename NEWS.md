@@ -1,5 +1,12 @@
 # influ2 1.1.0
 
+* Joint sdmTMB step plots now support paired delta-Gamma/lognormal formulas,
+  explicit annual predictors in each component, and encounter, positive, or
+  combined fixed-year contrasts. Reduced stages preserve fitting rows, effort
+  offsets, weights, and the spatial mesh; unchanged full stages are reused.
+  Joint fixed-effect covariance is retained for combined uncertainty. These
+  are not area-integrated indices or full offset-dependent CDI decompositions.
+
 * Residual-implied effects now include tinyVAST and brms adapters for Gaussian,
   Poisson, NB2, Gamma, Bernoulli, and lognormal responses with validated links.
   Standard tinyVAST delta-lognormal and brms hurdle-lognormal fits expose

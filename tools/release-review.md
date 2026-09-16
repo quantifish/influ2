@@ -80,10 +80,44 @@ run by tests or vignettes. Public example tables use the full 4,000-draw fit.
 Read-only replay confirms all six saved BNS 2 area/target component results
 are identical, with unchanged fit checksum. No BNS source or assessment output
 was changed. Both new figures were visually inspected; site-wide caption and
-lightbox tests pass for 10 pages and 97 images. Final archive and GitHub check
-results will be recorded below after completion. No CRAN/win-builder submission
+lightbox tests pass for 10 pages and 97 images. Commit `2bf0d55` passed the
+Ubuntu/Windows release run `35064812794`, coverage `35064812812`, pkgdown
+`35064812791`, and Pages deployment `35065631672`. Its Mac vignette-built
+archive passed `--as-cran --no-manual` with zero errors, zero warnings, and
+two NOTEs: existing new-submission/optional tinyVAST availability, and one
+`cpue_index` example taking 5.859 seconds. All ten vignettes built and rebuilt.
+Instrumented full-suite coverage was 95.87%. No CRAN/win-builder submission
 has been made; independent scientific calibration and the legacy review remain
 open.
+
+## Joint delta step plots: 16 September 2026
+
+The subsequent BNS review identified two related blockers: paired formulas were
+rejected during refitting, and full `influ()` decomposition rejected the joint
+effort offset. Step refits now accept explicit paired formulas and
+`year_term = c(occurrence = "year_scaled", positive = "year_factor")`.
+Native stored data, fitting weights, offsets, mesh, family, and model settings
+are retained. Identical stages and the unchanged original fit are reused.
+
+A dedicated fixed-year extraction route supports standard logit/log delta-Gamma
+and delta-lognormal. Occurrence contrasts are probability differences at the
+fixed-effect reference, positive contrasts are ratios, and combined ratios use
+both annual terms with their joint covariance. Positive log-link offsets cancel
+in these ratios, but are never dropped from refitting. Field modes are excluded
+from the annual contrast, and the full offset-dependent CDI restriction remains.
+The spatial article contains a small runnable paired-formula example.
+
+Native tests check reduced fits against direct sdmTMB fits, all three annual
+contrasts against independent coefficient calculations, common weighted grids,
+covariance simulation, preserved offsets/weights/rows, duplicate/full reuse,
+and invalid mappings. The BNS 2 integration ran five reduced fits on the PC
+(about 144 seconds in total) and reused the selected AR1 fit. All converged with
+positive-definite Hessians and no warnings. sdmTMB 1.1.0 itself cannot construct
+the stage with IID effects only in the positive component, so the diagnostic
+sequence adds vessel and target as one explicit block. All 23 protected BNS
+fit/assessment-input hashes remain unchanged. Native reduced fits, tables, and
+visually checked figures are back on the Mac, with a private BNS hand-off note.
+These private fisheries data and fits are not included in influ2 or GitHub.
 
 ## Worked residual-pattern examples: 15 September 2026
 

@@ -41,22 +41,26 @@
   if (is.null(y) && length(response) == 1L && response %in% names(data)) y <- data[[response]]
   if (is.null(y) || NROW(y) != nrow(data)) return(NULL)
   ordering <- order(rownames(data))
+  spatial_weights <- if (inherits(model, "sdmTMB")) {
+    unname(matrix(model$tmb_data$weights_i, nrow(data),
+      if (isTRUE(model$family$delta)) 2L else 1L)[ordering, , drop = FALSE])
+  } else NULL
   list(
     row = rownames(data)[ordering],
     focus = as.character(data[[focus]])[ordering],
     response = if (is.matrix(y)) unname(y[ordering, , drop = FALSE]) else unname(y[ordering]),
-    weights = if (is.null(frame)) NULL else {
+    weights = if (inherits(model, "sdmTMB")) spatial_weights else if (is.null(frame)) NULL else {
       w <- stats::model.weights(frame) %||% rep(1, nrow(data))
       unname(w[ordering])
     },
-    offset = if (is.null(frame)) NULL else {
+    offset = if (inherits(model, "sdmTMB")) unname(model$offset[ordering]) else if (is.null(frame)) NULL else {
       offset <- stats::model.offset(frame) %||% rep(0, nrow(data))
       unname(offset[ordering])
     }
   )
 }
 
-.step_payload <- function(input, year, component, probs, arguments, keep_fits) {
+.step_payload <- function(input, year, component, probs, arguments, keep_fits, year_term = NULL) {
   precomputed <- inherits(input, "influ_diag")
   if (precomputed && length(arguments)) {
     stop("Influence calculation arguments cannot change a precomputed diagnostic; supply fitted models instead.", call. = FALSE)
@@ -81,7 +85,13 @@
     }
   }
   diagnostic <- if (precomputed) input else {
-    do.call(influ, c(list(model = input, focus = year, probs = probs), arguments))
+    if (inherits(input, "sdmTMB") && isTRUE(input$family$delta)) {
+      do.call(.step_sdmtmb_diag, c(list(model = input, focus = year,
+        component = component, probs = probs, year_term = year_term), arguments))
+    } else {
+      if (!is.null(year_term)) stop("`year_term` mapping currently applies only to joint sdmTMB steps.", call. = FALSE)
+      do.call(influ, c(list(model = input, focus = year, probs = probs), arguments))
+    }
   }
   .assert_influ_diag(diagnostic)
   if (!identical(diagnostic$focus, year)) {
@@ -198,6 +208,10 @@
 #'   such as brms sampling controls. Stage-specific arguments take precedence.
 #'   Execution-only controls (`seed`, `cores`, `refresh`, `silent`, and `verbose`)
 #'   do not by themselves force an otherwise unchanged original fit to rerun.
+#' @param year_term For joint sdmTMB models, the annual predictor in each
+#'   component, e.g. `c(occurrence = "year_scaled", positive = "year_factor")`.
+#'   Defaults to `year` in both. Each predictor must be constant within each
+#'   plotted year and enter its formula as an additive fixed term.
 #' @param ... Arguments passed to [influ()] for fitted-model inputs, such as
 #'   `uncertainty = "none"`, `weights`, or `reference_data`. All steps use the
 #'   same calculation arguments. Not used for model-fitting controls.
@@ -211,6 +225,21 @@
 #' Native `update()` methods are used where available. `tinyVAST` has no such
 #' method, so its refits reconstruct the recorded fitting call with the locked
 #' data, stored spatial domain, and requested process settings.
+#' Joint sdmTMB refits likewise reconstruct the saved call, because its native
+#' update method does not update paired formulas. Supply explicit stages such as
+#' `list(Baseline = list(formula = list(~ year, ~ year), spatial = "off",
+#' spatiotemporal = "off"), Full = list(formula = model$formula))`.
+#' Supported joint step indices are standard delta-Gamma and delta-lognormal
+#' with logit/log links. Choose `component = "occurrence"`, `"positive"`, or
+#' `"unconditional_mean"`. The last combines both annual terms using their joint
+#' covariance; it is not an area-integrated index. Positive-component
+#' contrasts are ratios; occurrence contrasts are probability differences at
+#' the fixed-effect reference. Non-year covariates use each fit's common
+#' observed/reference design, not individual fitted random-effect modes.
+#' Positive-component effort
+#' offsets are preserved in refitting and cancel from log-link annual ratios.
+#' Field modes are not added to these fixed-year contrasts. This narrower
+#' calculation does not enable the full offset-dependent influence decomposition.
 #'
 #' Each curve uses the centring and uncertainty supplied by [influ()]. No extra
 #' plug-in rescaling is applied. With the same data and focus reference, all
@@ -241,7 +270,7 @@
 influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
                         labels = NULL, component = NULL,
                         probs = c(0.025, 0.975), keep_fits = FALSE,
-                        refit_args = list(), ...) {
+                        refit_args = list(), year_term = NULL, ...) {
   if (!is.logical(refit) || length(refit) != 1L || is.na(refit) ||
       !is.logical(keep_fits) || length(keep_fits) != 1L || is.na(keep_fits)) {
     stop("`refit` and `keep_fits` must each be TRUE or FALSE.", call. = FALSE)
@@ -256,7 +285,7 @@ influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
   }
   if (inherits(fits, "influ_steps")) {
     if (refit || !is.null(steps) || length(arguments) || length(refit_args) ||
-        !is.null(component) || (!is.null(year) && !identical(year, fits$focus))) {
+        !is.null(component) || !is.null(year_term) || (!is.null(year) && !identical(year, fits$focus))) {
       stop("A stored influ_steps object cannot be refitted or recalculated; supply the original fitted model.", call. = FALSE)
     }
     if (!is.null(labels)) {
@@ -281,10 +310,20 @@ influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
   }, logical(1)))) {
     stop("`fits` must contain supported fitted models or influence diagnostics.", call. = FALSE)
   }
+  if (!is.null(year_term) && !all(vapply(inputs, function(x) {
+    inherits(x, "sdmTMB") && isTRUE(x$family$delta)
+  }, logical(1)))) {
+    stop("`year_term` mapping currently applies only to joint sdmTMB fitted-model steps.", call. = FALSE)
+  }
+  if (refit && inherits(fits, "sdmTMB") && isTRUE(fits$family$delta) &&
+      (is.null(component) || length(component) != 1L || is.na(component) ||
+       !component %in% c("occurrence", "positive", "unconditional_mean"))) {
+    stop("Select `component = 'occurrence'`, 'positive', or 'unconditional_mean' before refitting a joint sdmTMB model.", call. = FALSE)
+  }
   if (is.null(year)) {
     year <- if (inherits(inputs[[1]], "influ_diag")) inputs[[1]]$focus else {
       formula <- .step_main_formula(inputs[[1]])
-      all.vars(formula[[3L]])[1L]
+      all.vars(.step_formulas(formula)[[1L]][[3L]])[1L]
     }
   }
   if (!is.character(year) || length(year) != 1L || is.na(year) || !nzchar(year)) {
@@ -297,7 +336,7 @@ influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
   process <- function(model, data = NULL) {
     step_arguments <- arguments
     if (!is.null(data)) step_arguments$data <- data
-    payload <- .step_payload(model, year, component, probs, step_arguments, keep_fits)
+    payload <- .step_payload(model, year, component, probs, step_arguments, keep_fits, year_term)
     if (is.null(baseline)) baseline <<- payload else {
       .check_step_payloads(list(baseline, payload))
     }
@@ -309,7 +348,7 @@ influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
   }
   if (refit) {
     result <- .step_refit_models(fits, year = year, steps = steps,
-      refit_args = refit_args, process = process)
+      refit_args = refit_args, process = process, year_term = year_term)
     payloads <- result$fits
     stage_table <- result$steps
     if (is.null(labels)) labels <- stage_table$label
@@ -348,6 +387,7 @@ influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
       mode = if (refit) "refitted" else "supplied",
       response = payloads[[1]]$response,
       component = unique(indices$component),
+      year_term = year_term,
       scale = unique(indices$scale),
       reference = payloads[[1]]$reference,
       normalisation = "influence reference; no additional display rescaling",

@@ -16,6 +16,7 @@ influ_steps(
   probs = c(0.025, 0.975),
   keep_fits = FALSE,
   refit_args = list(),
+  year_term = NULL,
   ...
 )
 
@@ -56,6 +57,11 @@ such as brms sampling controls. Stage-specific arguments take precedence.
 Execution-only controls (\code{seed}, \code{cores}, \code{refresh}, \code{silent}, and \code{verbose})
 do not by themselves force an otherwise unchanged original fit to rerun.}
 
+\item{year_term}{For joint sdmTMB models, the annual predictor in each
+component, e.g. \code{c(occurrence = "year_scaled", positive = "year_factor")}.
+Defaults to \code{year} in both. Each predictor must be constant within each
+plotted year and enter its formula as an additive fixed term.}
+
 \item{...}{Arguments passed to \code{\link[=influ]{influ()}} for fitted-model inputs, such as
 \code{uncertainty = "none"}, \code{weights}, or \code{reference_data}. All steps use the
 same calculation arguments. Not used for model-fitting controls.}
@@ -81,6 +87,20 @@ safely. Refits use the original analysis rows and report convergence problems.
 Native \code{update()} methods are used where available. \code{tinyVAST} has no such
 method, so its refits reconstruct the recorded fitting call with the locked
 data, stored spatial domain, and requested process settings.
+Joint sdmTMB refits likewise reconstruct the saved call, because its native
+update method does not update paired formulas. Supply explicit stages such as
+\code{list(Baseline = list(formula = list(~ year, ~ year), spatial = "off", spatiotemporal = "off"), Full = list(formula = model$formula))}.
+Supported joint step indices are standard delta-Gamma and delta-lognormal
+with logit/log links. Choose \code{component = "occurrence"}, \code{"positive"}, or
+\code{"unconditional_mean"}. The last combines both annual terms using their joint
+covariance; it is not an area-integrated index. Positive-component
+contrasts are ratios; occurrence contrasts are probability differences at
+the fixed-effect reference. Non-year covariates use each fit's common
+observed/reference design, not individual fitted random-effect modes.
+Positive-component effort
+offsets are preserved in refitting and cancel from log-link annual ratios.
+Field modes are not added to these fixed-year contrasts. This narrower
+calculation does not enable the full offset-dependent influence decomposition.
 
 Each curve uses the centring and uncertainty supplied by \code{\link[=influ]{influ()}}. No extra
 plug-in rescaling is applied. With the same data and focus reference, all
