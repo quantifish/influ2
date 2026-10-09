@@ -29,11 +29,13 @@
 .implied_native_family <- function(family, link, y, joint = FALSE) {
   if (!((family == "gaussian" && link == "identity") ||
       (family == "binomial" && link == "logit") ||
-      (family %in% c("poisson", "nbinom2", "Gamma", "lognormal") && link == "log"))) {
-    stop("Supported native implied-effect families are Gaussian(identity), Bernoulli(logit), Poisson(log), NB2(log), Gamma(log), and lognormal; other parameterisations require a validated adapter.", call. = FALSE)
+      (family %in% c("poisson", "nbinom2", "Gamma", "lognormal", "tweedie", "truncated_poisson", "truncated_nbinom2") && link == "log"))) {
+    stop("Supported native implied-effect families are Gaussian(identity), Bernoulli(logit), Poisson(log), NB2(log), Gamma(log), Tweedie(log), and lognormal; other parameterisations require a validated adapter.", call. = FALSE)
   }
   if (family == "binomial" && any(!y %in% c(0, 1))) stop("Binomial implied effects require Bernoulli (0/1) observations.", call. = FALSE)
   if (family %in% c("poisson", "nbinom2") && any(y < 0 | abs(y - round(y)) > 1e-7)) stop("Count-model responses must be non-negative integers.", call. = FALSE)
+  if (family == "tweedie" && any(y < 0)) stop("Tweedie responses must be non-negative.", call. = FALSE)
+  if (startsWith(family, "truncated_") && any(y < 0 | y != floor(y) | (!joint & y == 0))) stop("Truncated count responses must be positive integers outside a joint hurdle fit.", call. = FALSE)
   if (family %in% c("Gamma", "lognormal") && any(y < 0 | (!joint & y == 0))) stop("Positive-family responses must be strictly positive; only joint fits allow zeros.", call. = FALSE)
 }
 

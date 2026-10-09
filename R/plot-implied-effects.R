@@ -55,15 +55,23 @@ plot_implied_residuals <- function(fit, colour = "purple4", ncol = 3L, ...) {
   }
   combined <- identical(m$component, "combined")
   if (combined) {
-    title <- "Residual-implied response (combined delta model)"
+    title <- if (identical(m$joint_kind, "zero_inflated")) "Residual-implied response (zero-inflated mixture)" else "Residual-implied response (combined delta model)"
     baseline <- "Original observation mix; not a standardised index"
   }
   caption <- paste("Grey: fixed baseline. Original model held fixed; not a refitted interaction.",
     sum(!usable), "empty, sparse, or boundary strata omitted.")
-  if (identical(m$component, "positive")) caption <- paste(caption, "Positive observations only; not the combined delta response.")
+  if (identical(m$component, "positive") && !identical(m$joint_kind, "zero_inflated")) caption <- paste(caption, "Positive observations only; not the combined delta response.")
   if (identical(m$component, "encounter")) caption <- paste(caption, "Encounter component; all observations.")
   if (combined) caption <- paste("Grey: fitted stratum mean; purple: both component shifts applied.",
     "Original fit held fixed;", sum(!usable), "unsupported strata omitted.")
+  if (identical(m$joint_kind, "zero_inflated")) {
+    caption <- paste(caption, "All responses, including zeros, enter the full mixture likelihood.")
+    if (m$component %in% c("conditional", "positive")) title <- "Residual-implied count-process effect"
+  }
+  if (identical(m$component, "zero_inflation")) {
+    title <- "Residual-implied zero-inflation effect"
+    caption <- paste(caption, "Log-odds of the extra-zero gate; not observed encounter probability.")
+  }
   if (m$backend == "brms") caption <- paste(caption, "\n",
     if (identical(m$reference, "joint_posterior_draw")) paste("Fixed joint posterior draw", m$draw_id) else "Fixed posterior-mean parameters",
     "- not Bayesian credible intervals.")

@@ -151,7 +151,7 @@ test_that("brms implied effects fail explicitly for unsupported or ambiguous req
   one <- implied_brms_fixture("poisson")
   expect_error(implied_effects(one, groups = "area", year = "year", component = "positive"), "single supported")
   one$family$family <- "zero_inflated_poisson"
-  expect_error(implied_effects(one, groups = "area", year = "year"), "Supported native")
+  expect_error(implied_effects(one, groups = "area", year = "year"), "explicit|requires component")
   for (f in list(brms::bf(delta | weights(x) ~ year + area),
       brms::bf(delta | trunc(lb = .1) ~ year + area),
       brms::bf(delta ~ year + gp(x)), brms::bf(delta ~ year + ar(time = year_scaled)))) {

@@ -1,6 +1,6 @@
 # Development ideas and decisions
 
-Last reviewed: 16 September 2026.
+Last reviewed: 9 October 2026.
 
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records
@@ -24,6 +24,26 @@ does not reopen completed issues. Issue #18 was explicitly resumed on
   accidentally restoring an obsolete interface.
 - **Completed:** the agreed implementation, tests, and documentation are in place.
 - **In progress:** a bounded scope is approved and is being executed.
+
+## Family extension: 9 October 2026
+
+The maintainer approved ordinary binomial GLM/GAM/glmmTMB effects, the missing
+sdmTMB Gamma/Poisson/NB2 routes, Tweedie across backends, and additional joint
+hurdle/zero-inflated models. The implementation adds a shared native Tweedie
+kernel, known-trial binomial likelihoods, standard spatial delta-Gamma,
+Gamma/truncated-count hurdles, and full zero-inflated count mixture likelihoods.
+brms Tweedie requires an explicit, numerically verified custom-family contract;
+it is not a built-in brms family. The current scope table is in
+`vignettes/implied-effects.Rmd`; dated validation goes in `release-review.md`.
+
+The maintainer also requested discussion of Dunn–Smyth and OSA choices.
+Existing normal-score simulation PIT residuals already target randomised
+quantiles; an analytic fitted-CDF route would remove their finite-simulation
+approximation. OSA adds sequential conditioning and requires an explicit order
+and a native validated prediction/integration route. This discussion has not
+changed the residual defaults or turned likelihood-based implied effects into
+coefficient-plus-score calculations. Retain this as a separate residual API
+decision after the family extension.
 
 ## Nicholas's residual-diagnostic proposal
 

@@ -9,13 +9,22 @@
     stop("brms implied effects require a univariate linear-predictor model without response additions, autocorrelation, Gaussian processes, or special/nonlinear predictors.", call. = FALSE)
   }
   fam <- model$family
-  joint <- identical(fam$family, "hurdle_lognormal")
-  if (joint && (fam$link != "identity" || fam$link_hu != "logit")) stop("brms hurdle-lognormal implied effects require identity mu and logit hu links.", call. = FALSE)
-  if (joint && (is.null(component) || !component %in% c("positive", "encounter", "combined"))) stop("A joint brms fit requires explicit component = 'positive', 'encounter', or 'combined'.", call. = FALSE)
+  custom_tweedie <- inherits(fam, "customfamily") && identical(fam$name, "tweedie") &&
+    identical(fam$dpars, c("mu", "phi", "p")) && fam$link == "log" &&
+    fam$type == "real" && !length(fam$vars)
+  hurdle <- fam$family %in% c("hurdle_lognormal", "hurdle_gamma", "hurdle_poisson", "hurdle_negbinomial")
+  zi <- fam$family %in% c("zero_inflated_poisson", "zero_inflated_negbinomial")
+  joint <- hurdle || zi
+  new_joint <- joint && fam$family != "hurdle_lognormal"
+  gate_dpar <- if (zi) "zi" else "hu"
+  if (fam$family == "hurdle_lognormal" && (fam$link != "identity" || fam$link_hu != "logit")) stop("brms hurdle-lognormal implied effects require identity mu and logit hu links.", call. = FALSE)
+  if (new_joint) {
+    .implied_joint_component(if (zi) "zero_inflated" else "hurdle", component)
+    if (fam[[paste0("link_", gate_dpar)]] != "logit") stop("Joint brms implied effects require a logit mixture/hurdle link.", call. = FALSE)
+  } else if (joint && (is.null(component) || !component %in% c("positive", "encounter", "combined"))) stop("A joint brms fit requires explicit component = 'positive', 'encounter', or 'combined'.", call. = FALSE)
   if (!joint && !is.null(component) && component != "conditional") stop("A single supported brms response only accepts component = 'conditional'.", call. = FALSE)
   if (fam$family %in% c("lognormal", "hurdle_lognormal") && fam$link != "identity") stop("brms lognormal implied effects require the native identity link for log-location mu.", call. = FALSE)
-  family <- switch(fam$family, bernoulli = "binomial", negbinomial = "nbinom2", gamma = "Gamma",
-    hurdle_lognormal = "lognormal", fam$family)
+  family <- if (custom_tweedie) "tweedie" else .implied_family_name(sub("^(hurdle_|zero_inflated_)", "", fam$family))
   link <- if (family == "lognormal" && fam$link == "identity") "log" else fam$link
   a <- .implied_native_data(model, data, year, groups, model$formula$formula, family)
   raw_y <- a$observed
@@ -28,6 +37,11 @@
   # observations-by-all-draws array. A selected draw preserves the joint state.
   prep <- brms::prepare_predictions(model, re_formula = NULL, draw_ids = draw_id,
     point_estimate = if (is.null(draw_id)) "mean" else NULL, check_response = TRUE)
+  if (custom_tweedie) {
+    # Native custom families with vars = NULL append an unnamed NULL slot.
+    # It is not a response addition; non-NULL extra data still fail below.
+    prep$data <- prep$data[!vapply(prep$data, is.null, logical(1))]
+  }
   if (prep$ndraws != 1L || prep$nobs != length(raw_y) || length(prep$ac) ||
       !identical(names(prep$data), "Y") ||
       (!is.null(prep$old_order) && !identical(as.integer(prep$old_order), seq_along(raw_y))) ||
@@ -38,14 +52,22 @@
   # A modelled hu is a link-scale predictor; an unmodelled hu is already a
   # probability. get_dpar(inv_link = FALSE) does not transform scalar dpars.
   encounter_eta <- function() {
-    if (is.list(prep$dpars$hu)) -get("hu", FALSE) else -stats::qlogis(get("hu"))
+    if (is.list(prep$dpars[[gate_dpar]])) -get(gate_dpar, FALSE) else -stats::qlogis(get(gate_dpar))
   }
   a$backend <- "brms"
   a$family <- family
   a$link <- link
   a$eta <- get("mu", FALSE)
   a$dispersion <- switch(family, gaussian = get("sigma"), lognormal = get("sigma"),
-    nbinom2 = get("shape"), Gamma = 1 / get("shape"), 1)
+    nbinom2 = get("shape"), Gamma = 1 / get("shape"), tweedie = get("phi"), 1)
+  a$extra <- list()
+  if (custom_tweedie) {
+    power <- get("p")
+    if (any(!is.finite(power) | power <= 1 | power >= 2) || diff(range(power)) > 1e-12) {
+      stop("Custom brms Tweedie implied effects require a common native power strictly between 1 and 2.", call. = FALSE)
+    }
+    a$extra$power <- power[1L]
+  }
   a$component <- if (joint) component else "single fitted response"
   a$component_index <- if (identical(component, "encounter")) "hu" else "mu"
   a$included <- if (identical(component, "positive")) raw_y > 0 else rep(TRUE, length(raw_y))
@@ -55,9 +77,48 @@
     "Posterior-mean parameters, latent effects, smooths, offsets, and dispersion held fixed; not posterior-averaged implied effects"
   } else paste("Joint posterior draw", draw_id, "held fixed; not posterior-averaged implied effects")
   a <- .implied_native_predictors(a)
+  if (custom_tweedie) {
+    # A custom family's name is insufficient evidence of its density. Check
+    # its native log likelihood at the reference and shifted mean states.
+    for (delta in c(0, -.2, .2)) {
+      check <- prep
+      check$dpars$mu <- matrix(rep_len(get("mu"), length(raw_y)) * exp(delta), nrow = 1L)
+      native <- as.numeric(brms::log_lik(check, cores = 1))
+      expected <- .implied_density(raw_y, a$eta + delta, a$dispersion, "tweedie", a$extra)
+      if (length(native) != length(expected) || any(!is.finite(native)) ||
+          max(abs(native - expected)) > 1e-6) {
+        stop("Custom brms Tweedie log_lik does not agree with the declared mu/phi/p density.", call. = FALSE)
+      }
+    }
+  }
   # brms mu is mean(log Y), whereas the shared lognormal kernel uses log E(Y).
   # With sigma held fixed, a local shift has the same meaning on both scales.
   if (family == "lognormal") a$eta <- a$eta + a$dispersion^2 / 2
+  if (new_joint) {
+    a$positive_family <- if (hurdle && family %in% c("poisson", "nbinom2")) paste0("truncated_", family) else family
+    a$joint_kind <- if (zi) "zero_inflated" else "hurdle"
+    a$family <- fam$family; a$extra <- list()
+    a$eta <- cbind(rep_len(encounter_eta(), length(raw_y)), a$eta)
+    if (component == "combined") {
+      if (!is.null(year_term)) stop("Combined implied responses do not use a year-term baseline.", call. = FALSE)
+      return(a)
+    }
+    dpar <- if (component %in% c("encounter", "zero_inflation")) gate_dpar else "mu"
+    design <- .brms_population_matrix(model, dpar)
+    if (is.null(design)) {
+      a$baseline <- rep(0, length(raw_y)); a$baseline_terms <- character()
+      a$baseline_group_present <- FALSE
+      return(a)
+    }
+    vars <- .brms_parameter_names(design$X, dpar)
+    b <- prep$dpars[[dpar]]$fe$b
+    if (is.null(b) || !all(vars %in% colnames(b))) stop("Native brms baseline coefficients are not aligned.", call. = FALSE)
+    beta <- as.numeric(b[1L, vars])
+    if (component == "encounter") beta <- -beta
+    sm <- parsed$dpars[[dpar]]$sm
+    return(.implied_joint_baseline(a, groups, baseline, year_term, design$X, beta,
+      design$term_columns, if (inherits(sm, "formula")) all.vars(sm) else character()))
+  }
   if (identical(component, "combined")) {
     if (!is.null(year_term)) stop("Combined implied responses do not use a year-term baseline.", call. = FALSE)
     encounter <- encounter_eta()

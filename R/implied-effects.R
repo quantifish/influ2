@@ -7,22 +7,32 @@
 #'
 #' @param model A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. These
 #'   adapters support Gaussian identity-link models (including
-#'   an explicitly logged response), Poisson, NB2, and Gamma log-link models.
-#'   ML `sdmTMB` Bernoulli(logit), lognormal(log), and standard delta-lognormal
-#'   fits are also supported with explicit joint-component selection.
+#'   an explicitly logged response), binomial logit-link models (Bernoulli or
+#'   `cbind(successes, failures)`), and Poisson, NB2, Gamma, and Tweedie log-link
+#'   models. ML `sdmTMB` supports Gaussian, Bernoulli, Poisson, NB2, Gamma,
+#'   Tweedie, lognormal, and standard delta-Gamma/lognormal fits.
 #'   ML `tinyVAST` and native `brms` fits support Gaussian, Poisson, NB2, Gamma,
-#'   Bernoulli, and lognormal responses with the links described below, plus
-#'   standard tinyVAST delta-lognormal and brms hurdle-lognormal components.
+#'   Bernoulli, and lognormal responses with the links described below.
+#'   tinyVAST also supports Tweedie and standard delta-Gamma/lognormal.
+#'   Joint glmmTMB Gamma and truncated Poisson/NB2 hurdles, zero-inflated
+#'   Poisson/NB2/Tweedie mixtures, and brms hurdle Gamma/Poisson/NB2/lognormal
+#'   and zero-inflated Poisson/NB2 are supported. A brms custom Tweedie family
+#'   requires the verified `mu`, `phi`, and `p` contract below.
 #'   Other families, backends, joint components, non-unit case weights, and year
 #'   interactions fail explicitly rather than substitute another calculation.
 #' @param component `NULL` for a single-response fit. A joint standard
-#'   delta-lognormal `sdmTMB`/`tinyVAST` or hurdle-lognormal `brms` fit requires `"positive"`, `"encounter"`, or
-#'   `"combined"`. Only positive observations inform the positive adjustment
+#'   delta-Gamma/lognormal `sdmTMB`/`tinyVAST` or hurdle `brms`/`glmmTMB` fit requires `"positive"`, `"encounter"`, or
+#'   `"combined"`. For hurdles, only positive observations inform the positive adjustment
 #'   and its `min_n`; encounter uses all rows. The combined display uses both
 #'   adjustments and reports expected response, not a coefficient.
-#'   `"conditional"` may explicitly select a single-response
-#'   fit. No joint component is selected automatically.
-#' @param year_term For sdmTMB, tinyVAST, or brms effects, the original fixed annual
+#'   In a zero-inflated count mixture, use `"conditional"` (or `"positive"`)
+#'   for its count-process effect, `"zero_inflation"` for its extra-zero log-odds,
+#'   or `"combined"`. All rows, including zeros, inform each mixture adjustment;
+#'   latent component membership is never assigned from the response.
+#'   The extra-zero gate is not observed encounter probability.
+#'   `"conditional"` may also explicitly select a single-response fit.
+#'   No joint component is selected automatically.
+#' @param year_term For sdmTMB, tinyVAST, brms, or joint glmmTMB effects, the original fixed annual
 #'   predictor column, defaulting to `year`. For example, use `year = "year_factor"`
 #'   and `year_term = "year_scaled"` if the encounter formula uses a continuous
 #'   annual trend. The predictor must be constant within each requested year.
@@ -73,6 +83,10 @@
 #'   uses squared native dispersion predictions. No shape is re-estimated.
 #'   Gamma responses must be strictly positive; other Gamma links and joint
 #'   delta models are not automatically reinterpreted as Gamma(log) fits.
+#'   sdmTMB's native Gamma phi is shape, so the common Gamma scale is 1/phi.
+#'   Tweedie keeps its native power (strictly between 1 and 2) and scale fixed,
+#'   including its probability mass at zero. The optional mgcv density provides
+#'   likelihood evaluation; no power or dispersion is re-estimated.
 #'
 #'   Automatic intervals condition on the whole original fit. They omit
 #'   uncertainty in its parameters, latent effects, and baseline, and do not
@@ -97,7 +111,7 @@
 #'   without a fixed main effect uses the year-only baseline, not a fabricated
 #'   group coefficient. Zero-only strata remain in the table as empty positive
 #'   strata. Native likelihood observations and supplied data are checked before
-#'   selecting positive rows. Poisson-link delta and mixture families fail explicitly.
+#'   selecting positive rows. Poisson-link delta requires a separate adapter.
 #'   Bernoulli(logit) encounter shifts use all observations; all-zero or all-one
 #'   strata have infinite shifts and are retained as flagged boundary results.
 #'
@@ -123,6 +137,11 @@
 #'   and Gamma require log links. Multivariate/nonlinear models, response
 #'   additions (weights, censoring, truncation, or trials), autocorrelation,
 #'   Gaussian-process terms, and special predictors need separate adapters.
+#'   brms has no native Tweedie family. A custom family named `tweedie` with
+#'   real response, dpars `c("mu", "phi", "p")`, log-linked mu, common
+#'   1 < p < 2, and a native `log_lik` callback is accepted only after its
+#'   densities agree with mgcv at the reference and shifted mean states.
+#'   Matching a family name alone does not establish support.
 #'
 #'   Combined delta-lognormal displays estimate both shifts separately, then
 #'   average `plogis(eta_encounter + delta_encounter) * exp(eta_positive +
@@ -139,6 +158,16 @@
 #'   response totals with an effort offset, the display remains in those totals'
 #'   units, not per-unit-effort units. Traditional/descriptive options do not
 #'   apply to combined responses.
+#'
+#'   Additional joint families use their actual truncated or mixture densities.
+#'   In count hurdles, the positive mean includes the zero-truncation correction.
+#'   Zero-inflated count mixtures retain ordinary count zeros and extra zeros
+#'   together. Combined intervals profile the expected response over both local
+#'   shifts, whereas separate-component intervals hold the other shift at zero.
+#'   Native zero-inflation effects use log-odds of extra-zero membership, not
+#'   log-odds of observed absence. Unidentified and boundary component fits are
+#'   flagged and omitted from plots. A constant component has a centred baseline
+#'   of zero; its metadata do not invent an annual coefficient.
 #'
 #'   glmmTMB direct lognormal is not yet supported: it parameterises mean and SD on
 #'   the response scale; holding that SD fixed is not the same as a constant
@@ -181,9 +210,20 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   if (!is.character(groups) || length(groups) != 1L || is.na(groups) || !nzchar(groups)) {
     stop("`groups` must name one original-data grouping column.", call. = FALSE)
   }
-  if (!is.null(component)) component <- match.arg(component, c("conditional", "positive", "encounter", "combined"))
+  if (!is.null(component)) component <- match.arg(component, c("conditional", "positive", "encounter", "combined", "zero_inflation"))
   if (!is.null(draw_id) && !inherits(model, "brmsfit")) stop("`draw_id` applies only to brms implied effects.", call. = FALSE)
   a <- .implied_adapter(model, data, year, groups, baseline, component, year_term, draw_id)
+  if (identical(a$positive_family %||% a$family, "tweedie")) {
+    eta <- if (is.matrix(a$eta)) a$eta[, 2L] else a$eta
+    a$extra$tweedie_constant <- .implied_density(a$observed, eta, a$dispersion,
+      "tweedie", a$extra) - .implied_tweedie_meanpart(a$observed, eta, a$dispersion, a$extra$power)
+  }
+  if (!is.null(a$joint_kind)) {
+    if (method != "likelihood" || interval == "descriptive") {
+      stop("Joint implied effects require method = 'likelihood' and interval = 'auto' or 'none'.", call. = FALSE)
+    }
+    return(.implied_joint(a, groups, baseline, min_n, level, interval))
+  }
   if (identical(a$component, "combined")) {
     if (method != "likelihood" || interval == "descriptive") {
       stop("Combined implied responses require method = 'likelihood' and interval = 'auto' or 'none'.", call. = FALSE)
@@ -226,13 +266,15 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
         shift <- mean(legacy[i])
         se <- if (n > 1L) stats::sd(legacy[i]) / sqrt(n) else NA_real_
       } else {
-        fitted <- .implied_shift(a$observed[i], a$eta[i], a$dispersion[i], a$family)
+        fitted <- .implied_shift(a$observed[i], a$eta[i], a$dispersion[i], a$family,
+          .implied_extra_subset(a$extra, i))
         shift <- fitted$shift
         se <- fitted$std_error
         if (!is.finite(shift)) status <- if (shift > 0) "boundary_one" else "boundary_zero"
       }
       if (status == "ok" && actual_interval == "conditional_profile") {
-        ci <- .implied_profile(shift, a$observed[i], a$eta[i], a$dispersion[i], a$family, level)
+        ci <- .implied_profile(shift, a$observed[i], a$eta[i], a$dispersion[i], a$family, level,
+          .implied_extra_subset(a$extra, i))
         lo <- ci[1L]
         hi <- ci[2L]
       } else if (status == "ok" && actual_interval == "descriptive") {
@@ -259,6 +301,11 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   if (a$family == "Gamma") {
     metadata$dispersion <- "Native fitted Gamma scale phi = variance / mean^2; shape = 1/phi"
   }
+  if (a$family == "tweedie") {
+    metadata$power <- a$extra$power
+    metadata$dispersion <- "Native Tweedie phi; variance = phi * mean^power, with power held fixed"
+  }
+  if (!is.null(a$extra$trials)) metadata$trials <- "Known binomial trials retained in the likelihood"
   if (a$backend %in% c("sdmTMB", "tinyVAST", "brms")) {
     if (a$family == "lognormal") metadata$dispersion <- "Native fitted log-scale SD; meanlog = eta - sigma^2/2"
     metadata$n_total <- length(a$observed)
@@ -282,6 +329,9 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   }
   if (inherits(model, "tinyVAST")) return(.implied_tinyvast_adapter(model, data, year, groups, baseline, component, year_term))
   if (inherits(model, "brmsfit")) return(.implied_brms_adapter(model, data, year, groups, baseline, component, year_term, draw_id))
+  if (inherits(model, "glmmTMB") && .glmmTMB_has_component(model, "zi")) {
+    return(.implied_glmmtmb_joint_adapter(model, data, year, groups, baseline, component, year_term))
+  }
   if (!is.null(year_term)) stop("`year_term` applies only to sdmTMB, tinyVAST, and brms implied effects.", call. = FALSE)
   if (!is.null(component) && component != "conditional") {
     stop("This backend does not yet support component-specific implied effects.", call. = FALSE)
@@ -324,24 +374,40 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   }
   fam <- if (backend == "lm") stats::gaussian() else stats::family(model)
   raw_family <- fam$family
-  family <- if (grepl("^Negative Binomial|^nbinom2$", raw_family, ignore.case = TRUE)) "nbinom2" else raw_family
+  family <- .implied_family_name(raw_family)
   if (!((family == "gaussian" && fam$link == "identity") ||
-      (family %in% c("poisson", "nbinom2", "Gamma") && fam$link == "log"))) {
-    stop("Supported implied-effect families are Gaussian(identity), Poisson(log), NB2(log), and Gamma(log). Other parameterisations require a validated adapter.", call. = FALSE)
+      (family == "binomial" && fam$link == "logit") ||
+      (family %in% c("poisson", "nbinom2", "Gamma", "tweedie", "truncated_poisson", "truncated_nbinom2") && fam$link == "log"))) {
+    stop("Supported implied-effect families are Gaussian(identity), Binomial(logit), Poisson(log), NB2(log), Gamma(log), and Tweedie(log). Other parameterisations require a validated adapter.", call. = FALSE)
   }
   log_response <- family == "gaussian" && is.call(f[[2L]]) && length(f[[2L]]) == 2L &&
     identical(f[[2L]][[1L]], as.name("log")) && is.symbol(f[[2L]][[2L]])
-  if (!is.symbol(f[[2L]]) && !log_response) {
+  binomial_matrix <- family == "binomial" && is.call(f[[2L]]) && identical(f[[2L]][[1L]], as.name("cbind"))
+  if (!is.symbol(f[[2L]]) && !log_response && !binomial_matrix) {
     stop("Use a named response or a Gaussian model of log(response); other transformations are not supported.", call. = FALSE)
   }
   observed <- stats::model.response(frame)
+  extra <- list()
+  if (binomial_matrix) {
+    if (!is.matrix(observed) || ncol(observed) != 2L || any(!is.finite(observed) | observed < 0 | observed != floor(observed))) {
+      stop("Binomial cbind responses require finite integer successes and failures.", call. = FALSE)
+    }
+    extra$trials <- rowSums(observed)
+    if (any(extra$trials <= 0)) stop("Binomial trial counts must be positive.", call. = FALSE)
+    observed <- observed[, 1L]
+  } else if (family == "binomial") {
+    if (is.factor(observed) && nlevels(observed) == 2L) observed <- as.numeric(observed) - 1L
+    if (any(!observed %in% c(0, 1))) stop("Use Bernoulli observations or a cbind(successes, failures) binomial response.", call. = FALSE)
+  }
   if (!is.numeric(observed) || !is.null(dim(observed)) || any(!is.finite(observed))) {
     stop("A finite numeric response vector is required.", call. = FALSE)
   }
   n <- length(observed)
-  if (family %in% c("poisson", "nbinom2") && any(observed < 0 | abs(observed - round(observed)) > 1e-7)) {
+  if (family %in% c("poisson", "nbinom2", "truncated_poisson", "truncated_nbinom2") &&
+      any(observed < 0 | abs(observed - round(observed)) > 1e-7)) {
     stop("Count-model responses must be non-negative integers.", call. = FALSE)
   }
+  if (startsWith(family, "truncated_") && any(observed <= 0)) stop("Truncated count responses must be strictly positive.", call. = FALSE)
   if (family == "Gamma" && any(observed <= 0)) {
     stop("Gamma implied effects require strictly positive responses.", call. = FALSE)
   }
@@ -383,10 +449,11 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
       if (is.function(fam$getTheta)) fam$getTheta(TRUE) else model$theta
     } else if (family == "gaussian") {
       if (backend == "gam") sqrt(model$sig2) else stats::sigma(model)
-    } else if (family == "Gamma") {
+    } else if (family %in% c("Gamma", "tweedie")) {
       if (backend == "gam") model$sig2 else summary(model)$dispersion
     } else 1
   }
+  if (family == "tweedie") extra$power <- .implied_tweedie_power(model, fam, backend)
   if (!is.numeric(dispersion) || !length(dispersion) || !length(dispersion) %in% c(1L, n)) {
     stop("A native dispersion value per row, or one common value, is required.", call. = FALSE)
   }
@@ -398,15 +465,27 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   list(backend = backend, family = family, link = fam$link, frame = frame, data = aligned,
     year = time$name, observed = as.numeric(observed), eta = as.numeric(eta),
     dispersion = as.numeric(dispersion), baseline = base, baseline_terms = labels[chosen],
-    response = paste(deparse(f[[2L]]), collapse = " "), log_response = log_response)
+    response = paste(deparse(f[[2L]]), collapse = " "), log_response = log_response, extra = extra)
 }
 
-.implied_loglik <- function(delta, y, eta, dispersion, family) {
+.implied_loglik <- function(delta, y, eta, dispersion, family, extra = list()) {
   z <- eta + delta
   if (family == "binomial") {
     # Bernoulli/logit likelihood, stable in both tails.
     softplus <- function(x) pmax(x, 0) + log1p(exp(-abs(x)))
-    return(sum(-y * softplus(-z) - (1 - y) * softplus(z)))
+    trials <- extra$trials %||% 1
+    return(sum(lchoose(trials, y) - y * softplus(-z) - (trials - y) * softplus(z)))
+  }
+  if (family == "tweedie") {
+    if (!is.null(extra$tweedie_constant)) return(sum(extra$tweedie_constant +
+      .implied_tweedie_meanpart(y, z, dispersion, extra$power)))
+    if (!requireNamespace("mgcv", quietly = TRUE)) stop("Package 'mgcv' is required for the native Tweedie density.", call. = FALSE)
+    return(sum(mgcv::ldTweedie(y, mu = exp(z), p = extra$power, phi = dispersion)[, 1L]))
+  }
+  if (startsWith(family, "truncated_")) {
+    base <- sub("^truncated_", "", family)
+    return(.implied_loglik(delta, y, eta, dispersion, base, extra) -
+      sum(.implied_log1mexp(.implied_logzero(z, dispersion, base, extra))))
   }
   if (family == "lognormal") return(sum(stats::dlnorm(y, z - dispersion^2 / 2, dispersion, log = TRUE)))
   if (family == "gaussian") return(sum(stats::dnorm(y, z, dispersion, log = TRUE)))
@@ -426,15 +505,28 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     dispersion * softplus(v) - y * softplus(-v))
 }
 
-.implied_shift <- function(y, eta, dispersion, family) {
+.implied_shift <- function(y, eta, dispersion, family, extra = list()) {
   if (family == "binomial") {
     if (all(y == 0)) return(list(shift = -Inf, std_error = NA_real_))
-    if (all(y == 1)) return(list(shift = Inf, std_error = NA_real_))
-    score <- function(delta) sum(y - stats::plogis(eta + delta))
+    trials <- rep_len(extra$trials %||% 1, length(y))
+    if (all(y == trials)) return(list(shift = Inf, std_error = NA_real_))
+    score <- function(delta) sum(y - trials * stats::plogis(eta + delta))
     bounds <- c(-max(eta) - 40, -min(eta) + 40)
     delta <- stats::uniroot(score, bounds, tol = 1e-10)$root
     p <- stats::plogis(eta + delta)
-    return(list(shift = delta, std_error = 1 / sqrt(sum(p * (1 - p)))))
+    return(list(shift = delta, std_error = 1 / sqrt(sum(trials * p * (1 - p)))))
+  }
+  if (family == "tweedie") {
+    if (all(y == 0)) return(list(shift = -Inf, std_error = NA_real_))
+    p <- extra$power
+    lse <- function(x) { largest <- max(x); largest + log(sum(exp(x - largest))) }
+    delta <- lse(log(y[y > 0]) + (1 - p) * eta[y > 0] - log(rep_len(dispersion, length(y))[y > 0])) -
+      lse((2 - p) * eta - log(dispersion))
+    return(list(shift = delta, std_error = exp(-.5 * lse((2 - p) * (eta + delta) - log(dispersion)))))
+  }
+  if (startsWith(family, "truncated_")) {
+    if (all(y == 1)) return(list(shift = -Inf, std_error = NA_real_))
+    return(.implied_numeric_shift(function(d) .implied_loglik(d, y, eta, dispersion, family, extra)))
   }
   if (family == "lognormal") {
     w <- 1 / dispersion^2
@@ -475,7 +567,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   list(shift = delta, std_error = 1 / sqrt(sum((y + dispersion) * p * (1 - p))))
 }
 
-.implied_profile <- function(delta, y, eta, dispersion, family, level) {
+.implied_profile <- function(delta, y, eta, dispersion, family, level, extra = list()) {
   if (family == "lognormal") {
     # Exact quadratic profile in delta; avoids subtracting large log likelihoods.
     se <- sqrt(1 / sum(1 / rep_len(dispersion, length(y))^2))
@@ -500,9 +592,9 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
       direction * Inf
     }, numeric(1)))
   }
-  maximum <- .implied_loglik(delta, y, eta, dispersion, family)
+  maximum <- .implied_loglik(delta, y, eta, dispersion, family, extra)
   cutoff <- stats::qchisq(level, df = 1) / 2
-  f <- function(x) maximum - .implied_loglik(x, y, eta, dispersion, family) - cutoff
+  f <- function(x) maximum - .implied_loglik(x, y, eta, dispersion, family, extra) - cutoff
   vapply(c(-1, 1), function(direction) {
     width <- .25
     for (j in seq_len(14L)) {

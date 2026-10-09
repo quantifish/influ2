@@ -5,6 +5,49 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Expanded implied-effect families: 9 October 2026
+
+The approved extension adds ordinary binomial GLM/GAM/glmmTMB likelihoods,
+including known-trial two-column responses; the missing sdmTMB
+Gaussian/Gamma/Poisson/NB2 routes; and native log-link Tweedie across the five
+frequentist backends. brms supports a numerically verified custom Tweedie
+contract, not a built-in family. Standard spatial delta-Gamma, Gamma and
+truncated-count hurdles, and Poisson/NB2 zero-inflated mixtures are supported
+where native families exist; glmmTMB also supports zero-inflated Tweedie.
+The article records the exact backend/family matrix.
+
+Mixtures use their full likelihood, including zeros, without assigning latent
+membership. Extra-zero effects are not labelled observed encounter effects.
+Constant component gates have a zero centred baseline, not fabricated annual
+coefficients. Sparse, empty, all-zero, all-positive gate, and unidentified
+cells remain explicit. Single hurdle components use exact scores where
+available; joint response intervals profile both shifts. Tweedie's expensive
+mean-independent density normaliser is calculated once per row and discarded
+with the other calculation inputs. No model or draw array is retained.
+
+Native-likelihood tests cover fitted and shifted parameters, reference means,
+local optima, interval endpoints, native Gamma parameterisation differences,
+offset preservation, binomial counts, and save/reload. Six compact genuine
+brms posterior fixtures were generated with convergence checks; tests and
+vignettes do not run MCMC. Expanded focused tests pass without warnings.
+The first full instrumented run passes 7,540 assertions and measures 95.65%
+coverage; its 12 skips are documented CRAN-mode visual/developer-source checks.
+A final archive and coverage rerun includes the subsequent boundary guard.
+The rebuilt implied-effects article is visually checked, and its shared
+caption/lightbox checks pass for 29 images on the two available local pages.
+
+These are numerical implementation checks, not new calibration evidence for
+every family. The original fit remains fixed, brms intervals are conditional
+likelihood intervals rather than credible intervals, and combined responses
+are original-observation means rather than standardised indices. Poisson-link
+delta models, non-unit case weights, annual interactions/smooths, and unsupported
+distributional structures still fail explicitly. Existing uncommitted CDI-order
+work is preserved separately, and is not part of this publication.
+
+Dunn–Smyth and OSA residual choices remain a separate API discussion: no PIT
+defaults, stored ranks, or likelihood-implied-effect definitions changed.
+No CRAN or win-builder submission is authorised or performed by this extension.
+
 ## Automatic regular CDI label spacing: 16 September 2026
 
 This supersedes the fixed 20-label cap and overlap suppression recorded below.

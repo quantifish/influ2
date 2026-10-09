@@ -29,12 +29,17 @@ implied_effects(
 \arguments{
 \item{model}{A retained \code{lm}, GLM, \code{mgcv} GAM, or ML \code{glmmTMB} fit. These
 adapters support Gaussian identity-link models (including
-an explicitly logged response), Poisson, NB2, and Gamma log-link models.
-ML \code{sdmTMB} Bernoulli(logit), lognormal(log), and standard delta-lognormal
-fits are also supported with explicit joint-component selection.
+an explicitly logged response), binomial logit-link models (Bernoulli or
+\code{cbind(successes, failures)}), and Poisson, NB2, Gamma, and Tweedie log-link
+models. ML \code{sdmTMB} supports Gaussian, Bernoulli, Poisson, NB2, Gamma,
+Tweedie, lognormal, and standard delta-Gamma/lognormal fits.
 ML \code{tinyVAST} and native \code{brms} fits support Gaussian, Poisson, NB2, Gamma,
-Bernoulli, and lognormal responses with the links described below, plus
-standard tinyVAST delta-lognormal and brms hurdle-lognormal components.
+Bernoulli, and lognormal responses with the links described below.
+tinyVAST also supports Tweedie and standard delta-Gamma/lognormal.
+Joint glmmTMB Gamma and truncated Poisson/NB2 hurdles, zero-inflated
+Poisson/NB2/Tweedie mixtures, and brms hurdle Gamma/Poisson/NB2/lognormal
+and zero-inflated Poisson/NB2 are supported. A brms custom Tweedie family
+requires the verified \code{mu}, \code{phi}, and \code{p} contract below.
 Other families, backends, joint components, non-unit case weights, and year
 interactions fail explicitly rather than substitute another calculation.}
 
@@ -75,14 +80,19 @@ added to term contributions. This latter display mixes scales, is retained
 only for comparison, and is restricted to plain Gaussian log-response GLMs.}
 
 \item{component}{\code{NULL} for a single-response fit. A joint standard
-delta-lognormal \code{sdmTMB}/\code{tinyVAST} or hurdle-lognormal \code{brms} fit requires \code{"positive"}, \code{"encounter"}, or
-\code{"combined"}. Only positive observations inform the positive adjustment
+delta-Gamma/lognormal \code{sdmTMB}/\code{tinyVAST} or hurdle \code{brms}/\code{glmmTMB} fit requires \code{"positive"}, \code{"encounter"}, or
+\code{"combined"}. For hurdles, only positive observations inform the positive adjustment
 and its \code{min_n}; encounter uses all rows. The combined display uses both
 adjustments and reports expected response, not a coefficient.
-\code{"conditional"} may explicitly select a single-response
-fit. No joint component is selected automatically.}
+In a zero-inflated count mixture, use \code{"conditional"} (or \code{"positive"})
+for its count-process effect, \code{"zero_inflation"} for its extra-zero log-odds,
+or \code{"combined"}. All rows, including zeros, inform each mixture adjustment;
+latent component membership is never assigned from the response.
+The extra-zero gate is not observed encounter probability.
+\code{"conditional"} may also explicitly select a single-response fit.
+No joint component is selected automatically.}
 
-\item{year_term}{For sdmTMB, tinyVAST, or brms effects, the original fixed annual
+\item{year_term}{For sdmTMB, tinyVAST, brms, or joint glmmTMB effects, the original fixed annual
 predictor column, defaulting to \code{year}. For example, use \code{year = "year_factor"}
 and \code{year_term = "year_scaled"} if the encounter formula uses a continuous
 annual trend. The predictor must be constant within each requested year.
@@ -126,6 +136,10 @@ GAMs retain \code{sig2}, GLMs use \code{summary(model)$dispersion}, and glmmTMB
 uses squared native dispersion predictions. No shape is re-estimated.
 Gamma responses must be strictly positive; other Gamma links and joint
 delta models are not automatically reinterpreted as Gamma(log) fits.
+sdmTMB's native Gamma phi is shape, so the common Gamma scale is 1/phi.
+Tweedie keeps its native power (strictly between 1 and 2) and scale fixed,
+including its probability mass at zero. The optional mgcv density provides
+likelihood evaluation; no power or dispersion is re-estimated.
 
 Automatic intervals condition on the whole original fit. They omit
 uncertainty in its parameters, latent effects, and baseline, and do not
@@ -150,7 +164,7 @@ joint fit; only positive rows contribute to its local adjustments. A group
 without a fixed main effect uses the year-only baseline, not a fabricated
 group coefficient. Zero-only strata remain in the table as empty positive
 strata. Native likelihood observations and supplied data are checked before
-selecting positive rows. Poisson-link delta and mixture families fail explicitly.
+selecting positive rows. Poisson-link delta requires a separate adapter.
 Bernoulli(logit) encounter shifts use all observations; all-zero or all-one
 strata have infinite shifts and are retained as flagged boundary results.
 
@@ -176,6 +190,11 @@ Gaussian requires identity, Bernoulli requires logit, and Poisson, NB2,
 and Gamma require log links. Multivariate/nonlinear models, response
 additions (weights, censoring, truncation, or trials), autocorrelation,
 Gaussian-process terms, and special predictors need separate adapters.
+brms has no native Tweedie family. A custom family named \code{tweedie} with
+real response, dpars \code{c("mu", "phi", "p")}, log-linked mu, common
+1 < p < 2, and a native \code{log_lik} callback is accepted only after its
+densities agree with mgcv at the reference and shifted mean states.
+Matching a family name alone does not establish support.
 
 Combined delta-lognormal displays estimate both shifts separately, then
 average \code{plogis(eta_encounter + delta_encounter) * exp(eta_positive + delta_positive)} over the stratum's original rows, including zero responses.
@@ -191,6 +210,16 @@ regional standardisations, or area-integrated abundance. In a model of
 response totals with an effort offset, the display remains in those totals'
 units, not per-unit-effort units. Traditional/descriptive options do not
 apply to combined responses.
+
+Additional joint families use their actual truncated or mixture densities.
+In count hurdles, the positive mean includes the zero-truncation correction.
+Zero-inflated count mixtures retain ordinary count zeros and extra zeros
+together. Combined intervals profile the expected response over both local
+shifts, whereas separate-component intervals hold the other shift at zero.
+Native zero-inflation effects use log-odds of extra-zero membership, not
+log-odds of observed absence. Unidentified and boundary component fits are
+flagged and omitted from plots. A constant component has a centred baseline
+of zero; its metadata do not invent an annual coefficient.
 
 glmmTMB direct lognormal is not yet supported: it parameterises mean and SD on
 the response scale; holding that SD fixed is not the same as a constant

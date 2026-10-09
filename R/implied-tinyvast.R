@@ -17,9 +17,10 @@
   }
   if (!joint && !is.null(component) && component != "conditional") stop("A single-response fit only supports component = 'conditional'.", call. = FALSE)
   if (joint && (!identical(fam$type, "standard") ||
-      !identical(fam$family, c("binomial", "lognormal")) ||
+      !fam[[2L]]$family %in% c("lognormal", "Gamma") ||
+      !identical(fam$family, c("binomial", fam[[2L]]$family)) ||
       !identical(fam[[1L]]$link, "logit") || !identical(fam[[2L]]$link, "log"))) {
-    stop("Joint tinyVAST implied effects support standard delta-lognormal only; Poisson-link delta and other mixtures require separate adapters.", call. = FALSE)
+    stop("Joint tinyVAST implied effects support standard delta-lognormal and delta-Gamma; Poisson-link delta and other mixtures require separate adapters.", call. = FALSE)
   }
   k <- if (joint && component != "encounter") 2L else 1L
   f <- if (joint) fam[[k]] else fam
@@ -43,11 +44,19 @@
   a$eta <- if (k == 1L) r$p_i else r$p2_i
   sigma <- exp(model$internal$parlist$log_sigma)
   a$dispersion <- if (a$family %in% c("poisson", "binomial")) 1 else if (a$family == "Gamma") sigma^2 else sigma
+  if (a$family == "tweedie") a$dispersion <- sigma[1L]
+  a$extra <- list()
+  if (a$family == "tweedie") a$extra$power <- .implied_tweedie_power(model, f, "tinyVAST")
   a <- .implied_native_predictors(a)
   if (identical(component, "combined")) {
     if (!is.null(year_term)) stop("Combined implied responses do not use a year-term baseline.", call. = FALSE)
     if (length(r$p_i) != n || any(!is.finite(r$p_i))) stop("Finite aligned encounter predictors are required.", call. = FALSE)
     a$eta <- cbind(r$p_i, r$p2_i)
+    if (fam[[2L]]$family == "Gamma") {
+      a$joint_kind <- "hurdle"
+      a$positive_family <- "Gamma"
+      a$family <- "delta_Gamma"
+    }
     return(a)
   }
   setup <- if (k == 1L) model$internal$gam_setup else model$internal$delta_gam_setup

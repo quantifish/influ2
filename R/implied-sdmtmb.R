@@ -33,12 +33,14 @@
   }
   k <- if (joint && component != "encounter") 2L else 1L
   family <- if (joint) model$family[[k]] else model$family
-  supported <- (identical(family$family, "lognormal") && identical(family$link, "log")) ||
-    (identical(family$family, "binomial") && identical(family$link, "logit"))
+  supported <- (family$family == "gaussian" && family$link == "identity") ||
+    (family$family == "binomial" && family$link == "logit") ||
+    (family$family %in% c("lognormal", "Gamma", "poisson", "nbinom2", "tweedie") && family$link == "log")
   if (!supported || (joint && (!identical(model$family$type, "standard") ||
-      !identical(model$family$family, c("binomial", "lognormal")) ||
+      !model$family[[2L]]$family %in% c("lognormal", "Gamma") ||
+      !identical(model$family$family, c("binomial", model$family[[2L]]$family)) ||
       !identical(model$family$link, c("logit", "log"))))) {
-    stop("The sdmTMB implied-effect adapter supports Bernoulli(logit), lognormal(log), and standard delta-lognormal fits only; Poisson-link delta and mixture families require separate adapters.", call. = FALSE)
+    stop("The sdmTMB adapter supports standard delta-lognormal and delta-Gamma, plus validated single-response families; Poisson-link delta and mixture families require separate adapters.", call. = FALSE)
   }
   if (!is.null(model$nonlocal_parsed)) {
     stop("Nonlocal sdmTMB covariate operators are not supported for implied effects.", call. = FALSE)
@@ -64,7 +66,8 @@
   y <- frame[[response]]
   n <- nrow(frame)
   if (!is.numeric(y) || !is.null(dim(y)) || length(y) != n ||
-      any(!is.finite(y) | y < 0) || (!joint && family$family == "lognormal" && any(y == 0))) {
+      any(!is.finite(y)) || (family$family != "gaussian" && any(y < 0)) ||
+      (!joint && family$family %in% c("lognormal", "Gamma") && any(y == 0))) {
     stop("Lognormal responses must be finite and positive; zeros are allowed only in joint delta fits.", call. = FALSE)
   }
   positive <- y > 0
@@ -86,7 +89,7 @@
     stop("Binomial implied effects currently require Bernoulli (0/1) observations with size = 1.", call. = FALSE)
   }
   r <- .implied_sdmtmb_report(model)
-  if (!joint && family$family == "binomial") r$phi <- 1
+  if (!joint && family$family %in% c("binomial", "poisson")) r$phi <- 1
   if (!is.matrix(r$eta_i) || !identical(dim(r$eta_i), c(n, response_k)) ||
       any(!is.finite(r$eta_i)) || length(r$phi) != response_k ||
       any(!is.finite(r$phi) | r$phi <= 0)) {
@@ -94,9 +97,18 @@
   }
   if (identical(component, "combined")) {
     if (!is.null(year_term)) stop("Combined implied responses use fitted observation means, not a selected year-term baseline.", call. = FALSE)
-    return(list(backend = "sdmTMB", data = aligned, year = time$name,
+    a <- list(backend = "sdmTMB", data = aligned, year = time$name,
       observed = y, eta = r$eta_i, dispersion = rep(r$phi[2L], n),
-      response = response, component = "combined"))
+      response = response, component = "combined")
+    if (model$family[[2L]]$family == "Gamma") {
+      a$joint_kind <- "hurdle"
+      a$positive_family <- "Gamma"
+      # sdmTMB phi is Gamma shape, unlike tinyVAST/glmmTMB's CV.
+      a$dispersion <- 1 / a$dispersion
+      a$family <- "delta_Gamma"
+      a$extra <- list()
+    }
+    return(a)
   }
   if (is.null(year_term)) year_term <- time$name
   if (!is.character(year_term) || length(year_term) != 1L || is.na(year_term) ||
@@ -133,11 +145,16 @@
   if (!length(columns)) stop("No fixed-effect baseline columns were found.", call. = FALSE)
   term <- drop(X[, columns, drop = FALSE] %*% beta[columns])
   included <- if (identical(component, "positive")) positive else rep(TRUE, n)
-  list(backend = "sdmTMB", family = family$family, link = family$link, frame = frame,
+  a <- list(backend = "sdmTMB", family = family$family, link = family$link, frame = frame,
     data = aligned, year = time$name, observed = if (identical(component, "encounter")) as.numeric(positive) else as.numeric(y), eta = r$eta_i[, k],
     dispersion = rep(r$phi[k], n), baseline = term - mean(term),
     baseline_terms = labels[selected], response = response, log_response = FALSE,
     included = included, component = if (joint) component else "single fitted response",
     year_term = year_term, component_index = k,
-    baseline_group_present = baseline == "year_group" && length(group_term) > 0L)
+    baseline_group_present = baseline == "year_group" && length(group_term) > 0L,
+    extra = list())
+  if (a$family == "Gamma") a$dispersion <- 1 / a$dispersion
+  if (a$family == "tweedie") a$extra$power <- .implied_tweedie_power(model, family, "sdmTMB")
+  .implied_native_family(a$family, a$link, a$observed, joint)
+  a
 }

@@ -637,11 +637,82 @@ patchwork::wrap_plots(plot(bayes_example$encounter, ncol = 2),
   ncol = 1)
 ```
 
+## Additional joint families
+
+The same lobster sampling layout can also illustrate a Gamma hurdle model.
+Its zeros inform the encounter component, and its positive observations inform
+the Gamma component. The combined display applies both local shifts to the
+expected response over the original observation rows.
+
+```{r implied-gamma-hurdle, eval=has_glmmTMB}
+set.seed(9102026)
+example$gamma_delta <- rbinom(nrow(example), 1, plogis(.5 + .03 * trend)) *
+  rgamma(nrow(example), shape = 3, rate = 3 / exp(eta))
+gamma_hurdle <- glmmTMB::glmmTMB(
+  gamma_delta ~ year + season + depth + soak + (1 | vessel),
+  ziformula = ~year + season, family = glmmTMB::ziGamma("log"), data = example
+)
+gamma_combined <- implied_effects(gamma_hurdle, groups = "season",
+  component = "combined")
+head(as.data.frame(gamma_combined))
+```
+
+```{r implied-gamma-hurdle-display, eval=has_glmmTMB, fig.cap="Combined residual-implied response for a Gamma hurdle fit using the lobster sampling layout. Grey lines show fitted stratum means, and purple trajectories apply the separate encounter and positive-response shifts. Bars profile the conditional expected response over both shifts. These means retain the original observation mix and fitted vessel effects; they are not standardised seasonal CPUE indices.", fig.alt="Three seasonal panels comparing fitted Gamma-hurdle stratum means with local likelihood-implied response trajectories and conditional profile intervals."}
+plot(gamma_combined)
+```
+
+For a zero-inflated count model, component membership is unobserved. This
+example uses the full mixture likelihood for each requested view:
+
+```{r implied-count-mixture, eval=has_glmmTMB}
+example$mixture_count <- rbinom(nrow(example), 1, .65) * example$count_cpue
+mixture_fit <- glmmTMB::glmmTMB(
+  mixture_count ~ year + season + depth + soak + (1 | vessel),
+  ziformula = ~year + season, family = glmmTMB::nbinom2(), data = example
+)
+count_effect <- implied_effects(mixture_fit, groups = "season",
+  component = "conditional")
+extra_zero_effect <- implied_effects(mixture_fit, groups = "season",
+  component = "zero_inflation")
+mixture_response <- implied_effects(mixture_fit, groups = "season",
+  component = "combined")
+head(as.data.frame(mixture_response))
+table(mixture_response$table$status)
+```
+
+The extra-zero effect concerns the mixture gate. It is not an observed
+absence effect, and the count-process calculation does not discard zeros.
+Local cells with a boundary or unidentified component remain in the table
+with their status and are omitted from plots.
+
 ## Interpretation, uncertainty, and scope
 
-The current adapters support `lm`, GLM, GAM, and ML glmmTMB for Gaussian
-identity-link, Poisson log-link, NB2 log-link, and Gamma log-link models. Fitted GAM smooths and
-mixed-model effects stay fixed. Traditional comparison is restricted to
+Support is defined by both the backend and the response distribution:
+
+| Backend | Single-response families | Joint response families |
+|:--|:--|:--|
+| GLM and GAM | Gaussian, binomial, Poisson, NB2, Gamma, and Tweedie | Separate fitted components can be diagnosed individually |
+| glmmTMB | Gaussian, binomial, Poisson, NB2, Gamma, and Tweedie | Gamma and truncated Poisson/NB2 hurdles; zero-inflated Poisson/NB2/Tweedie |
+| sdmTMB | Gaussian, Bernoulli, Poisson, NB2, Gamma, Tweedie, and lognormal | Standard delta-Gamma and delta-lognormal |
+| tinyVAST | Gaussian, Bernoulli, Poisson, NB2, Gamma, Tweedie, and lognormal | Standard delta-Gamma and delta-lognormal |
+| brms | Gaussian, Bernoulli, Poisson, NB2, Gamma, and lognormal; verified custom Tweedie | Hurdle Gamma/Poisson/NB2/lognormal; zero-inflated Poisson/NB2 |
+
+Gaussian uses identity, binomial/Bernoulli uses logit, and ordinary positive/count
+mean models use log. brms lognormal instead uses its native identity link for
+log-location. Ordinary binomial fits may use a two-column successes/failures
+response with known trials. Tweedie requires 1 < power < 2 and retains the
+native fitted power and dispersion, including the mass at zero. sdmTMB's Gamma
+dispersion is shape; it is converted to the common scale as 1/shape. This
+differs from the squared native CV used by glmmTMB and tinyVAST.
+
+For brms, Tweedie is a **custom-family contract**, because brms does not supply
+a native Tweedie family. It must be named `tweedie`, have a real response,
+dpars `c("mu", "phi", "p")`, log-linked mu, one common power, and a native
+`log_lik` callback agreeing with the declared density at the original and shifted
+means. Unrelated custom families with the same name are rejected. Tests use
+saved genuine posterior fixtures, so no MCMC is run here.
+
+Fitted GAM smooths and mixed-model effects stay fixed. Traditional comparison is restricted to
 constant-variance Gaussian models of `log(response)`; the historical
 standardised option additionally requires a plain GLM.
 
@@ -652,22 +723,30 @@ index or an interaction. A suitable refit/bootstrap or explicitly defined
 posterior propagation would be a further development, not something these
 bars already provide.
 
-The sdmTMB adapter additionally supports Bernoulli(logit), lognormal(log), and
-explicit encounter, positive, and combined views of standard delta-lognormal
-fits. It does not reinterpret Poisson-link delta models or mixture families.
+Standard delta and hurdle fits offer explicit encounter, positive, and combined
+views. Positive-only calculations use the original observed-positive rows.
+Count hurdles use a zero-truncated density and its conditional positive mean.
+Poisson-link delta requires a separate adapter and is rejected explicitly.
 
-tinyVAST and brms additionally support Gaussian, Poisson, NB2, Gamma, Bernoulli,
-and lognormal, with identity for Gaussian, logit for Bernoulli, and log links
-for Poisson/NB2/Gamma. tinyVAST lognormal uses a log-mean link; brms uses its
-identity link for log-location. Both expose the three joint lognormal views
-demonstrated above. brms permits observation-specific dispersion, held fixed
+In a **zero-inflated count mixture**, a zero can come from the count process or
+from the extra-zero process. `component = "conditional"` estimates a local
+count-process shift, `"zero_inflation"` estimates an extra-zero log-odds shift,
+and `"combined"` estimates both and displays expected response. Every calculation
+uses the full mixture likelihood, including zeros. `"positive"` is accepted as
+an alias for the count-process view, but it does not filter out zeros. The
+extra-zero gate is not the probability of observed absence, so `"encounter"`
+is rejected for these mixtures. Boundary or unidentified shifts remain flagged
+in the table; they are not repaired with pseudocounts.
+
+tinyVAST lognormal uses a log-mean link; brms uses its identity link for
+log-location. brms permits observation-specific dispersion, held fixed
 during each local adjustment. tinyVAST requires ML, one response, and one family.
 
 Other families, other direct lognormal parameterisations, non-unit weights,
 and year interactions currently fail explicitly for this
 **new implied-effect calculation**. They remain supported where documented by
-the existing PIT diagnostics and other influ2 functions. Joint hurdle/delta
-models outside these validated lognormal routes require separate adapters.
+the existing PIT diagnostics and other influ2 functions. Joint families outside
+the validated routes in the table require separate adapters.
 brms multivariate/nonlinear, censored/truncated, autocorrelated, Gaussian-process,
 and special-predictor structures also require separate validation. A positive-component calculation is never silently
 substituted for a combined-response diagnostic.
