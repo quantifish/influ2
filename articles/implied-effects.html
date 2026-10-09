@@ -1092,37 +1092,194 @@ a standardised CPUE index.
 </div>
 </div>
 <div class="section level2">
+<h2 id="additional-joint-families">Additional joint families<a class="anchor" aria-label="anchor" href="#additional-joint-families"></a>
+</h2>
+<p>The same lobster sampling layout can also illustrate a Gamma hurdle
+model. Its zeros inform the encounter component, and its positive
+observations inform the Gamma component. The combined display applies
+both local shifts to the expected response over the original observation
+rows.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">9102026</span><span class="op">)</span></span>
+<span><span class="va">example</span><span class="op">$</span><span class="va">gamma_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">example</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="fl">.5</span> <span class="op">+</span> <span class="fl">.03</span> <span class="op">*</span> <span class="va">trend</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">example</span><span class="op">)</span>, shape <span class="op">=</span> <span class="fl">3</span>, rate <span class="op">=</span> <span class="fl">3</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">eta</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">gamma_hurdle</span> <span class="op">&lt;-</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="va">gamma_delta</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">season</span> <span class="op">+</span> <span class="va">depth</span> <span class="op">+</span> <span class="va">soak</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">vessel</span><span class="op">)</span>,</span>
+<span>  ziformula <span class="op">=</span> <span class="op">~</span><span class="va">year</span> <span class="op">+</span> <span class="va">season</span>, family <span class="op">=</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/nbinom2.html" class="external-link">ziGamma</a></span><span class="op">(</span><span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">example</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gamma_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">gamma_hurdle</span>, groups <span class="op">=</span> <span class="st">"season"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">gamma_combined</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   level        group   n n_positive baseline adjustment estimate std_error</span></span>
+<span><span class="co">#&gt; 1  2000 Early season 153         81 5.071513 0.18425856 6.097615 0.6241256</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143         88 6.019206 0.18497472 7.242237 0.6742032</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154         86 5.773592 0.09662582 6.359313 0.6208077</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160        100 5.454242 0.24130964 6.942787 0.6024737</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90         55 4.771928 0.22955168 6.003257 0.7088893</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67         44 3.505765 0.09122974 3.840638 0.4917417</span></span>
+<span><span class="co">#&gt;      lower    upper status encounter_adjustment positive_adjustment</span></span>
+<span><span class="co">#&gt; 1 4.958950 7.417438     ok          -0.03530077          0.20071557</span></span>
+<span><span class="co">#&gt; 2 6.002540 8.658244     ok           0.06385000          0.15993226</span></span>
+<span><span class="co">#&gt; 3 5.222343 7.667296     ok          -0.08917021          0.13502306</span></span>
+<span><span class="co">#&gt; 4 5.830201 8.202107     ok           0.10508480          0.20059792</span></span>
+<span><span class="co">#&gt; 5 4.721181 7.521535     ok           0.06213338          0.20492791</span></span>
+<span><span class="co">#&gt; 6 2.956195 4.903694     ok           0.15417422          0.03558374</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">gamma_combined</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="implied-effects_files/figure-html/implied-gamma-hurdle-display-1.png" class="r-plt" alt="Three seasonal panels comparing fitted Gamma-hurdle stratum means with local likelihood-implied response trajectories and conditional profile intervals." width="1056"><p class="caption">
+Combined residual-implied response for a Gamma hurdle fit using the
+lobster sampling layout. Grey lines show fitted stratum means, and
+purple trajectories apply the separate encounter and positive-response
+shifts. Bars profile the conditional expected response over both shifts.
+These means retain the original observation mix and fitted vessel
+effects; they are not standardised seasonal CPUE indices.
+</p>
+</div>
+<p>For a zero-inflated count model, component membership is unobserved.
+This example uses the full mixture likelihood for each requested
+view:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">example</span><span class="op">$</span><span class="va">mixture_count</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">example</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">.65</span><span class="op">)</span> <span class="op">*</span> <span class="va">example</span><span class="op">$</span><span class="va">count_cpue</span></span>
+<span><span class="va">mixture_fit</span> <span class="op">&lt;-</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
+<span>  <span class="va">mixture_count</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">season</span> <span class="op">+</span> <span class="va">depth</span> <span class="op">+</span> <span class="va">soak</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">vessel</span><span class="op">)</span>,</span>
+<span>  ziformula <span class="op">=</span> <span class="op">~</span><span class="va">year</span> <span class="op">+</span> <span class="va">season</span>, family <span class="op">=</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/nbinom2.html" class="external-link">nbinom2</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">example</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">count_effect</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">mixture_fit</span>, groups <span class="op">=</span> <span class="st">"season"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"conditional"</span><span class="op">)</span></span>
+<span><span class="va">extra_zero_effect</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">mixture_fit</span>, groups <span class="op">=</span> <span class="st">"season"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"zero_inflation"</span><span class="op">)</span></span>
+<span><span class="va">mixture_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">mixture_fit</span>, groups <span class="op">=</span> <span class="st">"season"</span>,</span>
+<span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixture_response</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   level        group   n n_positive baseline adjustment estimate std_error</span></span>
+<span><span class="co">#&gt; 1  2000 Early season 153        106 7.175751  0.2010503 8.773693 0.7110358</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143         92 6.219516  0.1037421 6.899398 0.6230327</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154        104 6.504191  0.1973964 7.923581 0.6583512</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160         98 5.607833  0.1286798 6.377933 0.5706983</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90         63 5.112214  0.1616548 6.009174 0.6329579</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67         41 3.632384  0.1624239 4.272987 0.6017527</span></span>
+<span><span class="co">#&gt;      lower     upper status encounter_adjustment positive_adjustment</span></span>
+<span><span class="co">#&gt; 1 7.454399 10.252663     ok         -0.004206822           0.2023111</span></span>
+<span><span class="co">#&gt; 2 5.751333  8.204157     ok          0.001287250           0.1032955</span></span>
+<span><span class="co">#&gt; 3 6.704182  9.295108     ok          0.085163696           0.1696449</span></span>
+<span><span class="co">#&gt; 4 5.326368  7.572293     ok         -0.068299854           0.1539312</span></span>
+<span><span class="co">#&gt; 5 4.854963  7.353755     ok          0.198694141           0.1016903</span></span>
+<span><span class="co">#&gt; 6 3.205144  5.588066     ok          0.071505080           0.1355238</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">mixture_response</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">status</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; failed_optimisation                  ok </span></span>
+<span><span class="co">#&gt;                   1                  53</span></span></code></pre></div>
+<p>The extra-zero effect concerns the mixture gate. It is not an
+observed absence effect, and the count-process calculation does not
+discard zeros. Local cells with a boundary or unidentified component
+remain in the table with their status and are omitted from plots.</p>
+</div>
+<div class="section level2">
 <h2 id="interpretation-uncertainty-and-scope">Interpretation, uncertainty, and scope<a class="anchor" aria-label="anchor" href="#interpretation-uncertainty-and-scope"></a>
 </h2>
-<p>The current adapters support <code>lm</code>, GLM, GAM, and ML
-glmmTMB for Gaussian identity-link, Poisson log-link, NB2 log-link, and
-Gamma log-link models. Fitted GAM smooths and mixed-model effects stay
-fixed. Traditional comparison is restricted to constant-variance
-Gaussian models of <code>log(response)</code>; the historical
-standardised option additionally requires a plain GLM.</p>
+<p>Support is defined by both the backend and the response
+distribution:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Backend</th>
+<th align="left">Single-response families</th>
+<th align="left">Joint response families</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">GLM and GAM</td>
+<td align="left">Gaussian, binomial, Poisson, NB2, Gamma, and
+Tweedie</td>
+<td align="left">Separate fitted components can be diagnosed
+individually</td>
+</tr>
+<tr class="even">
+<td align="left">glmmTMB</td>
+<td align="left">Gaussian, binomial, Poisson, NB2, Gamma, and
+Tweedie</td>
+<td align="left">Gamma and truncated Poisson/NB2 hurdles; zero-inflated
+Poisson/NB2/Tweedie</td>
+</tr>
+<tr class="odd">
+<td align="left">sdmTMB</td>
+<td align="left">Gaussian, Bernoulli, Poisson, NB2, Gamma, Tweedie, and
+lognormal</td>
+<td align="left">Standard delta-Gamma and delta-lognormal</td>
+</tr>
+<tr class="even">
+<td align="left">tinyVAST</td>
+<td align="left">Gaussian, Bernoulli, Poisson, NB2, Gamma, Tweedie, and
+lognormal</td>
+<td align="left">Standard delta-Gamma and delta-lognormal</td>
+</tr>
+<tr class="odd">
+<td align="left">brms</td>
+<td align="left">Gaussian, Bernoulli, Poisson, NB2, Gamma, and
+lognormal; verified custom Tweedie</td>
+<td align="left">Hurdle Gamma/Poisson/NB2/lognormal; zero-inflated
+Poisson/NB2</td>
+</tr>
+</tbody>
+</table>
+<p>Gaussian uses identity, binomial/Bernoulli uses logit, and ordinary
+positive/count mean models use log. brms lognormal instead uses its
+native identity link for log-location. Ordinary binomial fits may use a
+two-column successes/failures response with known trials. Tweedie
+requires 1 &lt; power &lt; 2 and retains the native fitted power and
+dispersion, including the mass at zero. sdmTMB’s Gamma dispersion is
+shape; it is converted to the common scale as 1/shape. This differs from
+the squared native CV used by glmmTMB and tinyVAST.</p>
+<p>For brms, Tweedie is a <strong>custom-family contract</strong>,
+because brms does not supply a native Tweedie family. It must be named
+<code>tweedie</code>, have a real response, dpars
+<code>c("mu", "phi", "p")</code>, log-linked mu, one common power, and a
+native <code>log_lik</code> callback agreeing with the declared density
+at the original and shifted means. Unrelated custom families with the
+same name are rejected. Tests use saved genuine posterior fixtures, so
+no MCMC is run here.</p>
+<p>Fitted GAM smooths and mixed-model effects stay fixed. Traditional
+comparison is restricted to constant-variance Gaussian models of
+<code>log(response)</code>; the historical standardised option
+additionally requires a plain GLM.</p>
 <p>Conditional profile intervals ignore uncertainty in the original
 model, its baseline, and its estimated latent effects. Descriptive
 one-SE bars also ignore dependence. Neither should be read as full
 uncertainty in a regional index or an interaction. A suitable
 refit/bootstrap or explicitly defined posterior propagation would be a
 further development, not something these bars already provide.</p>
-<p>The sdmTMB adapter additionally supports Bernoulli(logit),
-lognormal(log), and explicit encounter, positive, and combined views of
-standard delta-lognormal fits. It does not reinterpret Poisson-link
-delta models or mixture families.</p>
-<p>tinyVAST and brms additionally support Gaussian, Poisson, NB2, Gamma,
-Bernoulli, and lognormal, with identity for Gaussian, logit for
-Bernoulli, and log links for Poisson/NB2/Gamma. tinyVAST lognormal uses
-a log-mean link; brms uses its identity link for log-location. Both
-expose the three joint lognormal views demonstrated above. brms permits
-observation-specific dispersion, held fixed during each local
-adjustment. tinyVAST requires ML, one response, and one family.</p>
+<p>Standard delta and hurdle fits offer explicit encounter, positive,
+and combined views. Positive-only calculations use the original
+observed-positive rows. Count hurdles use a zero-truncated density and
+its conditional positive mean. Poisson-link delta requires a separate
+adapter and is rejected explicitly.</p>
+<p>In a <strong>zero-inflated count mixture</strong>, a zero can come
+from the count process or from the extra-zero process.
+<code>component = "conditional"</code> estimates a local count-process
+shift, <code>"zero_inflation"</code> estimates an extra-zero log-odds
+shift, and <code>"combined"</code> estimates both and displays expected
+response. Every calculation uses the full mixture likelihood, including
+zeros. <code>"positive"</code> is accepted as an alias for the
+count-process view, but it does not filter out zeros. The extra-zero
+gate is not the probability of observed absence, so
+<code>"encounter"</code> is rejected for these mixtures. Boundary or
+unidentified shifts remain flagged in the table; they are not repaired
+with pseudocounts.</p>
+<p>tinyVAST lognormal uses a log-mean link; brms uses its identity link
+for log-location. brms permits observation-specific dispersion, held
+fixed during each local adjustment. tinyVAST requires ML, one response,
+and one family.</p>
 <p>Other families, other direct lognormal parameterisations, non-unit
 weights, and year interactions currently fail explicitly for this
 <strong>new implied-effect calculation</strong>. They remain supported
 where documented by the existing PIT diagnostics and other influ2
-functions. Joint hurdle/delta models outside these validated lognormal
-routes require separate adapters. brms multivariate/nonlinear,
+functions. Joint families outside the validated routes in the table
+require separate adapters. brms multivariate/nonlinear,
 censored/truncated, autocorrelated, Gaussian-process, and
 special-predictor structures also require separate validation. A
 positive-component calculation is never silently substituted for a

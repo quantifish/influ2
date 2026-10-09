@@ -2,6 +2,17 @@
 
 ## influ2 1.1.0
 
+- Expanded residual-implied effects to ordinary binomial GLM/GAM/glmmTMB
+  fits, sdmTMB Gaussian/Gamma/Poisson/NB2, and native Tweedie fits
+  across the five frequentist backends. A verified brms custom Tweedie
+  contract is also supported. Added standard spatial delta-Gamma,
+  glmmTMB Gamma and truncated-count hurdles, brms Gamma/count hurdles,
+  and zero-inflated Poisson/NB2 mixtures (plus glmmTMB zero-inflated
+  Tweedie). Mixtures retain zeros in their full likelihood; extra-zero
+  effects are distinct from observed encounters. Native nuisance
+  parameters remain fixed, and boundary/unidentified shifts remain
+  explicit.
+
 - CDI encounter panels use the compact label “Effect (log-odds)” while
   positive ratio panels retain “Relative Effect”. Shared
   fixed/random-effect plots use horizontal short category labels.
