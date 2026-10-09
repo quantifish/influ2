@@ -1,3 +1,50 @@
+## Expanded implied-effect families: 9 October 2026
+
+Feature source `bdda53245f90602684017f5372b8ca53041a4104` expands ordinary
+binomial, Gamma/Poisson/NB2, Tweedie, hurdle, and zero-inflated implied-effect
+support within the explicitly documented native backend/family matrix. brms
+Tweedie uses a verified custom-family contract. Joint mixtures retain zeros
+in their full likelihood; no latent membership is assumed. Public native
+fixtures contain genuine posterior draws from simulated data, and tests and
+vignettes do not run MCMC. Native nuisance parameters remain fixed; plotted
+profile intervals are conditional, not full-fit uncertainty or credible intervals.
+
+Checked archive:
+`/private/tmp/influ2-implied-final.gZVFz0/check/influ2_1.1.0.tar.gz`.
+SHA256: `dfd527ea9f84552fc3ce83e9f3f2769d6d47732206eb8458d4a7444c191fbbc1`.
+All 209 comparable shipped files match the clean source tree; DESCRIPTION's
+build metadata is checked separately. No private or full-fit directories ship.
+Mac arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completes with zero
+errors, zero warnings, and one incoming-feasibility NOTE for a new submission,
+also reporting uncertain Additional_repositories availability. A separate
+HTTP check confirms the declared repository's source index responds 200.
+DHARMa is unavailable locally, so `_R_CHECK_FORCE_SUGGESTS_=false` was used.
+This does not claim a PDF-manual or complete optional-dependency check.
+
+All ten vignettes build and rebuild. Archive tests pass 7,618 assertions with
+nine intentional CRAN visual skips and no failures or warnings. Full local
+instrumentation passes 7,542 assertions and measures 95.65009% coverage; its
+12 skips are CRAN visual and developer-source checks. The checked archive is
+installed in the normal Mac R library. N09/IV01 frozen studies are unchanged.
+
+GitHub coverage `37868210719` passes 7,560 assertions with no failures or
+warnings, three developer-source checks skipped, and 95.64% coverage. Codecov
+upload succeeds. pkgdown `37868210743` and Pages `37869078141` publish gh-pages
+revision `d7f5559ee781cb3a6629a332af77fd5425ba7257`, built from the feature
+source above. All ten-page/102-image caption/lightbox checks pass. Fresh HTTP
+checks verify the support table and Gamma-hurdle figure; the live figure matches
+the deployment and local preview. R-CMD-check `37868210688` passes on Ubuntu
+release and Windows release: each reports `Status: OK`, 7,636 assertions, and
+zero failures, warnings, or skips. Ubuntu's minimal-installation check passes.
+Later validation-record commits change only excluded files and use `[skip ci]`;
+the checked package code remains the feature source above.
+
+No CRAN or win-builder submission was made. Broader scientific calibration,
+Nicholas's interpretation review, remaining legacy triage, and unsupported
+family/model structures remain separate release decisions. Residual-engine
+choices are discussed separately; no simulation-PIT defaults are changed.
+Uncommitted CDI-order work is preserved and excluded from this publication.
+
 ## Native implied effects and paired delta steps: 16 September 2026
 
 Feature source `a6ddd1e9b9c46759d796cdc8cf6ee6b57f6edc45` includes native

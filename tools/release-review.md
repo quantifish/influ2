@@ -30,11 +30,34 @@ local optima, interval endpoints, native Gamma parameterisation differences,
 offset preservation, binomial counts, and save/reload. Six compact genuine
 brms posterior fixtures were generated with convergence checks; tests and
 vignettes do not run MCMC. Expanded focused tests pass without warnings.
-The first full instrumented run passes 7,540 assertions and measures 95.65%
+The final full instrumented run passes 7,542 assertions and measures 95.65009%
 coverage; its 12 skips are documented CRAN-mode visual/developer-source checks.
-A final archive and coverage rerun includes the subsequent boundary guard.
-The rebuilt implied-effects article is visually checked, and its shared
-caption/lightbox checks pass for 29 images on the two available local pages.
+The final Mac arm64 R 4.6.1 source check (`--as-cran --no-manual`) completes
+with zero errors, zero warnings, and one incoming-feasibility NOTE for a new
+submission, also reporting uncertain additional-repository availability.
+The repository's source index responds HTTP 200 in a separate check. DHARMa
+was unavailable, so `_R_CHECK_FORCE_SUGGESTS_=false` was used; no PDF-manual
+or complete optional-dependency check is claimed. All ten vignettes build
+and rebuild, with 7,618 assertions and nine intentional CRAN visual skips.
+All 209 comparable shipped files match the clean source tree. The archive is
+`/private/tmp/influ2-implied-final.gZVFz0/check/influ2_1.1.0.tar.gz`, SHA256
+`dfd527ea9f84552fc3ce83e9f3f2769d6d47732206eb8458d4a7444c191fbbc1`.
+It is installed in the normal Mac R library; no private/full-fit directories
+are shipped. An estimated-power mgcv GAM also passes native-power and shifted
+likelihood checks. N09/IV01 frozen source hashes and summaries remain unchanged.
+
+Feature source `bdda53245f90602684017f5372b8ca53041a4104` is pushed. GitHub
+coverage `37868210719` passes 7,560 assertions without failures or warnings,
+with three developer-source checks unavailable in that instrumented installation,
+and reports 95.64%; the Codecov upload succeeds. pkgdown `37868210743` and
+Pages `37869078141` pass. The rebuilt article is visually reviewed, and all
+ten-page/102-image caption/lightbox checks pass. The live support table and
+new figure are verified by HTTP; the live image matches the deployment and
+local preview byte-for-byte. R-CMD-check `37868210688` passes on Ubuntu release
+and Windows release: both report `Status: OK`, 7,636 assertions, and zero
+failures, warnings, or skips. Ubuntu's minimal-installation check also passes.
+Subsequent validation-record commits change only files excluded from the
+source archive and use `[skip ci]`; package code remains feature source above.
 
 These are numerical implementation checks, not new calibration evidence for
 every family. The original fit remains fixed, brms intervals are conditional

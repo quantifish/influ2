@@ -45,6 +45,15 @@ changed the residual defaults or turned likelihood-based implied effects into
 coefficient-plus-score calculations. Retain this as a separate residual API
 decision after the family extension.
 
+A native glmmTMB Poisson prototype confirms that TMB's CDF-based OSA call
+requires a `data.term.indicator`, which the unmodified fitted objective does
+not expose. Do not silently substitute a Gaussian approximation or ordinary
+conditional PIT and label it OSA. A future `residual_method` choice belongs
+at calculation time, with method/conditioning metadata carried into the shared
+plots. Analytic Dunn–Smyth needs validated fitted-CDF adapters; posterior or
+new-effect integration must stay explicit. Response predictive envelopes still
+require simulation independently of how observation-level residuals are computed.
+
 ## Nicholas's residual-diagnostic proposal
 
 The source is his four-page *influ2 residual diagnostics: proposed work* PDF,
