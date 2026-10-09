@@ -5,6 +5,74 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Optional DHARMa residual engine: 9 October 2026
+
+The maintainer clarified DHARMa, not an analytic Dunn–Smyth extension, and
+approved DHARMa as the first additional residual engine. Feature source
+`1d83f301b4b51b5759490357e2b1023025a94831` adds
+`residual_method = "dharma"` to the native and external calculators. It calls
+`DHARMa::createDHARMa(method = "PIT")` on existing whole response simulations;
+native conditioning, posterior draw identities, components, fitted means, and
+response checks are not delegated to DHARMa's model-specific simulation defaults.
+The separate tie-randomisation seed is recorded for exact native replay.
+There is no refitting, MCMC, analytic-CDF, OSA, or residual-rotation implementation.
+Likelihood-based implied effects are unchanged.
+
+Original uniform values, including exact 0/1 endpoints, are retained. Only the
+normal-score display replaces infinities with explicit symmetric limits, at
+least as extreme as the simulation-resolution baseline and every finite interior
+score. This preserves residual ordering. Endpoint flags/counts and actual limits
+are stored; grouped normal-score summaries include these placeholders and are
+not a substitute for uniform-scale, tail-sensitive analysis. The original rank
+engine and N09/IV01 source hashes and artefacts remain unchanged.
+
+The working DHARMa matrix is bounded by `dharma_max_mb` (256 MiB by default),
+with warnings from 100 MiB; this is not a peak-memory bound. Summary-only
+retention remains the default. `retain_dharma = TRUE` keeps the genuine native
+object and matrix for DHARMa tests/aggregation, but no fitted model. Direct API
+agreement tests pass with DHARMa 0.4.7 and 0.5.0 across all six native backends
+and aligned external inputs, including known trials, mixed models, posterior
+predictions, spatial fields, and explicit delta components. Tests also cover
+batching, caller RNG restoration (including an initially absent seed), errors,
+memory guards, compactness, endpoint ordering, and saved-object plots. Native
+DHARMa tests/aggregation are exercised without new responses or fits.
+
+The final clean source archive is
+`/private/tmp/influ2-dharma-final.yHLoSK/check/influ2_1.1.0.tar.gz`, SHA256
+`da4551f5f7d13e08d1e89baa153ae34172bbb8c86eb48cd27d8aa9e9af0a6fe7`.
+All 211 comparable shipped files match the clean source; DESCRIPTION differs
+only in ordinary build wrapping/metadata. Private review, assistant, and
+uncommitted CDI-order files are absent. Mac arm64 R 4.6.1
+`R CMD check --as-cran --no-manual` completes with zero errors, zero warnings,
+and the existing incoming NOTE for a new submission and uncertain additional
+repository availability. A separate HTTP check confirms its source index is
+available. DHARMa is now installed; all ten vignettes build/rebuild, and archive
+tests pass 7,889 assertions with nine intentional CRAN visual skips. No full
+PDF-manual check or CRAN/win-builder submission is claimed. The checked archive
+is installed in the normal Mac library.
+
+Local full coverage is 95.70668%, with 100% for the new bridge. The extended
+minimal-installation check reopens 13 compact results, including DHARMa, with
+no optional backends available, reproduces their plots, and passes all 21
+missing-dependency guards. A one-run 5,049-row/250-simulation lobster benchmark
+retains 0.67 MiB for compact DHARMa versus 10.43 MiB with its native object;
+the full response matrix alone is 9.63 MiB. These are object sizes, not peak RAM
+measurements or general performance guarantees.
+
+GitHub coverage `37873523857` passes 7,831 assertions without failures or
+warnings (three unavailable developer-source checks skipped), reports 95.71%,
+and uploads successfully to Codecov. pkgdown `37873523867` and Pages
+`37874156869` pass, publishing `7edecf124f6b9ba7c79edd5a8a171ec6aaefeda9` from
+the feature source. All ten-page/103-image caption/lightbox checks pass. The
+new figure is visually reviewed, its live bytes match the deployment, and local
+docs are synchronised with that publication without removing unrelated files.
+Ubuntu release job `113636710485` in R-CMD-check `37873523872` completes with
+`Status: OK`, 7,907 assertions, no failures, warnings, or skips, and a successful
+minimal-installation check. Windows release job `113636710650` remains in
+progress at this record's snapshot; do not interpret that as either failure
+or success.
+The separate uncommitted CDI-order work remains untouched.
+
 ## Expanded implied-effect families: 9 October 2026
 
 The approved extension adds ordinary binomial GLM/GAM/glmmTMB likelihoods,
@@ -67,8 +135,10 @@ delta models, non-unit case weights, annual interactions/smooths, and unsupporte
 distributional structures still fail explicitly. Existing uncommitted CDI-order
 work is preserved separately, and is not part of this publication.
 
-Dunn–Smyth and OSA residual choices remain a separate API discussion: no PIT
-defaults, stored ranks, or likelihood-implied-effect definitions changed.
+Residual-engine additions were discussed separately from this family extension;
+the maintainer subsequently clarified DHARMa, not an analytic Dunn–Smyth route.
+See the later DHARMa entry above. No PIT defaults, stored ranks, or
+likelihood-implied-effect definitions changed in the family extension.
 No CRAN or win-builder submission is authorised or performed by this extension.
 
 ## Automatic regular CDI label spacing: 16 September 2026

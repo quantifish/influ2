@@ -1,3 +1,45 @@
+## Optional DHARMa residual engine: 9 October 2026
+
+Feature source `1d83f301b4b51b5759490357e2b1023025a94831` adds optional native
+DHARMa residual calculation, unchanged simulation/conditioning/component
+contracts, original uniform endpoints, explicitly limited normal-score endpoint
+displays, and optional retention of the genuine DHARMa object. The default
+simulation-PIT engine and frozen N09/IV01 sources/results are unchanged.
+DHARMa >= 0.4.7 remains in Suggests; direct tests pass with 0.4.7 and 0.5.0.
+No OSA, refitting, MCMC, residual rotation, or new calibrated-test claim is added.
+
+Checked archive:
+`/private/tmp/influ2-dharma-final.yHLoSK/check/influ2_1.1.0.tar.gz`.
+SHA256: `da4551f5f7d13e08d1e89baa153ae34172bbb8c86eb48cd27d8aa9e9af0a6fe7`.
+All 211 comparable shipped files match the clean source tree, with DESCRIPTION
+build wrapping checked separately; no private review or uncommitted CDI-order
+files ship. Mac arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completes with
+zero errors, zero warnings, and the existing incoming-feasibility NOTE for a
+new submission and uncertain Additional_repositories availability. Its source
+index responds HTTP 200 separately. All ten vignettes build/rebuild; tests pass
+7,889 assertions, with nine intentional CRAN visual skips. DHARMa is available
+locally for this check; no PDF-manual pass is claimed. The archive is installed
+in the normal Mac library. Full local coverage is 95.70668%; the new bridge is
+100% covered. Minimal installation passes 13 saved-result checks (including
+DHARMa plots without DHARMa available) and 21 missing-package guards.
+
+GitHub coverage `37873523857` passes 7,831 assertions without failures or
+warnings, with three unavailable developer-source checks skipped, and reports
+95.71%. Codecov upload succeeds. pkgdown `37873523867` and Pages `37874156869`
+publish gh-pages `7edecf124f6b9ba7c79edd5a8a171ec6aaefeda9` from the feature
+source. Ten-page/103-image caption/lightbox checks pass; the worked figure is
+visually checked, and its live bytes match the deployment. Local docs are
+synchronised with the publication. Ubuntu release job `113636710485` in
+R-CMD-check `37873523872` completes with `Status: OK`, 7,907 assertions, no
+failures, warnings, or skips, and a successful minimal-installation check.
+Windows release job `113636710650` is still running at this record's snapshot;
+its result is not yet known.
+
+No CRAN or win-builder submission was made. Numerical bridge tests do not
+establish fitted-model calibration for DHARMa tests. Scientific interpretation,
+remaining legacy triage, the PDF-manual check, and any OSA implementation remain
+separate release decisions. Uncommitted CDI-order work is preserved separately.
+
 ## Expanded implied-effect families: 9 October 2026
 
 Feature source `bdda53245f90602684017f5372b8ca53041a4104` expands ordinary
