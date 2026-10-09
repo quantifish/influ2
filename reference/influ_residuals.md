@@ -24,7 +24,10 @@ influ_residuals(
   calibration_groups = NULL,
   trial_counts = NULL,
   groups = NULL,
-  conditioning = "backend_default"
+  conditioning = "backend_default",
+  residual_method = c("simulation_pit", "dharma"),
+  retain_dharma = FALSE,
+  dharma_max_mb = 256
 )
 
 # S3 method for class 'influ_residuals'
@@ -62,6 +65,10 @@ print(x, ...)
 - seed:
 
   Integer random seed. The caller's random-number state is restored.
+  DHARMa tie randomisation uses a separate deterministic seed,
+  `(seed + 104729) %% .Machine$integer.max`, recorded in
+  `metadata$dharma_seed`, to avoid reusing the beginning of the
+  simulation/draw-selection RNG stream.
 
 - grid_size:
 
@@ -122,6 +129,29 @@ print(x, ...)
   back. See the conditioning section below before comparing model
   diagnostics.
 
+- residual_method:
+
+  `"simulation_pit"` (default) preserves influ2's compact
+  finite-simulation ranks. `"dharma"` delegates the residual calculation
+  to optional DHARMa \>= 0.4.7, using `createDHARMa(method = "PIT")` on
+  the same native response simulations and conditioning. It does not
+  call `simulateResiduals()` or adopt DHARMa's model-specific defaults.
+
+- retain_dharma:
+
+  Keep the genuine DHARMa object in `result$dharma`, including its full
+  response matrix, for DHARMa plotting, aggregation, and tests. Default
+  `FALSE` discards it after calculating the compact summaries. Requires
+  `residual_method = "dharma"`. No fitted model is retained.
+
+- dharma_max_mb:
+
+  Maximum size of the full DHARMa response matrix in MiB, default 256. A
+  larger request fails before simulation. Requests of at least 100 MiB
+  warn. This limits the matrix alone, not peak memory: DHARMa and native
+  simulators allocate additional copies. `batch_size` cannot remove this
+  full-matrix cost. Increase the limit explicitly only if appropriate.
+
 - x:
 
   An \`influ_residuals\` object.
@@ -141,12 +171,13 @@ compact ECDF summaries, and explicit calculation metadata.
 Each simulation is a joint response vector, preserving the native
 method's within-draw dependence. For observation \\i\\, let \\L_i\\
 count simulated responses below the observation and \\E_i\\ count ties.
-The randomised finite-simulation rank is \\(L_i + U_i(E_i + 1))/(B +
-1)\\, with independent uniform \\U_i\\. Its normal score is a
-simulation-based quantile residual, not a Pearson residual or an exact
-analytic PIT. Randomisation includes zeros and other atoms without
-adding arbitrary noise to catches. Increase `nsim` and inspect seed
-sensitivity for important conclusions.
+With the default `residual_method = "simulation_pit"`, the randomised
+finite-simulation rank is \\(L_i + U_i(E_i + 1))/(B + 1)\\, with
+independent uniform \\U_i\\. Its normal score is a simulation-based
+quantile residual, not a Pearson residual or an exact analytic PIT.
+Randomisation includes zeros and other atoms without adding arbitrary
+noise to catches. Increase `nsim` and inspect seed sensitivity for
+important conclusions.
 
 GLMs and GAMs simulate observation error at fitted parameters, including
 fitted smooths. `glmmTMB` uses its native simulation of new random
@@ -187,12 +218,33 @@ Fitted-data calibration, including grouped checks, is exploratory.
 Matching overall or annual means may follow from fitted intercept/year
 effects and does not validate a model.
 
-The object retains neither the fitted model nor an
+By default, the object retains neither the fitted model nor an
 observation-by-simulation matrix. Working storage includes an
 observation-by-batch matrix and a grid-by-simulation matrix, plus
 compact bin/group simulation summaries. Native backends may allocate
-additional memory. The ECDF grid spans observations and the first
-simulation batch; it is deliberately compact, not an exact
+additional memory.
+
+With `residual_method = "dharma"`, working storage also includes the
+full observation-by-simulation matrix. `observations$pit` contains
+DHARMa's unchanged uniform-scale residuals, which can equal zero or one.
+Their normal scores would be infinite at these endpoints. For display
+and grouped summaries only, endpoint scores are replaced by finite
+symmetric limits at least as extreme as every interior score and
+`qnorm(c(0.5, nsim + 0.5)/(nsim + 1))`. Interior scores are unchanged,
+and ordering is preserved (endpoint placeholders can tie an interior
+extreme). `observations$simulation_outlier` flags endpoints, and
+metadata records their count and finite display limits. These are
+display placeholders, not distances beyond the simulated range. Uniform
+PIT plots and the retained DHARMa object keep exact endpoints. Grouped
+normal-score summaries include these display placeholders; use the
+uniform values or DHARMa's own aggregation for tail-sensitive work.
+DHARMa tests are available only when its object is retained; their
+interpretation still depends on fitting, conditioning, and dependence.
+This does not implement OSA, residual rotation, or a refitted bootstrap.
+Likelihood-based
+[`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+are unaffected by the residual engine. The ECDF grid spans observations
+and the first simulation batch; it is deliberately compact, not an exact
 representation of every simulated jump. For binomial GLMs and `glmmTMB`,
 responses are success counts (including proportion responses with
 integer trial weights).

@@ -154,8 +154,9 @@ distribution, rather than holding the twelve fitted monthly effects
 fixed. Thus the ECDF band also reflects between-month variation in
 replicated data. These are model checks, not a test of whether
 particular observed months must follow a realised curve. The
-generalised-residual helper and DHARMa examples below remain separate
-fixed-effect comparisons.
+generalised-residual helper and native DHARMa comparisons below also
+show fixed-effect comparisons. The integrated DHARMa example uses this
+mixed model and explicitly retains influ2’s simulation conditioning.
 
 ``` r
 
@@ -1252,9 +1253,139 @@ updated.
 
 DHARMa supplies simulation-based quantile residuals and associated
 diagnostics ([Hartig 2026](#ref-DHARMa2026)). It is a suggested,
-optional dependency, not part of the compact influence calculation. The
-following example contrasts Poisson and negative-binomial variation
-while holding the mean formula fixed.
+optional dependency, not part of the compact influence calculation. It
+is now also an optional residual engine within the shared influ2
+plotting framework:
+
+``` r
+
+dharma_checks <- influ_residuals(
+  lobster_nb_mixed, nsim = 250, seed = 20260907,
+  residual_method = "dharma", conditioning = "new_effects"
+)
+dharma_checks
+#> DHARMa residual diagnostics (glmmTMB)
+#> 5049 observations; 250 simulations
+#> Time: year [ year-name detection ]
+#> Native simulations at fitted parameters; random effects resimulated
+#> Exploratory ranks; not a calibrated goodness-of-fit test
+#> DHARMa 0/1 endpoints: 16; normal-score display limits +/-3.62. Uniform PIT values remain unchanged.
+#> No model or observation-by-simulation matrix retained
+```
+
+`residual_method = "dharma"` sends the complete native response
+simulations to `DHARMa::createDHARMa(method = "PIT")`. DHARMa calculates
+its own uniform-scale residuals; this is not a new label on influ2’s
+finite-simulation ranks. It works through the existing simulation
+adapters for GLM, GAM, glmmTMB, brms, sdmTMB, and single-response
+tinyVAST models, subject to their existing family, conditioning, and
+component restrictions. No second model simulator, refitting, or MCMC is
+invoked. In particular, this example redraws random effects because we
+selected `conditioning = "new_effects"`; it does not inherit DHARMa
+0.5.0’s conditional-simulation default. DHARMa’s tie randomisation uses
+a separate deterministic seed derived from `seed`, recorded in
+`metadata$dharma_seed`, so it does not reuse the start of the
+response-simulation or posterior-draw-selection random-number stream.
+
+``` r
+
+plot(dharma_checks, response_scale = "log1p")
+```
+
+![Four panels use DHARMa residuals for the mixed lobster model, with
+matching predictive means, year distributions, and response
+ECDFs.](residual-diagnostics_files/figure-html/residual-dharma-bridge-overview-1.png)
+
+DHARMa residuals in influ2’s four-panel display for the
+negative-binomial glmmTMB lobster model. The native simulations redraw
+monthly effects. Panels A-C show normal scores of DHARMa’s unchanged
+uniform-scale PIT values; exact 0/1 endpoints are flagged and displayed
+at labelled finite limits that preserve residual ordering. Panel D
+remains a response-distribution check, not a DHARMa residual test. The
+reference bands are exploratory, not calibrated fitted-model acceptance
+criteria.
+
+The default `residual_method = "simulation_pit"` remains unchanged. Both
+engines use the same simulation targets, but their finite-simulation
+quantile rules differ. DHARMa’s `observations$pit` values can be exactly
+zero or one. We retain those values, and flag them in
+`observations$simulation_outlier`. Only their normal-score
+representation replaces infinities with finite symmetric limits, at
+least as extreme as `qnorm(c(0.5, nsim + 0.5)/(nsim + 1))` and all
+interior scores. Interior scores are unchanged. This preserves ordering,
+although an endpoint placeholder can tie an interior extreme. These are
+display limits, not the distance of an observation from the simulated
+range. Grouped normal-score summaries include the placeholders; use
+uniform values or DHARMa’s own aggregation for tail-sensitive work. Plot
+captions and metadata record the limits.
+`plot(dharma_checks, type = "pit_ecdf")` and `"pit_ecdf_diff"` retain
+the exact uniform values, including endpoints. As before, their optional
+bayesplot reference assumes independent uniform values, not a calibrated
+fitted-data test.
+
+### Retain the native object only when needed
+
+DHARMa requires a full observation-by-simulation matrix during
+calculation, even when `batch_size` is small. It and the native
+simulator may allocate additional working copies. `dharma_max_mb` limits
+the matrix alone (256 MiB by default), and requests of at least 100 MiB
+warn; this is not a peak-memory bound. By default, we discard the matrix
+and DHARMa object, keeping only the compact influ2 result. Retain the
+original DHARMa object explicitly to use its tools:
+
+``` r
+
+dharma_retained <- influ_residuals(
+  lobster_nb_mixed, nsim = 250, seed = 20260907,
+  residual_method = "dharma", conditioning = "new_effects",
+  retain_dharma = TRUE
+)
+# These reuse the existing responses, without fitting or simulating again:
+head(dharma_retained$dharma$scaledResiduals)
+#> [1] 0.8095948 0.3141531 0.8532295 0.5088420 0.7079369 0.4978355
+DHARMa::testDispersion(dharma_retained$dharma, plot = FALSE)
+#> 
+#>  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+#>  simulated
+#> 
+#> data:  simulationOutput
+#> dispersion = 1.1888, p-value = 0.368
+#> alternative hypothesis: two.sided
+```
+
+This genuine `dharma_retained$dharma` object contains the response
+simulations, not a fitted model or Pearson residuals. DHARMa’s
+aggregation tools can aggregate observations and matching simulated
+responses before recalculating residuals. Its tests do not remove
+fitting, posterior-data-reuse, or residual-dependence limitations; their
+p-values should not become automatic selection rules. Keep a compact
+result if only influ2 plots are required. Saved compact results can be
+replotted without DHARMa installed; only a new DHARMa calculation or use
+of its own retained-object tools needs the dependency.
+
+For externally generated response matrices, choose the same engine in
+`as_influ_residuals(..., residual_method = "dharma", integer_response = TRUE)`
+for counts, or `integer_response = FALSE` for continuous/mixed
+distributions. Bernoulli and grouped-binomial kinds supply `TRUE`
+automatically. All existing ID alignment and component declarations
+still apply. A combined hurdle/delta diagnostic is not a
+positive-component diagnostic.
+
+Likelihood-based residual-implied effects do not use PIT or DHARMa
+scores, so this option does not change
+[`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
+or
+[`plot_implied_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.md).
+OSA remains a separate future adapter: it would calculate sequential
+predictive residuals with an explicit ordering, not convert DHARMa
+values into OSA residuals.
+
+### Native DHARMa comparisons
+
+The following example contrasts Poisson and negative-binomial variation
+while holding the mean formula fixed, using DHARMa’s own simulation
+entry point. Unlike the integrated example, these are fixed-effect
+models.
 
 ``` r
 

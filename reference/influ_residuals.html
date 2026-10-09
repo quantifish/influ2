@@ -73,7 +73,10 @@ residuals by year, and a response-adaptive calibration or distribution panel.</p
 <span>  calibration_groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  trial_counts <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  conditioning <span class="op">=</span> <span class="st">"backend_default"</span></span>
+<span>  conditioning <span class="op">=</span> <span class="st">"backend_default"</span>,</span>
+<span>  residual_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"simulation_pit"</span>, <span class="st">"dharma"</span><span class="op">)</span>,</span>
+<span>  retain_dharma <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  dharma_max_mb <span class="op">=</span> <span class="fl">256</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_residuals'</span></span>
@@ -110,7 +113,10 @@ choices require an explicit override. No arbitrary grouping is selected.</p></dd
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer random seed. The caller's random-number state is restored.</p></dd>
+<dd><p>Integer random seed. The caller's random-number state is restored.
+DHARMa tie randomisation uses a separate deterministic seed,
+<code>(seed + 104729) %% .Machine$integer.max</code>, recorded in <code>metadata$dharma_seed</code>,
+to avoid reusing the beginning of the simulation/draw-selection RNG stream.</p></dd>
 
 
 <dt id="arg-grid-size">grid_size<a class="anchor" aria-label="anchor" href="#arg-grid-size"></a></dt>
@@ -170,6 +176,29 @@ glmmTMB, and <code>"posterior_predictive"</code> for brms. Explicit alternatives
 See the conditioning section below before comparing model diagnostics.</p></dd>
 
 
+<dt id="arg-residual-method">residual_method<a class="anchor" aria-label="anchor" href="#arg-residual-method"></a></dt>
+<dd><p><code>"simulation_pit"</code> (default) preserves influ2's
+compact finite-simulation ranks. <code>"dharma"</code> delegates the residual
+calculation to optional DHARMa &gt;= 0.4.7, using <code>createDHARMa(method = "PIT")</code>
+on the same native response simulations and conditioning. It does not
+call <code>simulateResiduals()</code> or adopt DHARMa's model-specific defaults.</p></dd>
+
+
+<dt id="arg-retain-dharma">retain_dharma<a class="anchor" aria-label="anchor" href="#arg-retain-dharma"></a></dt>
+<dd><p>Keep the genuine DHARMa object in <code>result$dharma</code>,
+including its full response matrix, for DHARMa plotting, aggregation, and
+tests. Default <code>FALSE</code> discards it after calculating the compact summaries.
+Requires <code>residual_method = "dharma"</code>. No fitted model is retained.</p></dd>
+
+
+<dt id="arg-dharma-max-mb">dharma_max_mb<a class="anchor" aria-label="anchor" href="#arg-dharma-max-mb"></a></dt>
+<dd><p>Maximum size of the full DHARMa response matrix in MiB,
+default 256. A larger request fails before simulation. Requests of at least
+100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
+native simulators allocate additional copies. <code>batch_size</code> cannot remove
+this full-matrix cost. Increase the limit explicitly only if appropriate.</p></dd>
+
+
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>An `influ_residuals` object.</p></dd>
 
@@ -189,7 +218,7 @@ compact ECDF summaries, and explicit calculation metadata.</p>
     <p>Each simulation is a joint response vector, preserving the native
 method's within-draw dependence. For observation \(i\), let \(L_i\)
 count simulated responses below the observation and \(E_i\) count ties.
-The randomised finite-simulation rank is
+With the default <code>residual_method = "simulation_pit"</code>, the randomised finite-simulation rank is
 \((L_i + U_i(E_i + 1))/(B + 1)\), with independent uniform \(U_i\).
 Its normal score is a simulation-based quantile residual, not a Pearson
 residual or an exact analytic PIT. Randomisation includes zeros and other
@@ -228,10 +257,28 @@ identity line. Dependence is only that represented by the native simulator;
 no extra vessel or temporal dependence is added. Fitted-data calibration,
 including grouped checks, is exploratory. Matching overall or annual means
 may follow from fitted intercept/year effects and does not validate a model.</p>
-<p>The object retains neither the fitted model nor an observation-by-simulation
+<p>By default, the object retains neither the fitted model nor an observation-by-simulation
 matrix. Working storage includes an observation-by-batch matrix and a
 grid-by-simulation matrix, plus compact bin/group simulation summaries.
-Native backends may allocate additional memory.
+Native backends may allocate additional memory.</p>
+<p>With <code>residual_method = "dharma"</code>, working storage also includes the full
+observation-by-simulation matrix. <code>observations$pit</code> contains DHARMa's
+unchanged uniform-scale residuals, which can equal zero or one. Their
+normal scores would be infinite at these endpoints. For display and grouped
+summaries only, endpoint scores are replaced by
+finite symmetric limits at least as extreme as every interior score and
+<code>qnorm(c(0.5, nsim + 0.5)/(nsim + 1))</code>. Interior scores are unchanged, and
+ordering is preserved (endpoint placeholders can tie an interior extreme).
+<code>observations$simulation_outlier</code> flags endpoints, and metadata records
+their count and finite display limits. These are display placeholders,
+not distances beyond the simulated range.
+Uniform PIT plots and the retained DHARMa object keep exact endpoints.
+Grouped normal-score summaries include these display placeholders; use
+the uniform values or DHARMa's own aggregation for tail-sensitive work.
+DHARMa tests are available only when its object is retained; their
+interpretation still depends on fitting, conditioning, and dependence.
+This does not implement OSA, residual rotation, or a refitted bootstrap.
+Likelihood-based <code><a href="implied_effects.html">implied_effects()</a></code> are unaffected by the residual engine.
 The ECDF grid spans observations and the first simulation batch; it is
 deliberately compact, not an exact representation of every simulated jump.
 For binomial GLMs and <code>glmmTMB</code>, responses are success counts (including

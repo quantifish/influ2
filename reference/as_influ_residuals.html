@@ -77,7 +77,11 @@ responses are simulated.</p>
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  calibration_bins <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  calibration_min_n <span class="op">=</span> <span class="fl">20L</span>,</span>
-<span>  calibration_groups <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  calibration_groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  residual_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"simulation_pit"</span>, <span class="st">"dharma"</span><span class="op">)</span>,</span>
+<span>  retain_dharma <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  dharma_max_mb <span class="op">=</span> <span class="fl">256</span>,</span>
+<span>  integer_response <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -166,7 +170,10 @@ in each batch. No additional responses are generated.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer random seed. The caller's random-number state is restored.</p></dd>
+<dd><p>Integer random seed. The caller's random-number state is restored.
+DHARMa tie randomisation uses a separate deterministic seed,
+<code>(seed + 104729) %% .Machine$integer.max</code>, recorded in <code>metadata$dharma_seed</code>,
+to avoid reusing the beginning of the simulation/draw-selection RNG stream.</p></dd>
 
 
 <dt id="arg-grid-size">grid_size<a class="anchor" aria-label="anchor" href="#arg-grid-size"></a></dt>
@@ -201,6 +208,37 @@ groups below this size remain visible but have no predictive envelope.</p></dd>
 defining a joint scientific grouping, e.g. <code>c("year", "target")</code>. These
 columns must not be defined from the outcome.</p></dd>
 
+
+<dt id="arg-residual-method">residual_method<a class="anchor" aria-label="anchor" href="#arg-residual-method"></a></dt>
+<dd><p><code>"simulation_pit"</code> (default) preserves influ2's
+compact finite-simulation ranks. <code>"dharma"</code> delegates the residual
+calculation to optional DHARMa &gt;= 0.4.7, using <code>createDHARMa(method = "PIT")</code>
+on the same native response simulations and conditioning. It does not
+call <code>simulateResiduals()</code> or adopt DHARMa's model-specific defaults.</p></dd>
+
+
+<dt id="arg-retain-dharma">retain_dharma<a class="anchor" aria-label="anchor" href="#arg-retain-dharma"></a></dt>
+<dd><p>Keep the genuine DHARMa object in <code>result$dharma</code>,
+including its full response matrix, for DHARMa plotting, aggregation, and
+tests. Default <code>FALSE</code> discards it after calculating the compact summaries.
+Requires <code>residual_method = "dharma"</code>. No fitted model is retained.</p></dd>
+
+
+<dt id="arg-dharma-max-mb">dharma_max_mb<a class="anchor" aria-label="anchor" href="#arg-dharma-max-mb"></a></dt>
+<dd><p>Maximum size of the full DHARMa response matrix in MiB,
+default 256. A larger request fails before simulation. Requests of at least
+100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
+native simulators allocate additional copies. <code>batch_size</code> cannot remove
+this full-matrix cost. Increase the limit explicitly only if appropriate.</p></dd>
+
+
+<dt id="arg-integer-response">integer_response<a class="anchor" aria-label="anchor" href="#arg-integer-response"></a></dt>
+<dd><p>For <code>residual_method = "dharma"</code>, declare whether
+the supplied response distribution is integer-valued. Required for general
+response kinds; defaults to <code>TRUE</code> for Bernoulli/grouped binomial. This is
+distribution metadata, not inferred from realised observed values. DHARMa's
+PIT calculation randomises atoms in both discrete and mixed distributions.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -226,8 +264,10 @@ observed-positive rows. Do not remove zeros separately within simulation
 columns or relabel a combined matrix as a component calculation. No
 conversion of censored, multivariate, weighted, or other special response
 encodings is provided; resolve the predictive target before using this API.</p>
-<p>The shared engine randomises ties and applies <code>qnorm(pit)</code> exactly as for
-fitted models. The caller's random-number state is restored, including on
+<p>The default shared engine randomises ties and applies <code>qnorm(pit)</code> exactly
+as for fitted models. DHARMa uses its own PIT calculation and the endpoint
+display convention documented in <code><a href="influ_residuals.html">influ_residuals()</a></code>. The caller's
+random-number state is restored, including on
 error. Reusing the same matrix, seed, batch size, and RNG kind reproduces
 the result. A native adapter can consume random numbers when preparing
 simulations (e.g. selecting posterior draws), so an identical seed alone
@@ -239,7 +279,9 @@ original matrix still occupies memory until they release it. Temporary
 ECDF/calibration storage and the first-batch ECDF grid follow the existing
 <code><a href="influ_residuals.html">influ_residuals()</a></code> calculation. Changing batch size can change that grid,
 but not the ranks or sequentially calculated predictive means for fixed
-supplied simulations. No counters or full simulation-retention mode is added.</p>
+supplied simulations. With <code>residual_method = "dharma"</code>, an additional
+full matrix is assembled for DHARMa and discarded by default. Set
+<code>retain_dharma = TRUE</code> only when DHARMa's original object is needed.</p>
 <p>These remain exploratory predictive checks. Fitted-data ranks are not
 automatically uniform or calibrated for parameter estimation, posterior
 data reuse, or latent dependence. This constructor does not implement

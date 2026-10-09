@@ -2,6 +2,18 @@
 
 ## influ2 1.1.0
 
+- Added optional DHARMa residual calculation to
+  [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
+  and
+  [`as_influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/as_influ_residuals.md),
+  reusing native response simulations, conditioning, and component
+  selection. DHARMa owns the PIT calculation; uniform endpoints are
+  preserved, with explicit finite limits in normal-score displays.
+  Results stay compact by default; `retain_dharma = TRUE` keeps the
+  genuine DHARMa object for its own tools. Full-matrix allocation has a
+  configurable memory guard. The default residual engine and
+  likelihood-implied effects are unchanged.
+
 - Expanded residual-implied effects to ordinary binomial GLM/GAM/glmmTMB
   fits, sdmTMB Gaussian/Gamma/Poisson/NB2, and native Tweedie fits
   across the five frequentist backends. A verified brms custom Tweedie

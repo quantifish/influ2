@@ -27,7 +27,11 @@ as_influ_residuals(
   groups = NULL,
   calibration_bins = 10L,
   calibration_min_n = 20L,
-  calibration_groups = NULL
+  calibration_groups = NULL,
+  residual_method = c("simulation_pit", "dharma"),
+  retain_dharma = FALSE,
+  dharma_max_mb = 256,
+  integer_response = NULL
 )
 ```
 
@@ -119,6 +123,10 @@ as_influ_residuals(
 - seed:
 
   Integer random seed. The caller's random-number state is restored.
+  DHARMa tie randomisation uses a separate deterministic seed,
+  `(seed + 104729) %% .Machine$integer.max`, recorded in
+  `metadata$dharma_seed`, to avoid reusing the beginning of the
+  simulation/draw-selection RNG stream.
 
 - grid_size:
 
@@ -154,6 +162,38 @@ as_influ_residuals(
   scientific grouping, e.g. `c("year", "target")`. These columns must
   not be defined from the outcome.
 
+- residual_method:
+
+  `"simulation_pit"` (default) preserves influ2's compact
+  finite-simulation ranks. `"dharma"` delegates the residual calculation
+  to optional DHARMa \>= 0.4.7, using `createDHARMa(method = "PIT")` on
+  the same native response simulations and conditioning. It does not
+  call `simulateResiduals()` or adopt DHARMa's model-specific defaults.
+
+- retain_dharma:
+
+  Keep the genuine DHARMa object in `result$dharma`, including its full
+  response matrix, for DHARMa plotting, aggregation, and tests. Default
+  `FALSE` discards it after calculating the compact summaries. Requires
+  `residual_method = "dharma"`. No fitted model is retained.
+
+- dharma_max_mb:
+
+  Maximum size of the full DHARMa response matrix in MiB, default 256. A
+  larger request fails before simulation. Requests of at least 100 MiB
+  warn. This limits the matrix alone, not peak memory: DHARMa and native
+  simulators allocate additional copies. `batch_size` cannot remove this
+  full-matrix cost. Increase the limit explicitly only if appropriate.
+
+- integer_response:
+
+  For `residual_method = "dharma"`, declare whether the supplied
+  response distribution is integer-valued. Required for general response
+  kinds; defaults to `TRUE` for Bernoulli/grouped binomial. This is
+  distribution metadata, not inferred from realised observed values.
+  DHARMa's PIT calculation randomises atoms in both discrete and mixed
+  distributions.
+
 ## Value
 
 An `influ_residuals` object, using the same plotting and grouped
@@ -184,13 +224,15 @@ conversion of censored, multivariate, weighted, or other special
 response encodings is provided; resolve the predictive target before
 using this API.
 
-The shared engine randomises ties and applies `qnorm(pit)` exactly as
-for fitted models. The caller's random-number state is restored,
-including on error. Reusing the same matrix, seed, batch size, and RNG
-kind reproduces the result. A native adapter can consume random numbers
-when preparing simulations (e.g. selecting posterior draws), so an
-identical seed alone does not guarantee identical ranks between the two
-entry points.
+The default shared engine randomises ties and applies `qnorm(pit)`
+exactly as for fitted models. DHARMa uses its own PIT calculation and
+the endpoint display convention documented in
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md).
+The caller's random-number state is restored, including on error.
+Reusing the same matrix, seed, batch size, and RNG kind reproduces the
+result. A native adapter can consume random numbers when preparing
+simulations (e.g. selecting posterior draws), so an identical seed alone
+does not guarantee identical ranks between the two entry points.
 
 This initial interface accepts an in-memory matrix, not a generator or
 on-disk stream. It is processed in observation-by-batch blocks; the
@@ -201,7 +243,9 @@ follow the existing
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
 calculation. Changing batch size can change that grid, but not the ranks
 or sequentially calculated predictive means for fixed supplied
-simulations. No counters or full simulation-retention mode is added.
+simulations. With `residual_method = "dharma"`, an additional full
+matrix is assembled for DHARMa and discarded by default. Set
+`retain_dharma = TRUE` only when DHARMa's original object is needed.
 
 These remain exploratory predictive checks. Fitted-data ranks are not
 automatically uniform or calibrated for parameter estimation, posterior

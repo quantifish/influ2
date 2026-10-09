@@ -134,12 +134,17 @@
 <code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span><span class="op">)</span>                          <span class="co"># Automatic fourth panel.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span>  <span class="co"># Explicit original CDF.</span></span></code></pre></div>
+<p>DHARMa is an optional residual engine using the same native simulations and conditioning choices:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">model</span>, residual_method <span class="op">=</span> <span class="st">"dharma"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span><span class="op">)</span></span></code></pre></div>
+<p>This leaves the default compact engine unchanged. DHARMa needs a full response matrix while calculating; it is discarded by default. Use <code>retain_dharma = TRUE</code> only when its original object is needed for DHARMa’s own tools. See the <a href="https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#simulation-based-checks-with-dharma">DHARMa example</a> for memory limits, endpoint handling, and interpretation.</p>
 <p>See <a href="https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#encounter-calibration">Residual diagnostics</a> for predictive-envelope interpretation and grouped checks that can reveal missing structure even when pooled encounter calibration looks good.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"quantifish/influ2"</span><span class="op">)</span></span></code></pre></div>
 <p>See <code><a href="articles/influ2.html">vignette("influ2")</a></code> for the framework, memory strategy, and model examples. The separate <code><a href="articles/bentley-validation.html">vignette("bentley-validation")</a></code> documents and plots the frozen agreement check against the original Bentley implementation.</p>
 </div>
