@@ -36,22 +36,26 @@ brms Tweedie requires an explicit, numerically verified custom-family contract;
 it is not a built-in brms family. The current scope table is in
 `vignettes/implied-effects.Rmd`; dated validation goes in `release-review.md`.
 
-The maintainer also requested discussion of Dunn–Smyth and OSA choices.
-Existing normal-score simulation PIT residuals already target randomised
-quantiles; an analytic fitted-CDF route would remove their finite-simulation
-approximation. OSA adds sequential conditioning and requires an explicit order
+The maintainer clarified that the requested additional engines are **DHARMa**
+and OSA, not an analytic Dunn–Smyth implementation. The first approved increment
+adds `residual_method = "dharma"` to the native and external calculators.
+DHARMa computes its own PIT values from the existing joint response simulations,
+with unchanged conditioning/component contracts. Compact retention remains the
+default; optional native-object retention enables DHARMa's own tools, with
+explicit full-matrix memory limits and endpoint-display metadata.
+OSA adds sequential conditioning and requires an explicit order
 and a native validated prediction/integration route. This discussion has not
 changed the residual defaults or turned likelihood-based implied effects into
 coefficient-plus-score calculations. Retain this as a separate residual API
-decision after the family extension.
+decision; no OSA implementation or change to the residual defaults is approved
+in this increment.
 
 A native glmmTMB Poisson prototype confirms that TMB's CDF-based OSA call
 requires a `data.term.indicator`, which the unmodified fitted objective does
 not expose. Do not silently substitute a Gaussian approximation or ordinary
-conditional PIT and label it OSA. A future `residual_method` choice belongs
+conditional PIT and label it OSA. The implemented `residual_method` choice belongs
 at calculation time, with method/conditioning metadata carried into the shared
-plots. Analytic Dunn–Smyth needs validated fitted-CDF adapters; posterior or
-new-effect integration must stay explicit. Response predictive envelopes still
+plots. Posterior or new-effect integration must stay explicit. Response predictive envelopes still
 require simulation independently of how observation-level residuals are computed.
 
 ## Nicholas's residual-diagnostic proposal
@@ -71,7 +75,7 @@ used influ2 revision `7bb976c`.
 | N05 | Accept externally generated response simulations — **Completed, 11 September** | `as_influ_residuals()` accepts a finite observation-by-simulation matrix with exact row IDs, aligned data, explicit response/year/kind/conditioning, and optional components/groups. Predictive means come from those same simulations; binomial calibration requires original fitted probabilities and known trial counts. No new simulations, automatic realignment, retained matrices, or streaming API. |
 | N06 | Make spatial and mixed-effect conditioning explicit — **Completed, 11 September** | `conditioning` exposes backend defaults and supported fitted, single conditional-draw, new-effect, and posterior-predictive targets. Independent native objectives protect fits; sdmTMB/tinyVAST share one joint draw across all response batches, with matching probabilities and explicit delta components. glmmTMB supports fitted effects and new effects, including protection against externally changed simulation controls. Native replay, batching, RNG, field/component, and guard tests pass. Shared draws require converged, unprofiled ML fits, not REML. Worked spatial comparisons are rendered. PR #26 passed both release platforms, coverage, and website checks and was merged; see the [audit](residual-conditioning-audit.md). Existing defaults remain; broader calibration validation is N09. |
 | N07 | Optional response-simulation retention — **Candidate** | Agree summary-only, in-memory, and potentially on-disk modes, draw/row subsetting, and memory warnings. Disk storage does not remove the cost of materialising a full matrix for another package. Keep compact retention as the default. |
-| N08 | DHARMa and response-simulation bayesplot bridges — **Candidate** | Reuse explicit retained or supplied simulations, with response/component metadata. Let `DHARMa::createDHARMa()` calculate its own residuals rather than replacing them with influ2 ranks. Test supported dependency interfaces, make dependencies optional, and warn before large exports. Coordinate with G02. |
+| N08 | DHARMa residual engine — **Implemented; validation in progress** | `residual_method = "dharma"` delegates to `DHARMa::createDHARMa(method = "PIT")` using existing native/external response simulations and conditioning. The default ranks remain frozen. Genuine native-object retention is opt-in, with a full-matrix size guard and warning, original uniform endpoints, and explicit finite normal-score display limits. Direct dependency, backend, component, compactness, RNG, and plot tests validate the bridge. General response-simulation bayesplot exports, residual rotation, spatial aggregation/maps (G02), and calibrated tests remain separate candidates. |
 | N09 | Clarify finite-simulation calibration and diagnostic targets — **First increment and plotting correction completed, 12 September; interpretation review, 14 September; approved worked examples completed, 15 September** | 100 NB2 datasets per backend, 500 eligible glmmTMB/sdmTMB fits, and 1,960 diagnostic records cover omitted terms, conditioning, known-truth controls, and paired sensitivity. Compact results and the Residual validation article are reproducible via the [protocol](n09/protocol.md). The separately approved bayesplot 1.16.0 grid correction aligns both optional PIT plots without changing the interval calculation, stored ranks, defaults, or frozen study. The [follow-up control](n09/check-pit-alignment.R) reproduces 4.77% independent-uniform crossings instead of 12.46%. Following the [interpretation review](n09/interpretation-review.md), the maintainer approved practical guidance and saved-data covariate/spatial examples in the Residual diagnostics article. Guarded row matching, common scales, and all six spatial years are tested; no study was rerun or default changed. Nicholas's scientific review and broader calibration remain open. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
@@ -84,8 +88,10 @@ calibration and a general map/autocorrelation API (G02) need separate agreement.
 The approved
 Gamma(log) adapter is implemented and numerically verified against the saved BNS
 positive GAMs. Existing conditioning defaults remain unchanged.
-N07 retention and N08 bridges are still candidates; N02 counters were passed
-over and remain unimplemented. Resume these only after further discussion.
+N07's general retention/disk API and the remaining N08 export/mapping extensions
+are still candidates. The approved DHARMa engine has bounded, opt-in native
+object retention only. N02 counters were passed over and remain unimplemented.
+Resume the unapproved candidates only after further discussion.
 
 ### Residual-implied backend extension: BNS 2 increment, 16 September
 

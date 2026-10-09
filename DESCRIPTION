@@ -39,7 +39,7 @@ Suggests:
     bayesplot (>= 1.16.0),
     brms,
     callr,
-    DHARMa,
+    DHARMa (>= 0.4.7),
     fmesher,
     glmmTMB,
     knitr,

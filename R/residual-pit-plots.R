@@ -20,7 +20,11 @@
     positions <- LETTERS[which(normal)]
     label <- if (identical(positions, c("A", "B", "C"))) "Panels A-C" else
       paste(if (length(positions) == 1L) "Panel" else "Panels", paste(positions, collapse = ", "))
-    lines <- paste0(label, ": simulation-based PIT residuals on the normal scale (qnorm(PIT)).")
+    lines <- paste0(label, ": ", .resid_method_label(x),
+      " residuals on the normal scale (qnorm(PIT)).")
+    if (identical(x$metadata$residual_method, "dharma")) {
+      lines <- c(lines, .resid_endpoint_caption(x))
+    }
   }
   descriptions <- c(distribution = "observed versus simulated response ECDF.",
     calibration = "response probability calibration.",
@@ -113,7 +117,8 @@
     title = if (difference) "PIT ECDF difference" else "PIT distribution check",
     subtitle = paste0(format(100 * level, trim = TRUE),
       "% simultaneous iid-uniform reference\nExploratory fitted-data ranks; not a calibrated test"),
-    x = "Simulation-based PIT value", y = if (difference) "PIT ECDF minus uniform CDF" else "PIT cumulative probability")
+    x = if (identical(x$metadata$residual_method, "dharma")) "DHARMa PIT value" else
+      "Simulation-based PIT value", y = if (difference) "PIT ECDF minus uniform CDF" else "PIT cumulative probability")
   attr(p, "pit_reference") <- c(list(method = "independent", interpolated = FALSE,
     level = level, grid_size = grid_size, evaluation_points = grid_size + 1L,
     difference = difference), alignment)

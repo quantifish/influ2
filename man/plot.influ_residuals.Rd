@@ -64,6 +64,10 @@ transform) ranks on the standard-normal scale, \code{qnorm(pit)}. The overview
 caption identifies the selected panels and distinguishes panel D: a response
 ECDF or probability-calibration check, not a PIT-residual distribution.
 Transforming the ranks does not establish normality or model calibration.
+For \code{residual_method = "dharma"} results, these panels instead use
+DHARMa's PIT values on the normal scale, with explicitly labelled finite
+display limits for exact 0/1 endpoints. Uniform PIT panels retain those
+endpoints unchanged. Choose the engine during calculation, not plotting.
 
 The year panel shows a boxplot for each sampled year and its sample
 size through box widths proportional to the square root of the number of

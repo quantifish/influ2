@@ -23,7 +23,11 @@ as_influ_residuals(
   groups = NULL,
   calibration_bins = 10L,
   calibration_min_n = 20L,
-  calibration_groups = NULL
+  calibration_groups = NULL,
+  residual_method = c("simulation_pit", "dharma"),
+  retain_dharma = FALSE,
+  dharma_max_mb = 256,
+  integer_response = NULL
 )
 }
 \arguments{
@@ -83,7 +87,10 @@ fitting or area weights as trial counts.}
 \item{batch_size}{Maximum number of supplied simulation columns processed
 in each batch. No additional responses are generated.}
 
-\item{seed}{Integer random seed. The caller's random-number state is restored.}
+\item{seed}{Integer random seed. The caller's random-number state is restored.
+DHARMa tie randomisation uses a separate deterministic seed,
+\code{(seed + 104729) \%\% .Machine$integer.max}, recorded in \code{metadata$dharma_seed},
+to avoid reusing the beginning of the simulation/draw-selection RNG stream.}
 
 \item{grid_size}{Approximate number of ECDF grid points, at least 20.}
 
@@ -105,6 +112,29 @@ groups below this size remain visible but have no predictive envelope.}
 \item{calibration_groups}{Optional character vector of columns in \code{data}
 defining a joint scientific grouping, e.g. \code{c("year", "target")}. These
 columns must not be defined from the outcome.}
+
+\item{residual_method}{\code{"simulation_pit"} (default) preserves influ2's
+compact finite-simulation ranks. \code{"dharma"} delegates the residual
+calculation to optional DHARMa >= 0.4.7, using \code{createDHARMa(method = "PIT")}
+on the same native response simulations and conditioning. It does not
+call \code{simulateResiduals()} or adopt DHARMa's model-specific defaults.}
+
+\item{retain_dharma}{Keep the genuine DHARMa object in \code{result$dharma},
+including its full response matrix, for DHARMa plotting, aggregation, and
+tests. Default \code{FALSE} discards it after calculating the compact summaries.
+Requires \code{residual_method = "dharma"}. No fitted model is retained.}
+
+\item{dharma_max_mb}{Maximum size of the full DHARMa response matrix in MiB,
+default 256. A larger request fails before simulation. Requests of at least
+100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
+native simulators allocate additional copies. \code{batch_size} cannot remove
+this full-matrix cost. Increase the limit explicitly only if appropriate.}
+
+\item{integer_response}{For \code{residual_method = "dharma"}, declare whether
+the supplied response distribution is integer-valued. Required for general
+response kinds; defaults to \code{TRUE} for Bernoulli/grouped binomial. This is
+distribution metadata, not inferred from realised observed values. DHARMa's
+PIT calculation randomises atoms in both discrete and mixed distributions.}
 }
 \value{
 An \code{influ_residuals} object, using the same plotting and grouped
@@ -136,8 +166,10 @@ columns or relabel a combined matrix as a component calculation. No
 conversion of censored, multivariate, weighted, or other special response
 encodings is provided; resolve the predictive target before using this API.
 
-The shared engine randomises ties and applies \code{qnorm(pit)} exactly as for
-fitted models. The caller's random-number state is restored, including on
+The default shared engine randomises ties and applies \code{qnorm(pit)} exactly
+as for fitted models. DHARMa uses its own PIT calculation and the endpoint
+display convention documented in \code{\link[=influ_residuals]{influ_residuals()}}. The caller's
+random-number state is restored, including on
 error. Reusing the same matrix, seed, batch size, and RNG kind reproduces
 the result. A native adapter can consume random numbers when preparing
 simulations (e.g. selecting posterior draws), so an identical seed alone
@@ -150,7 +182,9 @@ original matrix still occupies memory until they release it. Temporary
 ECDF/calibration storage and the first-batch ECDF grid follow the existing
 \code{\link[=influ_residuals]{influ_residuals()}} calculation. Changing batch size can change that grid,
 but not the ranks or sequentially calculated predictive means for fixed
-supplied simulations. No counters or full simulation-retention mode is added.
+supplied simulations. With \code{residual_method = "dharma"}, an additional
+full matrix is assembled for DHARMa and discarded by default. Set
+\code{retain_dharma = TRUE} only when DHARMa's original object is needed.
 
 These remain exploratory predictive checks. Fitted-data ranks are not
 automatically uniform or calibrated for parameter estimation, posterior

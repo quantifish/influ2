@@ -34,6 +34,10 @@
 #'   caption identifies the selected panels and distinguishes panel D: a response
 #'   ECDF or probability-calibration check, not a PIT-residual distribution.
 #'   Transforming the ranks does not establish normality or model calibration.
+#'   For `residual_method = "dharma"` results, these panels instead use
+#'   DHARMa's PIT values on the normal scale, with explicitly labelled finite
+#'   display limits for exact 0/1 endpoints. Uniform PIT panels retain those
+#'   endpoints unchanged. Choose the engine during calculation, not plotting.
 #'
 #'   The year panel shows a boxplot for each sampled year and its sample
 #'   size through box widths proportional to the square root of the number of
@@ -119,7 +123,11 @@ plot.influ_residuals <- function(x,
   if (type == "overview") {
     selected <- .resid_select_panels(x, panels, response_diagnostic)
     plots <- lapply(selected, function(p) {
-      plot(x, type = p, response_scale = response_scale, pit_grid_size = pit_grid_size)
+      panel <- plot(x, type = p, response_scale = response_scale, pit_grid_size = pit_grid_size)
+      if (identical(x$metadata$residual_method, "dharma") && p %in% c("qq", "fitted", "year")) {
+        panel <- panel + ggplot2::labs(caption = NULL)
+      }
+      panel
     })
     return(patchwork::wrap_plots(plots, ncol = 2) +
       patchwork::plot_annotation(caption = .resid_panel_caption(x, selected), tag_levels = "A"))
@@ -131,7 +139,9 @@ plot.influ_residuals <- function(x,
     return(.plot_residual_calibration(x, grouped = type == "calibration_groups"))
   }
   purple <- "purple4"
-  ylabel <- "Normal-score PIT residual"
+  ylabel <- if (identical(x$metadata$residual_method, "dharma"))
+    "Normal-score DHARMa residual" else "Normal-score PIT residual"
+  endpoint_caption <- .resid_endpoint_caption(x)
   coverage <- paste0(format(100 * x$metadata$level, trim = TRUE), "%")
   if (type == "qq") {
     return(ggplot2::ggplot(x$qq,
@@ -142,7 +152,7 @@ plot.influ_residuals <- function(x,
       ggplot2::geom_point(colour = purple, alpha = 0.5, size = 1) +
       ggplot2::labs(title = "Distributional Q-Q check",
         subtitle = paste(coverage, "pointwise iid-uniform reference"),
-        x = "Theoretical normal quantile", y = ylabel))
+        x = "Theoretical normal quantile", y = ylabel, caption = endpoint_caption))
   }
   d <- x$observations
   if (type == "fitted") {
@@ -155,7 +165,7 @@ plot.influ_residuals <- function(x,
     }
     return(p + ggplot2::labs(title = "Residuals against fitted values",
       subtitle = "Predictive mean estimated from the same simulations",
-      x = "Predictive mean response", y = ylabel))
+      x = "Predictive mean response", y = ylabel, caption = endpoint_caption))
   }
   if (type == "year") {
     levels <- levels(d$year)
@@ -177,7 +187,7 @@ plot.influ_residuals <- function(x,
         labels = levels) +
       ggplot2::labs(title = paste("Residuals by", x$metadata$year),
         subtitle = "Box widths proportional to square root of sample size",
-        x = x$metadata$year, y = ylabel) +
+        x = x$metadata$year, y = ylabel, caption = endpoint_caption) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)))
   }
   if (response_scale == "log1p" &&

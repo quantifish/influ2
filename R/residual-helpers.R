@@ -133,9 +133,11 @@ plot_grouped_residuals <- function(fit, data = NULL, year = NULL,
     ggplot2::scale_x_continuous(breaks = positions[ticks], labels = levels[ticks],
       expand = ggplot2::expansion(mult = 0.08)) +
     ggplot2::facet_wrap(~group, ncol = 3) +
-    ggplot2::labs(x = checks$metadata$year, y = "Mean normal-score rank residual",
+    ggplot2::labs(x = checks$metadata$year, y = if (identical(checks$metadata$residual_method, "dharma"))
+      "Mean normal-score DHARMa residual" else "Mean normal-score rank residual",
       title = "Generalised residual departures",
       subtitle = paste(checks$metadata$component, "response | mean +/- descriptive SE"),
+      caption = .resid_endpoint_caption(checks),
       size = "Records")
   attr(p, "residual_metadata") <- checks$metadata
   p

@@ -47,7 +47,8 @@ local({
   if (mode == "produce") {
     # Native mixed-model fits plus stored Bayesian draws; no MCMC is run.
     stopifnot(requireNamespace("glmmTMB", quietly = TRUE),
-      requireNamespace("brms", quietly = TRUE), requireNamespace("posterior", quietly = TRUE))
+      requireNamespace("brms", quietly = TRUE), requireNamespace("posterior", quietly = TRUE),
+      requireNamespace("DHARMa", quietly = TRUE))
     full <- glmmTMB::glmmTMB(catch ~ year + area + (1 | vessel), poisson(), data = data)
     reduced <- glmmTMB::glmmTMB(catch ~ year + (1 | vessel), poisson(), data = data)
     stopifnot(full$sdr$pdHess, reduced$sdr$pdHess,
@@ -57,6 +58,8 @@ local({
     results <- c(make_core_results(), list(
       mixed_influence = influ(full, focus = "year"),
       mixed_residuals = influ_residuals(full, nsim = 40, seed = 281),
+      dharma_residuals = influ_residuals(full, nsim = 40, seed = 281,
+        residual_method = "dharma"),
       mixed_index = cpue_index(full, reference_data = unique(data["area"])),
       mixed_steps = influ_steps(list(Reduced = reduced, Full = full), year = "year"),
       bayesian_influence = influ(fit, focus = "year", ndraws = 40, retain = "summary"),
@@ -64,7 +67,7 @@ local({
     stopifnot(!any(vapply(results, saved_result_has_live_state, logical(1))))
     saveRDS(results, config$results)
     saveRDS(lapply(results, saved_result_view), config$expected)
-    message("Saved 12 compact results and their table/plot baselines with optional backends available.")
+    message("Saved ", length(results), " compact results and their table/plot baselines with optional backends available.")
     return(invisible(NULL))
   }
 
@@ -80,7 +83,7 @@ local({
     comparison <- all.equal(views[[name]], expected[[name]], tolerance = 1e-12)
     if (!isTRUE(comparison)) stop("Restored result differs: ", name, ": ", paste(comparison, collapse = "; "))
   }
-  message("All 12 saved results reproduce tables, labels, panel layouts, and plot coordinates without their backends.")
+  message("All ", length(results), " saved results reproduce tables, labels, panel layouts, and plot coordinates without their backends, including DHARMa.")
 
   fresh <- make_core_results()
   stopifnot(isTRUE(all.equal(fresh, results[names(fresh)], tolerance = 1e-12)),
@@ -123,6 +126,10 @@ local({
   expect_dependency_error(plot(fresh$residuals,
     panels = c("qq", "fitted", "year", "pit_ecdf")),
     "PIT ECDF plots require optional package 'bayesplot'")
+  expect_dependency_error(influ_residuals(NULL, residual_method = "dharma"),
+    "DHARMa residuals require optional package 'DHARMa'")
+  expect_dependency_error(as_influ_residuals(NULL, residual_method = "dharma"),
+    "DHARMa residuals require optional package 'DHARMa'")
   assert_isolated()
-  message("All 19 missing-package guards passed; optional packages remained unavailable throughout.")
+  message("All 21 missing-package guards passed; optional packages remained unavailable throughout.")
 })

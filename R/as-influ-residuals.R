@@ -51,6 +51,11 @@
 #' @param calibration_groups Optional character vector of columns in `data`
 #'   defining a joint scientific grouping, e.g. `c("year", "target")`. These
 #'   columns must not be defined from the outcome.
+#' @param integer_response For `residual_method = "dharma"`, declare whether
+#'   the supplied response distribution is integer-valued. Required for general
+#'   response kinds; defaults to `TRUE` for Bernoulli/grouped binomial. This is
+#'   distribution metadata, not inferred from realised observed values. DHARMa's
+#'   PIT calculation randomises atoms in both discrete and mixed distributions.
 #' @inheritParams influ_residuals
 #'
 #' @details Each column must be a whole response vector from the intended
@@ -72,8 +77,10 @@
 #'   conversion of censored, multivariate, weighted, or other special response
 #'   encodings is provided; resolve the predictive target before using this API.
 #'
-#'   The shared engine randomises ties and applies `qnorm(pit)` exactly as for
-#'   fitted models. The caller's random-number state is restored, including on
+#'   The default shared engine randomises ties and applies `qnorm(pit)` exactly
+#'   as for fitted models. DHARMa uses its own PIT calculation and the endpoint
+#'   display convention documented in [influ_residuals()]. The caller's
+#'   random-number state is restored, including on
 #'   error. Reusing the same matrix, seed, batch size, and RNG kind reproduces
 #'   the result. A native adapter can consume random numbers when preparing
 #'   simulations (e.g. selecting posterior draws), so an identical seed alone
@@ -86,7 +93,9 @@
 #'   ECDF/calibration storage and the first-batch ECDF grid follow the existing
 #'   [influ_residuals()] calculation. Changing batch size can change that grid,
 #'   but not the ranks or sequentially calculated predictive means for fixed
-#'   supplied simulations. No counters or full simulation-retention mode is added.
+#'   supplied simulations. With `residual_method = "dharma"`, an additional
+#'   full matrix is assembled for DHARMa and discarded by default. Set
+#'   `retain_dharma = TRUE` only when DHARMa's original object is needed.
 #'
 #'   These remain exploratory predictive checks. Fitted-data ranks are not
 #'   automatically uniform or calibrated for parameter estimation, posterior
@@ -115,7 +124,10 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
     conditioning, component = NULL, observation_id = NULL, probability = NULL,
     probability_conditioning = NULL, trial_counts = NULL, batch_size = 25L,
     seed = 1L, grid_size = 201L, level = 0.95, groups = NULL,
-    calibration_bins = 10L, calibration_min_n = 20L, calibration_groups = NULL) {
+    calibration_bins = 10L, calibration_min_n = 20L, calibration_groups = NULL,
+    residual_method = c("simulation_pit", "dharma"), retain_dharma = FALSE,
+    dharma_max_mb = 256, integer_response = NULL) {
+  residual_method <- .resid_method_options(residual_method, retain_dharma, dharma_max_mb)
   if (!is.matrix(simulations) || !is.numeric(simulations)) {
     stop("`simulations` must be a numeric observation-by-simulation matrix.", call. = FALSE)
   }
@@ -138,6 +150,18 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
   .resid_external_text(response_kind, "response_kind")
   response_kind <- match.arg(response_kind, c("distribution", "positive_continuous",
     "combined", "bernoulli", "grouped_binomial"))
+  if (residual_method == "dharma") {
+    binomial <- response_kind %in% c("bernoulli", "grouped_binomial")
+    if (is.null(integer_response) && binomial) integer_response <- TRUE
+    if (!is.logical(integer_response) || length(integer_response) != 1L || is.na(integer_response)) {
+      stop("Declare `integer_response = TRUE` or FALSE for externally supplied DHARMa response simulations.", call. = FALSE)
+    }
+    if (binomial && !integer_response) {
+      stop("Bernoulli/binomial DHARMa inputs require `integer_response = TRUE`.", call. = FALSE)
+    }
+  } else if (!is.null(integer_response)) {
+    stop("`integer_response` is only used with `residual_method = 'dharma'`.", call. = FALSE)
+  }
   if (is.null(component)) component <- if (response_kind == "combined") "combined" else "single"
   component <- match.arg(component, c("single", "combined", "encounter", "positive"))
   if ((component == "combined") != (response_kind == "combined") ||
@@ -207,8 +231,9 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
     } else assign(".Random.seed", saved_seed, envir = .GlobalEnv)
   }, add = TRUE)
   set.seed(seed)
-  result <- .resid_summarise(adapter, time, data[groups %||% character()], nsim,
-    batch_size, seed, grid_size, level, calibration_bins, calibration_min_n, calibration_groups)
+  result <- .resid_summarise_method(adapter, time, data[groups %||% character()], nsim,
+    batch_size, seed, grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
+    residual_method, retain_dharma, dharma_max_mb, integer_response)
   result$metadata$input <- "external_response_matrix"
   result$metadata$observation_id <- observation_id %||% "row.names"
   result$metadata$alignment <- "Exact observation ID and row-order match; no automatic reordering"
