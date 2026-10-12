@@ -1,5 +1,6 @@
 ## Optional lme4 backend: 12 October 2026
 
+Feature source `215176dff4e4f174a44501b7ff28222b1d5be9ed` is pushed.
 Native lmer/glmer/glmer.nb adapters extend the shared diagnostic, PIT/DHARMa,
 likelihood-implied-effect, response/area-index, covariance, comparison, and
 step interfaces. Standard native families/links have explicit scope guards;
@@ -14,8 +15,29 @@ missing-package guards. Existing visual regressions and frozen N09/IV01
 results are unchanged. The executed full lobster example is visually checked,
 with ten-page/106-image caption/lightbox checks passing.
 
-Final source archive and GitHub release-platform checks are in progress; no
-completed final-archive check or deployment is claimed at this checkpoint.
+Checked archive:
+`/private/tmp/influ2-lme4.dUNWj0/checked-archive/influ2_1.1.0.tar.gz`.
+SHA256: `b9c6409390f74b335262934ff718e3659acbdf5ea727d36b524f18a8dbcc2a9e`.
+All 217 comparable shipped files and normalised DESCRIPTION fields match the
+clean source. No private review or uncommitted CDI-order files ship. Mac arm64
+R 4.6.1 `R CMD check --as-cran --no-manual` completes with zero errors, zero
+warnings, and the existing new-submission/additional-repository incoming NOTE.
+The additional source index responds HTTP 200 separately. All ten vignettes
+build and rebuild; archive tests pass 8,381 assertions with nine intentional
+CRAN visual skips. The checked archive is installed locally and its native
+lme4 workflows pass a smoke test. No PDF-manual pass is claimed.
+
+GitHub coverage `38189991110` passes 8,323 assertions without failures or
+warnings, with three unavailable developer-source checks skipped. It reports
+95.42%; Codecov upload succeeds. pkgdown `38189991120` and Pages `38191354384`
+pass, publishing gh-pages `8b1e8ba724cb0dd976b34e2f554c525398849e9f` from the
+feature source. Ten-page/106-image caption/lightbox checks pass; the live
+article and CDI bytes match the visually reviewed deployment. Local docs are
+synchronised. R-CMD-check `38189991126` passes on Ubuntu release and Windows
+release: each reports `Status: OK`, 8,399 passing assertions, and zero failures,
+warnings, or skips. Ubuntu's minimal-installation check also passes. Later
+verification-record edits are source-excluded and use `[skip ci]`; no checked
+runtime or vignette code is changed.
 No CRAN/win-builder submission, OSA implementation, or BNS modification was made.
 Uncommitted CDI-order work is excluded and preserved separately.
 

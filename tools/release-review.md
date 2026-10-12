@@ -7,6 +7,7 @@ is a separate, later step authorised by the maintainer.
 
 ## Optional lme4 backend: 12 October 2026
 
+Feature source `215176dff4e4f174a44501b7ff28222b1d5be9ed` is pushed.
 Native lmer/glmer/glmer.nb adapters now use the shared influence/CDI, index,
 area-integration, annual-covariance, PIT/DHARMa, implied-effect, comparison,
 and step interfaces. Standard supported families are Gaussian(identity),
@@ -36,8 +37,33 @@ The existing visual regression suite passes, and N09/IV01 frozen sources and
 results are unchanged. The genuine 5,049-row lobster example is executed and
 visually reviewed; ten-page/106-image caption/lightbox checks pass.
 
-Final archive and release-platform verification are in progress. This entry
-does not yet claim a completed check of the final archive or a GitHub deployment.
+The final clean archive is
+`/private/tmp/influ2-lme4.dUNWj0/checked-archive/influ2_1.1.0.tar.gz`, SHA256
+`b9c6409390f74b335262934ff718e3659acbdf5ea727d36b524f18a8dbcc2a9e`.
+All 217 comparable shipped files match the checked source; DESCRIPTION's
+normalised fields match separately. Private review and uncommitted CDI-order
+files are absent. Mac arm64 R 4.6.1 `R CMD check --as-cran --no-manual` completes
+with zero errors, zero warnings, and the existing incoming NOTE for a new
+submission and uncertain additional-repository availability. Its source index
+responds HTTP 200 separately. All ten vignettes build and rebuild. Archive
+tests pass 8,381 assertions, with nine intentional CRAN visual skips. The checked
+archive is installed in the normal Mac library; its installed workflows pass a
+native lme4 smoke test. This is not a PDF-manual check.
+
+GitHub coverage `38189991110` passes 8,323 assertions, with no failures or
+warnings and three unavailable developer-source checks skipped. It reports
+95.42% and uploads successfully to Codecov. pkgdown `38189991120` and Pages
+`38191354384` pass, publishing gh-pages `8b1e8ba724cb0dd976b34e2f554c525398849e9f`
+from the feature source. Ten-page/106-image caption/lightbox checks pass both
+on GitHub and on the synchronised local docs. The live article and CDI image
+match the deployment byte-for-byte, and the deployed CDI is visually reviewed.
+R-CMD-check `38189991126` passes on Ubuntu release and Windows release: each
+reports `Status: OK`, 8,399 passing assertions, and no failures, warnings, or
+skips. Ubuntu's minimal-installation check passes too. Whole-package vignette
+rebuilds take 21 elapsed minutes on Ubuntu and 28 on Windows in this run;
+these are runner-specific timings, not an isolated lme4 benchmark. Subsequent
+verification-record edits are excluded from the package source and use
+`[skip ci]`, without changing the checked runtime or repeating the workflows.
 No CRAN/win-builder submission, OSA implementation, BNS edit, or scientific
 calibration claim is made. Uncommitted CDI-order work remains separate.
 
