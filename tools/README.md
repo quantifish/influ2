@@ -46,11 +46,19 @@ BLIS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1`. These process-level controls
 are also used in CI to avoid excess numerical-library threading; the installed
 package does not change a user's thread settings.
 
-The two release-platform checks include the PDF manual and HTML help validation.
+The two release-platform checks request PDF-manual and HTML-help validation.
 They explicitly use `--as-cran --timings`, without `--no-manual`; TinyTeX is
-provided by the existing R actions. Local full checks likewise need a usable
-TeX installation and a recent HTML Tidy. A successful no-manual check is not
-a substitute for this final check.
+provided by the existing R actions, with the Courier font and `makeindex`
+explicitly installed for R's default Windows manual format. A separate
+`R CMD Rd2pdf` preflight
+catches compiler/font failures before the longer tests and worked examples;
+its PDF is written outside the checkout and retained as an Actions artefact,
+and the full check still recompiles the manual. Local full checks likewise
+need a usable TeX installation and a recent HTML Tidy. CI may report an
+environment NOTE if Tidy or the optional
+V8 math checker is absent; record that limitation rather than claiming those
+checks passed. A successful no-manual check is not a substitute for this
+final check.
 
 After building the website, run `Rscript tools/check-figure-captions.R`.
 This checks every plotted image in the rendered HTML, including the frozen

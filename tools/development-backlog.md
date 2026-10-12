@@ -27,19 +27,30 @@ does not reopen completed issues. Issue #18 was explicitly resumed on
 
 ## Optional lme4 backend: 12 October 2026
 
+Follow-up release hardening now includes the previously separate CDI-order
+option and a validated faster optimiser for the unchanged full lobster example.
+All ten live articles and their figures remain; Mac rendering is 60.5% faster.
+The full Mac archive check includes PDF/HTML manuals and passes with the existing
+incoming NOTE. Final Ubuntu and Windows checks, including their PDF manuals,
+pass 8,645 assertions each; vignette rebuilds take 458 and 567 seconds,
+respectively. Each has one documented HTML-checking environment NOTE.
+Final evidence/publication is tracked in the dated
+[release review](release-review.md); this does not advance scientific calibration,
+legacy triage, OSA, or CRAN submission.
+
 The maintainer approved lmer/glmer/glmer.nb support across influence/CDI,
 PIT/DHARMa residuals, likelihood-implied effects, expected-response and
 area-integrated indices, annual covariance, comparisons, and step plots.
 The implementation, tests, documentation, and publication are completed.
-Clean-source
-coverage (95.44%), minimal installation (17 results, 26 dependency guards),
-visual regressions, and local website/caption checks pass. The final Mac archive
-check has zero errors/warnings and the existing incoming NOTE; all ten vignettes
-rebuild, and 8,381 assertions pass. GitHub coverage passes at 95.42%, and the
-website is published and verified. Ubuntu and Windows release checks both
-report Status OK, with 8,399 assertions and no failures, warnings, or skips.
-See the dated release review
-for final evidence. Variance parameters
+The original backend addition at source `215176d` was verified with local
+coverage of 95.43545%, minimal installation (17 results, 26 dependency guards),
+visual regressions, and local website/caption checks. That original Mac archive
+check had zero errors/warnings and the existing incoming NOTE; all ten vignettes
+rebuilt, and 8,381 assertions passed. Its GitHub coverage passed at 95.42%, and
+the website was published and verified. Its Ubuntu and Windows release checks
+both reported Status OK, with 8,399 assertions and no failures, warnings, or
+skips. The follow-up above and dated release review supersede those historical
+counts for the current source. Variance parameters
 remain fixed in effect uncertainty; transformed Gaussian responses require an
 explicit log declaration. Nonlinear nlmer and arbitrary custom families are
 excluded. Negative-binomial refits require an explicit size-estimation choice.

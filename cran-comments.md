@@ -1,3 +1,65 @@
+## Vignette runtime, CDI ordering, and full manuals: 12 October 2026
+
+Reviewed source: `1d4a1c985f871899ae2fef1375c3fe12a9cf5849`.
+The previously separate coefficient-order option is included, with default
+and numeric invariance verified. The full lobster lme4 example uses a faster
+native optimiser without changing its observations, formula, NB size estimation,
+Laplace integration, or automatic derivatives. Both native fits converge;
+log-likelihood differs by 1.75e-8 and annual means by at most 0.00143%.
+All ten fully executed articles and all 87 article images remain. Mac article
+rendering falls from 353.290 to 139.414 seconds. Numerical-library threads are
+limited only in check processes; no installed-package thread controls change.
+
+Checked archive retained at
+`data-raw/release-candidates/2026-10-12-vignette-runtime/final-1d4a1c9/influ2_1.1.0.tar.gz`.
+SHA256: `26d2a53f3976524fc0c715539131832067cc4c5d58a89db6eb8b547efa67f0f7`.
+All 219 original comparable files and 30 generated article files match the
+reviewed snapshot; DESCRIPTION is checked separately after normalisation.
+The final help-only archive rebuild reuses fully executed article outputs;
+the full archive check independently rebuilds every vignette. There are no
+private review, assistant, or developer paths in the archive.
+
+Mac arm64 R 4.6.1 `R CMD check --as-cran --timings` completes with zero errors,
+zero warnings, and one existing incoming NOTE: new submission and uncertain
+Additional_repositories availability. The source index separately responds HTTP 200.
+Tests pass 8,627 assertions, with nine expected CRAN visual skips. The separate
+source/visual tests and 34 native optimiser/source guards pass. Vignette rebuilds
+take 148 elapsed seconds. PDF and HTML manuals pass; all 56 PDF pages are rendered
+and reviewed, with corrected clipping, hyperlinks, and percent formatting.
+The checked archive is installed locally. Minimal-installation checks pass
+17 compact results and 26 missing-package guards. Coverage is 95.44% locally
+and in GitHub run `38197306053`; that upload succeeds. Later help-only edits
+leave every executable expression identical to the covered feature source.
+
+pkgdown `38199163794` and Pages `38199961294` succeed, publishing reviewed
+source as gh-pages `60619fee318f94776ac157ee889044f52e76fc83`. Ten-page/
+106-image caption/lightbox and keyboard checks pass; local docs are synchronised,
+and live main-article/CDI-help bytes match. Changed figures are visually checked.
+Manual-enabled run `38199161612` passes all 8,645 assertions on each platform,
+with no test failures/warnings/skips, and rebuilds all vignettes in 506 seconds
+on Ubuntu and 591 seconds on Windows. Ubuntu's PDF manual passes; its one NOTE
+records missing HTML Tidy and optional V8 math-checking tools. Windows initially
+fails its PDF manual because TinyTeX-1 lacks the Courier `pcrr8t.tfm` metric,
+not because of a package/test error. CI-only commits `00e23ff` and `696aded`
+install the font and add an early Bash source-manual preflight; no shipped
+source changes. An early preflight also finds missing `makeindex`; CI-only
+`435fd64` installs that index tool and retains the compiled manuals. Superseded
+provisioning runs are cancelled before their expensive checks.
+Both early preflights pass. The 55-page Windows source-preflight PDF is also
+rendered and visually reviewed, with no material clipping/overlap and zero
+off-page words; this is separate from the full check's default-font compilation.
+Corrected full run `38203686940` succeeds on Ubuntu and Windows release at
+CI-only head `435fd642d63648154d8d8a4b1428de5ff331ea51`. Each passes 8,645
+assertions with no failures/warnings/skips, and its full PDF-manual check is
+OK. All vignettes rebuild in 458 elapsed seconds on Ubuntu and 567 on Windows.
+Each reports one environment NOTE: missing HTML Tidy/V8 checkers on Ubuntu,
+and missing optional V8 on Windows. The full local HTML check passes separately.
+Both check directories are clean. Final verification-record commits are
+source-excluded, use `[skip ci]`, and leave the checked package unchanged.
+Only Ubuntu release and Windows release are configured. Superseded draft runs
+are cancelled, not claimed as passing checks. No CRAN or win-builder submission
+is made. Scientific interpretation and remaining legacy triage remain separate.
+
 ## Optional lme4 backend: 12 October 2026
 
 Feature source `215176dff4e4f174a44501b7ff28222b1d5be9ed` is pushed.

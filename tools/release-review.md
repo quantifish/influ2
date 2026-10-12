@@ -5,6 +5,110 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Vignette runtime, CDI ordering, and full manuals: 12 October 2026
+
+Feature source `9ed780ddf567b359781072703e47346ab18d7fc7` incorporates the
+previously separate CDI-order edits, including fixed/random, component,
+display-scale, stable-tie, and saved-posterior tests. The default order and
+diagnostic values are unchanged. The option is documented in the main article.
+Subsequent help-only fixes produce reviewed source
+`1d4a1c985f871899ae2fef1375c3fe12a9cf5849`: class names are code rather than
+non-existent function links, Markdown is rendered, and 95% is correctly escaped.
+Parsed executable expressions are identical across those help-only changes.
+
+Per-chunk profiling of all ten fully executed articles identified the lobster
+lme4 fit as the main bottleneck. Its data (all 5,049 observations), formula,
+estimated NB size, Laplace integration, and native automatic derivative settings
+are unchanged. The example now selects `nloptwrap` with `ftol_abs = 1e-10`.
+An independent paired native fit took 234.154 seconds with the original
+optimiser and 18.878 seconds with the new control. Both converged without
+warnings; the log-likelihood difference was 1.75e-8 and the largest relative
+annual index-mean difference was 0.00143%. This is normal optimisation
+variation, not bit-identical fitted output or statistical calibration.
+Joint conditional covariance, influence, and annual covariance also agree.
+The 34-assertion fast regression guards the fit's model and numerical agreement.
+
+On this Mac, full article rendering fell from 353.290 to 139.414 seconds (60.5%).
+The main article fell from 238.114 to 31.346 seconds. Every article and all
+87 article images remain; there are no reduced datasets/draw counts, new
+native-model caches, newly disabled examples, or changes to the residual engine.
+Existing saved brms and scientific-validation examples are unchanged.
+CI limits numerical-library threads to one per process, without changing
+installed-package or user-session settings. Its matrix remains Ubuntu release
+and Windows release only, now with TinyTeX and manual-enabled checking.
+`tools/profile-vignettes.R` reproduces per-chunk and article timing.
+
+The reviewed archive is retained locally at
+`data-raw/release-candidates/2026-10-12-vignette-runtime/final-1d4a1c9/influ2_1.1.0.tar.gz`,
+SHA256 `26d2a53f3976524fc0c715539131832067cc4c5d58a89db6eb8b547efa67f0f7`.
+It uses already fully executed, byte-identical article outputs for the final
+help-only rebuild; the full check independently rebuilds every vignette.
+All 219 original comparable shipped files and the 30 generated article files
+match the reviewed snapshot; normalised DESCRIPTION fields match separately.
+Private review and assistant/developer files are absent.
+
+Mac arm64 R 4.6.1 `R CMD check --as-cran --timings`, with no manual or vignette
+check exclusions, completes with zero errors/warnings and the existing incoming
+NOTE for a new submission and uncertain additional-repository availability.
+The declared repository's source index independently responds HTTP 200.
+All 8,627 archive assertions pass; nine ordinary CRAN visual skips are backed
+by the separate passing source/visual suite. Vignettes rebuild in 148 elapsed
+seconds. PDF and HTML manuals both pass. All 56 final PDF pages were rendered
+and reviewed; there are no off-page words, clipping, or overlapping content.
+The manual SHA256 is
+`b0df9346d8e4319509e8360acc88bd8531ae73a2cad7f0c265401bb08c1532eb`.
+The checked archive is installed in the normal Mac library. The minimal
+installation still reopens 17 results and passes 26 missing-package guards.
+
+GitHub coverage `38197306053` succeeds at 95.44%, with 8,561 assertions and
+four unavailable article-source checks skipped; Codecov upload succeeds.
+No executable expressions changed in the later help fixes, so that coverage
+run is reused rather than rerun for comments. pkgdown `38199163794` and Pages
+`38199961294` succeed, publishing gh-pages
+`60619fee318f94776ac157ee889044f52e76fc83` from the reviewed source. Local
+docs are synchronised without deleting unrelated files; ten-page/106-image
+caption/lightbox and keyboard checks pass. Live main-article and CDI-help
+bytes match the deployment. The lme4 CDI and model-comparison figures are
+visually reviewed. Manual-enabled run `38199161612` passes all 8,645 assertions
+on both platforms, with no test failures, warnings, or skips. Every vignette
+rebuilds: 506 elapsed seconds on Ubuntu (previously 21 minutes) and 591 seconds
+on Windows (previously 28 minutes); these are runner-specific timings.
+Ubuntu's full check and PDF manual pass, with one environment NOTE because
+HTML Tidy and the optional V8 math checker are unavailable. Windows initially
+fails only the PDF/manual fallback: its TinyTeX-1 bundle lacks Courier's
+`pcrr8t.tfm` font metric, causing cascading URL-font errors in `Rdlatex.log`.
+CI-only commit `00e23ff` explicitly installs Courier and checks the source
+manual before the longer tests/examples; `696aded` uses Bash explicitly to
+avoid PowerShell's `R` alias. Neither changes shipped package files. The first
+font-corrected run `38203297859` is cancelled during dependency setup, before
+the expensive checks; Courier installation had passed on both platforms.
+The next early Windows preflight exposes a second missing TinyTeX-1 tool,
+`makeindex`, before long model examples run. CI-only `435fd64` installs it
+alongside Courier and retains the preflight PDFs as Actions artefacts.
+Both preflights pass. The retained Windows source-preflight PDF has 55 pages
+using Inconsolata/Nimbus Roman; it is not the full check's default-font PDF.
+All 55 pages are rendered and visually reviewed, with full-size checks of
+CDI labels, seed descriptions, and links. No off-page words, missing glyphs,
+clipping, or overlaps are found. It is retained beside the checked archive as
+`windows-preflight-manual.pdf`, SHA256
+`c30348c6ad67a81a5b4b678ae5e1ffa4c96aba09a7a71e076010445c0fb63c6e`.
+Corrected full run `38203686940` succeeds on both release platforms at CI head
+`435fd642d63648154d8d8a4b1428de5ff331ea51`. Each passes 8,645 assertions, with
+no test failures, warnings, or skips, and its full PDF-manual check is OK.
+All vignettes rebuild in 458 elapsed seconds on Ubuntu and 567 on Windows,
+versus the prior 21 and 28 minutes respectively. The full check action,
+including the ordinary build, takes 22m35s on Ubuntu and 26m37s on Windows.
+Each reports one environment NOTE: Ubuntu lacks HTML Tidy and optional V8
+math validation, while Windows lacks only the optional V8 checker. The full
+local HTML check passes separately. Both check directories are clean.
+Subsequent verification-record commits are source-excluded and use `[skip ci]`;
+they do not change the checked package or require repeating these workflows.
+Superseded draft check/publication runs, including
+`38203442401`, were cancelled to avoid duplicate Actions work.
+No CRAN/win-builder submission, scientific-scope expansion, or removal of the
+frozen legacy article is authorised or performed. Nicholas's scientific review
+and the remaining legacy triage stay separate.
+
 ## Optional lme4 backend: 12 October 2026
 
 Feature source `215176dff4e4f174a44501b7ff28222b1d5be9ed` is pushed.
