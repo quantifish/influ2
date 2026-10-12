@@ -44,10 +44,17 @@ jobs:
 
       - uses: r-lib/actions/setup-tinytex@v2
 
+      - name: Install R manual fonts
+        # R's Windows manual defaults use Courier, absent from TinyTeX-1.
+        run: tlmgr install courier
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
+
+      - name: Check PDF manual before the worked examples
+        run: R CMD Rd2pdf --no-preview --force --output="${{ runner.temp }}/influ2-manual.pdf" .
 
       - name: Check minimal installation and saved results
         if: matrix.config.os == 'ubuntu-latest'
