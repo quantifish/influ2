@@ -1,7 +1,7 @@
 #' Summarise criteria across CPUE model types
 #'
 #' A model-specific summary table for GLMs, mgcv GAMs, glmmTMB, brms,
-#' sdmTMB, and tinyVAST. Different criteria occupy different columns; missing
+#' lme4, sdmTMB, and tinyVAST. Different criteria occupy different columns; missing
 #' or inappropriate criteria are never replaced by another statistic.
 #'
 #' @param fits One supported fitted model, or a non-empty list of models.
@@ -34,7 +34,7 @@
 #' smoothing-parameter uncertainty correction when available. Its `cAIC`
 #' column therefore equals native AIC; it is not an independent criterion.
 #' sdmTMB and tinyVAST use their own approximate `cAIC()` methods. glmmTMB
-#' has no supported native conditional-AIC method here. No generic mixed-model
+#' and lme4 have no supported native conditional-AIC method here. No generic mixed-model
 #' correction, cAIC4 conversion, or refitting workaround is substituted.
 #' For an ordinary model without random effects, cAIC reduces to native AIC.
 #' Profiled spatial fits are not yet validated for conditional penalty
@@ -102,11 +102,11 @@ table_criterion <- function(fits, criterion = "auto", sort = FALSE,
         !is.na(sort) && tolower(sort) %in% c("aic", "caic", "looic"))) {
     stop("`sort` must be TRUE, FALSE, or one of AIC, cAIC, and looic.", call. = FALSE)
   }
-  classes <- c("glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST")
+  classes <- c("glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST", "merMod")
   if (inherits(fits, classes)) fits <- list(fits)
   if (!is.list(fits) || !length(fits) ||
       !all(vapply(fits, inherits, logical(1), classes))) {
-    stop("`fits` must contain supported GLM, GAM, glmmTMB, brmsfit, sdmTMB, or tinyVAST models.", call. = FALSE)
+    stop("`fits` must contain supported GLM, GAM, glmmTMB, lme4, brmsfit, sdmTMB, or tinyVAST models.", call. = FALSE)
   }
   bayesian <- vapply(fits, inherits, logical(1), "brmsfit")
   .check_brms_criterion_fits(fits[bayesian])
@@ -143,7 +143,7 @@ table_criterion <- function(fits, criterion = "auto", sort = FALSE,
     result$notes <- context$notes
     result
   })
-  numeric_columns <- c("nobs", "df", "df_residual", "logLik", "AIC", "BIC",
+  numeric_columns <- c("nobs", "df", "df_residual", "nAGQ", "logLik", "AIC", "BIC",
     "cAIC", "cAIC_df", "EDF_random", "deviance", "elpd_loo", "se_elpd_loo",
     "p_loo", "looic", "se_looic", "pareto_k_max", "pareto_k_bad",
     "loo_R2", "se_loo_R2", "bayes_R2", "se_bayes_R2", "log_lik", "se_log_lik")

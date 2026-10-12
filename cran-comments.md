@@ -1,3 +1,24 @@
+## Optional lme4 backend: 12 October 2026
+
+Native lmer/glmer/glmer.nb adapters extend the shared diagnostic, PIT/DHARMa,
+likelihood-implied-effect, response/area-index, covariance, comparison, and
+step interfaces. Standard native families/links have explicit scope guards;
+Gaussian log responses require an explicit declaration. lme4 >= 1.1-36 is
+optional. Variance/dispersion parameters remain fixed in effect uncertainty;
+indices set group effects to zero, not population-marginal integration.
+REML, non-default GLMM quadrature, and NB refit intent remain explicit.
+
+Direct native agreement and full clean-source coverage tests pass. Coverage
+is 95.43545%; minimal installation passes 17 saved-result checks and 26
+missing-package guards. Existing visual regressions and frozen N09/IV01
+results are unchanged. The executed full lobster example is visually checked,
+with ten-page/106-image caption/lightbox checks passing.
+
+Final source archive and GitHub release-platform checks are in progress; no
+completed final-archive check or deployment is claimed at this checkpoint.
+No CRAN/win-builder submission, OSA implementation, or BNS modification was made.
+Uncommitted CDI-order work is excluded and preserved separately.
+
 ## Optional DHARMa residual engine: 9 October 2026
 
 Feature source `1d83f301b4b51b5759490357e2b1023025a94831` adds optional native
@@ -32,8 +53,8 @@ visually checked, and its live bytes match the deployment. Local docs are
 synchronised with the publication. Ubuntu release job `113636710485` in
 R-CMD-check `37873523872` completes with `Status: OK`, 7,907 assertions, no
 failures, warnings, or skips, and a successful minimal-installation check.
-Windows release job `113636710650` is still running at this record's snapshot;
-its result is not yet known.
+Windows release job `113636710650` subsequently completed successfully; the
+overall run is verified successful on 12 October.
 
 No CRAN or win-builder submission was made. Numerical bridge tests do not
 establish fitted-model calibration for DHARMa tests. Scientific interpretation,

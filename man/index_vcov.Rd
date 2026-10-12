@@ -38,9 +38,9 @@ Retrieve the joint uncertainty of the annual expected-response index,
 not the model-coefficient covariance or observation-error covariance.
 }
 \details{
-All six standardisation backends and area integration retain these
+All standardisation backends and area integration retain these
 compact matrices when uncertainty is calculated, including when only
-summaries are retained. GLM/GAM/glmmTMB covariance is obtained by propagating
+summaries are retained. GLM/GAM/glmmTMB/lme4 covariance is obtained by propagating
 the joint fitted-parameter covariance through the weighted annual means.
 Log-scale covariance uses their log-index gradients. brms uses sample
 covariance of the same annual posterior draws, taking logs before

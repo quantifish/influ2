@@ -1,6 +1,6 @@
 # Development ideas and decisions
 
-Last reviewed: 9 October 2026.
+Last reviewed: 12 October 2026.
 
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records
@@ -25,7 +25,26 @@ does not reopen completed issues. Issue #18 was explicitly resumed on
 - **Completed:** the agreed implementation, tests, and documentation are in place.
 - **In progress:** a bounded scope is approved and is being executed.
 
+## Optional lme4 backend: 12 October 2026
+
+The maintainer approved lmer/glmer/glmer.nb support across influence/CDI,
+PIT/DHARMa residuals, likelihood-implied effects, expected-response and
+area-integrated indices, annual covariance, comparisons, and step plots.
+Implementation and direct native-agreement tests are in place. Clean-source
+coverage (95.44%), minimal installation (17 results, 26 dependency guards),
+visual regressions, and local website/caption checks pass; final archive and
+GitHub release-platform checks are in progress. See the dated release review
+for final evidence. Variance parameters
+remain fixed in effect uncertainty; transformed Gaussian responses require an
+explicit log declaration. Nonlinear nlmer and arbitrary custom families are
+excluded. Negative-binomial refits require an explicit size-estimation choice.
+
+OSA was explicitly parked by the maintainer on 9 October. It is not part of
+this extension or a release requirement. The feasibility prototype remains
+evidence for a possible later discussion, not an implemented residual engine.
+
 ## Family extension: 9 October 2026
+
 
 The maintainer approved ordinary binomial GLM/GAM/glmmTMB effects, the missing
 sdmTMB Gamma/Poisson/NB2 routes, Tweedie across backends, and additional joint
@@ -50,9 +69,11 @@ coefficient-plus-score calculations. Retain this as a separate residual API
 decision; no OSA implementation or change to the residual defaults is approved
 in this increment.
 
-A native glmmTMB Poisson prototype confirms that TMB's CDF-based OSA call
-requires a `data.term.indicator`, which the unmodified fitted objective does
-not expose. Do not silently substitute a Gaussian approximation or ordinary
+A native glmmTMB Poisson prototype succeeded with TMB's generic OSA method
+and the existing `keep` observation indicator. The faster CDF method needs
+additional lower/upper-CDF likelihood hooks; an indicator alone is insufficient.
+This was a feasibility check, not full validation, and OSA is now parked.
+Do not silently substitute a Gaussian approximation or ordinary
 conditional PIT and label it OSA. The implemented `residual_method` choice belongs
 at calculation time, with method/conditioning metadata carried into the shared
 plots. Posterior or new-effect integration must stay explicit. Response predictive

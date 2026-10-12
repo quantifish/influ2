@@ -19,7 +19,8 @@ implied_effects(
   traditional_scale = c("log_response", "standardised", "standardized"),
   component = NULL,
   year_term = NULL,
-  draw_id = NULL
+  draw_id = NULL,
+  response_transform = "identity"
 )
 
 \method{print}{influ_implied}(x, ...)
@@ -28,6 +29,8 @@ implied_effects(
 }
 \arguments{
 \item{model}{A retained \code{lm}, GLM, \code{mgcv} GAM, or ML \code{glmmTMB} fit. These
+also include lme4 lmer/glmer/glmer.nb fits for the corresponding supported
+single-response families, with fitted random effects held fixed.
 adapters support Gaussian identity-link models (including
 an explicitly logged response), binomial logit-link models (Bernoulli or
 \code{cbind(successes, failures)}), and Poisson, NB2, Gamma, and Tweedie log-link
@@ -102,6 +105,11 @@ Not used for combined implied responses, which do not have a term baseline.}
 posterior draw. \code{NULL} uses native posterior-mean parameters before
 predicting. Both options condition on a single parameter state; neither
 propagates posterior uncertainty or produces Bayesian credible intervals.}
+
+\item{response_transform}{For lme4 only, \code{"identity"} or explicitly \code{"log"}
+for a Gaussian lmer fit of log(response) or a named logged column.
+These adjustments remain on the fitted log-response scale; random effects
+and native Gaussian SD are held fixed. Other response transformations fail.}
 
 \item{x}{An `influ_implied` result.}
 

@@ -6,6 +6,8 @@
 #' abundance indices. Calculate once and plot the compact result repeatedly.
 #'
 #' @param model A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. These
+#'   also include lme4 lmer/glmer/glmer.nb fits for the corresponding supported
+#'   single-response families, with fitted random effects held fixed.
 #'   adapters support Gaussian identity-link models (including
 #'   an explicitly logged response), binomial logit-link models (Bernoulli or
 #'   `cbind(successes, failures)`), and Poisson, NB2, Gamma, and Tweedie log-link
@@ -41,6 +43,10 @@
 #'   posterior draw. `NULL` uses native posterior-mean parameters before
 #'   predicting. Both options condition on a single parameter state; neither
 #'   propagates posterior uncertainty or produces Bayesian credible intervals.
+#' @param response_transform For lme4 only, `"identity"` or explicitly `"log"`
+#'   for a Gaussian lmer fit of log(response) or a named logged column.
+#'   These adjustments remain on the fitted log-response scale; random effects
+#'   and native Gaussian SD are held fixed. Other response transformations fail.
 #' @param data Original model data with original row names, if needed to
 #'   recover the year or grouping column. Values are checked against the fit.
 #' @param year Time column; `NULL` uses the usual automatic detection.
@@ -194,7 +200,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     method = c("likelihood", "traditional"), baseline = c("year_group", "year"),
     min_n = 10L, level = .95, interval = c("auto", "descriptive", "none"),
     traditional_scale = c("log_response", "standardised", "standardized"),
-    component = NULL, year_term = NULL, draw_id = NULL) {
+    component = NULL, year_term = NULL, draw_id = NULL, response_transform = "identity") {
   method <- match.arg(method)
   baseline <- match.arg(baseline)
   interval <- match.arg(interval)
@@ -212,7 +218,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   }
   if (!is.null(component)) component <- match.arg(component, c("conditional", "positive", "encounter", "combined", "zero_inflation"))
   if (!is.null(draw_id) && !inherits(model, "brmsfit")) stop("`draw_id` applies only to brms implied effects.", call. = FALSE)
-  a <- .implied_adapter(model, data, year, groups, baseline, component, year_term, draw_id)
+  a <- .implied_adapter(model, data, year, groups, baseline, component, year_term, draw_id, response_transform)
   if (identical(a$positive_family %||% a$family, "tweedie")) {
     eta <- if (is.matrix(a$eta)) a$eta[, 2L] else a$eta
     a$extra$tweedie_constant <- .implied_density(a$observed, eta, a$dispersion,
@@ -323,7 +329,8 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   structure(list(table = table, metadata = metadata), class = "influ_implied")
 }
 
-.implied_adapter <- function(model, data, year, groups, baseline, component = NULL, year_term = NULL, draw_id = NULL) {
+.implied_adapter <- function(model, data, year, groups, baseline, component = NULL, year_term = NULL, draw_id = NULL, response_transform = "identity") {
+  if (!inherits(model, "merMod") && response_transform != "identity") stop("`response_transform` is an lme4 option only.", call. = FALSE)
   if (inherits(model, "sdmTMB")) {
     return(.implied_sdmtmb_adapter(model, data, year, groups, baseline, component, year_term))
   }
@@ -340,9 +347,10 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     stop("Stored PIT residuals do not contain the native likelihood. Supply the fitted model, or use plot_grouped_residuals() for grouped PIT departures.", call. = FALSE)
   }
   backend <- if (inherits(model, "glmmTMB")) "glmmTMB" else if (inherits(model, "gam")) "gam" else
-    if (inherits(model, "glm")) "glm" else if (inherits(model, "lm")) "lm" else NA_character_
-  if (is.na(backend)) stop("Implied effects require a supported lm, GLM, GAM, glmmTMB, sdmTMB, tinyVAST, or brms fit.", call. = FALSE)
+    if (inherits(model, "glm")) "glm" else if (inherits(model, "lm")) "lm" else if (inherits(model, "merMod")) "lme4" else NA_character_
+  if (is.na(backend)) stop("Implied effects require a supported lm, GLM, GAM, glmmTMB, lme4, sdmTMB, tinyVAST, or brms fit.", call. = FALSE)
   .require_model_backend(model)
+  lme4_info <- if (backend == "lme4") .lme4_check(model, response_transform) else NULL
   if (backend == "lm" && is.null(model$model)) stop("A retained model frame is required.", call. = FALSE)
   frame <- .residual_model_frame(model)
   if (is.null(frame) || !nrow(frame)) stop("A retained model frame is required.", call. = FALSE)
@@ -367,7 +375,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     if (isTRUE(model$modelInfo$REML) || !isTRUE(model$sdr$pdHess) || model$fit$convergence != 0L) {
       stop("Implied effects require a converged ML glmmTMB fit with a positive-definite Hessian.", call. = FALSE)
     }
-  } else if (isFALSE(model$converged)) stop("The supplied model did not converge.", call. = FALSE)
+  } else if (backend != "lme4" && isFALSE(model$converged)) stop("The supplied model did not converge.", call. = FALSE)
   weights <- stats::model.weights(frame)
   if (!is.null(weights) && any(!is.finite(weights) | weights != 1)) {
     stop("Non-unit case weights are not yet supported for implied effects.", call. = FALSE)
@@ -382,6 +390,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
   }
   log_response <- family == "gaussian" && is.call(f[[2L]]) && length(f[[2L]]) == 2L &&
     identical(f[[2L]][[1L]], as.name("log")) && is.symbol(f[[2L]][[2L]])
+  if (backend == "lme4" && response_transform == "log") log_response <- TRUE
   binomial_matrix <- family == "binomial" && is.call(f[[2L]]) && identical(f[[2L]][[1L]], as.name("cbind"))
   if (!is.symbol(f[[2L]]) && !log_response && !binomial_matrix) {
     stop("Use a named response or a Gaussian model of log(response); other transformations are not supported.", call. = FALSE)
@@ -412,7 +421,7 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
     stop("Gamma implied effects require strictly positive responses.", call. = FALSE)
   }
   X <- stats::model.matrix(model)
-  beta <- if (backend == "glmmTMB") glmmTMB::fixef(model)$cond else stats::coef(model)
+  beta <- if (backend == "glmmTMB") glmmTMB::fixef(model)$cond else if (backend == "lme4") lme4::fixef(model) else stats::coef(model)
   if (any(!is.finite(beta)) || !all(colnames(X) %in% names(beta))) {
     stop("Aliased or unaligned coefficients are not supported for implied effects.", call. = FALSE)
   }
@@ -443,6 +452,11 @@ implied_effects <- function(model, data = NULL, year = NULL, groups = "area",
       "Fitted dispersion", alignment)
     # glmmTMB reports Gamma sigma = 1/sqrt(shape), not phi = 1/shape.
     if (family == "Gamma") dispersion <- dispersion^2
+  } else if (backend == "lme4") {
+    eta <- .align_observation_values(stats::predict(model, type = "link", re.form = NULL), frame, "Fitted lme4 predictors", model)
+    dispersion <- if (family == "nbinom2") lme4::getME(model, "glmer.nb.theta") else {
+      if (family == "Gamma") stats::sigma(model)^2 else if (family == "gaussian") stats::sigma(model) else 1
+    }
   } else {
     eta <- if (backend == "lm") model$fitted.values else model$linear.predictors
     dispersion <- if (family == "nbinom2") {

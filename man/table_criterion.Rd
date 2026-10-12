@@ -40,7 +40,7 @@ No full fits, posterior draws, or pointwise likelihood arrays are retained.
 }
 \description{
 A model-specific summary table for GLMs, mgcv GAMs, glmmTMB, brms,
-sdmTMB, and tinyVAST. Different criteria occupy different columns; missing
+lme4, sdmTMB, and tinyVAST. Different criteria occupy different columns; missing
 or inappropriate criteria are never replaced by another statistic.
 }
 \details{
@@ -54,7 +54,7 @@ mgcv's ordinary \code{AIC()} already uses a conditional formulation, with its
 smoothing-parameter uncertainty correction when available. Its \code{cAIC}
 column therefore equals native AIC; it is not an independent criterion.
 sdmTMB and tinyVAST use their own approximate \code{cAIC()} methods. glmmTMB
-has no supported native conditional-AIC method here. No generic mixed-model
+and lme4 have no supported native conditional-AIC method here. No generic mixed-model
 correction, cAIC4 conversion, or refitting workaround is substituted.
 For an ordinary model without random effects, cAIC reduces to native AIC.
 Profiled spatial fits are not yet validated for conditional penalty

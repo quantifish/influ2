@@ -44,12 +44,14 @@ Suggests:
     glmmTMB,
     knitr,
     loo,
+    lme4 (>= 1.1-36),
     MASS,
     Matrix,
     mgcv,
     pkgload,
     posterior,
     proto,
+    reformulas,
     rmarkdown,
     sdmTMB,
     testthat (>= 3.2.0),
@@ -61,5 +63,5 @@ Additional_repositories: https://vast-lib.r-universe.dev
 LazyData: false
 VignetteBuilder: knitr
 Config/Needs/website: pkgdown
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1
 Config/testthat/edition: 3

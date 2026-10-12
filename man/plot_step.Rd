@@ -53,6 +53,12 @@ not the full expected response integrated over space.}
 keep the returned object small. Save expensive fits separately if needed.}
 
 \item{refit_args}{Named arguments passed to the model update at every step,
+with original fitting rows and offsets locked. For lme4 negative-binomial
+fits, explicitly supply \code{list(reestimate_nb = TRUE)} to use glmer.nb at each
+stage, or FALSE to keep the original size parameter. The saved native call
+cannot distinguish originally estimated from user-fixed size. Automatic
+lme4 sequences retain all random terms while adding fixed terms; changes
+to random structure require explicit step formulas, each with a random term.
 such as brms sampling controls. Stage-specific arguments take precedence.
 Execution-only controls (\code{seed}, \code{cores}, \code{refresh}, \code{silent}, and \code{verbose})
 do not by themselves force an otherwise unchanged original fit to rerun.}

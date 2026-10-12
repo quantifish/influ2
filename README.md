@@ -24,6 +24,7 @@ Initial adapters are available for:
 - `mgcv::gam()`;
 - `brms::brm()`;
 - `glmmTMB::glmmTMB()`;
+- `lme4::lmer()`, `lme4::glmer()`, and `lme4::glmer.nb()`;
 - `sdmTMB::sdmTMB()`; and
 - `tinyVAST::tinyVAST()`.
 
@@ -58,10 +59,10 @@ vignette for the supported location, scale, and link combinations.
 
 For an assessment-ready expected-response table, use `cpue_index()` with an
 explicit common reference profile or population. Both `"standardised"` and
-`"standardized"` are accepted. GLM, GAM, glmmTMB, complete brms, sdmTMB, and
+`"standardized"` are accepted. GLM, GAM, glmmTMB, lme4, complete brms, sdmTMB, and
 univariate tinyVAST fits are supported for response standardisation.
 `integrate_index()` separately calculates area-weighted totals for these same
-six backends, whether or not the fitted model includes spatial effects.
+seven backends, whether or not the fitted model includes spatial effects.
 
 ```r
 index <- cpue_index(model, year = "year", reference_data = reference_profile)

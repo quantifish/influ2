@@ -23,7 +23,8 @@ influ_residuals(
   conditioning = "backend_default",
   residual_method = c("simulation_pit", "dharma"),
   retain_dharma = FALSE,
-  dharma_max_mb = 256
+  dharma_max_mb = 256,
+  response_transform = "identity"
 )
 
 \method{print}{influ_residuals}(x, ...)
@@ -72,7 +73,7 @@ groups below this size remain visible but have no predictive envelope.}
 defining a joint scientific grouping, e.g. \code{c("year", "target")}. These
 columns must not be defined from the outcome. Supply \code{data} if necessary.}
 
-\item{trial_counts}{For weighted one-column binomial GLM/GAM/glmmTMB fits,
+\item{trial_counts}{For weighted one-column binomial GLM/GAM/glmmTMB/lme4 fits,
 the name of the known trial-count column in \code{data}. It must equal the
 fitted trial weights. Arbitrary case weights are not treated as trials.
 Two-column success/failure responses need no override.}
@@ -83,8 +84,8 @@ Only these columns, not the complete model data, are stored.}
 
 \item{conditioning}{Simulation target. \code{"backend_default"} preserves existing
 behaviour: \code{"fitted"} for GLM/GAM/sdmTMB/tinyVAST, \code{"new_effects"} for
-glmmTMB, and \code{"posterior_predictive"} for brms. Explicit alternatives are
-\code{"fitted"} for glmmTMB, \code{"conditional_draw"} for sdmTMB/tinyVAST, and
+glmmTMB/lme4, and \code{"posterior_predictive"} for brms. Explicit alternatives are
+\code{"fitted"} for glmmTMB/lme4, \code{"conditional_draw"} for sdmTMB/tinyVAST, and
 \code{"new_effects"} for sdmTMB. Unsupported combinations fail, not fall back.
 See the conditioning section below before comparing model diagnostics.}
 
@@ -104,6 +105,10 @@ default 256. A larger request fails before simulation. Requests of at least
 100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
 native simulators allocate additional copies. \code{batch_size} cannot remove
 this full-matrix cost. Increase the limit explicitly only if appropriate.}
+
+\item{response_transform}{For lme4 only, explicitly declare \code{"log"} for a
+Gaussian lmer fit of a log response; default \code{"identity"}. Observations
+and native simulations are then back-transformed to the natural scale.}
 
 \item{x}{An `influ_residuals` object.}
 

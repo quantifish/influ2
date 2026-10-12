@@ -693,6 +693,7 @@ Support is defined by both the backend and the response distribution:
 |:--|:--|:--|
 | GLM and GAM | Gaussian, binomial, Poisson, NB2, Gamma, and Tweedie | Separate fitted components can be diagnosed individually |
 | glmmTMB | Gaussian, binomial, Poisson, NB2, Gamma, and Tweedie | Gamma and truncated Poisson/NB2 hurdles; zero-inflated Poisson/NB2/Tweedie |
+| lme4 | Gaussian (identity or explicitly declared logged response), binomial(logit), Poisson/NB2/Gamma(log) | Separate fitted components only; no native joint hurdle/zero-inflated adapter |
 | sdmTMB | Gaussian, Bernoulli, Poisson, NB2, Gamma, Tweedie, and lognormal | Standard delta-Gamma and delta-lognormal |
 | tinyVAST | Gaussian, Bernoulli, Poisson, NB2, Gamma, Tweedie, and lognormal | Standard delta-Gamma and delta-lognormal |
 | brms | Gaussian, Bernoulli, Poisson, NB2, Gamma, and lognormal; verified custom Tweedie | Hurdle Gamma/Poisson/NB2/lognormal; zero-inflated Poisson/NB2 |

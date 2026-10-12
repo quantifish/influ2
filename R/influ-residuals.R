@@ -35,7 +35,7 @@
 #' @param calibration_groups Optional character vector of original-data columns
 #'   defining a joint scientific grouping, e.g. `c("year", "target")`. These
 #'   columns must not be defined from the outcome. Supply `data` if necessary.
-#' @param trial_counts For weighted one-column binomial GLM/GAM/glmmTMB fits,
+#' @param trial_counts For weighted one-column binomial GLM/GAM/glmmTMB/lme4 fits,
 #'   the name of the known trial-count column in `data`. It must equal the
 #'   fitted trial weights. Arbitrary case weights are not treated as trials.
 #'   Two-column success/failure responses need no override.
@@ -44,8 +44,8 @@
 #'   Only these columns, not the complete model data, are stored.
 #' @param conditioning Simulation target. `"backend_default"` preserves existing
 #'   behaviour: `"fitted"` for GLM/GAM/sdmTMB/tinyVAST, `"new_effects"` for
-#'   glmmTMB, and `"posterior_predictive"` for brms. Explicit alternatives are
-#'   `"fitted"` for glmmTMB, `"conditional_draw"` for sdmTMB/tinyVAST, and
+#'   glmmTMB/lme4, and `"posterior_predictive"` for brms. Explicit alternatives are
+#'   `"fitted"` for glmmTMB/lme4, `"conditional_draw"` for sdmTMB/tinyVAST, and
 #'   `"new_effects"` for sdmTMB. Unsupported combinations fail, not fall back.
 #'   See the conditioning section below before comparing model diagnostics.
 #' @param residual_method `"simulation_pit"` (default) preserves influ2's
@@ -62,6 +62,9 @@
 #'   100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
 #'   native simulators allocate additional copies. `batch_size` cannot remove
 #'   this full-matrix cost. Increase the limit explicitly only if appropriate.
+#' @param response_transform For lme4 only, explicitly declare `"log"` for a
+#'   Gaussian lmer fit of a log response; default `"identity"`. Observations
+#'   and native simulations are then back-transformed to the natural scale.
 #'
 #' @details Each simulation is a joint response vector, preserving the native
 #'   method's within-draw dependence. For observation \eqn{i}, let \eqn{L_i}
@@ -194,7 +197,8 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             calibration_groups = NULL, trial_counts = NULL,
                             groups = NULL, conditioning = "backend_default",
                             residual_method = c("simulation_pit", "dharma"),
-                            retain_dharma = FALSE, dharma_max_mb = 256) {
+                            retain_dharma = FALSE, dharma_max_mb = 256,
+                            response_transform = "identity") {
   component <- match.arg(component)
   residual_method <- .resid_method_options(residual_method, retain_dharma, dharma_max_mb)
   .resid_integer(calibration_bins, "calibration_bins", 1L)
@@ -228,7 +232,7 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
       data <- .resolve_influ_data(model, NULL)
     }
   }
-  adapter <- .resid_adapter(model, data, nsim, trial_counts, component, conditioning)
+  adapter <- .resid_backend_adapter(model, data, nsim, trial_counts, component, conditioning, response_transform)
   if (!all(groups %in% names(adapter$data))) {
     stop("`groups` must name columns in the model data; supply original `data`.", call. = FALSE)
   }
@@ -248,9 +252,14 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   if (n < 3L || any(!is.finite(observed))) {
     stop("At least three finite observed responses are required.", call. = FALSE)
   }
-  .resid_summarise_method(adapter, time, group_data, nsim, batch_size, seed,
+  result <- .resid_summarise_method(adapter, time, group_data, nsim, batch_size, seed,
     grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
     residual_method, retain_dharma, dharma_max_mb)
+  if (adapter$backend == "lme4") {
+    result$metadata$response_transform <- adapter$response_transform
+    result$metadata$native_response <- adapter$native_response
+  }
+  result
 }
 
 .resid_integer <- function(x, name, minimum) {

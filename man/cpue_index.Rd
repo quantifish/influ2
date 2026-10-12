@@ -23,7 +23,8 @@ cpue_index(
   ...,
   spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
   seed = 1L,
-  prediction_offset = NULL
+  prediction_offset = NULL,
+  response_transform = "identity"
 )
 
 \method{as.data.frame}{influ_index}(x, row.names = NULL, optional = FALSE, ...)
@@ -88,6 +89,13 @@ random-number state is restored; changing batch sizes preserves draws.}
 offset column in \code{reference_data}. \code{NULL} explicitly uses offset zero
 (one unit of exposure for a log-exposure offset). Other backends obtain
 offsets from their formula and the supplied reference predictors.}
+
+\item{response_transform}{For lme4 only, \code{"identity"} or explicitly \code{"log"}
+for a Gaussian lmer fit of log(response). Natural arithmetic expectations
+use \code{exp(eta + sigma^2/2)}, with group effects set to zero. The native
+fixed-effect covariance is propagated; uncertainty in sigma and random-effect
+variance parameters is not included. REML fits may describe indices, but
+must not rank different fixed-effect structures by likelihood criteria.}
 
 \item{x}{An `influ_index` object.}
 

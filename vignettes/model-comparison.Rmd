@@ -198,7 +198,7 @@ mixed <- table_criterion(list(GLM = glm_fit, GAM = gam_fit,
 ```
 
 The next table was calculated by one call to `table_criterion()` containing
-**all six backends**: GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST. Every fit
+**the six original backends**: GLM, GAM, glmmTMB, brms, sdmTMB, and tinyVAST. Every fit
 uses the same 150 simulated observations, including a complete, previously
 fitted four-chain brms model.
 This small continuous-response example is separate from the lobster count

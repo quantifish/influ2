@@ -5,6 +5,42 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Optional lme4 backend: 12 October 2026
+
+Native lmer/glmer/glmer.nb adapters now use the shared influence/CDI, index,
+area-integration, annual-covariance, PIT/DHARMa, implied-effect, comparison,
+and step interfaces. Standard supported families are Gaussian(identity),
+binomial(logit/probit/cloglog), and Poisson/NB2/Gamma(log); likelihood-implied
+binomial effects require logit. Gaussian logged responses require an explicit
+`response_transform = "log"`. Nonlinear nlmer and unvalidated custom families
+are excluded. lme4 >= 1.1-36 is optional, not an import.
+
+Influence uses native joint fixed/random conditional covariance, with coherent
+joint simulations. Variance/dispersion parameters remain fixed; non-log analytic
+differences condition on the fitted reference, whereas simulations propagate
+its coefficient dependence. Response indices set group effects to zero, not
+population-marginal integration, and propagate native fixed-effect covariance.
+The original model, its rows, weights, offsets, and RNG state are protected.
+Single random-intercept CDI categories use fitted grouping labels. Native ML
+criteria retain parameter counts; REML and non-default GLMM quadrature are not
+automatically ranked across incompatible likelihood targets. No cAIC surrogate
+or hidden ML refit is used. NB step refits require explicit size-estimation intent.
+
+Direct native-agreement tests pass across Gaussian/log-Gaussian, binomial
+successes/trials, Poisson, NB2, and Gamma models, including crossed effects,
+random slopes, polynomial bases, omitted rows, offsets, contrasts, native
+simulation replay, coherent covariance, compact retention, and unchanged fits.
+Clean-source full coverage is 95.43545%. The minimal installation reopens
+17 compact results without optional backends and passes 26 dependency guards.
+The existing visual regression suite passes, and N09/IV01 frozen sources and
+results are unchanged. The genuine 5,049-row lobster example is executed and
+visually reviewed; ten-page/106-image caption/lightbox checks pass.
+
+Final archive and release-platform verification are in progress. This entry
+does not yet claim a completed check of the final archive or a GitHub deployment.
+No CRAN/win-builder submission, OSA implementation, BNS edit, or scientific
+calibration claim is made. Uncommitted CDI-order work remains separate.
+
 ## Optional DHARMa residual engine: 9 October 2026
 
 The maintainer clarified DHARMa, not an analytic Dunn–Smyth extension, and
@@ -68,9 +104,8 @@ new figure is visually reviewed, its live bytes match the deployment, and local
 docs are synchronised with that publication without removing unrelated files.
 Ubuntu release job `113636710485` in R-CMD-check `37873523872` completes with
 `Status: OK`, 7,907 assertions, no failures, warnings, or skips, and a successful
-minimal-installation check. Windows release job `113636710650` remains in
-progress at this record's snapshot; do not interpret that as either failure
-or success.
+minimal-installation check. Windows release job `113636710650` subsequently
+completed successfully; the overall run is verified successful on 12 October.
 The separate uncommitted CDI-order work remains untouched.
 
 ## Expanded implied-effect families: 9 October 2026

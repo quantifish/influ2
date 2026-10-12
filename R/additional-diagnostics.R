@@ -14,13 +14,14 @@
 }
 
 .as_diagnostic_list <- function(fits, focus = NULL, ...) {
-  fitted_classes <- c("influ_diag", "glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST")
+  fitted_classes <- c("influ_diag", "glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST", "merMod")
   if (any(inherits(fits, fitted_classes))) fits <- list(fits)
   if (!is.list(fits) || !length(fits)) {
     stop("`fits` must be a fitted model, an influ_diag, or a non-empty list of them.", call. = FALSE)
   }
   lapply(fits, function(model) {
     if (inherits(model, "influ_diag")) return(model)
+    .require_model_backend(model)
     influ(model, focus = .comparison_focus(model, focus), ...)
   })
 }
@@ -30,7 +31,7 @@
   if (is.null(labels)) {
     labels <- vapply(seq_along(diagnostics), function(i) {
       model <- if (is.list(fits) && !any(inherits(fits, c(
-        "influ_diag", "glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST"
+        "influ_diag", "glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST", "merMod"
       )))) fits[[i]] else fits
       frm <- tryCatch(stats::formula(model), error = function(e) NULL)
       formula_label <- if (is.null(frm)) paste0(diagnostics[[i]]$backend, " ", i) else {

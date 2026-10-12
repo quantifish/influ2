@@ -1,4 +1,11 @@
-.index_prediction_guards <- function(model, backend) {
+.index_prediction_guards <- function(model, backend, response_transform = "identity") {
+  if (backend == "lme4") {
+    .lme4_check(model, response_transform)
+    if (!is.null(stats::getCall(model)$offset)) stop("Put exposure offsets in the formula for lme4 indices.", call. = FALSE)
+    w <- stats::model.weights(stats::model.frame(model))
+    if (!is.null(w) && any(w != 1) && stats::family(model)$family != "binomial") stop("Non-unit lme4 case weights need a validated reference-variance contract.", call. = FALSE)
+    return(invisible(NULL))
+  }
   if (backend == "brms") {
     if (!requireNamespace("brms", quietly = TRUE) ||
         !requireNamespace("posterior", quietly = TRUE)) {
@@ -57,6 +64,7 @@
     if (!inherits(f, "formula")) return(character())
     all.vars(f[[length(f)]])
   })))
+  if (backend == "lme4") required <- all.vars(stats::delete.response(stats::terms(model, fixed.only = TRUE)))
   if (backend == "glmmTMB") {
     required <- unique(unlist(lapply(c("cond", "zi", "disp"), function(component) {
       term <- stats::terms(model, component = component)

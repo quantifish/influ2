@@ -59,6 +59,7 @@ reference:
   - influ.gam
   - influ.glm
   - influ.glmmTMB
+  - influ.merMod
   - influ.sdmTMB
   - influ.tinyVAST
   - influ_effects

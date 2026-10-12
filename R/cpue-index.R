@@ -100,6 +100,12 @@
 #'   `covariance`, and optional `draws`. `as.data.frame()` returns the full table with `Year`, `Mean`,
 #'   `Median`, `SD`, `CV`, `Qlower`, `Qupper`, `Method`, `Distribution`, and `Link`.
 #' @seealso [index_table()], [index_vcov()], [integrate_index()], [plot_index()], [plot_compare()], [geo_mean()], [influ_indices()]
+#' @param response_transform For lme4 only, `"identity"` or explicitly `"log"`
+#'   for a Gaussian lmer fit of log(response). Natural arithmetic expectations
+#'   use `exp(eta + sigma^2/2)`, with group effects set to zero. The native
+#'   fixed-effect covariance is propagated; uncertainty in sigma and random-effect
+#'   variance parameters is not included. REML fits may describe indices, but
+#'   must not rank different fixed-effect structures by likelihood criteria.
 #' @examples
 #' if (requireNamespace("glmmTMB", quietly = TRUE)) {
 #'   data(lobsters_per_pot)
@@ -118,8 +124,9 @@ cpue_index <- function(model, year = NULL,
     rescale = "raw", ndraws = 1000L, batch_size = 250L,
     draw_batch_size = 100L, retain = c("summary", "draws"), units = NULL, ...,
     spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
-    seed = 1L, prediction_offset = NULL) {
+    seed = 1L, prediction_offset = NULL, response_transform = "identity") {
   .require_model_backend(model)
+  if (!inherits(model, "merMod") && response_transform != "identity") stop("`response_transform` is an lme4 option only.", call. = FALSE)
   method <- match.arg(method)
   if (method == "standardized") method <- "standardised"
   uncertainty <- match.arg(uncertainty)
@@ -157,7 +164,9 @@ cpue_index <- function(model, year = NULL,
       stop("Year-effect extraction does not accept reference data, rescaling, or draw retention; configure `influ()` first.", call. = FALSE)
     }
     diagnostic <- if (inherits(model, "influ_diag")) model else {
-      influ(model, focus = year, uncertainty = uncertainty, probs = probs, ...)
+      if (inherits(model, "merMod")) influ(model, focus = year, uncertainty = uncertainty,
+        probs = probs, response_transform = response_transform, ...) else
+        influ(model, focus = year, uncertainty = uncertainty, probs = probs, ...)
     }
     if (!identical(diagnostic$focus, year)) {
       stop("`year` does not match the diagnostic focus.", call. = FALSE)
@@ -183,10 +192,12 @@ cpue_index <- function(model, year = NULL,
     "glm"
   } else if (inherits(model, "glmmTMB")) "glmmTMB" else if (inherits(model, "brmsfit")) {
     "brms"
+  } else if (inherits(model, "merMod")) {
+    "lme4"
   } else if (!is.null(spatial_backend)) {
     spatial_backend
   } else {
-    stop("Response standardisation supports GLM, GAM, glmmTMB, complete brms, sdmTMB, and univariate tinyVAST fits.", call. = FALSE)
+    stop("Response standardisation supports GLM, GAM, glmmTMB, lme4, complete brms, sdmTMB, and univariate tinyVAST fits.", call. = FALSE)
   }
   if (retain == "draws" && !backend %in% c("brms", "sdmTMB", "tinyVAST")) {
     stop("Draw retention is currently available only for brms and spatial response indices.", call. = FALSE)
@@ -235,11 +246,12 @@ cpue_index <- function(model, year = NULL,
     time_values <- frame[[native_time]][match(years, as.character(frame[[year]]))]
   }
   family <- if (is.null(info)) stats::family(model) else info[c("family", "link")]
+  if (backend == "lme4" && response_transform == "log") family <- list(family = "lognormal", link = "log")
   if (grepl("^quasi", family$family)) {
     stop("Quasi families are not supported.", call. = FALSE)
   }
   if (is.null(info)) {
-    .index_prediction_guards(model, backend)
+    .index_prediction_guards(model, backend, response_transform)
     .index_reference_predictors(model, backend, year, reference_data)
   }
   batches <- split(seq_len(nrow(reference_data)),
@@ -295,8 +307,10 @@ cpue_index <- function(model, year = NULL,
     }
     uncertainty_label <- "posterior expected-response draws"
   } else {
-    result <- .index_frequentist(model, backend, years, batches, newdata,
-      weights, uncertainty != "none", batch_size)
+    result <- if (backend == "lme4") .index_lme4(model, years, newdata, weights,
+      uncertainty != "none", batch_size, response_transform) else
+      .index_frequentist(model, backend, years, batches, newdata,
+        weights, uncertainty != "none", batch_size)
     estimate <- result$estimate
     covariance <- result$covariance
     if (!raw) {
@@ -335,7 +349,9 @@ cpue_index <- function(model, year = NULL,
     probs = probs, reference_rows = nrow(reference_data),
     reference_variables = names(reference_data),
     reference = "fixed common population; response-scale weighted mean",
-    random_effects = if (backend %in% c("brms", "glmmTMB")) {
+    response_transform = if (backend == "lme4") response_transform else NULL,
+    variance_parameters = if (backend == "lme4") "native estimates held fixed; their uncertainty is not propagated" else NULL,
+    random_effects = if (backend %in% c("brms", "glmmTMB", "lme4")) {
       "group-level effects set to zero; not population-marginal"
     } else if (backend == "sdmTMB") {
       paste0("spatial fields: ", spatial_fields, "; IID effects zero; other fitted terms retained")

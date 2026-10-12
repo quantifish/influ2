@@ -1,5 +1,5 @@
 .step_backend <- function(model) {
-  classes <- c("brmsfit", "tinyVAST", "sdmTMB", "glmmTMB", "gam", "glm", "lm")
+  classes <- c("brmsfit", "tinyVAST", "sdmTMB", "glmmTMB", "merMod", "gam", "glm", "lm")
   found <- classes[vapply(classes, function(x) inherits(model, x), logical(1))]
   if (!length(found)) stop("Step refitting does not support this model class.", call. = FALSE)
   found[1]
@@ -112,6 +112,19 @@
 }
 
 .step_auto_formulas <- function(model, formula, year, backend) {
+  if (backend == "merMod") {
+    fixed <- .lme4_formula_tool("nobars", formula)
+    year_term <- .step_year_term(fixed, year)
+    terms <- stats::terms(fixed, keep.order = TRUE)
+    remaining <- setdiff(attr(terms, "term.labels"), year_term)
+    random <- vapply(.lme4_formula_tool("findbars", formula), function(x) paste0("(", paste(deparse(x), collapse = " "), ")"), character(1))
+    out <- lapply(seq.int(0L, length(remaining)), function(i) stats::reformulate(
+      c(year_term, utils::head(remaining, i), .step_offset_terms(formula), random),
+      response = paste(deparse(formula[[2L]]), collapse = " "),
+      intercept = attr(terms, "intercept"), env = environment(formula)))
+    names(out) <- c("Year + random effects", paste0("Add ", remaining))
+    return(out)
+  }
   if (backend %in% c("sdmTMB", "tinyVAST")) {
     stop("Spatial refits require explicit `steps` specifying which spatial and spatiotemporal structures each stage retains.", call. = FALSE)
   }
@@ -143,6 +156,12 @@
 }
 
 .step_locked_data <- function(model, formula, backend) {
+  if (backend == "merMod") {
+    data <- .lme4_data(model)
+    frame <- stats::model.frame(model)
+    return(list(data = data, weights = stats::model.weights(frame),
+      offset = if (is.null(stats::getCall(model)$offset)) NULL else frame[["(offset)"]]))
+  }
   frame <- tryCatch(stats::model.frame(model), error = function(e) NULL)
   if (!is.data.frame(frame)) frame <- NULL
   original <- tryCatch(eval(model$call$data, envir = .step_formula_env(formula)), error = function(e) NULL)
@@ -239,6 +258,10 @@
 
 .step_check_convergence <- function(model, backend, label) {
   fail <- function(message) stop("Step '", label, "' ", message, call. = FALSE)
+  if (backend == "merMod") {
+    messages <- model@optinfo$conv$lme4$messages %||% character()
+    if (any(model@optinfo$conv$opt != 0) || any(!grepl("boundary.*singular", messages, ignore.case = TRUE))) fail("did not converge.")
+  }
   if (backend %in% c("glm", "gam") && !isTRUE(model$converged)) {
     fail("did not converge.")
   }
@@ -293,6 +316,24 @@
 }
 
 .step_refit_one <- function(model, formula, args, locked, backend) {
+  if (backend == "merMod") {
+    nb <- .normalise_family_name(stats::family(model)$family)$family == "negative_binomial"
+    reestimate <- args$reestimate_nb
+    args$reestimate_nb <- NULL
+    call <- stats::getCall(model)
+    if (nb && isTRUE(reestimate)) {
+      call[[1L]] <- quote(lme4::glmer.nb)
+      call$family <- NULL
+    } else call[[1L]] <- if (inherits(model, "lmerMod")) quote(lme4::lmer) else quote(lme4::glmer)
+    call$formula <- formula
+    call$data <- locked$data
+    call$subset <- NULL
+    call$weights <- locked$weights
+    call$offset <- locked$offset
+    call$na.action <- quote(stats::na.fail)
+    for (name in names(args)) call[name] <- list(args[[name]])
+    return(eval(call, envir = environment(formula)))
+  }
   if (backend == "sdmTMB") {
     # update.sdmTMB calls update.formula() on formula lists, which is invalid.
     # Reconstruct the recorded call using retained data and mesh instead.
@@ -378,6 +419,9 @@
   locked <- .step_locked_data(model, formula, backend)
   if (!year %in% names(locked$data)) stop("`year` is absent from the fitted data.", call. = FALSE)
   refit_args <- .step_validate_refit_args(refit_args)
+  if (backend == "merMod" && .normalise_family_name(stats::family(model)$family)$family == "negative_binomial") {
+    if (!is.logical(refit_args$reestimate_nb) || length(refit_args$reestimate_nb) != 1L || is.na(refit_args$reestimate_nb)) stop("lme4 negative-binomial refits require `refit_args = list(reestimate_nb = TRUE)` to re-estimate size, or FALSE to hold it fixed; the saved call cannot identify its original estimation intent.", call. = FALSE)
+  }
   if (any(c("formula", "formula.") %in% names(refit_args))) {
     stop("Specify formulas in `steps`, rather than `refit_args`.", call. = FALSE)
   }
@@ -409,8 +453,9 @@
       if (backend == "tinyVAST" && name == "spatial_domain") {
         return(identical(args[[name]], model$spatial_domain))
       }
-      if (is.null(model$call[[name]])) return(is.null(args[[name]]))
-      original <- model$call[[name]]
+      if (name == "reestimate_nb" && backend == "merMod") return(FALSE)
+      if (is.null(stats::getCall(model)[[name]])) return(is.null(args[[name]]))
+      original <- stats::getCall(model)[[name]]
       # A live symbol may now point to different settings. Only recorded
       # literal values, or saved backend settings above, establish equality.
       if (!is.atomic(original)) return(FALSE)

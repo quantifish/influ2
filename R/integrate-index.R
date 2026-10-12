@@ -45,7 +45,7 @@
 #'   under the stated encounter definition, not abundance. Supplying a unit
 #'   label does not validate these scientific assumptions.
 #'
-#'   All six [cpue_index()] backends are supported with the same prediction
+#'   All [cpue_index()] backends, including lme4, are supported with the same prediction
 #'   conventions and model-structure guards. Smooth spatial predictors in GLMs
 #'   and GAMs can be integrated just like dedicated spatial fields. Joint
 #'   covariance or shared draws propagate dependence across cells and years;
@@ -80,7 +80,7 @@ integrate_index <- function(model, reference_data, area, year = NULL,
     ndraws = 1000L, batch_size = 250L, draw_batch_size = 100L,
     retain = c("summary", "draws"), averaging_weights = NULL,
     spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
-    seed = 1L, prediction_offset = NULL) {
+    seed = 1L, prediction_offset = NULL, response_transform = "identity") {
   if (!is.data.frame(reference_data) || !nrow(reference_data)) {
     stop("Supply a non-empty reference_data prediction domain.", call. = FALSE)
   }
@@ -123,7 +123,7 @@ integrate_index <- function(model, reference_data, area, year = NULL,
     uncertainty = match.arg(uncertainty), probs = probs, rescale = rescale,
     ndraws = ndraws, batch_size = batch_size, draw_batch_size = draw_batch_size,
     retain = match.arg(retain), units = units, spatial_fields = match.arg(spatial_fields),
-    seed = seed, prediction_offset = prediction_offset)
+    seed = seed, prediction_offset = prediction_offset, response_transform = response_transform)
   if (identical(rescale, "raw")) {
     for (column in c("Mean", "Median", "SD", "Qlower", "Qupper")) {
       result$table[[column]] <- result$table[[column]] * multiplier

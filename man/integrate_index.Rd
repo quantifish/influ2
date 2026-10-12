@@ -23,7 +23,8 @@ integrate_index(
   averaging_weights = NULL,
   spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
   seed = 1L,
-  prediction_offset = NULL
+  prediction_offset = NULL,
+  response_transform = "identity"
 )
 }
 \arguments{
@@ -102,6 +103,13 @@ random-number state is restored; changing batch sizes preserves draws.}
 offset column in \code{reference_data}. \code{NULL} explicitly uses offset zero
 (one unit of exposure for a log-exposure offset). Other backends obtain
 offsets from their formula and the supplied reference predictors.}
+
+\item{response_transform}{For lme4 only, \code{"identity"} or explicitly \code{"log"}
+for a Gaussian lmer fit of log(response). Natural arithmetic expectations
+use \code{exp(eta + sigma^2/2)}, with group effects set to zero. The native
+fixed-effect covariance is propagated; uncertainty in sigma and random-effect
+variance parameters is not included. REML fits may describe indices, but
+must not rank different fixed-effect structures by likelihood criteria.}
 }
 \value{
 An \code{influ_index} with the same assessment-table columns as
@@ -130,7 +138,7 @@ Area-integrated encounter probabilities describe expected occupied area
 under the stated encounter definition, not abundance. Supplying a unit
 label does not validate these scientific assumptions.
 
-All six \code{\link[=cpue_index]{cpue_index()}} backends are supported with the same prediction
+All \code{\link[=cpue_index]{cpue_index()}} backends, including lme4, are supported with the same prediction
 conventions and model-structure guards. Smooth spatial predictors in GLMs
 and GAMs can be integrated just like dedicated spatial fields. Joint
 covariance or shared draws propagate dependence across cells and years;

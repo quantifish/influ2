@@ -31,7 +31,7 @@ local({
   forbidden <- setdiff(unique(c(dependency_names(description["Suggests"]),
     "rstan", "StanHeaders", "RcppParallel")), c(required, core_allowed))
   required_absent <- c("brms", "rstan", "glmmTMB", "sdmTMB", "tinyVAST",
-    "posterior", "bayesplot", "TMB", "DHARMa", "fmesher", "callr", "pkgload", "testthat")
+    "posterior", "bayesplot", "TMB", "DHARMa", "lme4", "fmesher", "callr", "pkgload", "testthat")
   if (length(intersect(required_absent, required))) {
     stop("An optional package has become a mandatory dependency: ",
       paste(intersect(required_absent, required), collapse = ", "))

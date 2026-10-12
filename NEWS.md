@@ -1,5 +1,14 @@
 # influ2 1.1.0
 
+* Added optional lme4 adapters for lmer, glmer, and glmer.nb fits across
+  influence/CDI diagnostics, PIT/DHARMa residuals, likelihood-implied effects,
+  CPUE indices, area integration, annual covariance, comparisons, and step plots.
+  Gaussian log-response interpretation is explicit. Joint coefficient draws
+  preserve fixed/random dependence; variance and dispersion parameters are
+  held at native fitted estimates. Negative-binomial step refits require an
+  explicit choice about re-estimating size. REML criteria are not ranked across
+  fixed-effect structures. A worked simulated-lobster example is included.
+
 * Added optional DHARMa residual calculation to `influ_residuals()` and
   `as_influ_residuals()`, reusing native response simulations, conditioning,
   and component selection. DHARMa owns the PIT calculation; uniform endpoints

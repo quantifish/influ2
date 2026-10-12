@@ -78,9 +78,9 @@ index_table <- function(x, format = c("summary", "lognormal"),
 #'   Cholesky factorisation. No diagonal jitter or eigenvalue adjustment is
 #'   applied. The default permits positive-semidefinite matrices.
 #' @param ... Reserved for future use; unused arguments are rejected.
-#' @details All six standardisation backends and area integration retain these
+#' @details All standardisation backends and area integration retain these
 #'   compact matrices when uncertainty is calculated, including when only
-#'   summaries are retained. GLM/GAM/glmmTMB covariance is obtained by propagating
+#'   summaries are retained. GLM/GAM/glmmTMB/lme4 covariance is obtained by propagating
 #'   the joint fitted-parameter covariance through the weighted annual means.
 #'   Log-scale covariance uses their log-index gradients. brms uses sample
 #'   covariance of the same annual posterior draws, taking logs before

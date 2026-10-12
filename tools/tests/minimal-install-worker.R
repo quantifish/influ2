@@ -64,6 +64,12 @@ local({
       mixed_steps = influ_steps(list(Reduced = reduced, Full = full), year = "year"),
       bayesian_influence = influ(fit, focus = "year", ndraws = 40, retain = "summary"),
       bayesian_residuals = bayesian$checks))
+    stopifnot(requireNamespace("lme4", quietly = TRUE))
+    lme <- lme4::glmer(catch ~ year + area + (1 | vessel), family = poisson(), data = data)
+    results <- c(results, list(lme_influence = influ(lme, focus = "year"),
+      lme_residuals = influ_residuals(lme, nsim = 40, seed = 281),
+      lme_index = cpue_index(lme, reference_data = unique(data["area"])),
+      lme_implied = implied_effects(lme, groups = "area", min_n = 2, interval = "none")))
     stopifnot(!any(vapply(results, saved_result_has_live_state, logical(1))))
     saveRDS(results, config$results)
     saveRDS(lapply(results, saved_result_view), config$expected)
@@ -130,6 +136,12 @@ local({
     "DHARMa residuals require optional package 'DHARMa'")
   expect_dependency_error(as_influ_residuals(NULL, residual_method = "dharma"),
     "DHARMa residuals require optional package 'DHARMa'")
+  lme <- structure(list(), class = c("lmerMod", "merMod"))
+  expect_dependency_error(influ(lme, focus = "year"), "Package 'lme4' is required")
+  expect_dependency_error(influ_residuals(lme), "Package 'lme4' is required")
+  expect_dependency_error(cpue_index(lme), "Package 'lme4' is required")
+  expect_dependency_error(implied_effects(lme), "Package 'lme4' is required")
+  expect_dependency_error(influ_steps(lme), "Package 'lme4' is required")
   assert_isolated()
-  message("All 21 missing-package guards passed; optional packages remained unavailable throughout.")
+  message("All 26 missing-package guards passed; optional packages remained unavailable throughout.")
 })

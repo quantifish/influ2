@@ -2,7 +2,7 @@
   if (!is.null(data)) return(as.data.frame(data))
 
   model_frame <- tryCatch(stats::model.frame(model), error = function(e) NULL)
-  call_data <- tryCatch(model$call$data, error = function(e) NULL)
+  call_data <- tryCatch(stats::getCall(model)$data, error = function(e) NULL)
   if (!is.null(call_data)) {
     formula_environment <- tryCatch(
       environment(stats::formula(model)),
@@ -579,7 +579,8 @@
                                  component = "conditional", beta_draws = NULL,
                                  ndraws = 1000L, seed = NULL,
                                  draws_path = NULL, keep_model = FALSE,
-                                 notes = character()) {
+                                 notes = character(), reference_eta = NULL,
+                                 reference_eta_draws = NULL) {
   uncertainty <- match.arg(
     uncertainty,
     c("auto", "none", "analytic", "posterior", "simulation")
@@ -611,7 +612,7 @@
   if (uncertainty == "analytic" && is.null(vcov)) {
     stop("Analytic uncertainty requires a coefficient covariance matrix.", call. = FALSE)
   }
-  if (uncertainty == "simulation") {
+  if (uncertainty == "simulation" && is.null(beta_draws)) {
     if (is.null(vcov)) stop("Simulation uncertainty requires a coefficient covariance matrix.", call. = FALSE)
     beta_draws <- .draw_mvn(ndraws, beta, vcov, seed = seed)
   }
@@ -644,6 +645,11 @@
   } else {
     NULL
   }
+  # A mixed-model adapter can supply its complete reference predictor while
+  # retaining component-specific contrast matrices and compact summaries.
+  # Defaults leave the established six-backend calculations unchanged.
+  if (!is.null(reference_eta)) eta_reference <- reference_eta
+  if (!is.null(reference_eta_draws)) eta_reference_draws <- reference_eta_draws
 
   effect_list <- list()
   composition_list <- list()

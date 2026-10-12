@@ -55,7 +55,7 @@
     return(value[match(ids, value_ids)])
   }
   if (length(value) == nrow(frame)) return(value)
-  omitted <- model$na.action
+  omitted <- if (inherits(model, "merMod")) attr(frame, "na.action") else model$na.action
   if (inherits(omitted, "exclude") &&
       length(value) == nrow(frame) + length(omitted)) {
     return(value[-as.integer(omitted)])

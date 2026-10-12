@@ -7,7 +7,7 @@
 # deliberately have no backend requirement for their summary/plot methods.
 .require_model_backend <- function(model) {
   packages <- c(brmsfit = "brms", glmmTMB = "glmmTMB", sdmTMB = "sdmTMB",
-    tinyVAST = "tinyVAST", gam = "mgcv")
+    tinyVAST = "tinyVAST", gam = "mgcv", merMod = "lme4", lmerMod = "lme4", glmerMod = "lme4")
   matches <- vapply(names(packages), inherits, logical(1), x = model)
   if (!any(matches)) return(invisible(NULL))
   package <- unname(packages[which(matches)[1L]])

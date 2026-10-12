@@ -1,5 +1,5 @@
 .is_step_model <- function(x) {
-  inherits(x, c("glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST"))
+  inherits(x, c("glm", "gam", "glmmTMB", "brmsfit", "sdmTMB", "tinyVAST", "merMod"))
 }
 
 .step_label_vector <- function(labels, n) {
@@ -71,7 +71,8 @@
     # original design matrix using different years or covariates.
     source <- input
     if (!is.null(arguments$data)) {
-      source$call$data <- as.data.frame(arguments$data)
+      if (inherits(source, "merMod")) source@call$data <- as.data.frame(arguments$data) else
+        source$call$data <- as.data.frame(arguments$data)
     }
     backend <- .step_backend(source)
     if (backend %in% c("brmsfit", "sdmTMB", "tinyVAST") &&
@@ -205,6 +206,12 @@
 #' @param keep_fits Retain fitted models in the result? Defaults to `FALSE` to
 #'   keep the returned object small. Save expensive fits separately if needed.
 #' @param refit_args Named arguments passed to the model update at every step,
+#'   with original fitting rows and offsets locked. For lme4 negative-binomial
+#'   fits, explicitly supply `list(reestimate_nb = TRUE)` to use glmer.nb at each
+#'   stage, or FALSE to keep the original size parameter. The saved native call
+#'   cannot distinguish originally estimated from user-fixed size. Automatic
+#'   lme4 sequences retain all random terms while adding fixed terms; changes
+#'   to random structure require explicit step formulas, each with a random term.
 #'   such as brms sampling controls. Stage-specific arguments take precedence.
 #'   Execution-only controls (`seed`, `cores`, `refresh`, `silent`, and `verbose`)
 #'   do not by themselves force an otherwise unchanged original fit to rerun.
@@ -310,6 +317,7 @@ influ_steps <- function(fits, year = NULL, steps = NULL, refit = FALSE,
   }, logical(1)))) {
     stop("`fits` must contain supported fitted models or influence diagnostics.", call. = FALSE)
   }
+  invisible(lapply(inputs, .require_model_backend))
   if (!is.null(year_term) && !all(vapply(inputs, function(x) {
     inherits(x, "sdmTMB") && isTRUE(x$family$delta)
   }, logical(1)))) {

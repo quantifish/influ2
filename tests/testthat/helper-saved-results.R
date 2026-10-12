@@ -43,6 +43,9 @@ saved_result_view <- function(x) {
   } else if (inherits(x, "influ_steps")) {
     tables <- list(indices = influ2::influ_indices(x), summary = summary(x))
     plots <- list(steps = influ2::plot_step(x))
+  } else if (inherits(x, "influ_implied")) {
+    tables <- list(implied = as.data.frame(x), metadata = x$metadata)
+    plots <- list(implied = plot(x))
   } else stop("Unexpected saved-result class")
   signatures <- lapply(plots, saved_plot_signature)
   # Actually draw composite layouts and legends, not just their ggplot layers.
