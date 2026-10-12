@@ -371,6 +371,7 @@
 #'   \code{plot(checks, type = "qq")} diagnostic. Residual plots require an
 #'   \code{influ_residuals} object, not an \code{influ_diag}.
 #' @return A `ggplot` or `patchwork` object.
+#' @md
 #' @export
 plot.influ_diag <- function(x, type = c("influence", "index", "cdi", "components"),
                             term = NULL, component = NULL, scale = NULL,

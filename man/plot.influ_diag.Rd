@@ -20,10 +20,10 @@
 \method{autoplot}{influ_diag}(object, ...)
 }
 \arguments{
-\item{x}{An [influ_diag] object.}
+\item{x}{An \link{influ_diag} object.}
 
-\item{type}{One of `"influence"`, `"index"`, `"cdi"`, or
-`"components"`.}
+\item{type}{One of \code{"influence"}, \code{"index"}, \code{"cdi"}, or
+\code{"components"}.}
 
 \item{term}{Optional term selection.}
 
@@ -32,18 +32,18 @@
 \item{scale}{Optional influence scale. By default the natural response
 contrast is plotted rather than the link-scale contrast.}
 
-\item{coefficient_reference}{For CDI plots, `"centred"` (default) subtracts
+\item{coefficient_reference}{For CDI plots, \code{"centred"} (default) subtracts
 the term's mean over the same weighted reference distribution used for
-influence. `"model"` displays the original model-coded contribution on
+influence. \code{"model"} displays the original model-coded contribution on
 the link scale, including its reference factor level.}
 
-\item{coefficient_scale}{For CDI plots, `"auto"` (default) displays centred
+\item{coefficient_scale}{For CDI plots, \code{"auto"} (default) displays centred
 log-response effects as ratios on a logarithmic axis. Other links remain
-in their labelled link units. `"link"` displays centred link effects for
-every model. The `"model"` reference always uses link units.}
+in their labelled link units. \code{"link"} displays centred link effects for
+every model. The \code{"model"} reference always uses link units.}
 
-\item{coefficient_order}{For CDI plots, `"original"` (default) retains the
-diagnostic's level order. `"ascending"` and `"descending"` order categories
+\item{coefficient_order}{For CDI plots, \code{"original"} (default) retains the
+diagnostic's level order. \code{"ascending"} and \code{"descending"} order categories
 by their displayed coefficient or relative-effect point estimate. Ties
 retain their original order. Both coefficient and distribution panels use
 the same ordering; annual influence values and the input object are unchanged.
@@ -52,43 +52,43 @@ when horizontal order has meaning, such as months or a continuous covariate.}
 
 \item{...}{Reserved for future plotting options.}
 
-\item{object}{An [influ_diag] object passed to `autoplot()`.}
+\item{object}{An \link{influ_diag} object passed to \code{autoplot()}.}
 }
 \value{
-A `ggplot` or `patchwork` object.
+A \code{ggplot} or \code{patchwork} object.
 }
 \description{
 Plot a model-neutral influence diagnostic
 }
 \details{
-CDI intervals use the probabilities supplied to [influ()] (95%
-  by default). Centring propagates the joint coefficient covariance or is
-  performed within each posterior/simulation draw. Ratio summaries are
-  calculated after transforming those draws. A CDI plot displays one
-  component at a time; select `component` when a term occurs in several
-  model components. Zero-probability components retain their fitted link
-  orientation and are explicitly labelled as such.
-  Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
-  name remains on the horizontal axis rather than lengthening the y label.
-  Logit-scale panels use "Effect (log-odds)" (or "Effect (log-odds of zero)"
-  for zero-probability components). This shorter label does not change the
-  selected centring or component orientation.
-  Short term labels (including months) are horizontal on the upper fitted-
-  effect axis and the lower composition axis, for fixed and random effects.
-  At drawing time, the paired axes measure the available width and their
-  label text. All labels are shown when they fit; otherwise every second,
-  third, or subsequent level is labelled, starting at the first level.
-  The last level is not forced onto an off-stride position. The same regular
-  spacing is used above and below, retaining every coefficient, composition
-  column, and tick. Wider output devices can show more labels. Longer labels
-  are angled and justified for their respective top or bottom axis.
-  The influence panel's focus
-  labels are on the right, with the same level ordering as the composition.
-  The proportion legend has one column and at most four reference bubbles.
+CDI intervals use the probabilities supplied to \code{\link[=influ]{influ()}} (95\%
+by default). Centring propagates the joint coefficient covariance or is
+performed within each posterior/simulation draw. Ratio summaries are
+calculated after transforming those draws. A CDI plot displays one
+component at a time; select \code{component} when a term occurs in several
+model components. Zero-probability components retain their fitted link
+orientation and are explicitly labelled as such.
+Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
+name remains on the horizontal axis rather than lengthening the y label.
+Logit-scale panels use "Effect (log-odds)" (or "Effect (log-odds of zero)"
+for zero-probability components). This shorter label does not change the
+selected centring or component orientation.
+Short term labels (including months) are horizontal on the upper fitted-
+effect axis and the lower composition axis, for fixed and random effects.
+At drawing time, the paired axes measure the available width and their
+label text. All labels are shown when they fit; otherwise every second,
+third, or subsequent level is labelled, starting at the first level.
+The last level is not forced onto an off-stride position. The same regular
+spacing is used above and below, retaining every coefficient, composition
+column, and tick. Wider output devices can show more labels. Longer labels
+are angled and justified for their respective top or bottom axis.
+The influence panel's focus
+labels are on the right, with the same level ordering as the composition.
+The proportion legend has one column and at most four reference bubbles.
 }
 \seealso{
 \code{\link{influ_residuals}} and \code{\link{plot.influ_residuals}}
-  for the separate residual overview and standalone
-  \code{plot(checks, type = "qq")} diagnostic. Residual plots require an
-  \code{influ_residuals} object, not an \code{influ_diag}.
+for the separate residual overview and standalone
+\code{plot(checks, type = "qq")} diagnostic. Residual plots require an
+\code{influ_residuals} object, not an \code{influ_diag}.
 }
