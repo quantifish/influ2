@@ -20,7 +20,7 @@
 \method{autoplot}{influ_diag}(object, ...)
 }
 \arguments{
-\item{x}{An \link{influ_diag} object.}
+\item{x}{An \code{influ_diag} object.}
 
 \item{type}{One of \code{"influence"}, \code{"index"}, \code{"cdi"}, or
 \code{"components"}.}
@@ -52,7 +52,7 @@ when horizontal order has meaning, such as months or a continuous covariate.}
 
 \item{...}{Reserved for future plotting options.}
 
-\item{object}{An \link{influ_diag} object passed to \code{autoplot()}.}
+\item{object}{An \code{influ_diag} object passed to \code{autoplot()}.}
 }
 \value{
 A \code{ggplot} or \code{patchwork} object.

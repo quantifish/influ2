@@ -316,8 +316,8 @@
 
 #' Plot a model-neutral influence diagnostic
 #'
-#' @param x An [influ_diag] object.
-#' @param object An [influ_diag] object passed to `autoplot()`.
+#' @param x An `influ_diag` object.
+#' @param object An `influ_diag` object passed to `autoplot()`.
 #' @param type One of `"influence"`, `"index"`, `"cdi"`, or
 #'   `"components"`.
 #' @param term Optional term selection.
