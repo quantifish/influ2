@@ -54,6 +54,8 @@ jobs:
           needs: check
 
       - name: Check PDF manual before the worked examples
+        # PowerShell aliases R to Invoke-History; use the executable in Bash.
+        shell: bash
         run: R CMD Rd2pdf --no-preview --force --output="${{ runner.temp }}/influ2-manual.pdf" .
 
       - name: Check minimal installation and saved results
