@@ -20,6 +20,7 @@
 | `tools/implied-validation/` | IV01 NB2 implied-effect protocol, independent target checks, simulation driver, and compact report builder | No |
 | `tools/check-figure-captions.R`, `tools/tests/` | Site-wide lightbox caption and keyboard regression checks | No |
 | `tools/check-minimal-install.R`, `tools/tests/minimal-install-worker.R` | Isolated installation, core, saved-result, and missing-dependency smoke checks | No |
+| `tools/profile-vignettes.R` | Per-chunk timing of all fully executed worked articles | No |
 | `pkgdown/`, `_pkgdown.yml` | Website configuration, assets, and frozen review article | No |
 | `docs/` | Generated local website; ignored by Git | No |
 | `.github/`, `codecov.yml` | CI, website deployment, and coverage configuration | No |
@@ -33,6 +34,23 @@ Ignored local outputs such as `Rplots.pdf`, `doc/`, `Meta/`, and RStudio state
 are also excluded from the source archive. They have not been deleted.
 The remaining legacy source and frozen Get Started page must stay in Git
 until the maintainer completes their review.
+
+For per-chunk article timings, run
+`Rscript --vanilla tools/profile-vignettes.R . /absolute/temporary/output`.
+Optional trailing article names restrict the run. Every existing evaluated
+example is executed: this tool does not use cached fits, reduce simulations,
+or skip slow chunks. The output contains rendered HTML, `articles.csv`, and
+`chunks.csv`. For a single-thread comparison, start the R process with
+`OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
+BLIS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1`. These process-level controls
+are also used in CI to avoid excess numerical-library threading; the installed
+package does not change a user's thread settings.
+
+The two release-platform checks include the PDF manual and HTML help validation.
+They explicitly use `--as-cran --timings`, without `--no-manual`; TinyTeX is
+provided by the existing R actions. Local full checks likewise need a usable
+TeX installation and a recent HTML Tidy. A successful no-manual check is not
+a substitute for this final check.
 
 After building the website, run `Rscript tools/check-figure-captions.R`.
 This checks every plotted image in the rendered HTML, including the frozen

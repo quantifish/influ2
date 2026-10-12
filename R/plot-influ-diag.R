@@ -129,7 +129,10 @@
 
 .plot_influ_cdi <- function(x, term = NULL, component = NULL,
                             coefficient_reference = "centred",
-                            coefficient_scale = "auto") {
+                            coefficient_scale = "auto",
+                            coefficient_order = "original") {
+  coefficient_order <- match.arg(coefficient_order,
+    c("original", "ascending", "descending"))
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("Package 'patchwork' is required for CDI plots.", call. = FALSE)
   }
@@ -171,6 +174,13 @@
 
   term_levels <- unique(as.character(coefficients$level))
   if (!length(term_levels)) term_levels <- unique(as.character(composition$term_level))
+  if (coefficient_order != "original") {
+    # Sort on the effect actually displayed, with stable ties. Apply this same
+    # axis order to the composition without changing any diagnostic values.
+    ranked <- order(coefficients$estimate,
+      decreasing = coefficient_order == "descending", method = "radix")
+    term_levels <- unique(as.character(coefficients$level[ranked]))
+  }
   focus_levels <- unique(as.character(effects$level))
   coefficients$level <- factor(coefficients$level, levels = term_levels)
   composition$term_level <- factor(composition$term_level, levels = term_levels)
@@ -322,6 +332,13 @@
 #'   log-response effects as ratios on a logarithmic axis. Other links remain
 #'   in their labelled link units. `"link"` displays centred link effects for
 #'   every model. The `"model"` reference always uses link units.
+#' @param coefficient_order For CDI plots, `"original"` (default) retains the
+#'   diagnostic's level order. `"ascending"` and `"descending"` order categories
+#'   by their displayed coefficient or relative-effect point estimate. Ties
+#'   retain their original order. Both coefficient and distribution panels use
+#'   the same ordering; annual influence values and the input object are unchanged.
+#'   Use this for nominal categories such as vessels. The default is preferable
+#'   when horizontal order has meaning, such as months or a continuous covariate.
 #' @param ... Reserved for future plotting options.
 #'
 #' @details CDI intervals use the probabilities supplied to [influ()] (95%
@@ -358,14 +375,16 @@
 plot.influ_diag <- function(x, type = c("influence", "index", "cdi", "components"),
                             term = NULL, component = NULL, scale = NULL,
                             coefficient_reference = "centred",
-                            coefficient_scale = "auto", ...) {
+                            coefficient_scale = "auto",
+                            coefficient_order = "original", ...) {
   type <- match.arg(type)
   switch(
     type,
     influence = .plot_influ_effects(x, term, component, scale),
     components = .plot_influ_effects(x, term, component, scale),
     index = .plot_influ_indices(x),
-    cdi = .plot_influ_cdi(x, term, component, coefficient_reference, coefficient_scale)
+    cdi = .plot_influ_cdi(x, term, component, coefficient_reference,
+      coefficient_scale, coefficient_order)
   )
 }
 

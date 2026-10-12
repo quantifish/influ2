@@ -293,6 +293,12 @@ its covariance with each term effect. The default interval covers 95%; set
 option changes only the top panel, leaving the composition and influence
 panels unchanged.
 
+For unordered categories such as vessels, `coefficient_order = "ascending"`
+or `"descending"` orders both category panels by the displayed effect.
+The diagnostic values, intervals, and annual influence do not change.
+Keep the default `"original"` order for months or continuous predictors,
+where the horizontal sequence has meaning.
+
 The display scale follows the component's link. Log-link and lognormal
 components use relative effects; identity-link components use additive
 effects. Logit, probit, and complementary-log-log components remain in their
@@ -397,10 +403,18 @@ monthly random intercept as the preceding glmmTMB example. It is a native
 lme4 fit, not a conversion to another backend. Nonlinear `nlmer()` models
 and arbitrary custom families are outside this adapter's scope.
 
+The example selects lme4's `nloptwrap` optimiser with a tighter objective
+tolerance to avoid a slow default optimisation sequence on this larger
+dataset. The observations, model formula, negative-binomial size estimation,
+and Laplace integration are unchanged; derivative calculations retain lme4's
+native automatic settings.
+
 ```{r lobster-lme4, eval=has_lme4}
 lobster_lme4 <- lme4::glmer.nb(
   lobsters ~ year + poly(depth, 2) + poly(soak, 2) + (1 | month),
-  data = lobsters_per_pot
+  data = lobsters_per_pot,
+  control = lme4::glmerControl(optimizer = "nloptwrap",
+    optCtrl = list(ftol_abs = 1e-10))
 )
 lme4_diagnostic <- influ(lobster_lme4, focus = "year")
 summary(lme4_diagnostic)

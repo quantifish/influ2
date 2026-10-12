@@ -104,7 +104,10 @@
 #'   the dependency version, grid size, and alignment action.
 #'
 #' @seealso [influ_residuals()] for a worked calculation and standalone Q-Q
-#'   and ECDF examples; `vignette("residual-diagnostics")` for Bayesian examples.
+#'   and ECDF examples.
+#'
+#'   See `vignette("residual-diagnostics")` for Bayesian examples.
+#'
 #'   [as_influ_residuals()] creates the same plotting object from supplied simulations.
 #' @return A ggplot or a four-panel patchwork object, which can be customised.
 #' @md

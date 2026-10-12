@@ -18,3 +18,4 @@
 ^tools$
 ^codecov\.yml$
 ^Rplots\.pdf$
+^\.posit/assistant$

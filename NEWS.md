@@ -26,6 +26,15 @@
   extra-zero effects are distinct from observed encounters. Native nuisance
   parameters remain fixed, and boundary/unidentified shifts remain explicit.
 
+* CDI plots accept `coefficient_order = "ascending"` or `"descending"` to
+  order categories by their displayed effects. Coefficient and distribution
+  panels stay aligned, without changing diagnostic values or annual influence.
+  The default, `"original"`, preserves the existing plots.
+
+* Sped up the full lobster lme4 vignette fit using a validated native optimiser,
+  without changing its data, model, or likelihood integration. Development
+  checks limit numerical-library threads and now include the PDF manual.
+
 * CDI encounter panels use the compact label "Effect (log-odds)" while
   positive ratio panels retain "Relative Effect". Shared fixed/random-effect
   plots use horizontal short category labels. Matching upper/lower labels are

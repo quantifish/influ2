@@ -13,6 +13,7 @@
   scale = NULL,
   coefficient_reference = "centred",
   coefficient_scale = "auto",
+  coefficient_order = "original",
   ...
 )
 
@@ -40,6 +41,14 @@ the link scale, including its reference factor level.}
 log-response effects as ratios on a logarithmic axis. Other links remain
 in their labelled link units. `"link"` displays centred link effects for
 every model. The `"model"` reference always uses link units.}
+
+\item{coefficient_order}{For CDI plots, `"original"` (default) retains the
+diagnostic's level order. `"ascending"` and `"descending"` order categories
+by their displayed coefficient or relative-effect point estimate. Ties
+retain their original order. Both coefficient and distribution panels use
+the same ordering; annual influence values and the input object are unchanged.
+Use this for nominal categories such as vessels. The default is preferable
+when horizontal order has meaning, such as months or a continuous covariate.}
 
 \item{...}{Reserved for future plotting options.}
 

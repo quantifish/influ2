@@ -135,6 +135,9 @@ the dependency version, grid size, and alignment action.
 }
 \seealso{
 \code{\link[=influ_residuals]{influ_residuals()}} for a worked calculation and standalone Q-Q
-and ECDF examples; \code{vignette("residual-diagnostics")} for Bayesian examples.
+and ECDF examples.
+
+See \code{vignette("residual-diagnostics")} for Bayesian examples.
+
 \code{\link[=as_influ_residuals]{as_influ_residuals()}} creates the same plotting object from supplied simulations.
 }

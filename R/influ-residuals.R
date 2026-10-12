@@ -15,9 +15,10 @@
 #' @param nsim Number of complete response simulations, at least 20.
 #' @param batch_size Maximum number of simulations requested in each batch.
 #' @param seed Integer random seed. The caller's random-number state is restored.
-#'   DHARMa tie randomisation uses a separate deterministic seed,
-#'   `(seed + 104729) %% .Machine$integer.max`, recorded in `metadata$dharma_seed`,
-#'   to avoid reusing the beginning of the simulation/draw-selection RNG stream.
+#'   DHARMa tie randomisation uses a separate deterministic seed: add 104729
+#'   to `seed`, then take the remainder modulo `.Machine$integer.max`.
+#'   This is recorded in `metadata$dharma_seed` and avoids reusing the beginning
+#'   of the simulation/draw-selection RNG stream.
 #' @param grid_size Approximate number of ECDF grid points, at least 20.
 #' @param level Pointwise predictive interval coverage for ECDFs, and nominal
 #'   independent-uniform reference coverage for the Q-Q panel.

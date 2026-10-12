@@ -88,9 +88,10 @@ fitting or area weights as trial counts.}
 in each batch. No additional responses are generated.}
 
 \item{seed}{Integer random seed. The caller's random-number state is restored.
-DHARMa tie randomisation uses a separate deterministic seed,
-\code{(seed + 104729) \%\% .Machine$integer.max}, recorded in \code{metadata$dharma_seed},
-to avoid reusing the beginning of the simulation/draw-selection RNG stream.}
+DHARMa tie randomisation uses a separate deterministic seed: add 104729
+to \code{seed}, then take the remainder modulo \code{.Machine$integer.max}.
+This is recorded in \code{metadata$dharma_seed} and avoids reusing the beginning
+of the simulation/draw-selection RNG stream.}
 
 \item{grid_size}{Approximate number of ECDF grid points, at least 20.}
 
