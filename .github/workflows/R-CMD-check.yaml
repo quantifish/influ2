@@ -44,9 +44,9 @@ jobs:
 
       - uses: r-lib/actions/setup-tinytex@v2
 
-      - name: Install R manual fonts
-        # R's Windows manual defaults use Courier, absent from TinyTeX-1.
-        run: tlmgr install courier
+      - name: Install R manual fonts and index tool
+        # R's Windows manual needs Courier and makeindex, absent from TinyTeX-1.
+        run: tlmgr install courier makeindex
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -57,6 +57,12 @@ jobs:
         # PowerShell aliases R to Invoke-History; use the executable in Bash.
         shell: bash
         run: R CMD Rd2pdf --no-preview --force --output="${{ runner.temp }}/influ2-manual.pdf" .
+
+      - name: Retain compiled PDF manual
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: influ2-manual-${{ runner.os }}
+          path: ${{ runner.temp }}/influ2-manual.pdf
 
       - name: Check minimal installation and saved results
         if: matrix.config.os == 'ubuntu-latest'
