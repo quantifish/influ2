@@ -171,9 +171,10 @@ in each batch. No additional responses are generated.</p></dd>
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer random seed. The caller's random-number state is restored.
-DHARMa tie randomisation uses a separate deterministic seed,
-<code>(seed + 104729) %% .Machine$integer.max</code>, recorded in <code>metadata$dharma_seed</code>,
-to avoid reusing the beginning of the simulation/draw-selection RNG stream.</p></dd>
+DHARMa tie randomisation uses a separate deterministic seed: add 104729
+to <code>seed</code>, then take the remainder modulo <code>.Machine$integer.max</code>.
+This is recorded in <code>metadata$dharma_seed</code> and avoids reusing the beginning
+of the simulation/draw-selection RNG stream.</p></dd>
 
 
 <dt id="arg-grid-size">grid_size<a class="anchor" aria-label="anchor" href="#arg-grid-size"></a></dt>

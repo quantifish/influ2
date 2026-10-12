@@ -192,8 +192,8 @@ knitr::kable(regional_tables[c("Region", "Year", "Mean", "SD", "CV",
 
 | Region   | Year |  Mean |    SD |    CV | Qlower | Qupper |
 |:---------|:-----|------:|------:|------:|-------:|-------:|
-| Region A | 2010 | 3.444 | 0.352 | 0.102 |  2.819 |  4.208 |
-| Region A | 2011 | 4.057 | 0.394 | 0.097 |  3.354 |  4.908 |
+| Region A | 2010 | 3.444 | 0.352 | 0.102 |  2.820 |  4.208 |
+| Region A | 2011 | 4.057 | 0.394 | 0.097 |  3.354 |  4.907 |
 | Region A | 2012 | 3.834 | 0.364 | 0.095 |  3.182 |  4.619 |
 | Region A | 2013 | 3.210 | 0.303 | 0.094 |  2.668 |  3.864 |
 | Region A | 2014 | 2.701 | 0.255 | 0.094 |  2.245 |  3.250 |
@@ -207,7 +207,7 @@ knitr::kable(regional_tables[c("Region", "Year", "Mean", "SD", "CV",
 | Region B | 2014 | 6.197 | 0.552 | 0.089 |  5.204 |  7.380 |
 | Region B | 2015 | 6.243 | 0.553 | 0.089 |  5.247 |  7.427 |
 | Region B | 2016 | 7.136 | 0.628 | 0.088 |  6.006 |  8.478 |
-| Region B | 2017 | 8.447 | 0.740 | 0.088 |  7.115 | 10.028 |
+| Region B | 2017 | 8.447 | 0.740 | 0.088 |  7.115 | 10.029 |
 
 Both series come from the same `regional_fit`. Neither calculating
 another reference nor drawing another plot refits it. The table’s SD is
@@ -392,7 +392,7 @@ knitr::kable(do.call(rbind, native_checks), digits = 10, row.names = FALSE)
 | Region   | Max_mean_difference | Max_covariance_difference |
 |:---------|--------------------:|--------------------------:|
 | Region A |                   0 |                     2e-10 |
-| Region B |                   0 |                     9e-10 |
+| Region B |                   0 |                     1e-09 |
 
 For assessment export, keep each unscaled index table and its matching
 annual log-covariance matrix together. For example:

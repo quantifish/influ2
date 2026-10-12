@@ -98,12 +98,12 @@ summary(pcod_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>          depth_scaled               conditional                       0.5119533
-#>  spatiotemporal_field conditional:latent_fields                       0.4878812
+#>  spatiotemporal_field conditional:latent_fields                       0.5064357
 #>         depth_scaled2               conditional                       0.3191610
-#>         spatial_field conditional:latent_fields                       0.2723857
+#>         spatial_field conditional:latent_fields                       0.2805937
 #>  level_at_maximum
 #>              2003
-#>              2011
+#>              2013
 #>              2004
 #>              2003
 ```
@@ -446,7 +446,7 @@ summary(tiny_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>          factor(time)               conditional                      0.24617106
-#>  spatiotemporal_field conditional:latent_fields                      0.04614354
+#>  spatiotemporal_field conditional:latent_fields                      0.04752798
 #>         spatial_field conditional:latent_fields                      0.02584581
 #>  level_at_maximum
 #>                 5
@@ -789,15 +789,15 @@ knitr::kable(as.data.frame(pcod_area), digits = 3)
 
 | Year | Mean | Median | SD | CV | Qlower | Qupper | Method | Distribution | Link |
 |:---|---:|---:|---:|---:|---:|---:|:---|:---|:---|
-| 2003 | 13197.70 | NA | 546.515 | 0.041 | 11911.81 | 14025.61 | integrated | binomial | logit |
-| 2004 | 14240.84 | NA | 653.866 | 0.046 | 12835.84 | 15309.13 | integrated | binomial | logit |
-| 2005 | 14162.44 | NA | 597.426 | 0.042 | 12790.64 | 15057.75 | integrated | binomial | logit |
-| 2007 | 11457.21 | NA | 627.849 | 0.055 | 10478.60 | 12621.40 | integrated | binomial | logit |
-| 2009 | 12522.68 | NA | 613.366 | 0.049 | 11450.12 | 13772.37 | integrated | binomial | logit |
-| 2011 | 11371.78 | NA | 618.428 | 0.054 | 10425.62 | 12725.86 | integrated | binomial | logit |
-| 2013 | 14951.32 | NA | 659.690 | 0.044 | 13649.79 | 15907.31 | integrated | binomial | logit |
-| 2015 | 13845.19 | NA | 675.065 | 0.049 | 12688.01 | 15258.92 | integrated | binomial | logit |
-| 2017 | 11090.37 | NA | 620.627 | 0.056 | 10008.33 | 12376.41 | integrated | binomial | logit |
+| 2003 | 13197.70 | NA | 567.760 | 0.043 | 12120.191 | 14445.29 | integrated | binomial | logit |
+| 2004 | 14240.84 | NA | 659.981 | 0.046 | 12871.285 | 15321.37 | integrated | binomial | logit |
+| 2005 | 14162.44 | NA | 655.869 | 0.046 | 12842.750 | 15305.50 | integrated | binomial | logit |
+| 2007 | 11457.21 | NA | 570.477 | 0.050 | 10481.084 | 12714.38 | integrated | binomial | logit |
+| 2009 | 12522.68 | NA | 624.629 | 0.050 | 11186.418 | 13563.70 | integrated | binomial | logit |
+| 2011 | 11371.78 | NA | 657.900 | 0.058 | 10314.141 | 12918.96 | integrated | binomial | logit |
+| 2013 | 14951.32 | NA | 663.933 | 0.044 | 13659.403 | 15994.24 | integrated | binomial | logit |
+| 2015 | 13845.19 | NA | 541.865 | 0.039 | 12804.742 | 14717.81 | integrated | binomial | logit |
+| 2017 | 11090.37 | NA | 715.216 | 0.064 | 9859.464 | 12518.32 | integrated | binomial | logit |
 
 ``` r
 
@@ -848,12 +848,12 @@ knitr::kable(as.data.frame(tiny_total), digits = 3)
 
 | Year |    Mean | Median |     SD |    CV |  Qlower |  Qupper | Method     | Distribution | Link |
 |:-----|--------:|-------:|-------:|------:|--------:|--------:|:-----------|:-------------|:-----|
-| 1    | 109.670 |     NA | 19.225 | 0.175 |  85.934 | 147.271 | integrated | poisson      | log  |
-| 2    | 118.864 |     NA | 17.117 | 0.144 |  96.097 | 158.552 | integrated | poisson      | log  |
-| 3    | 134.286 |     NA | 16.986 | 0.126 | 115.665 | 179.599 | integrated | poisson      | log  |
-| 4    | 107.701 |     NA | 19.763 | 0.184 |  88.755 | 151.202 | integrated | poisson      | log  |
+| 1    | 109.670 |     NA | 19.135 | 0.174 |  85.783 | 146.663 | integrated | poisson      | log  |
+| 2    | 118.864 |     NA | 17.385 | 0.146 |  96.511 | 161.823 | integrated | poisson      | log  |
+| 3    | 134.286 |     NA | 16.937 | 0.126 | 115.763 | 179.299 | integrated | poisson      | log  |
+| 4    | 107.701 |     NA | 19.737 | 0.183 |  88.813 | 149.476 | integrated | poisson      | log  |
 | 5    | 165.391 |     NA | 30.589 | 0.185 | 139.547 | 251.454 | integrated | poisson      | log  |
-| 6    | 157.522 |     NA | 36.952 | 0.235 | 134.382 | 222.176 | integrated | poisson      | log  |
+| 6    | 157.522 |     NA | 35.687 | 0.227 | 133.311 | 219.209 | integrated | poisson      | log  |
 
 ``` r
 

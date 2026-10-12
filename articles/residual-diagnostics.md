@@ -1269,7 +1269,7 @@ dharma_checks
 #> Time: year [ year-name detection ]
 #> Native simulations at fitted parameters; random effects resimulated
 #> Exploratory ranks; not a calibrated goodness-of-fit test
-#> DHARMa 0/1 endpoints: 16; normal-score display limits +/-3.62. Uniform PIT values remain unchanged.
+#> DHARMa 0/1 endpoints: 22; normal-score display limits +/-3.65. Uniform PIT values remain unchanged.
 #> No model or observation-by-simulation matrix retained
 ```
 
@@ -1342,14 +1342,14 @@ dharma_retained <- influ_residuals(
 )
 # These reuse the existing responses, without fitting or simulating again:
 head(dharma_retained$dharma$scaledResiduals)
-#> [1] 0.8095948 0.3141531 0.8532295 0.5088420 0.7079369 0.4978355
+#> [1] 0.7905301 0.3071788 0.8111885 0.5172210 0.7123883 0.4440402
 DHARMa::testDispersion(dharma_retained$dharma, plot = FALSE)
 #> 
 #>  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
 #>  simulated
 #> 
 #> data:  simulationOutput
-#> dispersion = 1.1888, p-value = 0.368
+#> dispersion = 1.1686, p-value = 0.44
 #> alternative hypothesis: two.sided
 ```
 

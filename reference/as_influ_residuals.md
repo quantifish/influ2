@@ -123,10 +123,11 @@ as_influ_residuals(
 - seed:
 
   Integer random seed. The caller's random-number state is restored.
-  DHARMa tie randomisation uses a separate deterministic seed,
-  `(seed + 104729) %% .Machine$integer.max`, recorded in
-  `metadata$dharma_seed`, to avoid reusing the beginning of the
-  simulation/draw-selection RNG stream.
+  DHARMa tie randomisation uses a separate deterministic seed: add
+  104729 to `seed`, then take the remainder modulo
+  `.Machine$integer.max`. This is recorded in `metadata$dharma_seed` and
+  avoids reusing the beginning of the simulation/draw-selection RNG
+  stream.
 
 - grid_size:
 

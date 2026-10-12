@@ -164,8 +164,11 @@ alignment action.
 ## See also
 
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
-for a worked calculation and standalone Q-Q and ECDF examples;
+for a worked calculation and standalone Q-Q and ECDF examples.
+
+See
 [`vignette("residual-diagnostics")`](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.md)
 for Bayesian examples.
+
 [`as_influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/as_influ_residuals.md)
 creates the same plotting object from supplied simulations.

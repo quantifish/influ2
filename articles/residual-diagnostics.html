@@ -1304,7 +1304,7 @@ engine within the shared influ2 plotting framework:</p>
 <span><span class="co">#&gt; Time: year [ year-name detection ]</span></span>
 <span><span class="co">#&gt; Native simulations at fitted parameters; random effects resimulated</span></span>
 <span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span>
-<span><span class="co">#&gt; DHARMa 0/1 endpoints: 16; normal-score display limits +/-3.62. Uniform PIT values remain unchanged.</span></span>
+<span><span class="co">#&gt; DHARMa 0/1 endpoints: 22; normal-score display limits +/-3.65. Uniform PIT values remain unchanged.</span></span>
 <span><span class="co">#&gt; No model or observation-by-simulation matrix retained</span></span></code></pre></div>
 <p><code>residual_method = "dharma"</code> sends the complete native
 response simulations to
@@ -1372,14 +1372,14 @@ use its tools:</p>
 <span><span class="op">)</span></span>
 <span><span class="co"># These reuse the existing responses, without fitting or simulating again:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dharma_retained</span><span class="op">$</span><span class="va">dharma</span><span class="op">$</span><span class="va">scaledResiduals</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.8095948 0.3141531 0.8532295 0.5088420 0.7079369 0.4978355</span></span>
+<span><span class="co">#&gt; [1] 0.7905301 0.3071788 0.8111885 0.5172210 0.7123883 0.4440402</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/testDispersion.html" class="external-link">testDispersion</a></span><span class="op">(</span><span class="va">dharma_retained</span><span class="op">$</span><span class="va">dharma</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  DHARMa nonparametric dispersion test via sd of residuals fitted vs.</span></span>
 <span><span class="co">#&gt;  simulated</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; data:  simulationOutput</span></span>
-<span><span class="co">#&gt; dispersion = 1.1888, p-value = 0.368</span></span>
+<span><span class="co">#&gt; dispersion = 1.1686, p-value = 0.44</span></span>
 <span><span class="co">#&gt; alternative hypothesis: two.sided</span></span></code></pre></div>
 <p>This genuine <code>dharma_retained$dharma</code> object contains the
 response simulations, not a fitted model or Pearson residuals. DHARMa’s

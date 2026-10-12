@@ -365,6 +365,13 @@ and its covariance with each term effect. The default interval covers
 choose other bounds. The model-reference option changes only the top
 panel, leaving the composition and influence panels unchanged.
 
+For unordered categories such as vessels,
+`coefficient_order = "ascending"` or `"descending"` orders both category
+panels by the displayed effect. The diagnostic values, intervals, and
+annual influence do not change. Keep the default `"original"` order for
+months or continuous predictors, where the horizontal sequence has
+meaning.
+
 The display scale follows the component’s link. Log-link and lognormal
 components use relative effects; identity-link components use additive
 effects. Logit, probit, and complementary-log-log components remain in
@@ -515,11 +522,19 @@ preceding glmmTMB example. It is a native lme4 fit, not a conversion to
 another backend. Nonlinear `nlmer()` models and arbitrary custom
 families are outside this adapter’s scope.
 
+The example selects lme4’s `nloptwrap` optimiser with a tighter
+objective tolerance to avoid a slow default optimisation sequence on
+this larger dataset. The observations, model formula, negative-binomial
+size estimation, and Laplace integration are unchanged; derivative
+calculations retain lme4’s native automatic settings.
+
 ``` r
 
 lobster_lme4 <- lme4::glmer.nb(
   lobsters ~ year + poly(depth, 2) + poly(soak, 2) + (1 | month),
-  data = lobsters_per_pot
+  data = lobsters_per_pot,
+  control = lme4::glmerControl(optimizer = "nloptwrap",
+    optCtrl = list(ftol_abs = 1e-10))
 )
 lme4_diagnostic <- influ(lobster_lme4, focus = "year")
 summary(lme4_diagnostic)
@@ -529,10 +544,10 @@ summary(lme4_diagnostic)
 #>   Focus:   year
 #> 
 #>            term      component maximum_absolute_link_influence level_at_maximum
-#>  random_effects random_effects                       0.4208648             2000
-#>            year    conditional                       0.3506306             2002
-#>  poly(depth, 2)    conditional                       0.2497453             2008
-#>   poly(soak, 2)    conditional                       0.2345097             2014
+#>  random_effects random_effects                       0.4208634             2000
+#>            year    conditional                       0.3506333             2002
+#>  poly(depth, 2)    conditional                       0.2497462             2008
+#>   poly(soak, 2)    conditional                       0.2345095             2014
 ```
 
 ``` r
@@ -587,12 +602,12 @@ lme4_index <- cpue_index(lobster_lme4, year = "year",
   reference_data = lme4_reference, units = "lobsters per pot")
 head(index_table(lme4_index))
 #>   Year     Mean        SD        CV    Qlower   Qupper       Method
-#> 1 2000 1.687198 0.2398428 0.1421545 1.2769210 2.229299 standardised
-#> 2 2001 1.759611 0.2494245 0.1417498 1.3327819 2.323134 standardised
-#> 3 2002 1.839598 0.2563301 0.1393403 1.3999619 2.417294 standardised
-#> 4 2003 1.399828 0.1908107 0.1363101 1.0716358 1.828529 standardised
-#> 5 2004 1.584554 0.2156411 0.1360894 1.2135778 2.068934 standardised
-#> 6 2005 1.316781 0.1864901 0.1416257 0.9976118 1.738064 standardised
+#> 1 2000 1.687169 0.2398386 0.1421545 1.2768989 2.229260 standardised
+#> 2 2001 1.759605 0.2494233 0.1417496 1.3327780 2.323126 standardised
+#> 3 2002 1.839602 0.2563302 0.1393400 1.3999658 2.417299 standardised
+#> 4 2003 1.399827 0.1908103 0.1363099 1.0716357 1.828528 standardised
+#> 5 2004 1.584555 0.2156408 0.1360892 1.2135784 2.068934 standardised
+#> 6 2005 1.316783 0.1864900 0.1416255 0.9976136 1.738065 standardised
 #>                Distribution Link
 #> 1 Negative Binomial(1.7065)  log
 #> 2 Negative Binomial(1.7065)  log
@@ -602,10 +617,10 @@ head(index_table(lme4_index))
 #> 6 Negative Binomial(1.7065)  log
 index_vcov(lme4_index)[1:4, 1:4]
 #>            2000       2001       2002       2003
-#> 2000 0.02020790 0.01447726 0.01443719 0.01414563
-#> 2001 0.01447726 0.02009300 0.01449064 0.01420762
-#> 2002 0.01443719 0.01449064 0.01941571 0.01417135
-#> 2003 0.01414563 0.01420762 0.01417135 0.01858045
+#> 2000 0.02020789 0.01447721 0.01443714 0.01414558
+#> 2001 0.01447721 0.02009294 0.01449059 0.01420757
+#> 2002 0.01443714 0.01449059 0.01941565 0.01417129
+#> 2003 0.01414558 0.01420757 0.01417129 0.01858039
 ```
 
 `plot_index(lme4_index)` and
@@ -690,7 +705,7 @@ lme4_comparison <- table_criterion(
 )
 lme4_comparison[c("Model", "Backend", "nobs", "df", "AIC", "AIC_group", "delta_AIC")]
 #>     Model Backend nobs df      AIC AIC_group  delta_AIC
-#> 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441577
+#> 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441583
 #> 2 glmmTMB glmmTMB 5049 24 17755.82     AIC-1 0.00000000
 ```
 
@@ -859,9 +874,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10528749
+#>         spatial_field conditional:latent_fields                      0.10520073
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03084851
+#>  spatiotemporal_field conditional:latent_fields                      0.03291602
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -928,11 +943,11 @@ summary(tinyVAST_diagnostic)
 #>   Focus:   year
 #> 
 #>                  term                 component maximum_absolute_link_influence
-#>                  year               conditional                       0.2437404
-#>  spatiotemporal_field conditional:latent_fields                       0.0515625
+#>                  year               conditional                      0.24374040
+#>  spatiotemporal_field conditional:latent_fields                      0.05311503
 #>  level_at_maximum
 #>                 4
-#>                 2
+#>                 3
 ```
 
 ``` r
@@ -1789,9 +1804,9 @@ head(index_table(restored_results$index))
 #>   Year     Mean        SD        CV    Qlower   Qupper       Method
 #> 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised
 #> 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised
-#> 3 2002 1.841306 0.2566028 0.1393591 1.4012104 2.419629 standardised
+#> 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised
 #> 4 2003 1.400957 0.1908672 0.1362406 1.0726465 1.829755 standardised
-#> 5 2004 1.585962 0.2156039 0.1359452 1.2149997 2.070187 standardised
+#> 5 2004 1.585962 0.2156039 0.1359452 1.2149996 2.070187 standardised
 #> 6 2005 1.317816 0.1864175 0.1414594 0.9987212 1.738863 standardised
 #>   Distribution Link
 #> 1      nbinom2  log
