@@ -74,12 +74,12 @@
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An [influ_diag] object.</p></dd>
+<dd><p>An <code>influ_diag</code> object.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>One of `"influence"`, `"index"`, `"cdi"`, or
-`"components"`.</p></dd>
+<dd><p>One of <code>"influence"</code>, <code>"index"</code>, <code>"cdi"</code>, or
+<code>"components"</code>.</p></dd>
 
 
 <dt id="arg-term">term<a class="anchor" aria-label="anchor" href="#arg-term"></a></dt>
@@ -96,22 +96,22 @@ contrast is plotted rather than the link-scale contrast.</p></dd>
 
 
 <dt id="arg-coefficient-reference">coefficient_reference<a class="anchor" aria-label="anchor" href="#arg-coefficient-reference"></a></dt>
-<dd><p>For CDI plots, `"centred"` (default) subtracts
+<dd><p>For CDI plots, <code>"centred"</code> (default) subtracts
 the term's mean over the same weighted reference distribution used for
-influence. `"model"` displays the original model-coded contribution on
+influence. <code>"model"</code> displays the original model-coded contribution on
 the link scale, including its reference factor level.</p></dd>
 
 
 <dt id="arg-coefficient-scale">coefficient_scale<a class="anchor" aria-label="anchor" href="#arg-coefficient-scale"></a></dt>
-<dd><p>For CDI plots, `"auto"` (default) displays centred
+<dd><p>For CDI plots, <code>"auto"</code> (default) displays centred
 log-response effects as ratios on a logarithmic axis. Other links remain
-in their labelled link units. `"link"` displays centred link effects for
-every model. The `"model"` reference always uses link units.</p></dd>
+in their labelled link units. <code>"link"</code> displays centred link effects for
+every model. The <code>"model"</code> reference always uses link units.</p></dd>
 
 
 <dt id="arg-coefficient-order">coefficient_order<a class="anchor" aria-label="anchor" href="#arg-coefficient-order"></a></dt>
-<dd><p>For CDI plots, `"original"` (default) retains the
-diagnostic's level order. `"ascending"` and `"descending"` order categories
+<dd><p>For CDI plots, <code>"original"</code> (default) retains the
+diagnostic's level order. <code>"ascending"</code> and <code>"descending"</code> order categories
 by their displayed coefficient or relative-effect point estimate. Ties
 retain their original order. Both coefficient and distribution panels use
 the same ordering; annual influence values and the input object are unchanged.
@@ -124,46 +124,46 @@ when horizontal order has meaning, such as months or a continuous covariate.</p>
 
 
 <dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>An [influ_diag] object passed to `autoplot()`.</p></dd>
+<dd><p>An <code>influ_diag</code> object passed to <code>autoplot()</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A `ggplot` or `patchwork` object.</p>
+    <p>A <code>ggplot</code> or <code>patchwork</code> object.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>CDI intervals use the probabilities supplied to [influ()] (95<!-- % -->
-  by default). Centring propagates the joint coefficient covariance or is
-  performed within each posterior/simulation draw. Ratio summaries are
-  calculated after transforming those draws. A CDI plot displays one
-  component at a time; select `component` when a term occurs in several
-  model components. Zero-probability components retain their fitted link
-  orientation and are explicitly labelled as such.
-  Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
-  name remains on the horizontal axis rather than lengthening the y label.
-  Logit-scale panels use "Effect (log-odds)" (or "Effect (log-odds of zero)"
-  for zero-probability components). This shorter label does not change the
-  selected centring or component orientation.
-  Short term labels (including months) are horizontal on the upper fitted-
-  effect axis and the lower composition axis, for fixed and random effects.
-  At drawing time, the paired axes measure the available width and their
-  label text. All labels are shown when they fit; otherwise every second,
-  third, or subsequent level is labelled, starting at the first level.
-  The last level is not forced onto an off-stride position. The same regular
-  spacing is used above and below, retaining every coefficient, composition
-  column, and tick. Wider output devices can show more labels. Longer labels
-  are angled and justified for their respective top or bottom axis.
-  The influence panel's focus
-  labels are on the right, with the same level ordering as the composition.
-  The proportion legend has one column and at most four reference bubbles.</p>
+    <p>CDI intervals use the probabilities supplied to <code><a href="influ.html">influ()</a></code> (95%
+by default). Centring propagates the joint coefficient covariance or is
+performed within each posterior/simulation draw. Ratio summaries are
+calculated after transforming those draws. A CDI plot displays one
+component at a time; select <code>component</code> when a term occurs in several
+model components. Zero-probability components retain their fitted link
+orientation and are explicitly labelled as such.
+Ratio-scale CDI panels use the y-axis label "Relative Effect"; the term
+name remains on the horizontal axis rather than lengthening the y label.
+Logit-scale panels use "Effect (log-odds)" (or "Effect (log-odds of zero)"
+for zero-probability components). This shorter label does not change the
+selected centring or component orientation.
+Short term labels (including months) are horizontal on the upper fitted-
+effect axis and the lower composition axis, for fixed and random effects.
+At drawing time, the paired axes measure the available width and their
+label text. All labels are shown when they fit; otherwise every second,
+third, or subsequent level is labelled, starting at the first level.
+The last level is not forced onto an off-stride position. The same regular
+spacing is used above and below, retaining every coefficient, composition
+column, and tick. Wider output devices can show more labels. Longer labels
+are angled and justified for their respective top or bottom axis.
+The influence panel's focus
+labels are on the right, with the same level ordering as the composition.
+The proportion legend has one column and at most four reference bubbles.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="influ_residuals.html">influ_residuals</a></code> and <code><a href="plot.influ_residuals.html">plot.influ_residuals</a></code>
-  for the separate residual overview and standalone
-  <code>plot(checks, type = "qq")</code> diagnostic. Residual plots require an
-  <code>influ_residuals</code> object, not an <code>influ_diag</code>.</p></div>
+for the separate residual overview and standalone
+<code>plot(checks, type = "qq")</code> diagnostic. Residual plots require an
+<code>influ_residuals</code> object, not an <code>influ_diag</code>.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

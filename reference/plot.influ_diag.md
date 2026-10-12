@@ -26,11 +26,11 @@ autoplot(object, ...)
 
 - x:
 
-  An \[influ_diag\] object.
+  An `influ_diag` object.
 
 - type:
 
-  One of \`"influence"\`, \`"index"\`, \`"cdi"\`, or \`"components"\`.
+  One of `"influence"`, `"index"`, `"cdi"`, or `"components"`.
 
 - term:
 
@@ -47,22 +47,22 @@ autoplot(object, ...)
 
 - coefficient_reference:
 
-  For CDI plots, \`"centred"\` (default) subtracts the term's mean over
-  the same weighted reference distribution used for influence.
-  \`"model"\` displays the original model-coded contribution on the link
-  scale, including its reference factor level.
+  For CDI plots, `"centred"` (default) subtracts the term's mean over
+  the same weighted reference distribution used for influence. `"model"`
+  displays the original model-coded contribution on the link scale,
+  including its reference factor level.
 
 - coefficient_scale:
 
-  For CDI plots, \`"auto"\` (default) displays centred log-response
+  For CDI plots, `"auto"` (default) displays centred log-response
   effects as ratios on a logarithmic axis. Other links remain in their
-  labelled link units. \`"link"\` displays centred link effects for
-  every model. The \`"model"\` reference always uses link units.
+  labelled link units. `"link"` displays centred link effects for every
+  model. The `"model"` reference always uses link units.
 
 - coefficient_order:
 
-  For CDI plots, \`"original"\` (default) retains the diagnostic's level
-  order. \`"ascending"\` and \`"descending"\` order categories by their
+  For CDI plots, `"original"` (default) retains the diagnostic's level
+  order. `"ascending"` and `"descending"` order categories by their
   displayed coefficient or relative-effect point estimate. Ties retain
   their original order. Both coefficient and distribution panels use the
   same ordering; annual influence values and the input object are
@@ -76,19 +76,20 @@ autoplot(object, ...)
 
 - object:
 
-  An \[influ_diag\] object passed to \`autoplot()\`.
+  An `influ_diag` object passed to `autoplot()`.
 
 ## Value
 
-A \`ggplot\` or \`patchwork\` object.
+A `ggplot` or `patchwork` object.
 
 ## Details
 
-CDI intervals use the probabilities supplied to \[influ()\] (95 by
-default). Centring propagates the joint coefficient covariance or is
+CDI intervals use the probabilities supplied to
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md) (95%
+by default). Centring propagates the joint coefficient covariance or is
 performed within each posterior/simulation draw. Ratio summaries are
 calculated after transforming those draws. A CDI plot displays one
-component at a time; select \`component\` when a term occurs in several
+component at a time; select `component` when a term occurs in several
 model components. Zero-probability components retain their fitted link
 orientation and are explicitly labelled as such. Ratio-scale CDI panels
 use the y-axis label "Relative Effect"; the term name remains on the
