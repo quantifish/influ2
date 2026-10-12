@@ -239,15 +239,15 @@ mixed <- table_criterion(list(GLM = glm_fit, GAM = gam_fit,
 
 The next table was calculated by one call to
 [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
-containing **all six backends**: GLM, GAM, glmmTMB, brms, sdmTMB, and
-tinyVAST. Every fit uses the same 150 simulated observations, including
-a complete, previously fitted four-chain brms model. This small
-continuous-response example is separate from the lobster count example.
-The response follows year effects plus a covariate effect and Gaussian
-noise. Fits use `y ~ year + x`, except the GAM, which uses a fitted
-smooth `s(x, k = 5)`. The sdmTMB and tinyVAST fits have their fields
-switched off here: this example isolates the mixed-backend table, not
-spatial modelling.
+containing **the six original backends**: GLM, GAM, glmmTMB, brms,
+sdmTMB, and tinyVAST. Every fit uses the same 150 simulated
+observations, including a complete, previously fitted four-chain brms
+model. This small continuous-response example is separate from the
+lobster count example. The response follows year effects plus a
+covariate effect and Gaussian noise. Fits use `y ~ year + x`, except the
+GAM, which uses a fitted smooth `s(x, k = 5)`. The sdmTMB and tinyVAST
+fits have their fields switched off here: this example isolates the
+mixed-backend table, not spatial modelling.
 
 The reproducible preparation script is
 `data-raw/model-criteria-example.R` in the repository. It can reuse the

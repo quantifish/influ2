@@ -525,13 +525,186 @@ calculates population-level unconditional-mean influence using the joint
 covariance of both components.</p>
 </div>
 <div class="section level2">
+<h2 id="lme4">lme4<a class="anchor" aria-label="anchor" href="#lme4"></a>
+</h2>
+<p>Fits from <code>lmer()</code>, <code>glmer()</code>, and
+<code>glmer.nb()</code> use the same interfaces <span class="citation">(<a href="#ref-Bates2015">Bates et al.
+2015</a>)</span>. Here, the negative-binomial mixed model has the same
+fixed predictors and monthly random intercept as the preceding glmmTMB
+example. It is a native lme4 fit, not a conversion to another backend.
+Nonlinear <code>nlmer()</code> models and arbitrary custom families are
+outside this adapter’s scope.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lobster_lme4</span> <span class="op">&lt;-</span> <span class="fu">lme4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/lme4/man/glmer.nb.html" class="external-link">glmer.nb</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">month</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lme4_diagnostic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, focus <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lme4_diagnostic</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Influence diagnostic summary</span></span>
+<span><span class="co">#&gt;   Backend: lme4</span></span>
+<span><span class="co">#&gt;   Family:  single negative_binomial (log)</span></span>
+<span><span class="co">#&gt;   Focus:   year</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;            term      component maximum_absolute_link_influence level_at_maximum</span></span>
+<span><span class="co">#&gt;  random_effects random_effects                       0.4208648             2000</span></span>
+<span><span class="co">#&gt;            year    conditional                       0.3506306             2002</span></span>
+<span><span class="co">#&gt;  poly(depth, 2)    conditional                       0.2497453             2008</span></span>
+<span><span class="co">#&gt;   poly(soak, 2)    conditional                       0.2345097             2014</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="influ2_files/figure-html/lobster-lme4-influence-1.png" class="r-plt" alt="Influence components from an lme4 negative-binomial mixed model fitted to the same simulated lobster records." width="768"><p class="caption">
+Native lme4 influence ratios for the simulated lobster example. Fixed
+terms and the aggregate monthly random-effect contribution use the
+native joint conditional coefficient covariance. Random-effect variance
+and negative-binomial size are held at their fitted values; these
+intervals are not Bayesian posterior intervals.
+</p>
+</div>
+<p>CDI plots use the same layout, including for the aggregate random
+term. With one random intercept, its categories use the fitted grouping
+labels (months here), rather than numeric contribution values. Random
+slopes or crossed effects retain an aggregate contribution display.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"random_effects"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="influ2_files/figure-html/lobster-lme4-cdi-1.png" class="r-plt" alt="An lme4 random-effect CDI display aligns relative effects, sampled composition, and annual influence." width="768"><p class="caption">
+CDI display of the aggregate monthly random-effect contribution in the
+lme4 lobster model. The term is a fitted random contribution, not twelve
+independent fixed coefficients. Its reference and uncertainty follow the
+same conventions as the influence calculation.
+</p>
+</div>
+<div class="section level3">
+<h3 id="expected-response-indices-and-assessment-covariance">Expected-response indices and assessment covariance<a class="anchor" aria-label="anchor" href="#expected-response-indices-and-assessment-covariance"></a>
+</h3>
+<p>Supply the common depth and soak profile without a year column; the
+index calculation inserts every fitted year. Group-level effects are set
+to zero, <strong>not integrated over their population
+distribution</strong>. These are expected lobsters per pot, with joint
+fixed-effect uncertainty carried into the annual covariance matrix.
+Uncertainty in size and random-effect variance is not propagated by the
+lme4 adapter.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lme4_reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">depth</span><span class="op">)</span>, soak <span class="op">=</span> <span class="fl">24</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lme4_index</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  reference_data <span class="op">=</span> <span class="va">lme4_reference</span>, units <span class="op">=</span> <span class="st">"lobsters per pot"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">lme4_index</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Year     Mean        SD        CV    Qlower   Qupper       Method</span></span>
+<span><span class="co">#&gt; 1 2000 1.687198 0.2398428 0.1421545 1.2769210 2.229299 standardised</span></span>
+<span><span class="co">#&gt; 2 2001 1.759611 0.2494245 0.1417498 1.3327819 2.323134 standardised</span></span>
+<span><span class="co">#&gt; 3 2002 1.839598 0.2563301 0.1393403 1.3999619 2.417294 standardised</span></span>
+<span><span class="co">#&gt; 4 2003 1.399828 0.1908107 0.1363101 1.0716358 1.828529 standardised</span></span>
+<span><span class="co">#&gt; 5 2004 1.584554 0.2156411 0.1360894 1.2135778 2.068934 standardised</span></span>
+<span><span class="co">#&gt; 6 2005 1.316781 0.1864901 0.1416257 0.9976118 1.738064 standardised</span></span>
+<span><span class="co">#&gt;                Distribution Link</span></span>
+<span><span class="co">#&gt; 1 Negative Binomial(1.7065)  log</span></span>
+<span><span class="co">#&gt; 2 Negative Binomial(1.7065)  log</span></span>
+<span><span class="co">#&gt; 3 Negative Binomial(1.7065)  log</span></span>
+<span><span class="co">#&gt; 4 Negative Binomial(1.7065)  log</span></span>
+<span><span class="co">#&gt; 5 Negative Binomial(1.7065)  log</span></span>
+<span><span class="co">#&gt; 6 Negative Binomial(1.7065)  log</span></span>
+<span><span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">lme4_index</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span>
+<span><span class="co">#&gt;            2000       2001       2002       2003</span></span>
+<span><span class="co">#&gt; 2000 0.02020790 0.01447726 0.01443719 0.01414563</span></span>
+<span><span class="co">#&gt; 2001 0.01447726 0.02009300 0.01449064 0.01420762</span></span>
+<span><span class="co">#&gt; 2002 0.01443719 0.01449064 0.01941571 0.01417135</span></span>
+<span><span class="co">#&gt; 2003 0.01414563 0.01420762 0.01417135 0.01858045</span></span></code></pre></div>
+<p><code>plot_index(lme4_index)</code> and <code><a href="../reference/plot_compare.html">plot_compare()</a></code>
+reuse this saved result. Area integration uses the same native
+predictions: <code><a href="../reference/integrate_index.html">integrate_index()</a></code> accepts this fit and an
+explicitly defined common domain with cell areas. Multiplying lobsters
+per pot by area does <strong>not</strong> turn it into absolute
+abundance without an appropriate exposure/catchability conversion; see
+the <a href="cpue-indices.html">CPUE indices</a> article for the
+integration contract.</p>
+</div>
+<div class="section level3">
+<h3 id="residuals-and-implied-effects">Residuals and implied effects<a class="anchor" aria-label="anchor" href="#residuals-and-implied-effects"></a>
+</h3>
+<p>For lme4, <code>conditioning = "new_effects"</code> redraws monthly
+effects at fitted variance parameters; <code>"fitted"</code> instead
+holds their fitted modes fixed. The default is new effects. Each native
+draw is a joint response vector, and the simulated vectors and row-level
+PIT results are invariant to response-batch size. The compact
+response-ECDF grid uses the first batch, as in the existing engine, so
+its plotting knots can vary. The optional DHARMa engine uses those same
+simulations with the explicitly chosen conditioning.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lme4_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">281</span>,</span>
+<span>  conditioning <span class="op">=</span> <span class="st">"fitted"</span>, groups <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_checks</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="influ2_files/figure-html/lobster-lme4-residual-overview-1.png" class="r-plt" alt="The shared residual overview diagnoses an lme4 negative-binomial mixed model using fitted-effect conditioning." width="1056"><p class="caption">
+Four-panel PIT residual overview for the lme4 lobster model, conditional
+on fitted monthly effects. The displayed normal scores and response-ECDF
+comparison use native response simulations at fitted parameters.
+Reference bands remain exploratory, not calibrated fitted-model
+acceptance criteria.
+</p>
+</div>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_grouped_residuals.html">plot_grouped_residuals</a></span><span class="op">(</span><span class="va">lme4_checks</span>, groups <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">lme4_checks</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Optional DHARMa calculation; no model refit.</span></span>
+<span><span class="va">dharma_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, nsim <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>  residual_method <span class="op">=</span> <span class="st">"dharma"</span>, conditioning <span class="op">=</span> <span class="st">"fitted"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># A likelihood adjustment, not a sum of PIT/DHARMa scores and coefficients.</span></span>
+<span><span class="va">lme4_implied</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, groups <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_implied</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="step-plots-and-model-criteria">Step plots and model criteria<a class="anchor" aria-label="anchor" href="#step-plots-and-model-criteria"></a>
+</h3>
+<p>Automatic lme4 step sequences keep the random structure while adding
+fixed terms. Changing the random structure requires explicit step
+formulas. Negative-binomial step refits require an explicit dispersion
+choice because the saved native call does not identify whether size was
+originally estimated or supplied as known. The following example
+re-estimates size at each step:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lme4_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, year <span class="op">=</span> <span class="st">"year"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  refit_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>reestimate_nb <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_steps</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lme4_comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/table_criterion.html">table_criterion</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>lme4 <span class="op">=</span> <span class="va">lobster_lme4</span>, glmmTMB <span class="op">=</span> <span class="va">lobster_glmmTMB</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lme4_comparison</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Model"</span>, <span class="st">"Backend"</span>, <span class="st">"nobs"</span>, <span class="st">"df"</span>, <span class="st">"AIC"</span>, <span class="st">"AIC_group"</span>, <span class="st">"delta_AIC"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;     Model Backend nobs df      AIC AIC_group  delta_AIC</span></span>
+<span><span class="co">#&gt; 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441577</span></span>
+<span><span class="co">#&gt; 2 glmmTMB glmmTMB 5049 24 17755.82     AIC-1 0.00000000</span></span></code></pre></div>
+<p>Model criteria retain native likelihood values, degrees of freedom,
+and convergence notes. REML lmer fits are not automatically ranked
+against other fixed-effect structures; no hidden ML refit is performed.
+Conditional AIC is unavailable for lme4 here, rather than substituted
+with marginal AIC.</p>
+<p>For a Gaussian model of <code>log(response)</code>, explicitly pass
+<code>response_transform = "log"</code> to <code><a href="../reference/influ.html">influ()</a></code>,
+<code><a href="../reference/cpue_index.html">cpue_index()</a></code>, <code><a href="../reference/integrate_index.html">integrate_index()</a></code>,
+<code><a href="../reference/influ_residuals.html">influ_residuals()</a></code>, or <code><a href="../reference/implied_effects.html">implied_effects()</a></code>. This
+also supports a named precomputed log-response column. Natural-response
+indices use <code>exp(eta + sigma^2/2)</code> with sigma held fixed;
+implied adjustments remain on the fitted log-response scale. Arbitrary
+transformations such as <code>log(response + 1)</code> are not silently
+reinterpreted as lognormal models.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="brms">brms<a class="anchor" aria-label="anchor" href="#brms"></a>
 </h2>
 <p>The Bayesian backend uses genuine joint posterior draws, but projects
 each draw directly to the much smaller focus-by-term diagnostic. It
 never constructs an observation-by-draw-by-term array <span class="citation">(<a href="#ref-Buerkner2017">Bürkner 2017</a>)</span>.
 A model for the same lobster data can be fitted as follows:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_brms</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brm.html" class="external-link">brm</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">month</span><span class="op">)</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">depth</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="va">soak</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/brmsfamily.html" class="external-link">negbinomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -547,7 +720,7 @@ A model for the same lobster data can be fitted as follows:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The vignette uses the fitted model shipped with its source, rather
 than running MCMC whenever the documentation is built.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_brms</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
 <span>  <span class="st">"extdata"</span>, <span class="st">"brms-fixtures"</span>, <span class="st">"fit2.rds"</span>, package <span class="op">=</span> <span class="st">"influ2"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
@@ -573,7 +746,7 @@ than running MCMC whenever the documentation is built.</p>
 <span><span class="co">#&gt;              2002</span></span>
 <span><span class="co">#&gt;              2014</span></span>
 <span><span class="co">#&gt;              2008</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">brms_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-brms-influence-1.png" class="r-plt" alt="brms population-level year and soak-time, month group-level, and depth-smooth influence ratios." width="768"><p class="caption">
@@ -597,7 +770,7 @@ dependence between each month and the estimated reference, without
 retaining the full posterior array in the diagnostic. The first month
 therefore has an estimated effect and an interval, just like every other
 month.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
 <span>  <span class="va">brms_diagnostic</span>,</span>
 <span>  type <span class="op">=</span> <span class="st">"cdi"</span>,</span>
@@ -621,7 +794,7 @@ example, so this example uses the Pacific cod data and mesh supplied by
 <code>sdmTMB</code> <span class="citation">(<a href="#ref-Anderson2025">Anderson et al. 2025</a>)</span>. Fixed,
 spatial, and spatiotemporal contributions are returned in the same
 schema as the lobster examples.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcod_2011"</span>, package <span class="op">=</span> <span class="st">"sdmTMB"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcod_mesh_2011"</span>, package <span class="op">=</span> <span class="st">"sdmTMB"</span><span class="op">)</span></span>
 <span></span>
@@ -658,7 +831,7 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt;              2015</span></span>
 <span><span class="co">#&gt;              2015</span></span>
 <span><span class="co">#&gt;              2013</span></span></code></pre></div>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sdmTMB_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/sdmtmb-influence-1.png" class="r-plt" alt="sdmTMB fixed, spatial, and spatiotemporal influence components." width="768"><p class="caption">
@@ -674,7 +847,7 @@ count data set. The purpose is to exercise the spatial and
 spatiotemporal component interface, not to represent a complete survey
 analysis <span class="citation">(<a href="#ref-Thorson2025">Thorson et
 al. 2025</a>)</span>.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">120</span></span>
 <span><span class="va">spatial_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -720,7 +893,7 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
 <span><span class="co">#&gt;                 2</span></span></code></pre></div>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/tinyvast-influence-1.png" class="r-plt" alt="tinyVAST fixed and spatial influence components." width="768"><p class="caption">
@@ -759,16 +932,17 @@ the GLM is Poisson, the other models are negative binomial, and their
 covariate and month-effect specifications differ. This is therefore a
 sensitivity comparison between the fitted models, not a controlled
 comparison of fitting software.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_diagnostics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>GLM <span class="op">=</span> <span class="va">glm_diagnostic</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">has_mgcv</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">GAM</span> <span class="op">&lt;-</span> <span class="va">gam_diagnostic</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">has_glmmTMB</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">glmmTMB</span> <span class="op">&lt;-</span> <span class="va">glmmTMB_diagnostic</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_lme4</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">lme4</span> <span class="op">&lt;-</span> <span class="va">lme4_diagnostic</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">has_brms</span><span class="op">)</span> <span class="va">lobster_diagnostics</span><span class="op">$</span><span class="va">brms</span> <span class="op">&lt;-</span> <span class="va">brms_diagnostic</span></span></code></pre></div>
 <p><code>rescale = 1</code> gives each series a geometric mean of one
 over the common 2000–2017 period, making their relative trajectories
 directly comparable. Uncertainty ribbons are omitted here to keep
 overlapping lines readable.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_compare.html">plot_compare</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_diagnostics</span>,</span>
 <span>  labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">lobster_diagnostics</span><span class="op">)</span>,</span>
@@ -780,9 +954,9 @@ overlapping lines readable.</p>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-model-comparison-1.png" class="r-plt" alt="Annual standardised lobster CPUE indices on a common relative scale, with separate labelled lines for each fitted model." width="768"><p class="caption">
 Relative standardised lobster CPUE indices from the available GLM, GAM,
-glmmTMB, and brms examples. Each series has a geometric mean of one over
-2000–2017; differences reflect the models’ distributions and structures
-as well as their estimation methods.
+glmmTMB, lme4, and brms examples. Each series has a geometric mean of
+one over 2000–2017; differences reflect the models’ distributions and
+structures as well as their estimation methods.
 </p>
 </div>
 <p>Set <code>show_probs = TRUE</code> to display the intervals already
@@ -823,7 +997,7 @@ coefficients and the negative-binomial dispersion parameter,
 A reduced model can absorb omitted structure into its dispersion, so
 <code>theta</code> is not held at the full model’s estimate. This
 example requires the suggested package <code>MASS</code>.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_nb</span> <span class="op">&lt;-</span> <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">glm.nb</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  link <span class="op">=</span> <span class="va">log</span>,</span>
@@ -850,7 +1024,7 @@ example requires the suggested package <code>MASS</code>.</p>
 reuses that fit. The printed status records whether each model was
 refitted or reused; this avoids repeating an identical fit while
 preserving the model comparison.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">lobster_steps</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-refitted-step-plot-1.png" class="r-plt" alt="Four sequential negative-binomial GLM panels showing centred year-effect ratios for year only, year plus month, then depth, then soak time." width="768"><p class="caption">
@@ -874,7 +1048,7 @@ using the observed number of pot records in each year, matching the step
 diagnostic’s reference. It applies no additional display rescaling. The
 table reports root mean squared error (RMSE) across the 18 years on the
 log scale.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">year_truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="st">"simulation"</span><span class="op">)</span><span class="op">$</span><span class="va">year_effect</span></span>
 <span><span class="va">year_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
 <span><span class="va">year_truth</span><span class="op">$</span><span class="va">centred_log_effect</span> <span class="op">&lt;-</span> <span class="va">year_truth</span><span class="op">$</span><span class="va">log_effect</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/weighted.mean.html" class="external-link">weighted.mean</a></span><span class="op">(</span></span>
@@ -949,7 +1123,7 @@ without fitting again. The shortcut below creates the same kind of plot
 directly from a fitted model, but it performs the refits each time it is
 called. The automatic main-formula sequence also supports simple GAMs
 and <code>glmmTMB</code> models.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_step.html">plot_step</a></span><span class="op">(</span><span class="va">lobster_nb</span>, year <span class="op">=</span> <span class="st">"year"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gam_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span><span class="va">lobster_gam</span>, year <span class="op">=</span> <span class="st">"year"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -961,7 +1135,7 @@ common <code>reference_data</code> grid and
 <code>reference_weights</code> may be passed to
 <code><a href="../reference/influ_steps.html">influ_steps()</a></code> when the observed reference is not the
 intended comparison.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_nb</span>,</span>
 <span>  year <span class="op">=</span> <span class="st">"year"</span>,</span>
@@ -983,7 +1157,7 @@ Select the intended <code>component</code> explicitly for models with
 several response components. Check the convergence of supplied fits
 before including them; their <code>supplied</code> status does not
 record a new convergence assessment.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">brms_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    <span class="st">"Year"</span> <span class="op">=</span> <span class="va">brms_year_fit</span>,</span>
@@ -1018,7 +1192,7 @@ column is omitted from the reference data because the same profile is
 used in every observed year. The monthly random effect is set to zero:
 this is a zero-month-effect prediction on the link scale, not an average
 over the population of monthly random effects.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">assessment_reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">depth</span><span class="op">)</span>,</span>
 <span>  soak <span class="op">=</span> <span class="fl">24</span></span>
@@ -1047,7 +1221,7 @@ genuine posterior median when using a complete brms fit.
 missing medians, for code that depends on those columns. None of these
 uncertainty columns describes variation among individual
 observations.</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_index_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>, <span class="st">"Qlower"</span>, <span class="st">"Qupper"</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
@@ -1213,7 +1387,7 @@ reference profile.</caption>
 </table>
 <p>The plot uses the stored estimates and intervals. It does not fit a
 model or repeat the prediction calculation.</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">lobster_cpue</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Year"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1243,7 +1417,7 @@ simple additive log-link model the relative trajectories can coincide
 after rescaling, but that should not be assumed for models with year
 interactions or more complicated response structures.</p>
 <p><code><a href="../reference/cpue_index.html">cpue_index()</a></code> now provides this expected-response table
-for all six model classes. A separate <code><a href="../reference/integrate_index.html">integrate_index()</a></code>
+for all seven model classes. A separate <code><a href="../reference/integrate_index.html">integrate_index()</a></code>
 sums predictions times explicit cell areas, whether the model is a GLM,
 a GAM with a spatial smooth, a mixed model, or a specialist
 spatiotemporal model. See <a href="cpue-indices.html">CPUE indices</a>
@@ -1259,9 +1433,9 @@ required.</p>
 common coefficients, smooths, or latent effects. Passing only their SDs
 loses that dependence. <code><a href="../reference/index_vcov.html">index_vcov()</a></code> retrieves the
 <strong>annual-index</strong> variance–covariance matrix, not the much
-larger model-coefficient matrix. It works for the same six backends as
+larger model-coefficient matrix. It works for the same seven backends as
 <code><a href="../reference/cpue_index.html">cpue_index()</a></code> and <code><a href="../reference/integrate_index.html">integrate_index()</a></code>.</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">Sigma_log</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, scale <span class="op">=</span> <span class="st">"log"</span>, require_pd <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">Sigma_response</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, scale <span class="op">=</span> <span class="st">"response"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">Sigma_log</span><span class="op">)</span>, <span class="va">lobster_index_table</span><span class="op">$</span><span class="va">Year</span><span class="op">)</span><span class="op">)</span></span>
@@ -1402,7 +1576,7 @@ estimate. The diagonal of <code>Sigma_log</code> contains log-index
 variances; the off-diagonal entries describe covariance between annual
 estimation errors. Correlation rescales those entries and is often
 easier to read.</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, type <span class="op">=</span> <span class="st">"covariance"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>subtitle <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, type <span class="op">=</span> <span class="st">"correlation"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>subtitle <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
@@ -1450,7 +1624,7 @@ contrast, leaves log covariance unchanged.</p>
 order. The following bundle is ready to save with <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>
 and inspect in the assessment project; it retains neither the CPUE model
 nor its posterior draws.</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">assessment_input</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  table <span class="op">=</span> <span class="va">assessment_table</span>,</span>
 <span>  log_covariance <span class="op">=</span> <span class="va">Sigma_log</span>,</span>
@@ -1477,7 +1651,7 @@ per year, <code>index_table(..., format = "lognormal")</code> adds
 approximations to index uncertainty</strong>, not the distribution of
 the observed response and not replacements for genuine posterior
 medians.</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lognormal_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">lobster_cpue</span>, format <span class="op">=</span> <span class="st">"lognormal"</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
 <span>  <span class="va">lognormal_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Meanlog"</span>, <span class="st">"SDlog"</span>, <span class="st">"LognormalMedian"</span><span class="op">)</span><span class="op">]</span>,</span>
@@ -1616,14 +1790,15 @@ article</a> gives the formulae, calculation sources, and safeguards.</p>
 <h2 id="one-interface-and-compact-uncertainty">One interface and compact uncertainty<a class="anchor" aria-label="anchor" href="#one-interface-and-compact-uncertainty"></a>
 </h2>
 <p>All fitted-model methods return an <code>influ_diag</code>:</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/methods.html" class="external-link">methods</a></span><span class="op">(</span><span class="st">"influ"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     </span></span>
-<span><span class="co">#&gt; [5] influ.glmmTMB*  influ.sdmTMB*   influ.tinyVAST*</span></span>
+<span><span class="co">#&gt;  [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     </span></span>
+<span><span class="co">#&gt;  [5] influ.glmerMod* influ.glmmTMB*  influ.lmerMod*  influ.merMod*  </span></span>
+<span><span class="co">#&gt;  [9] influ.sdmTMB*   influ.tinyVAST*</span></span>
 <span><span class="co">#&gt; see '?methods' for accessing help and source code</span></span></code></pre></div>
 <p>The result contains compact tables for influence, coefficient or
 field summaries, data composition, and index comparisons:</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/influ_extractors.html">influ_effects</a></span><span class="op">(</span><span class="va">glm_diagnostic</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   focus level term   component scale   estimate  std_error       lower</span></span>
 <span><span class="co">#&gt; 1  year  2000 year conditional  link 0.26025542 0.05632333  0.14986373</span></span>
@@ -1742,7 +1917,7 @@ field summaries, data composition, and index comparisons:</p>
 <span><span class="co">#&gt; 7 analytic covariance</span></span>
 <span><span class="co">#&gt; 8 analytic covariance</span></span></code></pre></div>
 <p>Calculation and retention are separate choices:</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate uncertainty, retaining summaries only.</span></span>
 <span><span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">fitted_model</span>, focus <span class="op">=</span> <span class="st">"year"</span>, retain <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span>
 <span></span>
@@ -1782,7 +1957,7 @@ above. Only the residual diagnostic is calculated for the first time; it
 uses 100 response simulations from the existing glmmTMB fit, not a model
 refit or MCMC run. This example requires glmmTMB and MASS, as did the
 preceding index and step examples.</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lobster_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  influence <span class="op">=</span> <span class="va">glmmTMB_diagnostic</span>,</span>
 <span>  residuals <span class="op">=</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">lobster_glmmTMB</span>, nsim <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">281</span><span class="op">)</span>,</span>
@@ -1800,7 +1975,7 @@ check this workflow in a separate, clean R session with no original
 fitted models. Reopening and plotting the summaries do not repeat the
 response simulations, CPUE prediction calculation, or step-model
 refits.</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/quantifish/influ2" class="external-link">influ2</a></span><span class="op">)</span></span>
 <span><span class="co"># After restarting R, set result_file to the persistent path used above:</span></span>
 <span><span class="co"># result_file &lt;- "lobster-results.rds"</span></span>
@@ -1850,7 +2025,7 @@ them to someone else.</p>
 <h2 id="families-and-response-structures">Families and response structures<a class="anchor" aria-label="anchor" href="#families-and-response-structures"></a>
 </h2>
 <p>The initial family set is:</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/influ_families.html">influ_families</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              family                       aliases default_scale</span></span>
 <span><span class="co">#&gt; 1          gaussian                        normal    difference</span></span>
@@ -1915,6 +2090,11 @@ and James T. Thorson. 2025. <span>“sdmTMB: An r Package for Fast,
 Flexible, and User-Friendly Generalized Linear Mixed Effects Models with
 Spatial and Spatiotemporal Random Fields.”</span> <em>Journal of
 Statistical Software</em> 115 (2): 1–46. <a href="https://doi.org/10.18637/jss.v115.i02" class="external-link">https://doi.org/10.18637/jss.v115.i02</a>.
+</div>
+<div id="ref-Bates2015" class="csl-entry">
+Bates, Douglas, Martin Mächler, Ben Bolker, and Steve Walker. 2015.
+<span>“Fitting Linear Mixed-Effects Models Using <span class="nocase">lme4</span>.”</span> <em>Journal of Statistical
+Software</em> 67 (1): 1–48. <a href="https://doi.org/10.18637/jss.v067.i01" class="external-link">https://doi.org/10.18637/jss.v067.i01</a>.
 </div>
 <div id="ref-Bentley2012" class="csl-entry">
 Bentley, Nokome, Terese H. Kendrick, Paul J. Starr, and Paul A. Breen.

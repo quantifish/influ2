@@ -101,9 +101,9 @@ applied. The default permits positive-semidefinite matrices.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>All six standardisation backends and area integration retain these
+    <p>All standardisation backends and area integration retain these
 compact matrices when uncertainty is calculated, including when only
-summaries are retained. GLM/GAM/glmmTMB covariance is obtained by propagating
+summaries are retained. GLM/GAM/glmmTMB/lme4 covariance is obtained by propagating
 the joint fitted-parameter covariance through the weighted annual means.
 Log-scale covariance uses their log-index gradients. brms uses sample
 covariance of the same annual posterior draws, taking logs before

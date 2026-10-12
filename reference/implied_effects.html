@@ -74,7 +74,8 @@ abundance indices. Calculate once and plot the compact result repeatedly.</p>
 <span>  traditional_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"log_response"</span>, <span class="st">"standardised"</span>, <span class="st">"standardized"</span><span class="op">)</span>,</span>
 <span>  component <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  year_term <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  draw_id <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  draw_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_implied'</span></span>
@@ -90,6 +91,8 @@ abundance indices. Calculate once and plot the compact result repeatedly.</p>
 
 <dl><dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>A retained <code>lm</code>, GLM, <code>mgcv</code> GAM, or ML <code>glmmTMB</code> fit. These
+also include lme4 lmer/glmer/glmer.nb fits for the corresponding supported
+single-response families, with fitted random effects held fixed.
 adapters support Gaussian identity-link models (including
 an explicitly logged response), binomial logit-link models (Bernoulli or
 <code>cbind(successes, failures)</code>), and Poisson, NB2, Gamma, and Tweedie log-link
@@ -188,6 +191,13 @@ Not used for combined implied responses, which do not have a term baseline.</p><
 posterior draw. <code>NULL</code> uses native posterior-mean parameters before
 predicting. Both options condition on a single parameter state; neither
 propagates posterior uncertainty or produces Bayesian credible intervals.</p></dd>
+
+
+<dt id="arg-response-transform">response_transform<a class="anchor" aria-label="anchor" href="#arg-response-transform"></a></dt>
+<dd><p>For lme4 only, <code>"identity"</code> or explicitly <code>"log"</code>
+for a Gaussian lmer fit of log(response) or a named logged column.
+These adjustments remain on the fitted log-response scale; random effects
+and native Gaussian SD are held fixed. Other response transformations fail.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>

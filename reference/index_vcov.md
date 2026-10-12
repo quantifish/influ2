@@ -53,16 +53,16 @@ A numeric square matrix with matching year row and column names.
 
 ## Details
 
-All six standardisation backends and area integration retain these
-compact matrices when uncertainty is calculated, including when only
-summaries are retained. GLM/GAM/glmmTMB covariance is obtained by
-propagating the joint fitted-parameter covariance through the weighted
-annual means. Log-scale covariance uses their log-index gradients. brms
-uses sample covariance of the same annual posterior draws, taking logs
-before calculating log covariance. sdmTMB/tinyVAST use their shared
-joint Gaussian parameter/field draws in the same way. Positive estimates
-and, where used, positive draws are required for log covariance; values
-are never clipped.
+All standardisation backends and area integration retain these compact
+matrices when uncertainty is calculated, including when only summaries
+are retained. GLM/GAM/glmmTMB/lme4 covariance is obtained by propagating
+the joint fitted-parameter covariance through the weighted annual means.
+Log-scale covariance uses their log-index gradients. brms uses sample
+covariance of the same annual posterior draws, taking logs before
+calculating log covariance. sdmTMB/tinyVAST use their shared joint
+Gaussian parameter/field draws in the same way. Positive estimates and,
+where used, positive draws are required for log covariance; values are
+never clipped.
 
 The matrix follows the index's reference population, random-effect
 target, units, and normalisation. Multiplying by a known positive

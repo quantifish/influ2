@@ -101,9 +101,9 @@ contrasts</strong> in the influence and step plots. Both are useful, but
 neither is automatically an area-integrated abundance or biomass
 index.</p>
 <p>Both <code><a href="../reference/cpue_index.html">cpue_index()</a></code> and the separate
-<code><a href="../reference/integrate_index.html">integrate_index()</a></code> work with GLM, GAM, glmmTMB, complete
-brms, sdmTMB, and univariate tinyVAST fits. Spatial effects are not
-required for either calculation. The difference is the question:
+<code><a href="../reference/integrate_index.html">integrate_index()</a></code> work with GLM, GAM, lme4, glmmTMB,
+complete brms, sdmTMB, and univariate tinyVAST fits. Spatial effects are
+not required for either calculation. The difference is the question:
 standardisation produces a <strong>weighted mean</strong>, whereas
 integration produces an <strong>area-weighted total</strong> over a
 stated domain.</p>
@@ -643,9 +643,10 @@ simulates new observations. The diagonal of the response matrix matches
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>GLM, GAM, glmmTMB</td>
+<td>GLM, GAM, glmmTMB, lme4</td>
 <td>Delta method through the weighted annual response means; log-index
-gradients for log covariance.</td>
+gradients for log covariance. lme4 holds variance/dispersion parameters
+fixed.</td>
 </tr>
 <tr class="even">
 <td>brms</td>
@@ -781,13 +782,19 @@ comparison.</p>
 <div class="section level2">
 <h2 id="current-boundaries">Current boundaries<a class="anchor" aria-label="anchor" href="#current-boundaries"></a>
 </h2>
-<p>Response standardisation and area integration support all six
+<p>Response standardisation and area integration support all seven
 backends above, subject to model-structure checks. glmmTMB indices
 require a converged ML fit and do not yet support random effects in the
 zero component. brms autocorrelation and Gaussian-process predictions
 need a separate joint-prediction adapter. GAM smooths are evaluated as
 fitted, including random-effect smooths; their target can differ from
-the zero-group-effect convention used for glmmTMB and brms.</p>
+the zero-group-effect convention used for glmmTMB, lme4, and brms.</p>
+<p>lme4 supports Gaussian, binomial, Poisson, NB2, and Gamma fits.
+Explicitly declare <code>response_transform = "log"</code> for a
+Gaussian lmer model of a logged response: arithmetic expectations use
+<code>exp(eta + sigma^2/2)</code>. Its native fixed-effect covariance is
+propagated, with variance/dispersion parameters held fixed. Nonlinear
+nlmer models and arbitrary custom families are excluded.</p>
 <p>For binomial GLMs and glmmTMB, native response predictions are
 probabilities. For brms binomial models they are expected counts at the
 reference number of trials: supply one trial for a per-trial comparison.

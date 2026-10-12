@@ -22,7 +22,8 @@ implied_effects(
   traditional_scale = c("log_response", "standardised", "standardized"),
   component = NULL,
   year_term = NULL,
-  draw_id = NULL
+  draw_id = NULL,
+  response_transform = "identity"
 )
 
 # S3 method for class 'influ_implied'
@@ -36,9 +37,11 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 - model:
 
-  A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. These adapters
-  support Gaussian identity-link models (including an explicitly logged
-  response), binomial logit-link models (Bernoulli or
+  A retained `lm`, GLM, `mgcv` GAM, or ML `glmmTMB` fit. These also
+  include lme4 lmer/glmer/glmer.nb fits for the corresponding supported
+  single-response families, with fitted random effects held fixed.
+  adapters support Gaussian identity-link models (including an
+  explicitly logged response), binomial logit-link models (Bernoulli or
   `cbind(successes, failures)`), and Poisson, NB2, Gamma, and Tweedie
   log-link models. ML `sdmTMB` supports Gaussian, Bernoulli, Poisson,
   NB2, Gamma, Tweedie, lognormal, and standard delta-Gamma/lognormal
@@ -142,6 +145,13 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
   draw. `NULL` uses native posterior-mean parameters before predicting.
   Both options condition on a single parameter state; neither propagates
   posterior uncertainty or produces Bayesian credible intervals.
+
+- response_transform:
+
+  For lme4 only, `"identity"` or explicitly `"log"` for a Gaussian lmer
+  fit of log(response) or a named logged column. These adjustments
+  remain on the fitted log-response scale; random effects and native
+  Gaussian SD are held fixed. Other response transformations fail.
 
 - x:
 

@@ -75,7 +75,8 @@ No model is fitted or updated by this function.</p>
 <span>  <span class="va">...</span>,</span>
 <span>  spatial_fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"spatial"</span>, <span class="st">"spatiotemporal"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  prediction_offset <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  prediction_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_index'</span></span>
@@ -179,6 +180,15 @@ random-number state is restored; changing batch sizes preserves draws.</p></dd>
 offset column in <code>reference_data</code>. <code>NULL</code> explicitly uses offset zero
 (one unit of exposure for a log-exposure offset). Other backends obtain
 offsets from their formula and the supplied reference predictors.</p></dd>
+
+
+<dt id="arg-response-transform">response_transform<a class="anchor" aria-label="anchor" href="#arg-response-transform"></a></dt>
+<dd><p>For lme4 only, <code>"identity"</code> or explicitly <code>"log"</code>
+for a Gaussian lmer fit of log(response). Natural arithmetic expectations
+use <code>exp(eta + sigma^2/2)</code>, with group effects set to zero. The native
+fixed-effect covariance is propagated; uncertainty in sigma and random-effect
+variance parameters is not included. REML fits may describe indices, but
+must not rank different fixed-effect structures by likelihood criteria.</p></dd>
 
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>

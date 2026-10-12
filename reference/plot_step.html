@@ -135,6 +135,12 @@ keep the returned object small. Save expensive fits separately if needed.</p></d
 
 <dt id="arg-refit-args">refit_args<a class="anchor" aria-label="anchor" href="#arg-refit-args"></a></dt>
 <dd><p>Named arguments passed to the model update at every step,
+with original fitting rows and offsets locked. For lme4 negative-binomial
+fits, explicitly supply <code>list(reestimate_nb = TRUE)</code> to use glmer.nb at each
+stage, or FALSE to keep the original size parameter. The saved native call
+cannot distinguish originally estimated from user-fixed size. Automatic
+lme4 sequences retain all random terms while adding fixed terms; changes
+to random structure require explicit step formulas, each with a random term.
 such as brms sampling controls. Stage-specific arguments take precedence.
 Execution-only controls (<code>seed</code>, <code>cores</code>, <code>refresh</code>, <code>silent</code>, and <code>verbose</code>)
 do not by themselves force an otherwise unchanged original fit to rerun.</p></dd>

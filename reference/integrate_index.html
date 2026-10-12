@@ -77,7 +77,8 @@ No model is refitted and no observation-level predictive noise is added.</p>
 <span>  averaging_weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  spatial_fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"spatial"</span>, <span class="st">"spatiotemporal"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  prediction_offset <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  prediction_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -198,6 +199,15 @@ offset column in <code>reference_data</code>. <code>NULL</code> explicitly uses 
 (one unit of exposure for a log-exposure offset). Other backends obtain
 offsets from their formula and the supplied reference predictors.</p></dd>
 
+
+<dt id="arg-response-transform">response_transform<a class="anchor" aria-label="anchor" href="#arg-response-transform"></a></dt>
+<dd><p>For lme4 only, <code>"identity"</code> or explicitly <code>"log"</code>
+for a Gaussian lmer fit of log(response). Natural arithmetic expectations
+use <code>exp(eta + sigma^2/2)</code>, with group effects set to zero. The native
+fixed-effect covariance is propagated; uncertainty in sigma and random-effect
+variance parameters is not included. REML fits may describe indices, but
+must not rank different fixed-effect structures by likelihood criteria.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -221,7 +231,7 @@ unless an appropriate catchability/exposure conversion is supplied.
 Area-integrated encounter probabilities describe expected occupied area
 under the stated encounter definition, not abundance. Supplying a unit
 label does not validate these scientific assumptions.</p>
-<p>All six <code><a href="cpue_index.html">cpue_index()</a></code> backends are supported with the same prediction
+<p>All <code><a href="cpue_index.html">cpue_index()</a></code> backends, including lme4, are supported with the same prediction
 conventions and model-structure guards. Smooth spatial predictors in GLMs
 and GAMs can be integrated just like dedicated spatial fields. Joint
 covariance or shared draws propagate dependence across cells and years;

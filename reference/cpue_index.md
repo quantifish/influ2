@@ -24,7 +24,8 @@ cpue_index(
   ...,
   spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
   seed = 1L,
-  prediction_offset = NULL
+  prediction_offset = NULL,
+  response_transform = "identity"
 )
 
 # S3 method for class 'influ_index'
@@ -132,6 +133,16 @@ print(x, ...)
   `reference_data`. `NULL` explicitly uses offset zero (one unit of
   exposure for a log-exposure offset). Other backends obtain offsets
   from their formula and the supplied reference predictors.
+
+- response_transform:
+
+  For lme4 only, `"identity"` or explicitly `"log"` for a Gaussian lmer
+  fit of log(response). Natural arithmetic expectations use
+  `exp(eta + sigma^2/2)`, with group effects set to zero. The native
+  fixed-effect covariance is propagated; uncertainty in sigma and
+  random-effect variance parameters is not included. REML fits may
+  describe indices, but must not rank different fixed-effect structures
+  by likelihood criteria.
 
 - x:
 

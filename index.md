@@ -26,6 +26,9 @@ Initial adapters are available for:
 - [`mgcv::gam()`](https://rdrr.io/pkg/mgcv/man/gam.html);
 - [`brms::brm()`](https://paulbuerkner.com/brms/reference/brm.html);
 - [`glmmTMB::glmmTMB()`](https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html);
+- [`lme4::lmer()`](https://rdrr.io/pkg/lme4/man/lmer.html),
+  [`lme4::glmer()`](https://rdrr.io/pkg/lme4/man/glmer.html), and
+  [`lme4::glmer.nb()`](https://rdrr.io/pkg/lme4/man/glmer.nb.html);
 - [`sdmTMB::sdmTMB()`](https://sdmTMB.github.io/sdmTMB/reference/sdmTMB.html);
   and
 - [`tinyVAST::tinyVAST()`](https://vast-lib.github.io/tinyVAST/reference/tinyVAST.html).
@@ -67,11 +70,11 @@ For an assessment-ready expected-response table, use
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
 with an explicit common reference profile or population. Both
 `"standardised"` and `"standardized"` are accepted. GLM, GAM, glmmTMB,
-complete brms, sdmTMB, and univariate tinyVAST fits are supported for
-response standardisation.
+lme4, complete brms, sdmTMB, and univariate tinyVAST fits are supported
+for response standardisation.
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
-separately calculates area-weighted totals for these same six backends,
-whether or not the fitted model includes spatial effects.
+separately calculates area-weighted totals for these same seven
+backends, whether or not the fitted model includes spatial effects.
 
 ``` r
 

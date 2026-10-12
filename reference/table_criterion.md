@@ -1,6 +1,6 @@
 # Summarise criteria across CPUE model types
 
-A model-specific summary table for GLMs, mgcv GAMs, glmmTMB, brms,
+A model-specific summary table for GLMs, mgcv GAMs, glmmTMB, brms, lme4,
 sdmTMB, and tinyVAST. Different criteria occupy different columns;
 missing or inappropriate criteria are never replaced by another
 statistic.
@@ -71,16 +71,16 @@ mgcv's ordinary [`AIC()`](https://rdrr.io/r/stats/AIC.html) already uses
 a conditional formulation, with its smoothing-parameter uncertainty
 correction when available. Its `cAIC` column therefore equals native
 AIC; it is not an independent criterion. sdmTMB and tinyVAST use their
-own approximate `cAIC()` methods. glmmTMB has no supported native
-conditional-AIC method here. No generic mixed-model correction, cAIC4
-conversion, or refitting workaround is substituted. For an ordinary
-model without random effects, cAIC reduces to native AIC. Profiled
-spatial fits are not yet validated for conditional penalty counting;
-their cAIC is unavailable, while native marginal criteria remain.
-Restricted-likelihood and penalised/prior fits are flagged and excluded
-from automatic ranking. In particular, REML objective values must not
-rank different fixed-effect structures. mgcv's conditional AIC is not
-its REML smoothing-selection objective.
+own approximate `cAIC()` methods. glmmTMB and lme4 have no supported
+native conditional-AIC method here. No generic mixed-model correction,
+cAIC4 conversion, or refitting workaround is substituted. For an
+ordinary model without random effects, cAIC reduces to native AIC.
+Profiled spatial fits are not yet validated for conditional penalty
+counting; their cAIC is unavailable, while native marginal criteria
+remain. Restricted-likelihood and penalised/prior fits are flagged and
+excluded from automatic ranking. In particular, REML objective values
+must not rank different fixed-effect structures. mgcv's conditional AIC
+is not its REML smoothing-selection objective.
 
 AIC/BIC and cAIC comparison groups distinguish conditional observation
 likelihoods from marginal likelihoods. Ordinary models with no random

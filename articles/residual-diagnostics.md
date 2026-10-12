@@ -1276,14 +1276,14 @@ dharma_checks
 `residual_method = "dharma"` sends the complete native response
 simulations to `DHARMa::createDHARMa(method = "PIT")`. DHARMa calculates
 its own uniform-scale residuals; this is not a new label on influ2’s
-finite-simulation ranks. It works through the existing simulation
-adapters for GLM, GAM, glmmTMB, brms, sdmTMB, and single-response
-tinyVAST models, subject to their existing family, conditioning, and
-component restrictions. No second model simulator, refitting, or MCMC is
-invoked. In particular, this example redraws random effects because we
-selected `conditioning = "new_effects"`; it does not inherit DHARMa
-0.5.0’s conditional-simulation default. DHARMa’s tie randomisation uses
-a separate deterministic seed derived from `seed`, recorded in
+finite-simulation ranks. It works through the simulation adapters for
+GLM, GAM, glmmTMB, lme4, brms, sdmTMB, and single-response tinyVAST
+models, subject to their existing family, conditioning, and component
+restrictions. No second model simulator, refitting, or MCMC is invoked.
+In particular, this example redraws random effects because we selected
+`conditioning = "new_effects"`; it does not inherit DHARMa 0.5.0’s
+conditional-simulation default. DHARMa’s tie randomisation uses a
+separate deterministic seed derived from `seed`, recorded in
 `metadata$dharma_seed`, so it does not reuse the start of the
 response-simulation or posterior-draw-selection random-number stream.
 
@@ -1647,7 +1647,7 @@ calling tinyVAST `"mle-mvn"` separately for each batch. This does not
 provide an automatic multivariate DHARMa adapter or establish universal
 fitted-model calibration.
 
-### GLM, GAM, glmmTMB, and brms
+### GLM, GAM, glmmTMB, lme4, and brms
 
 All influ2 helpers use the generalised simulation engine for GLMs, GAMs,
 and glmmTMB. Native packages additionally offer their own residual

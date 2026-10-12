@@ -17,6 +17,10 @@ plots.
   : Influence diagnostics for generalised linear models
 - [`influ(`*`<glmmTMB>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.glmmTMB.md)
   : Influence diagnostics for glmmTMB models
+- [`influ(`*`<merMod>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.merMod.md)
+  [`influ(`*`<lmerMod>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.merMod.md)
+  [`influ(`*`<glmerMod>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.merMod.md)
+  : Influence diagnostics for lme4 mixed models
 - [`influ(`*`<sdmTMB>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.sdmTMB.md)
   : Influence diagnostics for sdmTMB models
 - [`influ(`*`<tinyVAST>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ.tinyVAST.md)

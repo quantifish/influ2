@@ -27,7 +27,8 @@ influ_residuals(
   conditioning = "backend_default",
   residual_method = c("simulation_pit", "dharma"),
   retain_dharma = FALSE,
-  dharma_max_mb = 256
+  dharma_max_mb = 256,
+  response_transform = "identity"
 )
 
 # S3 method for class 'influ_residuals'
@@ -107,10 +108,10 @@ print(x, ...)
 
 - trial_counts:
 
-  For weighted one-column binomial GLM/GAM/glmmTMB fits, the name of the
-  known trial-count column in `data`. It must equal the fitted trial
-  weights. Arbitrary case weights are not treated as trials. Two-column
-  success/failure responses need no override.
+  For weighted one-column binomial GLM/GAM/glmmTMB/lme4 fits, the name
+  of the known trial-count column in `data`. It must equal the fitted
+  trial weights. Arbitrary case weights are not treated as trials.
+  Two-column success/failure responses need no override.
 
 - groups:
 
@@ -122,12 +123,12 @@ print(x, ...)
 - conditioning:
 
   Simulation target. `"backend_default"` preserves existing behaviour:
-  `"fitted"` for GLM/GAM/sdmTMB/tinyVAST, `"new_effects"` for glmmTMB,
-  and `"posterior_predictive"` for brms. Explicit alternatives are
-  `"fitted"` for glmmTMB, `"conditional_draw"` for sdmTMB/tinyVAST, and
-  `"new_effects"` for sdmTMB. Unsupported combinations fail, not fall
-  back. See the conditioning section below before comparing model
-  diagnostics.
+  `"fitted"` for GLM/GAM/sdmTMB/tinyVAST, `"new_effects"` for
+  glmmTMB/lme4, and `"posterior_predictive"` for brms. Explicit
+  alternatives are `"fitted"` for glmmTMB/lme4, `"conditional_draw"` for
+  sdmTMB/tinyVAST, and `"new_effects"` for sdmTMB. Unsupported
+  combinations fail, not fall back. See the conditioning section below
+  before comparing model diagnostics.
 
 - residual_method:
 
@@ -151,6 +152,12 @@ print(x, ...)
   warn. This limits the matrix alone, not peak memory: DHARMa and native
   simulators allocate additional copies. `batch_size` cannot remove this
   full-matrix cost. Increase the limit explicitly only if appropriate.
+
+- response_transform:
+
+  For lme4 only, explicitly declare `"log"` for a Gaussian lmer fit of a
+  log response; default `"identity"`. Observations and native
+  simulations are then back-transformed to the natural scale.
 
 - x:
 

@@ -26,7 +26,7 @@ Both
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
 and the separate
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
-work with GLM, GAM, glmmTMB, complete brms, sdmTMB, and univariate
+work with GLM, GAM, lme4, glmmTMB, complete brms, sdmTMB, and univariate
 tinyVAST fits. Spatial effects are not required for either calculation.
 The difference is the question: standardisation produces a **weighted
 mean**, whereas integration produces an **area-weighted total** over a
@@ -225,7 +225,7 @@ simulates new observations. The diagonal of the response matrix matches
 
 | Backend | Joint covariance calculation |
 |----|----|
-| GLM, GAM, glmmTMB | Delta method through the weighted annual response means; log-index gradients for log covariance. |
+| GLM, GAM, glmmTMB, lme4 | Delta method through the weighted annual response means; log-index gradients for log covariance. lme4 holds variance/dispersion parameters fixed. |
 | brms | Sample covariance of annual posterior expected-response draws; take logs of those same draws for log covariance. |
 | sdmTMB, tinyVAST | Sample covariance of joint Gaussian parameter/field simulations of the annual index; these are not MCMC draws. |
 
@@ -374,13 +374,20 @@ also remains a year-effect comparison.
 
 ## Current boundaries
 
-Response standardisation and area integration support all six backends
+Response standardisation and area integration support all seven backends
 above, subject to model-structure checks. glmmTMB indices require a
 converged ML fit and do not yet support random effects in the zero
 component. brms autocorrelation and Gaussian-process predictions need a
 separate joint-prediction adapter. GAM smooths are evaluated as fitted,
 including random-effect smooths; their target can differ from the
-zero-group-effect convention used for glmmTMB and brms.
+zero-group-effect convention used for glmmTMB, lme4, and brms.
+
+lme4 supports Gaussian, binomial, Poisson, NB2, and Gamma fits.
+Explicitly declare `response_transform = "log"` for a Gaussian lmer
+model of a logged response: arithmetic expectations use
+`exp(eta + sigma^2/2)`. Its native fixed-effect covariance is
+propagated, with variance/dispersion parameters held fixed. Nonlinear
+nlmer models and arbitrary custom families are excluded.
 
 For binomial GLMs and glmmTMB, native response predictions are
 probabilities. For brms binomial models they are expected counts at the

@@ -506,6 +506,214 @@ separately. For hurdle and zero-inflated fits,
 calculates population-level unconditional-mean influence using the joint
 covariance of both components.
 
+## lme4
+
+Fits from `lmer()`, `glmer()`, and `glmer.nb()` use the same interfaces
+([Bates et al. 2015](#ref-Bates2015)). Here, the negative-binomial mixed
+model has the same fixed predictors and monthly random intercept as the
+preceding glmmTMB example. It is a native lme4 fit, not a conversion to
+another backend. Nonlinear `nlmer()` models and arbitrary custom
+families are outside this adapter’s scope.
+
+``` r
+
+lobster_lme4 <- lme4::glmer.nb(
+  lobsters ~ year + poly(depth, 2) + poly(soak, 2) + (1 | month),
+  data = lobsters_per_pot
+)
+lme4_diagnostic <- influ(lobster_lme4, focus = "year")
+summary(lme4_diagnostic)
+#> Influence diagnostic summary
+#>   Backend: lme4
+#>   Family:  single negative_binomial (log)
+#>   Focus:   year
+#> 
+#>            term      component maximum_absolute_link_influence level_at_maximum
+#>  random_effects random_effects                       0.4208648             2000
+#>            year    conditional                       0.3506306             2002
+#>  poly(depth, 2)    conditional                       0.2497453             2008
+#>   poly(soak, 2)    conditional                       0.2345097             2014
+```
+
+``` r
+
+plot(lme4_diagnostic, type = "components")
+```
+
+![Influence components from an lme4 negative-binomial mixed model fitted
+to the same simulated lobster
+records.](influ2_files/figure-html/lobster-lme4-influence-1.png)
+
+Native lme4 influence ratios for the simulated lobster example. Fixed
+terms and the aggregate monthly random-effect contribution use the
+native joint conditional coefficient covariance. Random-effect variance
+and negative-binomial size are held at their fitted values; these
+intervals are not Bayesian posterior intervals.
+
+CDI plots use the same layout, including for the aggregate random term.
+With one random intercept, its categories use the fitted grouping labels
+(months here), rather than numeric contribution values. Random slopes or
+crossed effects retain an aggregate contribution display.
+
+``` r
+
+plot(lme4_diagnostic, type = "cdi", term = "random_effects")
+```
+
+![An lme4 random-effect CDI display aligns relative effects, sampled
+composition, and annual
+influence.](influ2_files/figure-html/lobster-lme4-cdi-1.png)
+
+CDI display of the aggregate monthly random-effect contribution in the
+lme4 lobster model. The term is a fitted random contribution, not twelve
+independent fixed coefficients. Its reference and uncertainty follow the
+same conventions as the influence calculation.
+
+### Expected-response indices and assessment covariance
+
+Supply the common depth and soak profile without a year column; the
+index calculation inserts every fitted year. Group-level effects are set
+to zero, **not integrated over their population distribution**. These
+are expected lobsters per pot, with joint fixed-effect uncertainty
+carried into the annual covariance matrix. Uncertainty in size and
+random-effect variance is not propagated by the lme4 adapter.
+
+``` r
+
+lme4_reference <- data.frame(
+  depth = median(lobsters_per_pot$depth), soak = 24
+)
+lme4_index <- cpue_index(lobster_lme4, year = "year",
+  reference_data = lme4_reference, units = "lobsters per pot")
+head(index_table(lme4_index))
+#>   Year     Mean        SD        CV    Qlower   Qupper       Method
+#> 1 2000 1.687198 0.2398428 0.1421545 1.2769210 2.229299 standardised
+#> 2 2001 1.759611 0.2494245 0.1417498 1.3327819 2.323134 standardised
+#> 3 2002 1.839598 0.2563301 0.1393403 1.3999619 2.417294 standardised
+#> 4 2003 1.399828 0.1908107 0.1363101 1.0716358 1.828529 standardised
+#> 5 2004 1.584554 0.2156411 0.1360894 1.2135778 2.068934 standardised
+#> 6 2005 1.316781 0.1864901 0.1416257 0.9976118 1.738064 standardised
+#>                Distribution Link
+#> 1 Negative Binomial(1.7065)  log
+#> 2 Negative Binomial(1.7065)  log
+#> 3 Negative Binomial(1.7065)  log
+#> 4 Negative Binomial(1.7065)  log
+#> 5 Negative Binomial(1.7065)  log
+#> 6 Negative Binomial(1.7065)  log
+index_vcov(lme4_index)[1:4, 1:4]
+#>            2000       2001       2002       2003
+#> 2000 0.02020790 0.01447726 0.01443719 0.01414563
+#> 2001 0.01447726 0.02009300 0.01449064 0.01420762
+#> 2002 0.01443719 0.01449064 0.01941571 0.01417135
+#> 2003 0.01414563 0.01420762 0.01417135 0.01858045
+```
+
+`plot_index(lme4_index)` and
+[`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
+reuse this saved result. Area integration uses the same native
+predictions:
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+accepts this fit and an explicitly defined common domain with cell
+areas. Multiplying lobsters per pot by area does **not** turn it into
+absolute abundance without an appropriate exposure/catchability
+conversion; see the [CPUE
+indices](https://www.quantifish.co.nz/influ2/articles/cpue-indices.md)
+article for the integration contract.
+
+### Residuals and implied effects
+
+For lme4, `conditioning = "new_effects"` redraws monthly effects at
+fitted variance parameters; `"fitted"` instead holds their fitted modes
+fixed. The default is new effects. Each native draw is a joint response
+vector, and the simulated vectors and row-level PIT results are
+invariant to response-batch size. The compact response-ECDF grid uses
+the first batch, as in the existing engine, so its plotting knots can
+vary. The optional DHARMa engine uses those same simulations with the
+explicitly chosen conditioning.
+
+``` r
+
+lme4_checks <- influ_residuals(lobster_lme4, nsim = 250, seed = 281,
+  conditioning = "fitted", groups = "month")
+```
+
+``` r
+
+plot(lme4_checks)
+```
+
+![The shared residual overview diagnoses an lme4 negative-binomial mixed
+model using fitted-effect
+conditioning.](influ2_files/figure-html/lobster-lme4-residual-overview-1.png)
+
+Four-panel PIT residual overview for the lme4 lobster model, conditional
+on fitted monthly effects. The displayed normal scores and response-ECDF
+comparison use native response simulations at fitted parameters.
+Reference bands remain exploratory, not calibrated fitted-model
+acceptance criteria.
+
+``` r
+
+plot(lme4_checks, type = "qq")
+plot_grouped_residuals(lme4_checks, groups = "month")
+plot_predicted_residuals(lme4_checks)
+
+# Optional DHARMa calculation; no model refit.
+dharma_checks <- influ_residuals(lobster_lme4, nsim = 250,
+  residual_method = "dharma", conditioning = "fitted")
+
+# A likelihood adjustment, not a sum of PIT/DHARMa scores and coefficients.
+lme4_implied <- implied_effects(lobster_lme4, groups = "month")
+plot(lme4_implied)
+```
+
+### Step plots and model criteria
+
+Automatic lme4 step sequences keep the random structure while adding
+fixed terms. Changing the random structure requires explicit step
+formulas. Negative-binomial step refits require an explicit dispersion
+choice because the saved native call does not identify whether size was
+originally estimated or supplied as known. The following example
+re-estimates size at each step:
+
+``` r
+
+lme4_steps <- influ_steps(lobster_lme4, year = "year", refit = TRUE,
+  refit_args = list(reestimate_nb = TRUE))
+plot(lme4_steps)
+```
+
+``` r
+
+lme4_comparison <- table_criterion(
+  list(lme4 = lobster_lme4, glmmTMB = lobster_glmmTMB)
+)
+lme4_comparison[c("Model", "Backend", "nobs", "df", "AIC", "AIC_group", "delta_AIC")]
+#>     Model Backend nobs df      AIC AIC_group  delta_AIC
+#> 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441577
+#> 2 glmmTMB glmmTMB 5049 24 17755.82     AIC-1 0.00000000
+```
+
+Model criteria retain native likelihood values, degrees of freedom, and
+convergence notes. REML lmer fits are not automatically ranked against
+other fixed-effect structures; no hidden ML refit is performed.
+Conditional AIC is unavailable for lme4 here, rather than substituted
+with marginal AIC.
+
+For a Gaussian model of `log(response)`, explicitly pass
+`response_transform = "log"` to
+[`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md),
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md),
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md),
+[`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md),
+or
+[`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md).
+This also supports a named precomputed log-response column.
+Natural-response indices use `exp(eta + sigma^2/2)` with sigma held
+fixed; implied adjustments remain on the fitted log-response scale.
+Arbitrary transformations such as `log(response + 1)` are not silently
+reinterpreted as lognormal models.
+
 ## brms
 
 The Bayesian backend uses genuine joint posterior draws, but projects
@@ -776,6 +984,7 @@ comparison of fitting software.
 lobster_diagnostics <- list(GLM = glm_diagnostic)
 if (has_mgcv) lobster_diagnostics$GAM <- gam_diagnostic
 if (has_glmmTMB) lobster_diagnostics$glmmTMB <- glmmTMB_diagnostic
+if (has_lme4) lobster_diagnostics$lme4 <- lme4_diagnostic
 if (has_brms) lobster_diagnostics$brms <- brms_diagnostic
 ```
 
@@ -801,9 +1010,9 @@ with separate labelled lines for each fitted
 model.](influ2_files/figure-html/lobster-model-comparison-1.png)
 
 Relative standardised lobster CPUE indices from the available GLM, GAM,
-glmmTMB, and brms examples. Each series has a geometric mean of one over
-2000–2017; differences reflect the models’ distributions and structures
-as well as their estimation methods.
+glmmTMB, lme4, and brms examples. Each series has a geometric mean of
+one over 2000–2017; differences reflect the models’ distributions and
+structures as well as their estimation methods.
 
 Set `show_probs = TRUE` to display the intervals already stored in the
 diagnostics. For these objects, they are 95% confidence or credible
@@ -1164,7 +1373,7 @@ rescaling, but that should not be assumed for models with year
 interactions or more complicated response structures.
 
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
-now provides this expected-response table for all six model classes. A
+now provides this expected-response table for all seven model classes. A
 separate
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
 sums predictions times explicit cell areas, whether the model is a GLM,
@@ -1184,7 +1393,7 @@ common coefficients, smooths, or latent effects. Passing only their SDs
 loses that dependence.
 [`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)
 retrieves the **annual-index** variance–covariance matrix, not the much
-larger model-coefficient matrix. It works for the same six backends as
+larger model-coefficient matrix. It works for the same seven backends as
 [`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
 and
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md).
@@ -1371,8 +1580,9 @@ All fitted-model methods return an `influ_diag`:
 ``` r
 
 methods("influ")
-#> [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     
-#> [5] influ.glmmTMB*  influ.sdmTMB*   influ.tinyVAST*
+#>  [1] influ.brmsfit*  influ.default*  influ.gam*      influ.glm*     
+#>  [5] influ.glmerMod* influ.glmmTMB*  influ.lmerMod*  influ.merMod*  
+#>  [9] influ.sdmTMB*   influ.tinyVAST*
 #> see '?methods' for accessing help and source code
 ```
 
@@ -1693,6 +1903,11 @@ and James T. Thorson. 2025. “sdmTMB: An r Package for Fast, Flexible,
 and User-Friendly Generalized Linear Mixed Effects Models with Spatial
 and Spatiotemporal Random Fields.” *Journal of Statistical Software* 115
 (2): 1–46. <https://doi.org/10.18637/jss.v115.i02>.
+
+Bates, Douglas, Martin Mächler, Ben Bolker, and Steve Walker. 2015.
+“Fitting Linear Mixed-Effects Models Using lme4.” *Journal of
+Statistical Software* 67 (1): 1–48.
+<https://doi.org/10.18637/jss.v067.i01>.
 
 Bentley, Nokome, Terese H. Kendrick, Paul J. Starr, and Paul A. Breen.
 2012. “Influence Plots and Metrics: Tools for Better Understanding
