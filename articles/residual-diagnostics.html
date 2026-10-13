@@ -1296,7 +1296,8 @@ engine within the shared influ2 plotting framework:</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dharma_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">20260907</span>,</span>
-<span>  residual_method <span class="op">=</span> <span class="st">"dharma"</span>, conditioning <span class="op">=</span> <span class="st">"new_effects"</span></span>
+<span>  residual_method <span class="op">=</span> <span class="st">"dharma"</span>, conditioning <span class="op">=</span> <span class="st">"new_effects"</span>,</span>
+<span>  residual_tests <span class="op">=</span> <span class="st">"standard"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">dharma_checks</span></span>
 <span><span class="co">#&gt; DHARMa residual diagnostics (glmmTMB)</span></span>
@@ -1335,6 +1336,712 @@ reference bands are exploratory, not calibrated fitted-model acceptance
 criteria.
 </p>
 </div>
+<div class="section level3">
+<h3 id="an-overall-report-followed-by-each-model-term">An overall report, followed by each model term<a class="anchor" aria-label="anchor" href="#an-overall-report-followed-by-each-model-term"></a>
+</h3>
+<p><code><a href="../reference/check_cpue.html">check_cpue()</a></code> assembles an <strong>overall model
+report</strong>, then works through every recorded model term. We reuse
+the already calculated residuals, so this call does not simulate
+responses, refit the model, or repeat DHARMa tests:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lobster_report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_cpue.html">check_cpue</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_nb_mixed</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span>, residuals <span class="op">=</span> <span class="va">dharma_checks</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">report_tables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lobster_report</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">report_tables</span><span class="op">$</span><span class="va">model_statistics</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"backend"</span>, <span class="st">"nobs"</span>, <span class="st">"df"</span>, <span class="st">"logLik"</span>, <span class="st">"AIC"</span>, <span class="st">"BIC"</span>, <span class="st">"deviance"</span></span>
+<span><span class="op">)</span><span class="op">]</span>, digits <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">backend</th>
+<th align="right">nobs</th>
+<th align="right">df</th>
+<th align="right">logLik</th>
+<th align="right">AIC</th>
+<th align="right">BIC</th>
+<th align="right">deviance</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">glmmTMB</td>
+<td align="right">5049</td>
+<td align="right">26</td>
+<td align="right">-8851.785</td>
+<td align="right">17755.57</td>
+<td align="right">17925.27</td>
+<td align="right">5460.928</td>
+</tr></tbody>
+</table>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">report_tables</span><span class="op">$</span><span class="va">overall</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"check"</span>, <span class="st">"status"</span>, <span class="st">"statistic"</span>, <span class="st">"p_value"</span>, <span class="st">"p_adjusted"</span></span>
+<span><span class="op">)</span><span class="op">]</span>, digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="38%">
+<col width="19%">
+<col width="14%">
+<col width="11%">
+<col width="16%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">check</th>
+<th align="left">status</th>
+<th align="right">statistic</th>
+<th align="right">p_value</th>
+<th align="right">p_adjusted</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">convergence</td>
+<td align="left">no_flag</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">positive_definite_hessian</td>
+<td align="left">no_flag</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">finite_coefficients</td>
+<td align="left">no_flag</td>
+<td align="right">0.0000</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">finite_uncertainty</td>
+<td align="left">no_flag</td>
+<td align="right">0.0000</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">gradient</td>
+<td align="left">not_assessed</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">variance_boundary</td>
+<td align="left">not_assessed</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">uniformity</td>
+<td align="left">review</td>
+<td align="right">0.0456</td>
+<td align="right">0.00</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">dispersion</td>
+<td align="left">no_flag</td>
+<td align="right">1.1686</td>
+<td align="right">0.44</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">report_tables</span><span class="op">$</span><span class="va">terms</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"term"</span>, <span class="st">"component"</span>, <span class="st">"check"</span>, <span class="st">"status"</span>, <span class="st">"statistic"</span>, <span class="st">"df"</span>, <span class="st">"p_value"</span>, <span class="st">"p_adjusted"</span></span>
+<span><span class="op">)</span><span class="op">]</span>, digits <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="3%">
+<col width="19%">
+<col width="13%">
+<col width="19%">
+<col width="8%">
+<col width="11%">
+<col width="3%">
+<col width="8%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">term</th>
+<th align="left">component</th>
+<th align="left">check</th>
+<th align="left">status</th>
+<th align="right">statistic</th>
+<th align="right">df</th>
+<th align="right">p_value</th>
+<th align="right">p_adjusted</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">year</td>
+<td align="left">conditional</td>
+<td align="left">group_location</td>
+<td align="left">review</td>
+<td align="right">99.5690</td>
+<td align="right">17</td>
+<td align="right">0.0000</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="left">poly(depth, 3)</td>
+<td align="left">conditional</td>
+<td align="left">rank_association</td>
+<td align="left">no_flag</td>
+<td align="right">0.0159</td>
+<td align="right">NA</td>
+<td align="right">0.2577</td>
+<td align="right">0.2577</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="left">poly(soak, 3)</td>
+<td align="left">conditional</td>
+<td align="left">rank_association</td>
+<td align="left">review</td>
+<td align="right">0.0583</td>
+<td align="right">NA</td>
+<td align="right">0.0000</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="left">(1 | month)</td>
+<td align="left">conditional</td>
+<td align="left">group_location</td>
+<td align="left">review</td>
+<td align="right">434.6092</td>
+<td align="right">11</td>
+<td align="right">0.0000</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="odd">
+<td align="left">31</td>
+<td align="left">2000</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0988</td>
+<td align="right">NA</td>
+<td align="right">0.0228</td>
+<td align="right">0.1367</td>
+</tr>
+<tr class="even">
+<td align="left">41</td>
+<td align="left">2001</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.1146</td>
+<td align="right">NA</td>
+<td align="right">0.0052</td>
+<td align="right">0.0670</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">2002</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0967</td>
+<td align="right">NA</td>
+<td align="right">0.0190</td>
+<td align="right">0.1331</td>
+</tr>
+<tr class="even">
+<td align="left">6</td>
+<td align="left">2003</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0673</td>
+<td align="right">NA</td>
+<td align="right">0.1241</td>
+<td align="right">0.4059</td>
+</tr>
+<tr class="odd">
+<td align="left">7</td>
+<td align="left">2004</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0331</td>
+<td align="right">NA</td>
+<td align="right">0.9320</td>
+<td align="right">1.0000</td>
+</tr>
+<tr class="even">
+<td align="left">8</td>
+<td align="left">2005</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0358</td>
+<td align="right">NA</td>
+<td align="right">0.9478</td>
+<td align="right">1.0000</td>
+</tr>
+<tr class="odd">
+<td align="left">9</td>
+<td align="left">2006</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0710</td>
+<td align="right">NA</td>
+<td align="right">0.1015</td>
+<td align="right">0.4059</td>
+</tr>
+<tr class="even">
+<td align="left">10</td>
+<td align="left">2007</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">review</td>
+<td align="right">0.1069</td>
+<td align="right">NA</td>
+<td align="right">0.0014</td>
+<td align="right">0.0215</td>
+</tr>
+<tr class="odd">
+<td align="left">11</td>
+<td align="left">2008</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0949</td>
+<td align="right">NA</td>
+<td align="right">0.0085</td>
+<td align="right">0.0921</td>
+</tr>
+<tr class="even">
+<td align="left">12</td>
+<td align="left">2009</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0837</td>
+<td align="right">NA</td>
+<td align="right">0.0271</td>
+<td align="right">0.1367</td>
+</tr>
+<tr class="odd">
+<td align="left">13</td>
+<td align="left">2010</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0913</td>
+<td align="right">NA</td>
+<td align="right">0.0105</td>
+<td align="right">0.0941</td>
+</tr>
+<tr class="even">
+<td align="left">14</td>
+<td align="left">2011</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0993</td>
+<td align="right">NA</td>
+<td align="right">0.0078</td>
+<td align="right">0.0921</td>
+</tr>
+<tr class="odd">
+<td align="left">15</td>
+<td align="left">2012</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.1102</td>
+<td align="right">NA</td>
+<td align="right">0.0077</td>
+<td align="right">0.0921</td>
+</tr>
+<tr class="even">
+<td align="left">16</td>
+<td align="left">2013</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">review</td>
+<td align="right">0.1430</td>
+<td align="right">NA</td>
+<td align="right">0.0000</td>
+<td align="right">0.0007</td>
+</tr>
+<tr class="odd">
+<td align="left">17</td>
+<td align="left">2014</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">review</td>
+<td align="right">0.1222</td>
+<td align="right">NA</td>
+<td align="right">0.0002</td>
+<td align="right">0.0031</td>
+</tr>
+<tr class="even">
+<td align="left">18</td>
+<td align="left">2015</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">review</td>
+<td align="right">0.1084</td>
+<td align="right">NA</td>
+<td align="right">0.0018</td>
+<td align="right">0.0254</td>
+</tr>
+<tr class="odd">
+<td align="left">19</td>
+<td align="left">2016</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">review</td>
+<td align="right">0.1364</td>
+<td align="right">NA</td>
+<td align="right">0.0000</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">20</td>
+<td align="left">2017</td>
+<td align="left">single</td>
+<td align="left">year_uniformity</td>
+<td align="left">no_flag</td>
+<td align="right">0.0906</td>
+<td align="right">NA</td>
+<td align="right">0.0155</td>
+<td align="right">0.1242</td>
+</tr>
+<tr class="odd">
+<td align="left">21</td>
+<td align="left">year</td>
+<td align="left">single</td>
+<td align="left">year_homogeneity</td>
+<td align="left">review</td>
+<td align="right">1.7480</td>
+<td align="right">17</td>
+<td align="right">0.0288</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<p>The first table uses native model statistics: sample size, likelihood
+degrees of freedom, log-likelihood, AIC, BIC, and available deviance.
+They describe the fit; they do not alone establish that its structure is
+adequate. GLM/GAM explained deviance, GAM adjusted R-squared, and an
+already saved brms Bayesian R-squared are separately labelled when
+available. There is no universal explained-deviance statistic for every
+mixed or spatial model. We do not fit a null model or run posterior
+predictions merely to fill a missing table cell.</p>
+<p>Native checks report optimiser convergence, available
+Hessian/uncertainty evidence, rank deficiency, and backend-specific
+warnings. Missing diagnostics are not passes.
+<code>check_cpue(fit, simulate = FALSE)</code> produces this quick
+fitting report and the term inventory without residual simulation.
+Calling <code>check_cpue(fit)</code> without a residual object requests
+new DHARMa residuals and standard tests, using the backend’s recorded
+default conditioning. It can take time and temporarily allocate a
+response matrix. There is no silent engine fallback if DHARMa, a family,
+or a simulation target is unavailable: the report records an unassessed
+check and its reason. Hard numerical problems prevent automatic
+simulation. Saved TMB objectives are not secretly reinitialised.</p>
+<p>For each fitted term, the current screens report <strong>Spearman
+rho</strong> for a raw numeric predictor or a <strong>Kruskal-Wallis H
+statistic</strong> for sufficiently sampled categories, including the
+monthly grouping variable here. Their nominal p-values are Holm-adjusted
+across the calculated term screens. These are descriptive
+residual-association checks on uniform PIT ranks, <strong>not DHARMa
+tests, coefficient-significance tests, or evidence that a random-effect
+variance is non-zero</strong>. A <code>poly(depth, 3)</code> screen
+examines monotone association with raw depth, not each basis coefficient
+or every nonlinear departure. Native GAM smooth EDF and approximate
+fitted-effect statistics are a separate descriptive row, not a residual
+failure. Interactions, multivariate/latent processes, sparse groups, and
+unsupported component checks remain visible as
+<code>not_assessed</code>; the function does not replace them with
+arbitrary proxies.</p>
+<p>The standard native DHARMa tests supply the overall uniformity KS
+statistic and response-dispersion ratio, plus within-year KS checks and
+the median-centred Levene F statistic for year-to-year variation. Levene
+is <strong>not</strong> Kruskal-Wallis. The within-year KS tests have
+their own Holm family; no universal adjustment across all diagnostic
+questions is implied. Use <code>residual_tests = "full"</code> when
+calculating new residuals to add auxiliary quantile regressions and
+outlier checks. The former fits diagnostic qgam regressions, not the
+CPUE model; the latter uses explicit bootstrap references for integer
+responses. Both add calculation time. Simulation-test p-values have
+finite Monte Carlo precision; a reported zero is not an exact
+probability.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_report</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="residual-diagnostics_files/figure-html/residual-model-report-overview-1.png" class="r-plt" alt="The four-panel mixed-model overview includes native likelihood statistics and labelled stored residual-test summaries." width="1056"><p class="caption">
+The model-check report reuses the negative-binomial glmmTMB lobster
+residuals and adds available native model statistics and stored DHARMa
+tests. The Q-Q panel reports uniform-scale KS evidence, the year panel
+reports uniform-scale Levene and within-year KS evidence, and the
+response ECDF panel reports the separate native response-dispersion
+test, not an ECDF test. No quantile regression was requested in this
+standard report. Tests are exploratory, specific to new-effect
+conditioning, and not calibrated model acceptance rules.
+</p>
+</div>
+<p><code>plot(report, type = "term", term = ...)</code> reuses a
+retained raw predictor and its stored screen. The descriptive smooth is
+not the curve used to obtain the Spearman statistic, nor is that
+statistic a test of the smooth’s significance.</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_report</span>, type <span class="op">=</span> <span class="st">"term"</span>, term <span class="op">=</span> <span class="st">"poly(depth, 3)"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="residual-diagnostics_files/figure-html/residual-model-report-term-1.png" class="r-plt" alt="Residuals against depth show the matching raw-predictor screen without model fitting or additional simulation." width="768"><p class="caption">
+Normal-score DHARMa residuals against raw depth, with the stored
+uniform-PIT Spearman association and Holm-adjusted exploratory p-value.
+The original cubic depth term, predictive means, and residuals are
+unchanged. The blue loess is descriptive; this is not a coefficient or
+polynomial-basis significance test.
+</p>
+</div>
+<p>The report distinguishes <code>issue</code> (numerical fitting
+problem), <code>review</code> (evidence to inspect),
+<code>no_flag</code> (this screen did not flag),
+<code>not_assessed</code> (no defensible result), and
+<code>not_applicable</code> (an irrelevant check or a separately
+described native effect statistic). It never declares an overall model
+pass. Component and conditioning targets remain explicit: combined
+response checks do not validate positive or encounter components
+separately.</p>
+<p>Andrea Havron and Cole Monnahan’s work is especially relevant here.
+<a href="https://github.com/florianhartig/DHARMa/issues/301" class="external-link">DHARMa
+issue 301</a> credits them with identifying inflated false-positive
+rates when residual correlation persists. Their <a href="https://github.com/nmfs-ost/Havron-MixedResidualStudy" class="external-link">mixed-model
+validation study</a> compares residual approaches, conditioning, and
+rotation using known-model simulations. We incorporate that lesson by
+recording the conditioning target, keeping native p-values exploratory,
+and reporting unavailable tests honestly. We do <strong>not</strong>
+claim that Holm correction removes dependence, or silently rotate
+residuals. Backend/family-specific false-warning and power calibration
+remains a separate scientific task; see <a href="residual-validation.html">Residual validation</a>. The same
+caution applies to posterior predictive reuse of fitting data in
+brms.</p>
+</div>
+<div class="section level3">
+<h3 id="poisson-versus-negative-binomial-ignoring-overdispersion">Poisson versus negative binomial: ignoring overdispersion<a class="anchor" aria-label="anchor" href="#poisson-versus-negative-binomial-ignoring-overdispersion"></a>
+</h3>
+<p>The most direct comparison changes the response family while keeping
+<strong>every observation, mean-model term, monthly random effect, and
+diagnostic simulation target the same</strong>.
+<code>lobster_poisson_mixed</code> and <code>lobster_nb_mixed</code>
+were fitted above; the checks do not refit either model. These data were
+simulated from a negative-binomial distribution, so Poisson’s
+conditional variance equal to its mean is too restrictive.</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">poisson_report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_cpue.html">check_cpue</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_poisson_mixed</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span>,</span>
+<span>  nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">20260907</span>, conditioning <span class="op">=</span> <span class="st">"new_effects"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">reports</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Poisson <span class="op">=</span> <span class="va">poisson_report</span>, Negative_binomial <span class="op">=</span> <span class="va">lobster_report</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">overall_comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">reports</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">name</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">report</span> <span class="op">&lt;-</span> <span class="va">reports</span><span class="op">[[</span><span class="va">name</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">fit_stats</span> <span class="op">&lt;-</span> <span class="va">report</span><span class="op">$</span><span class="va">model_statistics</span></span>
+<span>  <span class="va">dispersion</span> <span class="op">&lt;-</span> <span class="va">report</span><span class="op">$</span><span class="va">overall</span><span class="op">[</span><span class="va">report</span><span class="op">$</span><span class="va">overall</span><span class="op">$</span><span class="va">check</span> <span class="op">==</span> <span class="st">"dispersion"</span>, <span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Model <span class="op">=</span> <span class="va">name</span>, N <span class="op">=</span> <span class="va">fit_stats</span><span class="op">$</span><span class="va">nobs</span>, DF <span class="op">=</span> <span class="va">fit_stats</span><span class="op">$</span><span class="va">df</span>,</span>
+<span>    AIC <span class="op">=</span> <span class="va">fit_stats</span><span class="op">$</span><span class="va">AIC</span>, Dispersion_ratio <span class="op">=</span> <span class="va">dispersion</span><span class="op">$</span><span class="va">statistic</span>,</span>
+<span>    Monte_Carlo_p <span class="op">=</span> <span class="va">dispersion</span><span class="op">$</span><span class="va">p_value</span>, Dispersion_status <span class="op">=</span> <span class="va">dispersion</span><span class="op">$</span><span class="va">status</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">overall_comparison</span>, digits <span class="op">=</span> <span class="fl">4</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="21%">
+<col width="5%">
+<col width="3%">
+<col width="10%">
+<col width="20%">
+<col width="16%">
+<col width="21%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Model</th>
+<th align="right">N</th>
+<th align="right">DF</th>
+<th align="right">AIC</th>
+<th align="right">Dispersion_ratio</th>
+<th align="right">Monte_Carlo_p</th>
+<th align="left">Dispersion_status</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Poisson</td>
+<td align="right">5049</td>
+<td align="right">25</td>
+<td align="right">19383.90</td>
+<td align="right">2.2879</td>
+<td align="right">0.00</td>
+<td align="left">review</td>
+</tr>
+<tr class="even">
+<td align="left">Negative_binomial</td>
+<td align="right">5049</td>
+<td align="right">26</td>
+<td align="right">17755.57</td>
+<td align="right">1.1686</td>
+<td align="right">0.44</td>
+<td align="left">no_flag</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">term_comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">reports</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">name</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">term_stats</span> <span class="op">&lt;-</span> <span class="va">reports</span><span class="op">[[</span><span class="va">name</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">term_checks</span></span>
+<span>  <span class="va">term_stats</span> <span class="op">&lt;-</span> <span class="va">term_stats</span><span class="op">[</span><span class="va">term_stats</span><span class="op">$</span><span class="va">check</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group_location"</span>, <span class="st">"rank_association"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Model <span class="op">=</span> <span class="va">name</span>, Term <span class="op">=</span> <span class="va">term_stats</span><span class="op">$</span><span class="va">term</span>,</span>
+<span>    Statistic <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">term_stats</span><span class="op">$</span><span class="va">check</span> <span class="op">==</span> <span class="st">"rank_association"</span>, <span class="st">"Spearman rho"</span>, <span class="st">"Kruskal-Wallis H"</span><span class="op">)</span>,</span>
+<span>    Value <span class="op">=</span> <span class="va">term_stats</span><span class="op">$</span><span class="va">statistic</span>, Holm_p <span class="op">=</span> <span class="va">term_stats</span><span class="op">$</span><span class="va">p_adjusted</span>,</span>
+<span>    Status <span class="op">=</span> <span class="va">term_stats</span><span class="op">$</span><span class="va">status</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">term_comparison</span>, digits <span class="op">=</span> <span class="fl">4</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="23%">
+<col width="22%">
+<col width="22%">
+<col width="11%">
+<col width="9%">
+<col width="10%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Model</th>
+<th align="left">Term</th>
+<th align="left">Statistic</th>
+<th align="right">Value</th>
+<th align="right">Holm_p</th>
+<th align="left">Status</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Poisson</td>
+<td align="left">year</td>
+<td align="left">Kruskal-Wallis H</td>
+<td align="right">124.0638</td>
+<td align="right">0.0000</td>
+<td align="left">review</td>
+</tr>
+<tr class="even">
+<td align="left">Poisson</td>
+<td align="left">poly(depth, 3)</td>
+<td align="left">Spearman rho</td>
+<td align="right">0.0275</td>
+<td align="right">0.0503</td>
+<td align="left">no_flag</td>
+</tr>
+<tr class="odd">
+<td align="left">Poisson</td>
+<td align="left">poly(soak, 3)</td>
+<td align="left">Spearman rho</td>
+<td align="right">0.0467</td>
+<td align="right">0.0018</td>
+<td align="left">review</td>
+</tr>
+<tr class="even">
+<td align="left">Poisson</td>
+<td align="left">(1 | month)</td>
+<td align="left">Kruskal-Wallis H</td>
+<td align="right">486.2067</td>
+<td align="right">0.0000</td>
+<td align="left">review</td>
+</tr>
+<tr class="odd">
+<td align="left">Negative_binomial</td>
+<td align="left">year</td>
+<td align="left">Kruskal-Wallis H</td>
+<td align="right">99.5690</td>
+<td align="right">0.0000</td>
+<td align="left">review</td>
+</tr>
+<tr class="even">
+<td align="left">Negative_binomial</td>
+<td align="left">poly(depth, 3)</td>
+<td align="left">Spearman rho</td>
+<td align="right">0.0159</td>
+<td align="right">0.2577</td>
+<td align="left">no_flag</td>
+</tr>
+<tr class="odd">
+<td align="left">Negative_binomial</td>
+<td align="left">poly(soak, 3)</td>
+<td align="left">Spearman rho</td>
+<td align="right">0.0583</td>
+<td align="right">0.0001</td>
+<td align="left">review</td>
+</tr>
+<tr class="even">
+<td align="left">Negative_binomial</td>
+<td align="left">(1 | month)</td>
+<td align="left">Kruskal-Wallis H</td>
+<td align="right">434.6092</td>
+<td align="right">0.0000</td>
+<td align="left">review</td>
+</tr>
+</tbody>
+</table>
+<p>The native DHARMa dispersion statistic compares observed
+response-residual variance with its simulated reference. Values above
+one indicate more variation than expected under that simulation target.
+In this run Poisson’s ratio is approximately <strong>2.29</strong>, with
+none of the 250 simulated residual variances as large as the observed
+one. The reported <code>p = 0</code> means <strong>below the resolution
+of 250 simulations</strong>, not an exact zero probability. The
+negative-binomial ratio is approximately <strong>1.19</strong>, with
+<code>p = 0.368</code>: this particular dispersion screen does not flag
+it.</p>
+<p>That is strong exploratory evidence against the Poisson variance
+assumption in this example, not proof that the negative-binomial model
+is perfect. Its uniformity and some term screens still flag, and the
+small soak-time rho illustrates why effect size matters alongside a
+p-value with 5,049 records. Monthly rank differences under
+<code>new_effects</code> conditioning are not a test that the fitted
+monthly variance is zero or that months should be removed.</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">poisson_report</span><span class="op">$</span><span class="va">residuals</span>, type <span class="op">=</span> <span class="st">"qq"</span>, annotations <span class="op">=</span> <span class="st">"tests"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Poisson: Q-Q check"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_report</span><span class="op">$</span><span class="va">residuals</span>, type <span class="op">=</span> <span class="st">"qq"</span>, annotations <span class="op">=</span> <span class="st">"tests"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Negative binomial: Q-Q check"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="residual-diagnostics_files/figure-html/residual-model-report-family-qq-1.png" class="r-plt" alt="Paired Q-Q checks contrast Poisson and negative-binomial models without changing their mean structure." width="1056"><p class="caption">
+Matched glmmTMB Poisson (left) and negative-binomial (right) Q-Q checks
+use the same data, mean formula, monthly random intercept, simulation
+count, seed, and new-effect conditioning. The plotted normal scores
+derive from uniform-scale DHARMa PIT values. The stored KS tests are
+exploratory; a better distributional pattern does not constitute an
+overall model pass.
+</p>
+</div>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">poisson_report</span><span class="op">$</span><span class="va">residuals</span>, type <span class="op">=</span> <span class="st">"distribution"</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span>,</span>
+<span>  annotations <span class="op">=</span> <span class="st">"tests"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Poisson: response check"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_report</span><span class="op">$</span><span class="va">residuals</span>, type <span class="op">=</span> <span class="st">"distribution"</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span>,</span>
+<span>    annotations <span class="op">=</span> <span class="st">"tests"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Negative binomial: response check"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="residual-diagnostics_files/figure-html/residual-model-report-family-distribution-1.png" class="r-plt" alt="Poisson and negative-binomial response checks show their different dispersion ratios and matching predictive distributions." width="1056"><p class="caption">
+Matched Poisson (left) and negative-binomial (right)
+response-distribution checks, with their stored native DHARMa dispersion
+ratios. The purple curve is observed and the blue curve is the simulated
+median. Poisson’s ratio is about 2.29 and its finite Monte Carlo p-value
+is reported as zero from 250 simulations; the negative-binomial ratio is
+about 1.19 with p = 0.368. The grey predictive bands and response ECDFs
+are not themselves dispersion-test statistics, and these are not
+calibrated model acceptance tests.
+</p>
+</div>
 <p>The default <code>residual_method = "simulation_pit"</code> remains
 unchanged. Both engines use the same simulation targets, but their
 finite-simulation quantile rules differ. DHARMa’s
@@ -1353,6 +2060,7 @@ tail-sensitive work. Plot captions and metadata record the limits.
 <code>"pit_ecdf_diff"</code> retain the exact uniform values, including
 endpoints. As before, their optional bayesplot reference assumes
 independent uniform values, not a calibrated fitted-data test.</p>
+</div>
 <div class="section level3">
 <h3 id="retain-the-native-object-only-when-needed">Retain the native object only when needed<a class="anchor" aria-label="anchor" href="#retain-the-native-object-only-when-needed"></a>
 </h3>
@@ -1364,7 +2072,7 @@ and requests of at least 100 MiB warn; this is not a peak-memory bound.
 By default, we discard the matrix and DHARMa object, keeping only the
 compact influ2 result. Retain the original DHARMa object explicitly to
 use its tools:</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dharma_retained</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">20260907</span>,</span>
 <span>  residual_method <span class="op">=</span> <span class="st">"dharma"</span>, conditioning <span class="op">=</span> <span class="st">"new_effects"</span>,</span>
@@ -1410,7 +2118,7 @@ explicit ordering, not convert DHARMa values into OSA residuals.</p>
 variation while holding the mean formula fixed, using DHARMa’s own
 simulation entry point. Unlike the integrated example, these are
 fixed-effect models.</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dharma_poisson</span> <span class="op">&lt;-</span> <span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/simulateResiduals.html" class="external-link">simulateResiduals</a></span><span class="op">(</span></span>
 <span>  fittedModel <span class="op">=</span> <span class="va">lobster_poisson</span>, n <span class="op">=</span> <span class="fl">250</span>, refit <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">20260907</span></span>
 <span><span class="op">)</span></span>
@@ -1424,7 +2132,7 @@ example uses 250 simulations. For substantive work, increase that number
 and check stability. Simulation storage still scales with observations
 times simulations, independently of influ2’s compact
 uncertainty-retention settings.</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/plotQQunif.html" class="external-link">plotQQunif</a></span><span class="op">(</span></span>
 <span>  <span class="va">dharma_poisson</span>, testUniformity <span class="op">=</span> <span class="cn">FALSE</span>, testOutliers <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -1442,14 +2150,14 @@ accommodate the simulated overdispersion. Formal tests are suppressed
 here so interpretation starts with the diagnostic pattern.
 </p>
 </div>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>DHARMa residuals are approximately <strong>uniform on zero to
 one</strong> under an adequate simulation model, not normally
 distributed. Do not feed them into a normal Q-Q plot without a
 deliberate transformation. Distributional agreement does not rule out
 remaining covariate patterns:</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/plotResiduals.html" class="external-link">plotResiduals</a></span><span class="op">(</span></span>
 <span>  <span class="va">dharma_poisson</span>, form <span class="op">=</span> <span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">depth</span>, quantreg <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -1467,14 +2175,14 @@ lobster models. The thin black dashed line marks the uniform median of
 rank-scaled. These are not independent validation tests.
 </p>
 </div>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The simulated responses can also check quantities of direct fisheries
 interest. Compare the observed proportion of empty pots and the upper
 catch quantile with the same quantities calculated from each simulated
 dataset. These are predictive checks at fitted parameters, not posterior
 predictive checks or confidence intervals for an index.</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">statistics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Empty-pot proportion"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  <span class="st">"95th catch percentile"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.95</span><span class="op">)</span><span class="op">)</span></span>
@@ -1623,7 +2331,7 @@ residual reference</a> and <a href="https://sdmtmb.github.io/sdmTMB/articles/res
 residual examples</a>.</p>
 <p>For a single-response model such as <code>pcod_model</code> in <a href="spatial-spatiotemporal.html">Spatial and spatiotemporal
 diagnostics</a>, influ2’s unified Q-Q workflow is:</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcod_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
 <span><span class="op">)</span></span>
@@ -1641,7 +2349,7 @@ These remain exploratory fitted-model diagnostics.</p>
 <p>sdmTMB also has a dedicated DHARMa bridge. The following recipe
 reuses an already fitted model; it is not evaluated again in this
 article.</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">41</span><span class="op">)</span></span>
 <span><span class="va">pcod_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, type <span class="op">=</span> <span class="st">"mle-mvn"</span><span class="op">)</span></span>
 <span><span class="va">pcod_dharma</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/dharma_residuals.html" class="external-link">dharma_residuals</a></span><span class="op">(</span></span>
@@ -1664,7 +2372,7 @@ target.</p>
 simulated normal-score ranks. Fitted-field conditioning remains the
 default, with one shared conditional latent draw now available
 explicitly:</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
 <span><span class="op">)</span></span>
@@ -1754,7 +2462,7 @@ values, and default four panels are unchanged. This fixes the display,
 <strong>not fitted-model calibration</strong>. The original study and
 its pre-correction results remain frozen and available for
 comparison.</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span>,</span>
@@ -1801,7 +2509,7 @@ order. The unchanged default is
 chooses response calibration or a response ECDF using the original
 response metadata. For example, retain the response ECDF and replace the
 year panel with a PIT ECDF difference:</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, panels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"pit_ecdf_diff"</span>, <span class="st">"distribution"</span><span class="op">)</span>,</span>
 <span>  response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1821,7 +2529,7 @@ the needed summaries were calculated. There must be exactly four names;
 their order and repetition are allowed. Missing summaries produce an
 informative error rather than silently substituting a different
 diagnostic. For an optional PIT plot in the fourth position, use:</p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, panels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"year"</span>, <span class="st">"pit_ecdf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>That last layout omits the complementary response check, so inspect
 it separately with <code>plot(nb_checks, type = "distribution")</code>
@@ -1852,7 +2560,7 @@ start of this article. The first call below generates 100 whole-response
 replicates using glmmTMB itself. It simulates observation variation and
 redraws the monthly random effects at fitted parameters. The constructor
 then only summarises that existing matrix:</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20260912</span><span class="op">)</span></span>
 <span><span class="va">response_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fitted_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span><span class="op">)</span><span class="op">)</span></span>
@@ -1874,7 +2582,7 @@ then only summarises that existing matrix:</p>
 <span><span class="co">#&gt; Time: year [ explicit external column ]</span></span>
 <span><span class="co">#&gt; Fitted parameters; monthly random effects resimulated</span></span>
 <span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span></code></pre></div>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-external-overview-1.png" class="r-plt" alt="Four-panel residual overview using externally supplied glmmTMB lobster simulations." width="1056"><p class="caption">
@@ -1893,7 +2601,7 @@ mixed-model tests.
 <p>The returned object also works with the standalone Q-Q/PIT views and
 the existing residual helpers. The grouping columns must be retained
 during calculation, as above:</p>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">external_checks</span><span class="op">)</span></span>
@@ -1929,7 +2637,7 @@ column of <strong>original fitted success probabilities</strong>, not
 the average of simulated zero/ one responses. Record their conditioning
 separately from the response simulations. For example, given already
 aligned encounter data and simulations:</p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">encounter_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_influ_residuals.html">as_influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">simulated_presence</span>, <span class="va">matched_data</span>,</span>
 <span>  response <span class="op">=</span> <span class="st">"present"</span>, year <span class="op">=</span> <span class="st">"year"</span>, response_kind <span class="op">=</span> <span class="st">"bernoulli"</span>,</span>

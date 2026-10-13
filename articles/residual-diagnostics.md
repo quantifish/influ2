@@ -1261,7 +1261,8 @@ plotting framework:
 
 dharma_checks <- influ_residuals(
   lobster_nb_mixed, nsim = 250, seed = 20260907,
-  residual_method = "dharma", conditioning = "new_effects"
+  residual_method = "dharma", conditioning = "new_effects",
+  residual_tests = "standard"
 )
 dharma_checks
 #> DHARMa residual diagnostics (glmmTMB)
@@ -1304,6 +1305,307 @@ at labelled finite limits that preserve residual ordering. Panel D
 remains a response-distribution check, not a DHARMa residual test. The
 reference bands are exploratory, not calibrated fitted-model acceptance
 criteria.
+
+### An overall report, followed by each model term
+
+[`check_cpue()`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
+assembles an **overall model report**, then works through every recorded
+model term. We reuse the already calculated residuals, so this call does
+not simulate responses, refit the model, or repeat DHARMa tests:
+
+``` r
+
+lobster_report <- check_cpue(
+  lobster_nb_mixed, data = lobsters_per_pot, residuals = dharma_checks
+)
+report_tables <- summary(lobster_report)
+knitr::kable(report_tables$model_statistics[c(
+  "backend", "nobs", "df", "logLik", "AIC", "BIC", "deviance"
+)], digits = 3)
+```
+
+| backend | nobs |  df |    logLik |      AIC |      BIC | deviance |
+|:--------|-----:|----:|----------:|---------:|---------:|---------:|
+| glmmTMB | 5049 |  26 | -8851.785 | 17755.57 | 17925.27 | 5460.928 |
+
+``` r
+
+knitr::kable(report_tables$overall[c(
+  "check", "status", "statistic", "p_value", "p_adjusted"
+)], digits = 4)
+```
+
+| check                     | status       | statistic | p_value | p_adjusted |
+|:--------------------------|:-------------|----------:|--------:|-----------:|
+| convergence               | no_flag      |        NA |      NA |         NA |
+| positive_definite_hessian | no_flag      |        NA |      NA |         NA |
+| finite_coefficients       | no_flag      |    0.0000 |      NA |         NA |
+| finite_uncertainty        | no_flag      |    0.0000 |      NA |         NA |
+| gradient                  | not_assessed |        NA |      NA |         NA |
+| variance_boundary         | not_assessed |        NA |      NA |         NA |
+| uniformity                | review       |    0.0456 |    0.00 |         NA |
+| dispersion                | no_flag      |    1.1686 |    0.44 |         NA |
+
+``` r
+
+knitr::kable(report_tables$terms[c(
+  "term", "component", "check", "status", "statistic", "df", "p_value", "p_adjusted"
+)], digits = 4)
+```
+
+|  | term | component | check | status | statistic | df | p_value | p_adjusted |
+|:---|:---|:---|:---|:---|---:|---:|---:|---:|
+| 1 | year | conditional | group_location | review | 99.5690 | 17 | 0.0000 | 0.0000 |
+| 2 | poly(depth, 3) | conditional | rank_association | no_flag | 0.0159 | NA | 0.2577 | 0.2577 |
+| 3 | poly(soak, 3) | conditional | rank_association | review | 0.0583 | NA | 0.0000 | 0.0001 |
+| 4 | (1 \| month) | conditional | group_location | review | 434.6092 | 11 | 0.0000 | 0.0000 |
+| 31 | 2000 | single | year_uniformity | no_flag | 0.0988 | NA | 0.0228 | 0.1367 |
+| 41 | 2001 | single | year_uniformity | no_flag | 0.1146 | NA | 0.0052 | 0.0670 |
+| 5 | 2002 | single | year_uniformity | no_flag | 0.0967 | NA | 0.0190 | 0.1331 |
+| 6 | 2003 | single | year_uniformity | no_flag | 0.0673 | NA | 0.1241 | 0.4059 |
+| 7 | 2004 | single | year_uniformity | no_flag | 0.0331 | NA | 0.9320 | 1.0000 |
+| 8 | 2005 | single | year_uniformity | no_flag | 0.0358 | NA | 0.9478 | 1.0000 |
+| 9 | 2006 | single | year_uniformity | no_flag | 0.0710 | NA | 0.1015 | 0.4059 |
+| 10 | 2007 | single | year_uniformity | review | 0.1069 | NA | 0.0014 | 0.0215 |
+| 11 | 2008 | single | year_uniformity | no_flag | 0.0949 | NA | 0.0085 | 0.0921 |
+| 12 | 2009 | single | year_uniformity | no_flag | 0.0837 | NA | 0.0271 | 0.1367 |
+| 13 | 2010 | single | year_uniformity | no_flag | 0.0913 | NA | 0.0105 | 0.0941 |
+| 14 | 2011 | single | year_uniformity | no_flag | 0.0993 | NA | 0.0078 | 0.0921 |
+| 15 | 2012 | single | year_uniformity | no_flag | 0.1102 | NA | 0.0077 | 0.0921 |
+| 16 | 2013 | single | year_uniformity | review | 0.1430 | NA | 0.0000 | 0.0007 |
+| 17 | 2014 | single | year_uniformity | review | 0.1222 | NA | 0.0002 | 0.0031 |
+| 18 | 2015 | single | year_uniformity | review | 0.1084 | NA | 0.0018 | 0.0254 |
+| 19 | 2016 | single | year_uniformity | review | 0.1364 | NA | 0.0000 | 0.0001 |
+| 20 | 2017 | single | year_uniformity | no_flag | 0.0906 | NA | 0.0155 | 0.1242 |
+| 21 | year | single | year_homogeneity | review | 1.7480 | 17 | 0.0288 | NA |
+
+The first table uses native model statistics: sample size, likelihood
+degrees of freedom, log-likelihood, AIC, BIC, and available deviance.
+They describe the fit; they do not alone establish that its structure is
+adequate. GLM/GAM explained deviance, GAM adjusted R-squared, and an
+already saved brms Bayesian R-squared are separately labelled when
+available. There is no universal explained-deviance statistic for every
+mixed or spatial model. We do not fit a null model or run posterior
+predictions merely to fill a missing table cell.
+
+Native checks report optimiser convergence, available
+Hessian/uncertainty evidence, rank deficiency, and backend-specific
+warnings. Missing diagnostics are not passes.
+`check_cpue(fit, simulate = FALSE)` produces this quick fitting report
+and the term inventory without residual simulation. Calling
+`check_cpue(fit)` without a residual object requests new DHARMa
+residuals and standard tests, using the backend’s recorded default
+conditioning. It can take time and temporarily allocate a response
+matrix. There is no silent engine fallback if DHARMa, a family, or a
+simulation target is unavailable: the report records an unassessed check
+and its reason. Hard numerical problems prevent automatic simulation.
+Saved TMB objectives are not secretly reinitialised.
+
+For each fitted term, the current screens report **Spearman rho** for a
+raw numeric predictor or a **Kruskal-Wallis H statistic** for
+sufficiently sampled categories, including the monthly grouping variable
+here. Their nominal p-values are Holm-adjusted across the calculated
+term screens. These are descriptive residual-association checks on
+uniform PIT ranks, **not DHARMa tests, coefficient-significance tests,
+or evidence that a random-effect variance is non-zero**. A
+`poly(depth, 3)` screen examines monotone association with raw depth,
+not each basis coefficient or every nonlinear departure. Native GAM
+smooth EDF and approximate fitted-effect statistics are a separate
+descriptive row, not a residual failure. Interactions,
+multivariate/latent processes, sparse groups, and unsupported component
+checks remain visible as `not_assessed`; the function does not replace
+them with arbitrary proxies.
+
+The standard native DHARMa tests supply the overall uniformity KS
+statistic and response-dispersion ratio, plus within-year KS checks and
+the median-centred Levene F statistic for year-to-year variation. Levene
+is **not** Kruskal-Wallis. The within-year KS tests have their own Holm
+family; no universal adjustment across all diagnostic questions is
+implied. Use `residual_tests = "full"` when calculating new residuals to
+add auxiliary quantile regressions and outlier checks. The former fits
+diagnostic qgam regressions, not the CPUE model; the latter uses
+explicit bootstrap references for integer responses. Both add
+calculation time. Simulation-test p-values have finite Monte Carlo
+precision; a reported zero is not an exact probability.
+
+``` r
+
+plot(lobster_report, response_scale = "log1p")
+```
+
+![The four-panel mixed-model overview includes native likelihood
+statistics and labelled stored residual-test
+summaries.](residual-diagnostics_files/figure-html/residual-model-report-overview-1.png)
+
+The model-check report reuses the negative-binomial glmmTMB lobster
+residuals and adds available native model statistics and stored DHARMa
+tests. The Q-Q panel reports uniform-scale KS evidence, the year panel
+reports uniform-scale Levene and within-year KS evidence, and the
+response ECDF panel reports the separate native response-dispersion
+test, not an ECDF test. No quantile regression was requested in this
+standard report. Tests are exploratory, specific to new-effect
+conditioning, and not calibrated model acceptance rules.
+
+`plot(report, type = "term", term = ...)` reuses a retained raw
+predictor and its stored screen. The descriptive smooth is not the curve
+used to obtain the Spearman statistic, nor is that statistic a test of
+the smooth’s significance.
+
+``` r
+
+plot(lobster_report, type = "term", term = "poly(depth, 3)")
+```
+
+![Residuals against depth show the matching raw-predictor screen without
+model fitting or additional
+simulation.](residual-diagnostics_files/figure-html/residual-model-report-term-1.png)
+
+Normal-score DHARMa residuals against raw depth, with the stored
+uniform-PIT Spearman association and Holm-adjusted exploratory p-value.
+The original cubic depth term, predictive means, and residuals are
+unchanged. The blue loess is descriptive; this is not a coefficient or
+polynomial-basis significance test.
+
+The report distinguishes `issue` (numerical fitting problem), `review`
+(evidence to inspect), `no_flag` (this screen did not flag),
+`not_assessed` (no defensible result), and `not_applicable` (an
+irrelevant check or a separately described native effect statistic). It
+never declares an overall model pass. Component and conditioning targets
+remain explicit: combined response checks do not validate positive or
+encounter components separately.
+
+Andrea Havron and Cole Monnahan’s work is especially relevant here.
+[DHARMa issue 301](https://github.com/florianhartig/DHARMa/issues/301)
+credits them with identifying inflated false-positive rates when
+residual correlation persists. Their [mixed-model validation
+study](https://github.com/nmfs-ost/Havron-MixedResidualStudy) compares
+residual approaches, conditioning, and rotation using known-model
+simulations. We incorporate that lesson by recording the conditioning
+target, keeping native p-values exploratory, and reporting unavailable
+tests honestly. We do **not** claim that Holm correction removes
+dependence, or silently rotate residuals. Backend/family-specific
+false-warning and power calibration remains a separate scientific task;
+see [Residual
+validation](https://www.quantifish.co.nz/influ2/articles/residual-validation.md).
+The same caution applies to posterior predictive reuse of fitting data
+in brms.
+
+### Poisson versus negative binomial: ignoring overdispersion
+
+The most direct comparison changes the response family while keeping
+**every observation, mean-model term, monthly random effect, and
+diagnostic simulation target the same**. `lobster_poisson_mixed` and
+`lobster_nb_mixed` were fitted above; the checks do not refit either
+model. These data were simulated from a negative-binomial distribution,
+so Poisson’s conditional variance equal to its mean is too restrictive.
+
+``` r
+
+poisson_report <- check_cpue(
+  lobster_poisson_mixed, data = lobsters_per_pot,
+  nsim = 250, seed = 20260907, conditioning = "new_effects"
+)
+reports <- list(Poisson = poisson_report, Negative_binomial = lobster_report)
+
+overall_comparison <- do.call(rbind, lapply(names(reports), function(name) {
+  report <- reports[[name]]
+  fit_stats <- report$model_statistics
+  dispersion <- report$overall[report$overall$check == "dispersion", ]
+  data.frame(Model = name, N = fit_stats$nobs, DF = fit_stats$df,
+    AIC = fit_stats$AIC, Dispersion_ratio = dispersion$statistic,
+    Monte_Carlo_p = dispersion$p_value, Dispersion_status = dispersion$status)
+}))
+knitr::kable(overall_comparison, digits = 4, row.names = FALSE)
+```
+
+| Model | N | DF | AIC | Dispersion_ratio | Monte_Carlo_p | Dispersion_status |
+|:---|---:|---:|---:|---:|---:|:---|
+| Poisson | 5049 | 25 | 19383.90 | 2.2879 | 0.00 | review |
+| Negative_binomial | 5049 | 26 | 17755.57 | 1.1686 | 0.44 | no_flag |
+
+``` r
+
+
+term_comparison <- do.call(rbind, lapply(names(reports), function(name) {
+  term_stats <- reports[[name]]$term_checks
+  term_stats <- term_stats[term_stats$check %in%
+    c("group_location", "rank_association"), ]
+  data.frame(Model = name, Term = term_stats$term,
+    Statistic = ifelse(term_stats$check == "rank_association", "Spearman rho", "Kruskal-Wallis H"),
+    Value = term_stats$statistic, Holm_p = term_stats$p_adjusted,
+    Status = term_stats$status)
+}))
+knitr::kable(term_comparison, digits = 4, row.names = FALSE)
+```
+
+| Model             | Term           | Statistic        |    Value | Holm_p | Status  |
+|:------------------|:---------------|:-----------------|---------:|-------:|:--------|
+| Poisson           | year           | Kruskal-Wallis H | 124.0638 | 0.0000 | review  |
+| Poisson           | poly(depth, 3) | Spearman rho     |   0.0275 | 0.0503 | no_flag |
+| Poisson           | poly(soak, 3)  | Spearman rho     |   0.0467 | 0.0018 | review  |
+| Poisson           | (1 \| month)   | Kruskal-Wallis H | 486.2067 | 0.0000 | review  |
+| Negative_binomial | year           | Kruskal-Wallis H |  99.5690 | 0.0000 | review  |
+| Negative_binomial | poly(depth, 3) | Spearman rho     |   0.0159 | 0.2577 | no_flag |
+| Negative_binomial | poly(soak, 3)  | Spearman rho     |   0.0583 | 0.0001 | review  |
+| Negative_binomial | (1 \| month)   | Kruskal-Wallis H | 434.6092 | 0.0000 | review  |
+
+The native DHARMa dispersion statistic compares observed
+response-residual variance with its simulated reference. Values above
+one indicate more variation than expected under that simulation target.
+In this run Poisson’s ratio is approximately **2.29**, with none of the
+250 simulated residual variances as large as the observed one. The
+reported `p = 0` means **below the resolution of 250 simulations**, not
+an exact zero probability. The negative-binomial ratio is approximately
+**1.19**, with `p = 0.368`: this particular dispersion screen does not
+flag it.
+
+That is strong exploratory evidence against the Poisson variance
+assumption in this example, not proof that the negative-binomial model
+is perfect. Its uniformity and some term screens still flag, and the
+small soak-time rho illustrates why effect size matters alongside a
+p-value with 5,049 records. Monthly rank differences under `new_effects`
+conditioning are not a test that the fitted monthly variance is zero or
+that months should be removed.
+
+``` r
+
+(plot(poisson_report$residuals, type = "qq", annotations = "tests") +
+  labs(title = "Poisson: Q-Q check")) +
+  (plot(lobster_report$residuals, type = "qq", annotations = "tests") +
+    labs(title = "Negative binomial: Q-Q check"))
+```
+
+![Paired Q-Q checks contrast Poisson and negative-binomial models
+without changing their mean
+structure.](residual-diagnostics_files/figure-html/residual-model-report-family-qq-1.png)
+
+Matched glmmTMB Poisson (left) and negative-binomial (right) Q-Q checks
+use the same data, mean formula, monthly random intercept, simulation
+count, seed, and new-effect conditioning. The plotted normal scores
+derive from uniform-scale DHARMa PIT values. The stored KS tests are
+exploratory; a better distributional pattern does not constitute an
+overall model pass.
+
+``` r
+
+(plot(poisson_report$residuals, type = "distribution", response_scale = "log1p",
+  annotations = "tests") + labs(title = "Poisson: response check")) +
+  (plot(lobster_report$residuals, type = "distribution", response_scale = "log1p",
+    annotations = "tests") + labs(title = "Negative binomial: response check"))
+```
+
+![Poisson and negative-binomial response checks show their different
+dispersion ratios and matching predictive
+distributions.](residual-diagnostics_files/figure-html/residual-model-report-family-distribution-1.png)
+
+Matched Poisson (left) and negative-binomial (right)
+response-distribution checks, with their stored native DHARMa dispersion
+ratios. The purple curve is observed and the blue curve is the simulated
+median. Poisson’s ratio is about 2.29 and its finite Monte Carlo p-value
+is reported as zero from 250 simulations; the negative-binomial ratio is
+about 1.19 with p = 0.368. The grey predictive bands and response ECDFs
+are not themselves dispersion-test statistics, and these are not
+calibrated model acceptance tests.
 
 The default `residual_method = "simulation_pit"` remains unchanged. Both
 engines use the same simulation targets, but their finite-simulation

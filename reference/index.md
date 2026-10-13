@@ -92,6 +92,14 @@ comparisons. The [plot() and
 autoplot()](https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.md)
 methods here display `influ_residuals` objects.
 
+- [`check_cpue()`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
+  [`print(`*`<influ_check>`*`)`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
+  [`summary(`*`<influ_check>`*`)`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
+  [`as.data.frame(`*`<influ_check>`*`)`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
+  : Check a CPUE model, overall and term by term
+- [`plot(`*`<influ_check>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_check.md)
+  [`autoplot(`*`<influ_check>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_check.md)
+  : Plot stored CPUE model-check results
 - [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
   [`print(`*`<influ_residuals>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
   : Calculate compact simulation-based residual diagnostics

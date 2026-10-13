@@ -28,7 +28,8 @@ influ_residuals(
   residual_method = c("simulation_pit", "dharma"),
   retain_dharma = FALSE,
   dharma_max_mb = 256,
-  response_transform = "identity"
+  response_transform = "identity",
+  residual_tests = c("none", "standard", "full")
 )
 
 # S3 method for class 'influ_residuals'
@@ -40,7 +41,7 @@ print(x, ...)
 - model:
 
   A fitted GLM, `mgcv` GAM, `glmmTMB`, `brmsfit`, `sdmTMB`, or
-  single-response `tinyVAST` model. No model is fitted by this function.
+  single-response `tinyVAST` model. No CPUE model is fitted or refitted.
 
 - data:
 
@@ -160,6 +161,20 @@ print(x, ...)
   log response; default `"identity"`. Observations and native
   simulations are then back-transformed to the natural scale.
 
+- residual_tests:
+
+  Optional native DHARMa checks: `"none"` (default) leaves the existing
+  result unchanged; `"standard"` calculates uniformity, simulation-based
+  response dispersion, and supported year-level categorical checks.
+  `"full"` also calculates auxiliary quantile regressions and an outlier
+  test (bootstrap for integer responses, with extra calculation cost).
+  Requires `residual_method = "dharma"`. Tests run once while the native
+  object exists, retaining compact statistics only. They are
+  exploratory, not fitted-model-calibrated acceptance tests, and do not
+  refit the CPUE model, run MCMC, or use Pearson dispersion. Year KS
+  p-values are Holm- adjusted across supported years; the other checks
+  are not jointly adjusted.
+
 - x:
 
   An \`influ_residuals\` object.
@@ -172,7 +187,9 @@ print(x, ...)
 
 An S3 `influ_residuals` object containing observation-level ranks,
 normal scores, predictive means, year labels, Q-Q reference coordinates,
-compact ECDF summaries, and explicit calculation metadata.
+compact ECDF summaries, and explicit calculation metadata. Optional
+`tests` contains saved native diagnostic statistics and p-values, not
+simulation matrices or auxiliary diagnostic regressions.
 
 ## Details
 
@@ -246,10 +263,13 @@ display placeholders, not distances beyond the simulated range. Uniform
 PIT plots and the retained DHARMa object keep exact endpoints. Grouped
 normal-score summaries include these display placeholders; use the
 uniform values or DHARMa's own aggregation for tail-sensitive work.
-DHARMa tests are available only when its object is retained; their
-interpretation still depends on fitting, conditioning, and dependence.
-This does not implement OSA, residual rotation, or a refitted bootstrap.
-Likelihood-based
+Requested `residual_tests` are calculated before the native object is
+discarded, with compact statistics retained. Other DHARMa tools require
+`retain_dharma = TRUE`; their interpretation still depends on fitting,
+conditioning, and dependence. Native test p-values are not jointly
+adjusted across the whole report, and a non-significant result is not
+proof of adequacy. This does not implement OSA, residual rotation, or a
+refitted bootstrap. Likelihood-based
 [`implied_effects()`](https://www.quantifish.co.nz/influ2/reference/implied_effects.md)
 are unaffected by the residual engine. The ECDF grid spans observations
 and the first simulation batch; it is deliberately compact, not an exact

@@ -17,6 +17,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/news/index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/as_influ_residuals.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/check_cpue.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/cpue_index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/geo_mean.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.html</loc></url>
@@ -40,6 +41,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/reference/integrate_index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/lobsters_per_pot.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/new_influ_diag.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_check.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_steps.html</loc></url>

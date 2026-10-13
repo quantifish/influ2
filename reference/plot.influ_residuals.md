@@ -16,7 +16,8 @@ plot(
   ...,
   response_diagnostic = c("auto", "distribution", "calibration"),
   panels = NULL,
-  pit_grid_size = 100L
+  pit_grid_size = 100L,
+  annotations = c("none", "tests", "model", "all")
 )
 
 # S3 method for class 'influ_residuals'
@@ -71,6 +72,19 @@ autoplot(object, ...)
   simultaneous reference limits, between 2 and 1000 (default 100). There
   are `pit_grid_size + 1` evaluation points, including zero and one.
   Used only for PIT-ECDF panels, not for the stored response ECDF grid.
+
+- annotations:
+
+  Optional stored annotations: `"none"` (default), `"tests"`, `"model"`,
+  or `"all"`. Test statistics must have been calculated with
+  `residual_tests` in
+  [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md).
+  Model summaries are supplied by
+  [`check_cpue()`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md).
+  Plotting only formats saved results; it never fits a diagnostic
+  regression, calls DHARMa, or consumes randomness. The displayed test
+  source is the uniform PIT or response scale, not the normal-score
+  display. P-values remain exploratory and conditioning-specific.
 
 ## Value
 

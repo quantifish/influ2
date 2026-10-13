@@ -3,7 +3,7 @@
 Reduce an already generated response-simulation matrix to the same
 compact diagnostic returned by
 [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md).
-No model is fitted, and no new responses are simulated.
+No CPUE model is fitted, and no new responses are simulated.
 
 ## Usage
 
@@ -31,7 +31,8 @@ as_influ_residuals(
   residual_method = c("simulation_pit", "dharma"),
   retain_dharma = FALSE,
   dharma_max_mb = 256,
-  integer_response = NULL
+  integer_response = NULL,
+  residual_tests = c("none", "standard", "full")
 )
 ```
 
@@ -194,6 +195,20 @@ as_influ_residuals(
   distribution metadata, not inferred from realised observed values.
   DHARMa's PIT calculation randomises atoms in both discrete and mixed
   distributions.
+
+- residual_tests:
+
+  Optional native DHARMa checks: `"none"` (default) leaves the existing
+  result unchanged; `"standard"` calculates uniformity, simulation-based
+  response dispersion, and supported year-level categorical checks.
+  `"full"` also calculates auxiliary quantile regressions and an outlier
+  test (bootstrap for integer responses, with extra calculation cost).
+  Requires `residual_method = "dharma"`. Tests run once while the native
+  object exists, retaining compact statistics only. They are
+  exploratory, not fitted-model-calibrated acceptance tests, and do not
+  refit the CPUE model, run MCMC, or use Pearson dispersion. Year KS
+  p-values are Holm- adjusted across supported years; the other checks
+  are not jointly adjusted.
 
 ## Value
 
