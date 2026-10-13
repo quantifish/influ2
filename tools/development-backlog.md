@@ -1,6 +1,27 @@
 # Development ideas and decisions
 
-Last reviewed: 12 October 2026.
+Last reviewed: 13 October 2026.
+
+## Model-check reports and optional DHARMa statistics: 13 October 2026
+
+The maintainer approved implementation of overall model statistics followed by
+term-level checks, and opted not to contact Cole today. `check_cpue()` now has
+native fitting/statistics extraction across seven backends, an explicit term
+inventory, and exploratory raw-predictor PIT screens with separate native GAM
+smooth summaries. Optional genuine DHARMa tests are retained compactly and
+displayed without recomputation. This is not a calibrated automated model-pass
+system, term selector, refitting routine, or new residual engine default.
+
+The correlation/type-I-error lesson in
+[DHARMa issue 301](https://github.com/florianhartig/DHARMa/issues/301) and the
+[Havron study](https://github.com/nmfs-ost/Havron-MixedResidualStudy) is integrated
+into report targets, missing-check statuses, and interpretation safeguards.
+Independent null/alternative validation of nominal false-warning rates and
+power by backend, family, conditioning, and dependence remains open. Rotation,
+OSA, generic spatial/temporal testing without a defined sampling/ordering
+contract, GAM basis-dimension/concurvity checks, and complete Bayesian sampler
+energy/treedepth checks are not silently added. No email or CRAN submission is
+part of this increment. Verification is recorded in the release review.
 
 This is the ongoing consideration list for Nicholas Ducharme-Barth's residual
 proposal and ideas identified in generalised_influ / Ginflu. Inclusion records

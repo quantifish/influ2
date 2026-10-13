@@ -13,7 +13,8 @@
   ...,
   response_diagnostic = c("auto", "distribution", "calibration"),
   panels = NULL,
-  pit_grid_size = 100L
+  pit_grid_size = 100L,
+  annotations = c("none", "tests", "model", "all")
 )
 
 \method{autoplot}{influ_residuals}(object, ...)
@@ -51,6 +52,14 @@ exist in \code{x}; selecting a panel never recalculates residuals.}
 and its simultaneous reference limits, between 2 and 1000 (default 100).
 There are \code{pit_grid_size + 1} evaluation points, including zero and one.
 Used only for PIT-ECDF panels, not for the stored response ECDF grid.}
+
+\item{annotations}{Optional stored annotations: \code{"none"} (default),
+\code{"tests"}, \code{"model"}, or \code{"all"}. Test statistics must have been
+calculated with \code{residual_tests} in \code{\link[=influ_residuals]{influ_residuals()}}. Model summaries
+are supplied by \code{\link[=check_cpue]{check_cpue()}}. Plotting only formats saved results; it
+never fits a diagnostic regression, calls DHARMa, or consumes randomness.
+The displayed test source is the uniform PIT or response scale, not the
+normal-score display. P-values remain exploratory and conditioning-specific.}
 }
 \value{
 A ggplot or a four-panel patchwork object, which can be customised.

@@ -5,6 +5,42 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Overall/term model checking and DHARMa evidence: 13 October 2026
+
+The approved increment adds `check_cpue()` reports, overall native statistics
+and numerical checks, an inventory/screen for every model term, compact optional
+native DHARMa tests, and stored plot annotations. Native API/state tests cover
+all seven backends. Ordinary weighted/cbind/factor binomial encoding, transformed
+responses, exact original-row subsets, joint components, same-fit provenance,
+missing dependencies, and reloaded TMB objective guards are covered. No original
+model refits, MCMC, automatic R-squared/LOO/null-model fitting, OSA, or rotation
+are part of this increment. The original residual calculation and plot defaults
+remain frozen. These reports are exploratory evidence, not calibrated universal
+model-pass or term-removal rules. The Havron/Monnahan correlation warning is
+documented; empirical calibration and Nicholas's scientific review remain open.
+
+The local full source suite passes 9,370 assertions, with zero failures,
+warnings, or skips. A manual-enabled source archive check also passes with
+zero errors, warnings, and notes: every vignette rebuilds, PDF/HTML manuals
+pass, and 9,081 archive assertions pass. That archive precedes the added
+277-assertion seven-backend integration file, the 12-assertion deliberately
+overdispersed comparison regression, and subsequent help/paired-example-only
+updates; it is not labelled a frozen final submission archive. The final
+full-source suite and current article render separately verify those additions.
+
+The worked glmmTMB example compares matched Poisson and NB2 fits to all 5,049
+lobster records. Their stored DHARMa response-dispersion ratios are 2.2879
+(Poisson, Monte Carlo p = 0 from 250 simulations) and 1.1888 (NB2, p = 0.368).
+Zero is a finite simulation estimate, not an exact probability. NB2 still has
+uniformity/term flags, so no overall-pass claim is made. Both native overall
+tables and term screens are shown, alongside paired Q-Q and response checks.
+The updated figures and new manual topics have been visually inspected.
+Ten rendered articles and 110 plotted images pass caption/lightbox/keyboard
+checks. An isolated minimal installation reproduces all 19 saved results,
+including the new native/DHARMa report tables and plots without their optional
+backends; all 26 existing missing-package guards pass. No CRAN or winbuilder
+submission, email to Cole, or unrelated issue closure was made.
+
 ## Vignette runtime, CDI ordering, and full manuals: 12 October 2026
 
 Feature source `9ed780ddf567b359781072703e47346ab18d7fc7` incorporates the

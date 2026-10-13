@@ -101,6 +101,8 @@ reference:
     comparisons. The [plot() and autoplot()](plot.influ_residuals.html) methods here display
     `influ_residuals` objects.
   contents:
+  - check_cpue
+  - plot.influ_check
   - influ_residuals
   - as_influ_residuals
   - plot.influ_residuals

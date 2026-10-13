@@ -27,7 +27,8 @@ as_influ_residuals(
   residual_method = c("simulation_pit", "dharma"),
   retain_dharma = FALSE,
   dharma_max_mb = 256,
-  integer_response = NULL
+  integer_response = NULL,
+  residual_tests = c("none", "standard", "full")
 )
 }
 \arguments{
@@ -136,6 +137,17 @@ the supplied response distribution is integer-valued. Required for general
 response kinds; defaults to \code{TRUE} for Bernoulli/grouped binomial. This is
 distribution metadata, not inferred from realised observed values. DHARMa's
 PIT calculation randomises atoms in both discrete and mixed distributions.}
+
+\item{residual_tests}{Optional native DHARMa checks: \code{"none"} (default)
+leaves the existing result unchanged; \code{"standard"} calculates uniformity,
+simulation-based response dispersion, and supported year-level categorical
+checks. \code{"full"} also calculates auxiliary quantile regressions and an
+outlier test (bootstrap for integer responses, with extra calculation cost).
+Requires \code{residual_method = "dharma"}. Tests run once while the native
+object exists, retaining compact statistics only. They are exploratory,
+not fitted-model-calibrated acceptance tests, and do not refit the CPUE
+model, run MCMC, or use Pearson dispersion. Year KS p-values are Holm-
+adjusted across supported years; the other checks are not jointly adjusted.}
 }
 \value{
 An \code{influ_residuals} object, using the same plotting and grouped
@@ -144,7 +156,7 @@ input, explicit alignment, response component, and declared conditioning.
 }
 \description{
 Reduce an already generated response-simulation matrix to the same compact
-diagnostic returned by \code{\link[=influ_residuals]{influ_residuals()}}. No model is fitted, and no new
+diagnostic returned by \code{\link[=influ_residuals]{influ_residuals()}}. No CPUE model is fitted, and no new
 responses are simulated.
 }
 \details{

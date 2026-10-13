@@ -27,6 +27,13 @@
 #'   and its simultaneous reference limits, between 2 and 1000 (default 100).
 #'   There are `pit_grid_size + 1` evaluation points, including zero and one.
 #'   Used only for PIT-ECDF panels, not for the stored response ECDF grid.
+#' @param annotations Optional stored annotations: `"none"` (default),
+#'   `"tests"`, `"model"`, or `"all"`. Test statistics must have been
+#'   calculated with `residual_tests` in [influ_residuals()]. Model summaries
+#'   are supplied by [check_cpue()]. Plotting only formats saved results; it
+#'   never fits a diagnostic regression, calls DHARMa, or consumes randomness.
+#'   The displayed test source is the uniform PIT or response scale, not the
+#'   normal-score display. P-values remain exploratory and conditioning-specific.
 #' @param ... Reserved for future methods; currently unused.
 #'
 #' @details In the default overview, panels A-C use simulation-based randomised PIT (probability integral
@@ -116,12 +123,46 @@ plot.influ_residuals <- function(x,
     type = c("overview", "qq", "fitted", "year", "distribution", "calibration", "calibration_groups", "pit_ecdf", "pit_ecdf_diff"),
     response_scale = c("identity", "log1p"), ...,
     response_diagnostic = c("auto", "distribution", "calibration"),
-    panels = NULL, pit_grid_size = 100L) {
+    panels = NULL, pit_grid_size = 100L,
+    annotations = c("none", "tests", "model", "all")) {
   type <- match.arg(type)
   response_scale <- match.arg(response_scale)
   response_diagnostic <- match.arg(response_diagnostic)
+  annotations <- match.arg(annotations)
   if (type != "overview" && !is.null(panels)) {
     stop("`panels` is only used with `type = 'overview'`.", call. = FALSE)
+  }
+  if (annotations != "none") {
+    if (type == "overview") {
+      selected <- .resid_select_panels(x, panels, response_diagnostic)
+      plots <- lapply(selected, function(p) {
+        panel <- plot(x, type = p, response_scale = response_scale,
+          pit_grid_size = pit_grid_size,
+          annotations = if (annotations %in% c("tests", "all")) "tests" else "none")
+        if (identical(x$metadata$residual_method, "dharma") && p %in% c("qq", "fitted", "year")) {
+          panel <- panel + ggplot2::labs(caption = NULL)
+        }
+        panel
+      })
+      model <- if (annotations %in% c("model", "all")) {
+        if (is.null(x$model_statistics)) "Model statistics not stored; calculate check_cpue() with a fitted model." else .cpue_model_annotation(x$model_statistics)
+      } else NULL
+      caption <- .resid_panel_caption(x, selected)
+      if (annotations %in% c("tests", "all")) caption <- paste(caption,
+        "Stored DHARMa p-values are exploratory and conditioning-dependent, not calibrated model acceptance tests.", sep = "\n")
+      # Only the optional annotated overview wraps captions. Preserve each
+      # existing line and leave the frozen default overview exactly unchanged.
+      lines <- strsplit(caption, "\n", fixed = TRUE)[[1L]]
+      caption <- paste(unlist(lapply(lines, function(line) {
+        if (nzchar(line)) strwrap(line, width = 110L) else ""
+      })), collapse = "\n")
+      return(patchwork::wrap_plots(plots, ncol = 2) +
+        patchwork::plot_annotation(subtitle = model, caption = caption, tag_levels = "A"))
+    }
+    p <- plot(x, type = type, response_scale = response_scale,
+      response_diagnostic = response_diagnostic, pit_grid_size = pit_grid_size,
+      annotations = "none")
+    return(.resid_plot_annotations(p, x, type, annotations))
   }
   if (type == "overview") {
     selected <- .resid_select_panels(x, panels, response_diagnostic)

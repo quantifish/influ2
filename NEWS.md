@@ -1,5 +1,21 @@
 # influ2 1.1.0
 
+* Added `check_cpue()` with compact overall native model statistics, numerical
+  fitting evidence, and an explicit inventory/check for every model term across
+  seven backends. Raw-predictor PIT association screens are exploratory, with
+  Holm adjustment, not coefficient-significance or term-removal rules. Missing
+  latent, interaction, component, and sparse-data checks are not passes. Saved
+  native TMB objectives are not reinitialised implicitly. Printing and plotting
+  use retained results, without model refits, MCMC, or new simulations.
+
+* Optional `residual_tests = "standard"` or `"full"` calculates genuine native
+  DHARMa statistics before discarding its response matrix. `annotations` adds
+  stored statistics to residual plots, with sources, conditioning, and finite
+  Monte Carlo precision explicit. Existing residual and plot defaults remain
+  unchanged. A worked mixed-lobster report documents overall/term interpretation
+  and the correlated-residual false-positive warning highlighted by Andrea
+  Havron and Cole Monnahan; calibrated acceptance tests and OSA remain separate.
+
 * Added optional lme4 adapters for lmer, glmer, and glmer.nb fits across
   influence/CDI diagnostics, PIT/DHARMa residuals, likelihood-implied effects,
   CPUE indices, area integration, annual covariance, comparisons, and step plots.

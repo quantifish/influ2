@@ -24,7 +24,12 @@ saved_plot_signature <- function(p) {
 }
 
 saved_result_view <- function(x) {
-  if (inherits(x, "influ_diag")) {
+  if (inherits(x, "influ_check")) {
+    tables <- list(statistics = x$model_statistics, checks = as.data.frame(x),
+      summary = summary(x), inventory = x$term_inventory)
+    plots <- list(overview = plot(x), status = plot(x, type = "status"),
+      term = plot(x, type = "term", term = "area"))
+  } else if (inherits(x, "influ_diag")) {
     tables <- list(effects = influ2::influ_effects(x),
       composition = influ2::influ_composition(x), indices = influ2::influ_indices(x),
       metrics = influ2::influ_metrics(x), summary = summary(x))

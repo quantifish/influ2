@@ -1,7 +1,7 @@
 #' Diagnose externally simulated responses
 #'
 #' Reduce an already generated response-simulation matrix to the same compact
-#' diagnostic returned by [influ_residuals()]. No model is fitted, and no new
+#' diagnostic returned by [influ_residuals()]. No CPUE model is fitted, and no new
 #' responses are simulated.
 #'
 #' @param simulations Numeric matrix with observations in rows and complete
@@ -126,8 +126,10 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
     seed = 1L, grid_size = 201L, level = 0.95, groups = NULL,
     calibration_bins = 10L, calibration_min_n = 20L, calibration_groups = NULL,
     residual_method = c("simulation_pit", "dharma"), retain_dharma = FALSE,
-    dharma_max_mb = 256, integer_response = NULL) {
+    dharma_max_mb = 256, integer_response = NULL,
+    residual_tests = c("none", "standard", "full")) {
   residual_method <- .resid_method_options(residual_method, retain_dharma, dharma_max_mb)
+  residual_tests <- .resid_test_options(residual_tests, residual_method)
   if (!is.matrix(simulations) || !is.numeric(simulations)) {
     stop("`simulations` must be a numeric observation-by-simulation matrix.", call. = FALSE)
   }
@@ -233,7 +235,7 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
   set.seed(seed)
   result <- .resid_summarise_method(adapter, time, data[groups %||% character()], nsim,
     batch_size, seed, grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
-    residual_method, retain_dharma, dharma_max_mb, integer_response)
+    residual_method, retain_dharma, dharma_max_mb, integer_response, residual_tests)
   result$metadata$input <- "external_response_matrix"
   result$metadata$observation_id <- observation_id %||% "row.names"
   result$metadata$alignment <- "Exact observation ID and row-order match; no automatic reordering"

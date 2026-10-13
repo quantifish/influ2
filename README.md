@@ -85,7 +85,7 @@ integrating CPUE does not automatically turn it into absolute biomass.
 ## Residual diagnostics
 
 Residual overviews also adapt to the response: Bernoulli encounter models use
-fixed-bin probability calibration, while positive and combined catch responses
+fixed-bin probability calibration, while positive and combined responses
 retain the observed-versus-simulated CDF. No model is refitted by these calls.
 
 ```r
@@ -107,6 +107,25 @@ matrix while calculating; it is discarded by default. Use `retain_dharma = TRUE`
 only when its original object is needed for DHARMa's own tools. See the
 [DHARMa example](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#simulation-based-checks-with-dharma)
 for memory limits, endpoint handling, and interpretation.
+
+For native fitting evidence and a term-by-term residual report:
+
+```r
+report <- check_cpue(model, data = original_data)
+report
+summary(report)$terms
+plot(report)  # Stored model statistics and exploratory DHARMa tests.
+
+# Quick fitting report; no response simulation.
+check_cpue(model, simulate = FALSE)
+```
+
+The checker supports the same seven backends. Unavailable tests are explicitly
+unassessed, and there is no overall model-pass flag. Numeric and categorical
+term screens are exploratory raw-predictor checks, not coefficient significance
+or automatic term selection. Supplying `residuals = checks` reuses a native
+residual result from the same fitted model without further simulation.
+
 
 See [Residual diagnostics](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#encounter-calibration)
 for predictive-envelope interpretation and grouped checks that can reveal

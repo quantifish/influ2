@@ -5,7 +5,7 @@
 #' residuals by year, and a response-adaptive calibration or distribution panel.
 #'
 #' @param model A fitted GLM, `mgcv` GAM, `glmmTMB`, `brmsfit`, `sdmTMB`, or
-#'   single-response `tinyVAST` model. No model is fitted by this function.
+#'   single-response `tinyVAST` model. No CPUE model is fitted or refitted.
 #' @param data Original model data, retaining original row names. Usually not
 #'   needed; supply it if a transformed time term hides the raw year column.
 #' @param year Name of the time column. By default, recognise year/fishing-year
@@ -63,6 +63,16 @@
 #'   100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
 #'   native simulators allocate additional copies. `batch_size` cannot remove
 #'   this full-matrix cost. Increase the limit explicitly only if appropriate.
+#' @param residual_tests Optional native DHARMa checks: `"none"` (default)
+#'   leaves the existing result unchanged; `"standard"` calculates uniformity,
+#'   simulation-based response dispersion, and supported year-level categorical
+#'   checks. `"full"` also calculates auxiliary quantile regressions and an
+#'   outlier test (bootstrap for integer responses, with extra calculation cost).
+#'   Requires `residual_method = "dharma"`. Tests run once while the native
+#'   object exists, retaining compact statistics only. They are exploratory,
+#'   not fitted-model-calibrated acceptance tests, and do not refit the CPUE
+#'   model, run MCMC, or use Pearson dispersion. Year KS p-values are Holm-
+#'   adjusted across supported years; the other checks are not jointly adjusted.
 #' @param response_transform For lme4 only, explicitly declare `"log"` for a
 #'   Gaussian lmer fit of a log response; default `"identity"`. Observations
 #'   and native simulations are then back-transformed to the natural scale.
@@ -132,8 +142,11 @@
 #'   Uniform PIT plots and the retained DHARMa object keep exact endpoints.
 #'   Grouped normal-score summaries include these display placeholders; use
 #'   the uniform values or DHARMa's own aggregation for tail-sensitive work.
-#'   DHARMa tests are available only when its object is retained; their
-#'   interpretation still depends on fitting, conditioning, and dependence.
+#'   Requested `residual_tests` are calculated before the native object is
+#'   discarded, with compact statistics retained. Other DHARMa tools require
+#'   `retain_dharma = TRUE`; their interpretation still depends on fitting,
+#'   conditioning, and dependence. Native test p-values are not jointly adjusted
+#'   across the whole report, and a non-significant result is not proof of adequacy.
 #'   This does not implement OSA, residual rotation, or a refitted bootstrap.
 #'   Likelihood-based [implied_effects()] are unaffected by the residual engine.
 #'   The ECDF grid spans observations and the first simulation batch; it is
@@ -173,6 +186,8 @@
 #' @return An S3 `influ_residuals` object containing observation-level ranks,
 #'   normal scores, predictive means, year labels, Q-Q reference coordinates,
 #'   compact ECDF summaries, and explicit calculation metadata.
+#'   Optional `tests` contains saved native diagnostic statistics and p-values,
+#'   not simulation matrices or auxiliary diagnostic regressions.
 #' @seealso [as_influ_residuals()] for externally generated response simulations;
 #'   [plot.influ_residuals()], [plot_predicted_residuals()],
 #'   [plot_grouped_residuals()]
@@ -199,9 +214,11 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             groups = NULL, conditioning = "backend_default",
                             residual_method = c("simulation_pit", "dharma"),
                             retain_dharma = FALSE, dharma_max_mb = 256,
-                            response_transform = "identity") {
+                            response_transform = "identity",
+                            residual_tests = c("none", "standard", "full")) {
   component <- match.arg(component)
   residual_method <- .resid_method_options(residual_method, retain_dharma, dharma_max_mb)
+  residual_tests <- .resid_test_options(residual_tests, residual_method)
   .resid_integer(calibration_bins, "calibration_bins", 1L)
   .resid_integer(calibration_min_n, "calibration_min_n", 1L)
   .resid_integer(nsim, "nsim", 20L)
@@ -255,7 +272,7 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   }
   result <- .resid_summarise_method(adapter, time, group_data, nsim, batch_size, seed,
     grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
-    residual_method, retain_dharma, dharma_max_mb)
+    residual_method, retain_dharma, dharma_max_mb, residual_tests = residual_tests)
   if (adapter$backend == "lme4") {
     result$metadata$response_transform <- adapter$response_transform
     result$metadata$native_response <- adapter$native_response

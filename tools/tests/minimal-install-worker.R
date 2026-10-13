@@ -58,6 +58,9 @@ local({
     results <- c(make_core_results(), list(
       mixed_influence = influ(full, focus = "year"),
       mixed_residuals = influ_residuals(full, nsim = 40, seed = 281),
+      model_report = check_cpue(full, data = data, nsim = 40, seed = 281,
+        residual_method = "simulation_pit"),
+      dharma_model_report = check_cpue(full, data = data, nsim = 40, seed = 281),
       dharma_residuals = influ_residuals(full, nsim = 40, seed = 281,
         residual_method = "dharma"),
       mixed_index = cpue_index(full, reference_data = unique(data["area"])),

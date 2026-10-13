@@ -4,7 +4,7 @@
 .resid_summarise_method <- function(adapter, time, group_data, nsim, batch_size, seed,
     grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
     residual_method = "simulation_pit", retain_dharma = FALSE, dharma_max_mb = 256,
-    integer_response = NULL) {
+    integer_response = NULL, residual_tests = "none") {
   dharma <- residual_method == "dharma"
   if (dharma) {
     matrix_mb <- .resid_dharma_memory(length(adapter$observed), nsim, dharma_max_mb)
@@ -54,6 +54,10 @@
   result$metadata$endpoint_count <- sum(endpoints)
   result$metadata$normal_score_limits <- limits
   result$metadata$dharma_matrix_mb <- matrix_mb
+  if (residual_tests != "none") {
+    result$tests <- .resid_dharma_test_table(native_dharma, result, residual_tests)
+    result$metadata$residual_tests <- attr(result$tests, "test_metadata")
+  }
   if (retain_dharma) {
     result$dharma <- native_dharma
     result$metadata$retention <- "DHARMa object and full response matrix retained; no fitted model retained"
