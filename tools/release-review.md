@@ -37,8 +37,8 @@ do not run new MCMC.
 The exact archive is
 `data-raw/release-candidates/2026-10-14-model-search/verified/influ2_1.1.0.tar.gz`,
 SHA256 `aebad96d2f91180d8b456a7a593702f249c8ea8dde1f2c5d31f57e754c826d65`.
-All 250 canonical shipped files match; automatic DESCRIPTION build fields
-are separate. Executed article outputs were reused for two final
+All 250 canonical shipped files match the implementation commit `c8cc69e`;
+automatic DESCRIPTION build fields are separate. Executed article outputs were reused for two final
 safeguard-only code changes, followed by an independent full archive check
 that rebuilt every vignette. Mac arm64 R 4.6.1 `R CMD check --as-cran
 --timings` finishes **Status OK**: 11,782 archive assertions, all 11 vignettes
@@ -52,6 +52,13 @@ Figure/lightbox checks pass 11 pages and 113 images. Scientific calibration,
 legacy triage, unrestricted/process search, model averaging, and
 selection-adjusted uncertainty remain separate. GitHub and website status
 can be checked against the subsequent source commit.
+
+A subsequent test-only coverage repair lets the worked-example test read
+the checked-out vignette via `GITHUB_WORKSPACE` when covr's bare installation
+omits vignette sources. Only genuinely source-free installations skip that
+example; the native model tests still run. Its 45 focused assertions pass.
+The retained archive predates this test-helper path repair; its runtime R
+code, help, and vignette are unchanged.
 
 ## Bounded-memory DHARMa: 14 October 2026
 

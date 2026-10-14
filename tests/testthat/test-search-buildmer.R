@@ -81,9 +81,11 @@ test_that("bounded forward BIC selection agrees with buildmer for protected mixe
 
 search_vignette_chunk <- function(label) {
   candidates <- c(test_path("..", "..", "vignettes", "model-search.Rmd"),
-    system.file("doc", "model-search.Rmd", package = "influ2"))
+    system.file("doc", "model-search.Rmd", package = "influ2"),
+    file.path(Sys.getenv("GITHUB_WORKSPACE", unset = ""),
+      "vignettes", "model-search.Rmd"))
   path <- candidates[file.exists(candidates)][1L]
-  if (is.na(path)) stop("The model-search vignette source is unavailable.")
+  if (is.na(path)) testthat::skip("The model-search vignette source is unavailable in this bare installation.")
   lines <- readLines(path, warn = FALSE)
   start <- grep(paste0("^```\\{r ", label, "(,|\\})"), lines)
   if (length(start) != 1L) stop("Expected one vignette chunk: ", label)
