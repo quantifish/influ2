@@ -49,7 +49,9 @@ in every observed year. Supply all required predictors and any exposure
 variables explicitly; use one unit of exposure for a per-unit index.}
 
 \item{reference_weights}{Non-negative weights, one per reference row.
-Defaults to equal weights. These are standardisation weights, not areas.}
+Defaults to equal weights. Weights are normalised to sum to one; cell or
+habitat areas can therefore define an area-weighted mean in CPUE units.
+This is not an area-integrated total; use \code{\link[=integrate_index]{integrate_index()}} for that.}
 
 \item{uncertainty}{\code{"auto"} for propagated uncertainty, or \code{"none"} for
 a point-estimate preview with missing uncertainty columns.}
