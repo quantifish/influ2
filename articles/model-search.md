@@ -195,7 +195,7 @@ knitr::kable(index_table(recommended_index), digits = 3, row.names = FALSE)
 | 2010 | 1.219 | 0.167 | 0.137 |  0.932 |  1.595 | standardised | nbinom2      | log  |
 | 2011 | 1.379 | 0.189 | 0.137 |  1.055 |  1.803 | standardised | nbinom2      | log  |
 | 2012 | 1.214 | 0.170 | 0.140 |  0.922 |  1.598 | standardised | nbinom2      | log  |
-| 2013 | 1.372 | 0.187 | 0.136 |  1.051 |  1.792 | standardised | nbinom2      | log  |
+| 2013 | 1.372 | 0.187 | 0.136 |  1.050 |  1.792 | standardised | nbinom2      | log  |
 | 2014 | 1.259 | 0.171 | 0.136 |  0.965 |  1.642 | standardised | nbinom2      | log  |
 | 2015 | 1.067 | 0.146 | 0.137 |  0.816 |  1.395 | standardised | nbinom2      | log  |
 | 2016 | 1.094 | 0.148 | 0.135 |  0.840 |  1.426 | standardised | nbinom2      | log  |

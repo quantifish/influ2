@@ -1270,7 +1270,7 @@ dharma_checks
 #> Time: year [ year-name detection ]
 #> Native simulations at fitted parameters; random effects resimulated
 #> Exploratory ranks; not a calibrated goodness-of-fit test
-#> DHARMa 0/1 endpoints: 22; normal-score display limits +/-3.65. Uniform PIT values remain unchanged.
+#> DHARMa 0/1 endpoints: 16; normal-score display limits +/-3.62. Uniform PIT values remain unchanged.
 #> Compact DHARMa PIT summaries; temporary response cache removed; no model or full response matrix retained
 ```
 
@@ -1329,7 +1329,7 @@ knitr::kable(report_tables$model_statistics[c(
 
 | backend | nobs |  df |    logLik |      AIC |      BIC | deviance |
 |:--------|-----:|----:|----------:|---------:|---------:|---------:|
-| glmmTMB | 5049 |  26 | -8851.785 | 17755.57 | 17925.27 | 5460.928 |
+| glmmTMB | 5049 |  26 | -8851.785 | 17755.57 | 17925.27 | 5460.943 |
 
 ``` r
 
@@ -1346,8 +1346,8 @@ knitr::kable(report_tables$overall[c(
 | finite_uncertainty        | no_flag      |    0.0000 |      NA |         NA |
 | gradient                  | not_assessed |        NA |      NA |         NA |
 | variance_boundary         | not_assessed |        NA |      NA |         NA |
-| uniformity                | review       |    0.0456 |    0.00 |         NA |
-| dispersion                | no_flag      |    1.1686 |    0.44 |         NA |
+| uniformity                | review       |    0.0501 |   0.000 |         NA |
+| dispersion                | no_flag      |    1.1888 |   0.368 |         NA |
 
 ``` r
 
@@ -1358,29 +1358,29 @@ knitr::kable(report_tables$terms[c(
 
 |  | term | component | check | status | statistic | df | p_value | p_adjusted |
 |:---|:---|:---|:---|:---|---:|---:|---:|---:|
-| 1 | year | conditional | group_location | review | 99.5690 | 17 | 0.0000 | 0.0000 |
-| 2 | poly(depth, 3) | conditional | rank_association | no_flag | 0.0159 | NA | 0.2577 | 0.2577 |
-| 3 | poly(soak, 3) | conditional | rank_association | review | 0.0583 | NA | 0.0000 | 0.0001 |
-| 4 | (1 \| month) | conditional | group_location | review | 434.6092 | 11 | 0.0000 | 0.0000 |
-| 31 | 2000 | single | year_uniformity | no_flag | 0.0988 | NA | 0.0228 | 0.1367 |
-| 41 | 2001 | single | year_uniformity | no_flag | 0.1146 | NA | 0.0052 | 0.0670 |
-| 5 | 2002 | single | year_uniformity | no_flag | 0.0967 | NA | 0.0190 | 0.1331 |
-| 6 | 2003 | single | year_uniformity | no_flag | 0.0673 | NA | 0.1241 | 0.4059 |
-| 7 | 2004 | single | year_uniformity | no_flag | 0.0331 | NA | 0.9320 | 1.0000 |
-| 8 | 2005 | single | year_uniformity | no_flag | 0.0358 | NA | 0.9478 | 1.0000 |
-| 9 | 2006 | single | year_uniformity | no_flag | 0.0710 | NA | 0.1015 | 0.4059 |
-| 10 | 2007 | single | year_uniformity | review | 0.1069 | NA | 0.0014 | 0.0215 |
-| 11 | 2008 | single | year_uniformity | no_flag | 0.0949 | NA | 0.0085 | 0.0921 |
-| 12 | 2009 | single | year_uniformity | no_flag | 0.0837 | NA | 0.0271 | 0.1367 |
-| 13 | 2010 | single | year_uniformity | no_flag | 0.0913 | NA | 0.0105 | 0.0941 |
-| 14 | 2011 | single | year_uniformity | no_flag | 0.0993 | NA | 0.0078 | 0.0921 |
-| 15 | 2012 | single | year_uniformity | no_flag | 0.1102 | NA | 0.0077 | 0.0921 |
-| 16 | 2013 | single | year_uniformity | review | 0.1430 | NA | 0.0000 | 0.0007 |
-| 17 | 2014 | single | year_uniformity | review | 0.1222 | NA | 0.0002 | 0.0031 |
-| 18 | 2015 | single | year_uniformity | review | 0.1084 | NA | 0.0018 | 0.0254 |
-| 19 | 2016 | single | year_uniformity | review | 0.1364 | NA | 0.0000 | 0.0001 |
-| 20 | 2017 | single | year_uniformity | no_flag | 0.0906 | NA | 0.0155 | 0.1242 |
-| 21 | year | single | year_homogeneity | review | 1.7480 | 17 | 0.0288 | NA |
+| 1 | year | conditional | group_location | review | 96.1261 | 17 | 0.0000 | 0.0000 |
+| 2 | poly(depth, 3) | conditional | rank_association | no_flag | 0.0137 | NA | 0.3299 | 0.3299 |
+| 3 | poly(soak, 3) | conditional | rank_association | review | 0.0636 | NA | 0.0000 | 0.0000 |
+| 4 | (1 \| month) | conditional | group_location | review | 440.5696 | 11 | 0.0000 | 0.0000 |
+| 31 | 2000 | single | year_uniformity | no_flag | 0.1116 | NA | 0.0066 | 0.0664 |
+| 41 | 2001 | single | year_uniformity | no_flag | 0.1081 | NA | 0.0099 | 0.0794 |
+| 5 | 2002 | single | year_uniformity | no_flag | 0.0900 | NA | 0.0355 | 0.2133 |
+| 6 | 2003 | single | year_uniformity | no_flag | 0.0723 | NA | 0.0811 | 0.3242 |
+| 7 | 2004 | single | year_uniformity | no_flag | 0.0386 | NA | 0.8236 | 1.0000 |
+| 8 | 2005 | single | year_uniformity | no_flag | 0.0312 | NA | 0.9857 | 1.0000 |
+| 9 | 2006 | single | year_uniformity | no_flag | 0.0658 | NA | 0.1542 | 0.4626 |
+| 10 | 2007 | single | year_uniformity | review | 0.1118 | NA | 0.0007 | 0.0108 |
+| 11 | 2008 | single | year_uniformity | review | 0.1031 | NA | 0.0032 | 0.0382 |
+| 12 | 2009 | single | year_uniformity | no_flag | 0.0901 | NA | 0.0138 | 0.0963 |
+| 13 | 2010 | single | year_uniformity | no_flag | 0.0963 | NA | 0.0058 | 0.0635 |
+| 14 | 2011 | single | year_uniformity | no_flag | 0.0995 | NA | 0.0077 | 0.0691 |
+| 15 | 2012 | single | year_uniformity | no_flag | 0.0900 | NA | 0.0488 | 0.2441 |
+| 16 | 2013 | single | year_uniformity | review | 0.1274 | NA | 0.0004 | 0.0059 |
+| 17 | 2014 | single | year_uniformity | review | 0.1258 | NA | 0.0001 | 0.0019 |
+| 18 | 2015 | single | year_uniformity | review | 0.1098 | NA | 0.0015 | 0.0212 |
+| 19 | 2016 | single | year_uniformity | review | 0.1346 | NA | 0.0000 | 0.0001 |
+| 20 | 2017 | single | year_uniformity | review | 0.1093 | NA | 0.0017 | 0.0220 |
+| 21 | year | single | year_homogeneity | review | 1.9592 | 17 | 0.0105 | NA |
 
 The first table uses native model statistics: sample size, likelihood
 degrees of freedom, log-likelihood, AIC, BIC, and available deviance.
@@ -1546,8 +1546,8 @@ knitr::kable(overall_comparison, digits = 4, row.names = FALSE)
 
 | Model | N | DF | AIC | Dispersion_ratio | Monte_Carlo_p | Dispersion_status |
 |:---|---:|---:|---:|---:|---:|:---|
-| Poisson | 5049 | 25 | 19383.90 | 2.2879 | 0.00 | review |
-| Negative_binomial | 5049 | 26 | 17755.57 | 1.1686 | 0.44 | no_flag |
+| Poisson | 5049 | 25 | 19383.90 | 2.2879 | 0.000 | review |
+| Negative_binomial | 5049 | 26 | 17755.57 | 1.1888 | 0.368 | no_flag |
 
 ``` r
 
@@ -1570,10 +1570,10 @@ knitr::kable(term_comparison, digits = 4, row.names = FALSE)
 | Poisson           | poly(depth, 3) | Spearman rho     |   0.0275 | 0.0503 | no_flag |
 | Poisson           | poly(soak, 3)  | Spearman rho     |   0.0467 | 0.0018 | review  |
 | Poisson           | (1 \| month)   | Kruskal-Wallis H | 486.2067 | 0.0000 | review  |
-| Negative_binomial | year           | Kruskal-Wallis H |  99.5690 | 0.0000 | review  |
-| Negative_binomial | poly(depth, 3) | Spearman rho     |   0.0159 | 0.2577 | no_flag |
-| Negative_binomial | poly(soak, 3)  | Spearman rho     |   0.0583 | 0.0001 | review  |
-| Negative_binomial | (1 \| month)   | Kruskal-Wallis H | 434.6092 | 0.0000 | review  |
+| Negative_binomial | year           | Kruskal-Wallis H |  96.1261 | 0.0000 | review  |
+| Negative_binomial | poly(depth, 3) | Spearman rho     |   0.0137 | 0.3299 | no_flag |
+| Negative_binomial | poly(soak, 3)  | Spearman rho     |   0.0636 | 0.0000 | review  |
+| Negative_binomial | (1 \| month)   | Kruskal-Wallis H | 440.5696 | 0.0000 | review  |
 
 The DHARMa response-dispersion statistic compares observed
 response-residual variance with its simulated reference. Values above
@@ -1703,14 +1703,14 @@ dharma_retained <- influ_residuals(
 )
 # These reuse the existing responses, without fitting or simulating again:
 head(dharma_retained$dharma$scaledResiduals)
-#> [1] 0.7905301 0.3071788 0.8111885 0.5172210 0.7123883 0.4440402
+#> [1] 0.8095948 0.3141531 0.8532295 0.5088420 0.7079369 0.4978355
 DHARMa::testDispersion(dharma_retained$dharma, plot = FALSE)
 #> 
 #>  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
 #>  simulated
 #> 
 #> data:  simulationOutput
-#> dispersion = 1.1686, p-value = 0.44
+#> dispersion = 1.1888, p-value = 0.368
 #> alternative hypothesis: two.sided
 ```
 
@@ -1761,7 +1761,7 @@ knitr::kable(dharma_checks$tests[c("check", "term", "status", "method")],
 | year_uniformity | 2005 | no_flag | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2006 | no_flag | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2007 | review | DHARMa within-year KS; Holm correction across tested years |
-| year_uniformity | 2008 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2008 | review | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2009 | no_flag | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2010 | no_flag | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2011 | no_flag | DHARMa within-year KS; Holm correction across tested years |
@@ -1770,7 +1770,7 @@ knitr::kable(dharma_checks$tests[c("check", "term", "status", "method")],
 | year_uniformity | 2014 | review | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2015 | review | DHARMa within-year KS; Holm correction across tested years |
 | year_uniformity | 2016 | review | DHARMa within-year KS; Holm correction across tested years |
-| year_uniformity | 2017 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2017 | review | DHARMa within-year KS; Holm correction across tested years |
 | year_homogeneity | year | review | DHARMa median-centred Levene test |
 
 This genuine `dharma_retained$dharma` object contains the response

@@ -562,10 +562,10 @@ settings.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;            term      component maximum_absolute_link_influence level_at_maximum</span></span>
-<span><span class="co">#&gt;  random_effects random_effects                       0.4208634             2000</span></span>
-<span><span class="co">#&gt;            year    conditional                       0.3506333             2002</span></span>
-<span><span class="co">#&gt;  poly(depth, 2)    conditional                       0.2497462             2008</span></span>
-<span><span class="co">#&gt;   poly(soak, 2)    conditional                       0.2345095             2014</span></span></code></pre></div>
+<span><span class="co">#&gt;  random_effects random_effects                       0.4208660             2000</span></span>
+<span><span class="co">#&gt;            year    conditional                       0.3506314             2002</span></span>
+<span><span class="co">#&gt;  poly(depth, 2)    conditional                       0.2497448             2008</span></span>
+<span><span class="co">#&gt;   poly(soak, 2)    conditional                       0.2345104             2014</span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -608,13 +608,13 @@ lme4 adapter.</p>
 <span><span class="va">lme4_index</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  reference_data <span class="op">=</span> <span class="va">lme4_reference</span>, units <span class="op">=</span> <span class="st">"lobsters per pot"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">lme4_index</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Year     Mean        SD        CV    Q0.025   Q0.975       Method</span></span>
-<span><span class="co">#&gt; 1 2000 1.687169 0.2398386 0.1421545 1.2768989 2.229260 standardised</span></span>
-<span><span class="co">#&gt; 2 2001 1.759605 0.2494233 0.1417496 1.3327780 2.323126 standardised</span></span>
-<span><span class="co">#&gt; 3 2002 1.839602 0.2563302 0.1393400 1.3999658 2.417299 standardised</span></span>
-<span><span class="co">#&gt; 4 2003 1.399827 0.1908103 0.1363099 1.0716357 1.828528 standardised</span></span>
-<span><span class="co">#&gt; 5 2004 1.584555 0.2156408 0.1360892 1.2135784 2.068934 standardised</span></span>
-<span><span class="co">#&gt; 6 2005 1.316783 0.1864900 0.1416255 0.9976136 1.738065 standardised</span></span>
+<span><span class="co">#&gt;   Year     Mean        SD        CV   Q0.025   Q0.975       Method</span></span>
+<span><span class="co">#&gt; 1 2000 1.687216 0.2398454 0.1421545 1.276934 2.229322 standardised</span></span>
+<span><span class="co">#&gt; 2 2001 1.759612 0.2494248 0.1417499 1.332782 2.323136 standardised</span></span>
+<span><span class="co">#&gt; 3 2002 1.839598 0.2563303 0.1393404 1.399962 2.417295 standardised</span></span>
+<span><span class="co">#&gt; 4 2003 1.399828 0.1908109 0.1363103 1.071636 1.828530 standardised</span></span>
+<span><span class="co">#&gt; 5 2004 1.584556 0.2156415 0.1360896 1.213578 2.068936 standardised</span></span>
+<span><span class="co">#&gt; 6 2005 1.316779 0.1864900 0.1416259 0.997610 1.738061 standardised</span></span>
 <span><span class="co">#&gt;                Distribution Link</span></span>
 <span><span class="co">#&gt; 1 Negative Binomial(1.7065)  log</span></span>
 <span><span class="co">#&gt; 2 Negative Binomial(1.7065)  log</span></span>
@@ -624,10 +624,10 @@ lme4 adapter.</p>
 <span><span class="co">#&gt; 6 Negative Binomial(1.7065)  log</span></span>
 <span><span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">lme4_index</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span>
 <span><span class="co">#&gt;            2000       2001       2002       2003</span></span>
-<span><span class="co">#&gt; 2000 0.02020789 0.01447721 0.01443714 0.01414558</span></span>
-<span><span class="co">#&gt; 2001 0.01447721 0.02009294 0.01449059 0.01420757</span></span>
-<span><span class="co">#&gt; 2002 0.01443714 0.01449059 0.01941565 0.01417129</span></span>
-<span><span class="co">#&gt; 2003 0.01414558 0.01420757 0.01417129 0.01858039</span></span></code></pre></div>
+<span><span class="co">#&gt; 2000 0.02020791 0.01447730 0.01443724 0.01414567</span></span>
+<span><span class="co">#&gt; 2001 0.01447730 0.02009303 0.01449068 0.01420766</span></span>
+<span><span class="co">#&gt; 2002 0.01443724 0.01449068 0.01941575 0.01417139</span></span>
+<span><span class="co">#&gt; 2003 0.01414567 0.01420766 0.01417139 0.01858049</span></span></code></pre></div>
 <p><code>plot_index(lme4_index)</code> and <code><a href="../reference/plot_compare.html">plot_compare()</a></code>
 reuse this saved result. Area integration uses the same native
 predictions: <code><a href="../reference/integrate_index.html">integrate_index()</a></code> accepts this fit and an
@@ -694,7 +694,7 @@ re-estimates size at each step:</p>
 <span><span class="op">)</span></span>
 <span><span class="va">lme4_comparison</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Model"</span>, <span class="st">"Backend"</span>, <span class="st">"nobs"</span>, <span class="st">"df"</span>, <span class="st">"AIC"</span>, <span class="st">"AIC_group"</span>, <span class="st">"delta_AIC"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;     Model Backend nobs df      AIC AIC_group  delta_AIC</span></span>
-<span><span class="co">#&gt; 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441583</span></span>
+<span><span class="co">#&gt; 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441579</span></span>
 <span><span class="co">#&gt; 2 glmmTMB glmmTMB 5049 24 17755.82     AIC-1 0.00000000</span></span></code></pre></div>
 <p>Model criteria retain native likelihood values, degrees of freedom,
 and convergence notes. REML lmer fits are not automatically ranked
@@ -838,9 +838,9 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;       as.factor(year)               conditional                      0.60757313</span></span>
-<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10520073</span></span>
+<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10518795</span></span>
 <span><span class="co">#&gt;          depth_scaled               conditional                      0.05400688</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03291602</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03380178</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;              2013</span></span>
 <span><span class="co">#&gt;              2015</span></span>
@@ -904,10 +904,10 @@ al. 2025</a>)</span>.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;                  year               conditional                      0.24374040</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.05311503</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.05218935</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;                 4</span></span>
-<span><span class="co">#&gt;                 3</span></span></code></pre></div>
+<span><span class="co">#&gt;                 2</span></span></code></pre></div>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tinyVAST_diagnostic</span>, type <span class="op">=</span> <span class="st">"components"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -2005,9 +2005,9 @@ refits.</p>
 <span><span class="co">#&gt;   Year     Mean        SD        CV    Q0.025   Q0.975       Method</span></span>
 <span><span class="co">#&gt; 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised</span></span>
 <span><span class="co">#&gt; 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised</span></span>
-<span><span class="co">#&gt; 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised</span></span>
+<span><span class="co">#&gt; 3 2002 1.841306 0.2566028 0.1393591 1.4012104 2.419629 standardised</span></span>
 <span><span class="co">#&gt; 4 2003 1.400957 0.1908672 0.1362406 1.0726465 1.829755 standardised</span></span>
-<span><span class="co">#&gt; 5 2004 1.585962 0.2156039 0.1359452 1.2149996 2.070187 standardised</span></span>
+<span><span class="co">#&gt; 5 2004 1.585962 0.2156039 0.1359452 1.2149997 2.070187 standardised</span></span>
 <span><span class="co">#&gt; 6 2005 1.317816 0.1864175 0.1414594 0.9987212 1.738863 standardised</span></span>
 <span><span class="co">#&gt;   Distribution Link</span></span>
 <span><span class="co">#&gt; 1      nbinom2  log</span></span>

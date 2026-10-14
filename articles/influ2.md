@@ -544,10 +544,10 @@ summary(lme4_diagnostic)
 #>   Focus:   year
 #> 
 #>            term      component maximum_absolute_link_influence level_at_maximum
-#>  random_effects random_effects                       0.4208634             2000
-#>            year    conditional                       0.3506333             2002
-#>  poly(depth, 2)    conditional                       0.2497462             2008
-#>   poly(soak, 2)    conditional                       0.2345095             2014
+#>  random_effects random_effects                       0.4208660             2000
+#>            year    conditional                       0.3506314             2002
+#>  poly(depth, 2)    conditional                       0.2497448             2008
+#>   poly(soak, 2)    conditional                       0.2345104             2014
 ```
 
 ``` r
@@ -601,13 +601,13 @@ lme4_reference <- data.frame(
 lme4_index <- cpue_index(lobster_lme4, year = "year",
   reference_data = lme4_reference, units = "lobsters per pot")
 head(index_table(lme4_index))
-#>   Year     Mean        SD        CV    Q0.025   Q0.975       Method
-#> 1 2000 1.687169 0.2398386 0.1421545 1.2768989 2.229260 standardised
-#> 2 2001 1.759605 0.2494233 0.1417496 1.3327780 2.323126 standardised
-#> 3 2002 1.839602 0.2563302 0.1393400 1.3999658 2.417299 standardised
-#> 4 2003 1.399827 0.1908103 0.1363099 1.0716357 1.828528 standardised
-#> 5 2004 1.584555 0.2156408 0.1360892 1.2135784 2.068934 standardised
-#> 6 2005 1.316783 0.1864900 0.1416255 0.9976136 1.738065 standardised
+#>   Year     Mean        SD        CV   Q0.025   Q0.975       Method
+#> 1 2000 1.687216 0.2398454 0.1421545 1.276934 2.229322 standardised
+#> 2 2001 1.759612 0.2494248 0.1417499 1.332782 2.323136 standardised
+#> 3 2002 1.839598 0.2563303 0.1393404 1.399962 2.417295 standardised
+#> 4 2003 1.399828 0.1908109 0.1363103 1.071636 1.828530 standardised
+#> 5 2004 1.584556 0.2156415 0.1360896 1.213578 2.068936 standardised
+#> 6 2005 1.316779 0.1864900 0.1416259 0.997610 1.738061 standardised
 #>                Distribution Link
 #> 1 Negative Binomial(1.7065)  log
 #> 2 Negative Binomial(1.7065)  log
@@ -617,10 +617,10 @@ head(index_table(lme4_index))
 #> 6 Negative Binomial(1.7065)  log
 index_vcov(lme4_index)[1:4, 1:4]
 #>            2000       2001       2002       2003
-#> 2000 0.02020789 0.01447721 0.01443714 0.01414558
-#> 2001 0.01447721 0.02009294 0.01449059 0.01420757
-#> 2002 0.01443714 0.01449059 0.01941565 0.01417129
-#> 2003 0.01414558 0.01420757 0.01417129 0.01858039
+#> 2000 0.02020791 0.01447730 0.01443724 0.01414567
+#> 2001 0.01447730 0.02009303 0.01449068 0.01420766
+#> 2002 0.01443724 0.01449068 0.01941575 0.01417139
+#> 2003 0.01414567 0.01420766 0.01417139 0.01858049
 ```
 
 `plot_index(lme4_index)` and
@@ -705,7 +705,7 @@ lme4_comparison <- table_criterion(
 )
 lme4_comparison[c("Model", "Backend", "nobs", "df", "AIC", "AIC_group", "delta_AIC")]
 #>     Model Backend nobs df      AIC AIC_group  delta_AIC
-#> 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441583
+#> 1    lme4    lme4 5049 24 17755.84     AIC-1 0.02441579
 #> 2 glmmTMB glmmTMB 5049 24 17755.82     AIC-1 0.00000000
 ```
 
@@ -874,9 +874,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10520073
+#>         spatial_field conditional:latent_fields                      0.10518795
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03291602
+#>  spatiotemporal_field conditional:latent_fields                      0.03380178
 #>  level_at_maximum
 #>              2013
 #>              2015
@@ -944,10 +944,10 @@ summary(tinyVAST_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>                  year               conditional                      0.24374040
-#>  spatiotemporal_field conditional:latent_fields                      0.05311503
+#>  spatiotemporal_field conditional:latent_fields                      0.05218935
 #>  level_at_maximum
 #>                 4
-#>                 3
+#>                 2
 ```
 
 ``` r
@@ -1809,9 +1809,9 @@ head(index_table(restored_results$index))
 #>   Year     Mean        SD        CV    Q0.025   Q0.975       Method
 #> 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised
 #> 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised
-#> 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised
+#> 3 2002 1.841306 0.2566028 0.1393591 1.4012104 2.419629 standardised
 #> 4 2003 1.400957 0.1908672 0.1362406 1.0726465 1.829755 standardised
-#> 5 2004 1.585962 0.2156039 0.1359452 1.2149996 2.070187 standardised
+#> 5 2004 1.585962 0.2156039 0.1359452 1.2149997 2.070187 standardised
 #> 6 2005 1.317816 0.1864175 0.1414594 0.9987212 1.738863 standardised
 #>   Distribution Link
 #> 1      nbinom2  log
