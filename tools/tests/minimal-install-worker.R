@@ -36,13 +36,18 @@ local({
     full <- glm(catch ~ year + area + vessel, family = poisson(), data = data)
     reduced <- update(full, . ~ year + area, data = data)
     reference <- unique(data[c("area", "vessel")])
+    search <- search_cpue(full, year = "year", direction = "backward",
+      refit = TRUE, keep_fits = "none", seed = 281)
+    # Elapsed wall time is not a reproducible scientific result.
+    search$candidates$elapsed <- NULL
     list(influence = influ(full, focus = "year"),
       preview = influ(full, focus = "year", uncertainty = "none"),
       residuals = influ_residuals(full, nsim = 40, seed = 281),
       index = cpue_index(full, reference_data = reference),
       integrated = integrate_index(full, reference, area = seq_len(nrow(reference)),
         area_units = "km^2", response_units = "individuals/km^2"),
-      steps = influ_steps(list(Reduced = reduced, Full = full), year = "year"))
+      steps = influ_steps(list(Reduced = reduced, Full = full), year = "year"),
+      search = search)
   }
   if (mode == "produce") {
     # Native mixed-model fits plus stored Bayesian draws; no MCMC is run.
@@ -67,6 +72,10 @@ local({
       mixed_steps = influ_steps(list(Reduced = reduced, Full = full), year = "year"),
       bayesian_influence = influ(fit, focus = "year", ndraws = 40, retain = "summary"),
       bayesian_residuals = bayesian$checks))
+    mixed_search <- search_cpue(full, year = "year", direction = "backward",
+      refit = TRUE, keep_fits = "none", seed = 281)
+    mixed_search$candidates$elapsed <- NULL
+    results$mixed_search <- mixed_search
     stopifnot(requireNamespace("lme4", quietly = TRUE))
     lme <- lme4::glmer(catch ~ year + area + (1 | vessel), family = poisson(), data = data)
     results <- c(results, list(lme_influence = influ(lme, focus = "year"),
@@ -101,7 +110,7 @@ local({
     any(fresh$residuals$ecdf$upper > fresh$residuals$ecdf$lower))
   invisible(lapply(fresh, saved_result_view))
   print(plot_compare(list(Standardised = fresh$index, Same_model = fresh$index)))
-  message("Fresh core influence, preview, PIT residuals, standardised and integrated indices, and steps passed.")
+  message("Fresh core influence, preview, PIT residuals, indices, steps, and constrained search passed without optional packages.")
 
   expect_dependency_error <- function(expr, text) {
     error <- tryCatch({ force(expr); NULL }, error = identity)
@@ -114,6 +123,8 @@ local({
   for (backend in c("glmmTMB", "sdmTMB", "tinyVAST")) {
     expect_dependency_error(influ(structure(list(), class = backend), focus = "year"),
       paste0("Package '", backend, "' is required for this model."))
+    expect_dependency_error(search_cpue(structure(list(), class = backend)),
+      paste0("Package '", backend, "' is required for model search."))
   }
   expect_dependency_error(influ(structure(list(), class = "brmsfit"), focus = "year"),
     "Packages 'brms' and 'posterior' are required for this model.")
@@ -145,6 +156,9 @@ local({
   expect_dependency_error(cpue_index(lme), "Package 'lme4' is required")
   expect_dependency_error(implied_effects(lme), "Package 'lme4' is required")
   expect_dependency_error(influ_steps(lme), "Package 'lme4' is required")
+  expect_dependency_error(search_cpue(lme), "Package 'lme4' is required for model search.")
+  expect_dependency_error(search_cpue(structure(list(), class = "brmsfit")),
+    "Package 'brms' is required for model search.")
   assert_isolated()
-  message("All 26 missing-package guards passed; optional packages remained unavailable throughout.")
+  message("All 31 missing-package guards passed; optional packages remained unavailable throughout.")
 })

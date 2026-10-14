@@ -24,6 +24,8 @@ navbar:
         href: articles/regional-cpue.html
       - text: Model comparison
         href: articles/model-comparison.html
+      - text: Model search
+        href: articles/model-search.html
       - text: Hurdle, delta, and zero-inflated models
         href: articles/hurdle.html
       - text: Spatial and spatiotemporal diagnostics
@@ -44,6 +46,7 @@ articles:
   - cpue-indices
   - regional-cpue
   - model-comparison
+  - model-search
   - hurdle
   - spatial-spatiotemporal
   - bentley-validation
@@ -111,11 +114,14 @@ reference:
   - plot_grouped_residuals
   - plot_predicted_residuals
 
-- title: Model comparison
-  desc: Model-specific likelihood and Bayesian criteria, with explicit comparison safeguards.
+- title: Model comparison and search
+  desc: Model-specific criteria and constrained native refitting, with explicit comparison safeguards.
   contents:
   - get_bayes_R2
   - table_criterion
+  - search_cpue
+  - selected_model
+  - plot.influ_search
 
 - title: Data
   desc: Simulated data supplied with the package.

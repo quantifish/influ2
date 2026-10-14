@@ -102,5 +102,5 @@ conditional Akaike information for nonlinear mixed-effects models.
 \doi{10.48550/arXiv.2411.14185}.
 }
 \seealso{
-\code{\link[=get_bayes_R2]{get_bayes_R2()}}, \code{\link[=plot_compare]{plot_compare()}}
+\code{\link[=get_bayes_R2]{get_bayes_R2()}}, \code{\link[=plot_compare]{plot_compare()}}, \code{\link[=search_cpue]{search_cpue()}}
 }

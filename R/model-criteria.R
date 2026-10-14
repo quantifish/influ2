@@ -73,7 +73,7 @@
 #'   Inapplicable or unavailable values are `NA`, with reasons in `notes` and
 #'   the `criteria_notes` attribute (model, criterion, status, and detail).
 #'   No full fits, posterior draws, or pointwise likelihood arrays are retained.
-#' @seealso [get_bayes_R2()], [plot_compare()]
+#' @seealso [get_bayes_R2()], [plot_compare()], [search_cpue()]
 #' @references
 #' Wood, Pya, and Saefken (2016). Smoothing parameter and model selection
 #' for general smooth models. \doi{10.1080/01621459.2016.1180986}.

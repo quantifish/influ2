@@ -39,6 +39,7 @@ Imports:
 Suggests:
     bayesplot (>= 1.16.0),
     brms,
+    buildmer,
     callr,
     DHARMa (>= 0.4.7),
     fmesher,

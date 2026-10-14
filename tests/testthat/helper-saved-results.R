@@ -24,7 +24,10 @@ saved_plot_signature <- function(p) {
 }
 
 saved_result_view <- function(x) {
-  if (inherits(x, "influ_check")) {
+  if (inherits(x, "influ_search")) {
+    tables <- list(candidates = as.data.frame(x), summary = summary(x))
+    plots <- list(search = plot(x))
+  } else if (inherits(x, "influ_check")) {
     tables <- list(statistics = x$model_statistics, checks = as.data.frame(x),
       summary = summary(x), inventory = x$term_inventory)
     plots <- list(overview = plot(x), status = plot(x, type = "status"),

@@ -145,10 +145,20 @@
 .criterion_model.sdmTMB <- function(model, requested, context, dots) {
   fam <- model$family
   if (isTRUE(fam$delta)) fam$family <- paste0("delta_", fam$family[2])
-  frame <- .criterion_frame(model, model$formula[[1]], model$data, model$tmb_data$weights_i)
-  result <- .criterion_base(model, "sdmTMB", model$formula[[1]], fam, context, frame,
+  formula <- if (inherits(model$formula, "formula")) model$formula else model$formula[[1L]]
+  frame <- .criterion_sdmTMB_frame(model, formula)
+  result <- .criterion_base(model, "sdmTMB", formula, fam, context, frame,
     converged = if (is.null(model$model$convergence)) NA else model$model$convergence == 0,
     pdHess = if (is.null(model$sd_report)) NA else model$sd_report$pdHess)
+  if (is.null(frame)) {
+    # model.frame.sdmTMB() returns raw data, not a response-first model frame.
+    # Never retain that generic fallback as verified likelihood provenance.
+    result$frame <- NULL
+    result$response <- NA_character_
+    result$eligible <- FALSE
+    .criterion_note(context, "ranking",
+      "The observed response and aligned native observation weights could not be verified; no automatic comparison group.", "warning")
+  }
   random <- length(model$tmb_obj$env$random) > 0L
   result$row$df_type <- "native likelihood parameter count (random effects integrated out)"
   result$row$likelihood <- if (random) "Laplace marginal likelihood" else "ordinary observation likelihood"
@@ -170,6 +180,51 @@
     edf <- sum(sdmTMB::cAIC(model, what = "EDF"))
     list(value = value, df = length(model$model$par) + edf, edf_random = edf)
   })
+}
+
+.criterion_sdmTMB_frame <- function(model, formula) {
+  n <- nrow(model$data)
+  if (is.null(n) || n < 1L) return(NULL)
+  w <- as.numeric(model$tmb_data$weights_i)
+  if (isTRUE(model$family$delta) && length(w) == 2L * n) {
+    if (!identical(w[seq_len(n)], w[n + seq_len(n)])) return(NULL)
+    w <- w[seq_len(n)]
+  }
+  if (length(w) != n || any(!is.finite(w) | w < 0)) return(NULL)
+  frame <- .criterion_frame(model, formula, model$data, w)
+  if (is.null(frame)) return(NULL)
+  native <- model$tmb_data$y_i
+  if (isTRUE(model$family$delta)) {
+    # The first native column records encounter, and positive observations
+    # occupy the second. Reconstruct zeros instead of comparing NA positives.
+    if (!is.matrix(native) || !identical(dim(native), c(n, 2L)) ||
+        anyNA(native[, 1L]) || any(!native[, 1L] %in% c(0, 1))) return(NULL)
+    observed <- ifelse(native[, 1L] == 0, 0, native[, 2L])
+    forms <- model$formula
+    if (is.list(forms) && length(forms) == 2L &&
+        !identical(forms[[1L]][[2L]], forms[[2L]][[2L]])) return(NULL)
+  } else if (identical(model$family$family, "binomial")) {
+    observed <- as.numeric(native)
+    size <- model$tmb_data$size %||% model$tmb_data$size_i
+    if (length(size) != n || any(!is.finite(size) | size < 0 | abs(size - round(size)) > 1e-8)) return(NULL)
+    if (is.matrix(frame$y)) {
+      if (ncol(frame$y) != 2L || any(!is.finite(frame$y) | frame$y < 0 | abs(frame$y - round(frame$y)) > 1e-8) ||
+          !isTRUE(all.equal(as.numeric(rowSums(frame$y)), as.numeric(size), check.attributes = FALSE)) ||
+          !isTRUE(all.equal(as.numeric(frame$y[, 1L]), observed, check.attributes = FALSE))) return(NULL)
+      # Preserve the two-column response in the comparison signature.
+      return(frame)
+    }
+    y <- if (is.factor(frame$y)) pmin(as.numeric(frame$y) - 1, 1) else as.numeric(frame$y)
+    successes <- y * size
+    if (length(observed) != n || anyNA(observed) ||
+        !isTRUE(all.equal(successes, observed, check.attributes = FALSE))) return(NULL)
+    # Equal proportions with different trial counts are different likelihoods.
+    frame$frame[["(.binomial_trials)"]] <- as.numeric(size)
+    return(frame)
+  } else observed <- as.numeric(native)
+  if (length(observed) != n || anyNA(observed) ||
+      !isTRUE(all.equal(as.numeric(frame$y), as.numeric(observed), check.attributes = FALSE))) return(NULL)
+  frame
 }
 
 #' @export

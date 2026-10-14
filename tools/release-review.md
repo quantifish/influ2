@@ -5,6 +5,54 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Constrained model search: 14 October 2026
+
+`search_cpue()` implements a fresh buildmer-style constrained controller over
+seven native backends, with preflight as the default, explicit refitting,
+protected annual/offset/process specifications, atomic/dependent term blocks,
+bounded distinct-candidate caching, compact retention, and `selected_model()`.
+The Model search article executes the existing lobster NB2 glmmTMB example,
+an explicitly optional monthly random effect, and the selected fit's CPUE
+table and plot. Native forward/backward specification and ML likelihood/BIC
+parity tests against buildmer pass; its final REML fit is not incorrectly
+compared with a native ML fit.
+
+Verification repaired source-family mutation in NB GAM/glmmTMB refits,
+unsafe positional parameter-map transfer, changed external sdmTMB latent
+formulas, duplicated delta weights, and binomial success/trial provenance.
+Families are isolated without resetting fixed/estimated nuisance semantics.
+Stored processes, designs, and trial counts are preserved; unsafe maps and
+unrecoverable settings fail explicitly. A pre-existing near-zero spatial
+projection assertion now uses an absolute `1e-8` log-scale tolerance, rather
+than a relative tolerance. No model calculation was loosened.
+
+The source suite passes 11,782 assertions without failures, warnings, or
+skips. Final focused safeguards pass 476 assertions. A separate genuine brms
+test fits four chains and refits a reduced model with new MCMC: full/reduced
+LOOIC 295.7185/411.2123; maximum R-hat 1.001266/1.002406; zero divergences;
+reliable maximum Pareto-k 0.28470/0.26586. Source formula, priors, data,
+posterior draws, and caller RNG remain unchanged. Routine tests and vignettes
+do not run new MCMC.
+
+The exact archive is
+`data-raw/release-candidates/2026-10-14-model-search/verified/influ2_1.1.0.tar.gz`,
+SHA256 `aebad96d2f91180d8b456a7a593702f249c8ea8dde1f2c5d31f57e754c826d65`.
+All 250 canonical shipped files match; automatic DESCRIPTION build fields
+are separate. Executed article outputs were reused for two final
+safeguard-only code changes, followed by an independent full archive check
+that rebuilt every vignette. Mac arm64 R 4.6.1 `R CMD check --as-cran
+--timings` finishes **Status OK**: 11,782 archive assertions, all 11 vignettes
+rebuilt, and PDF/HTML manuals passing. No manual, vignette, or optional
+dependency checks are excluded. Incoming-network checks are disabled;
+this is not CRAN acceptance or a new win-builder submission.
+
+Minimal installation reopens 21 compact results and passes 31 missing-package
+guards, including saved/core search without buildmer or optional backends.
+Figure/lightbox checks pass 11 pages and 113 images. Scientific calibration,
+legacy triage, unrestricted/process search, model averaging, and
+selection-adjusted uncertainty remain separate. GitHub and website status
+can be checked against the subsequent source commit.
+
 ## Bounded-memory DHARMa: 14 October 2026
 
 Compact DHARMa calculations now default to a temporary column-major binary

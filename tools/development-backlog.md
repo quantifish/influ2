@@ -1,6 +1,29 @@
 # Development ideas and decisions
 
-Last reviewed: 13 October 2026.
+Last reviewed: 14 October 2026.
+
+## Constrained model search: 14 October 2026
+
+The maintainer approved implementation after identifying the CRA workflow as
+`buildmer::buildglmmTMB()`. `search_cpue()` now uses a fresh backend-aware
+controller for forward, backward, both, and order-then-backward searches.
+The native fit/criterion contracts cover GLM, GAM, glmmTMB, lme4, brms,
+sdmTMB, and univariate tinyVAST. The default is preflight only; refitting is
+explicit. Annual blocks, fitted rows, offsets, likelihood weights, trials,
+and essential process specifications are protected. Optional non-essential
+random terms must be deliberately nominated. Complete candidate summaries,
+numerical failures, bounded fitting, compact retention, and best-evaluated
+recommendations are visible, not implicit scientific acceptance.
+
+The worked Model search article uses the existing simulated lobster dataset.
+Native forward/backward ML specification checks against buildmer, native
+backend refits, and a separate genuine brms MCMC/LOO smoke support this
+increment. The release review records completed verification separately.
+This does not implement unrestricted all-subsets search, automatic spatial
+process toggling, joint selection of both delta components, nonlinear brms
+search, model averaging, selection-adjusted uncertainty, or residual-p-value
+elimination. Scientific validation/calibration and legacy review remain
+separate; no CRAN or win-builder submission is authorised by this task.
 
 ## Model-check reports and optional DHARMa statistics: 13 October 2026
 

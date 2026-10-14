@@ -445,7 +445,9 @@ test_that("tinyVAST exposes fitted spatial and spatiotemporal components", {
       extra_times = numeric(0), future_var = FALSE, past_var = FALSE, parm_var = FALSE))
     effect <- preview$influence[preview$influence$term == term & preview$influence$scale == "link", ]
     expected <- tapply(observed, data$year, mean) - mean(projected)
-    expect_equal(effect$estimate, as.numeric(expected[effect$level]), tolerance = 1e-8)
+    # Absolute log-scale accuracy: a relative tolerance is unstable for
+    # near-zero field contrasts from native sparse numerical projections.
+    expect_lt(max(abs(effect$estimate - as.numeric(expected[effect$level]))), 1e-8)
     expect_true(all(is.na(effect$std_error)))
   }
   expect_true(any(diagnostic$influence$term == "spatiotemporal_field"))
