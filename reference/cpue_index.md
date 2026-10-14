@@ -66,7 +66,11 @@ print(x, ...)
 - reference_weights:
 
   Non-negative weights, one per reference row. Defaults to equal
-  weights. These are standardisation weights, not areas.
+  weights. Weights are normalised to sum to one; cell or habitat areas
+  can therefore define an area-weighted mean in CPUE units. This is not
+  an area-integrated total; use
+  [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+  for that.
 
 - uncertainty:
 

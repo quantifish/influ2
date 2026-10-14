@@ -116,7 +116,9 @@ variables explicitly; use one unit of exposure for a per-unit index.</p></dd>
 
 <dt id="arg-reference-weights">reference_weights<a class="anchor" aria-label="anchor" href="#arg-reference-weights"></a></dt>
 <dd><p>Non-negative weights, one per reference row.
-Defaults to equal weights. These are standardisation weights, not areas.</p></dd>
+Defaults to equal weights. Weights are normalised to sum to one; cell or
+habitat areas can therefore define an area-weighted mean in CPUE units.
+This is not an area-integrated total; use <code><a href="integrate_index.html">integrate_index()</a></code> for that.</p></dd>
 
 
 <dt id="arg-uncertainty">uncertainty<a class="anchor" aria-label="anchor" href="#arg-uncertainty"></a></dt>

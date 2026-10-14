@@ -424,6 +424,242 @@ sdmTMB nonlocal covariate operators are rejected explicitly. Integration
 over a new population of latent random effects is a different target,
 not implied by these methods.
 
+## Area-weighted CPUE over a fixed fishing domain
+
+Area weighting does not require a density response or a specialist
+spatial model. Suppose the simulated lobster fishing domain contains
+three non-overlapping habitat areas, totalling 100 km². We represent
+each habitat by one depth profile, fix soak time at 24 hours, and use
+the same habitat areas in every year. The response remains **lobsters
+per pot**.
+
+These areas are illustrative, not inferred from the sampling frequency
+or the lobster dataset. The chosen depths lie within the observed depth
+range in every year. In an assessment, define the domain from defensible
+mapped areas and use enough prediction cells or representative profiles
+to describe its covariates. A single profile per habitat is a compact
+approximation, not a claim that real habitats have constant depth or
+CPUE.
+
+``` r
+
+cpue_domain <- data.frame(
+  habitat = c("Shallow", "Middle", "Deep"),
+  depth = c(15, 25, 35),
+  soak = 24,
+  area_km2 = c(10, 30, 60)
+)
+cpue_domain$area_proportion <- cpue_domain$area_km2 / sum(cpue_domain$area_km2)
+knitr::kable(cpue_domain, digits = 2, row.names = FALSE)
+```
+
+| habitat | depth | soak | area_km2 | area_proportion |
+|:--------|------:|-----:|---------:|----------------:|
+| Shallow |    15 |   24 |       10 |             0.1 |
+| Middle  |    25 |   24 |       30 |             0.3 |
+| Deep    |    35 |   24 |       60 |             0.6 |
+
+If $`A_i`$ is habitat area and $`\widehat\mu_{it}`$ is its expected CPUE
+in year $`t`$, the area-weighted mean is
+
+``` math
+  \widehat I_t = \frac{\sum_i A_i\widehat\mu_{it}}{\sum_i A_i}.
+```
+
+Use
+[`cpue_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+with areas as `reference_weights`. They are normalised internally, so
+supplying km² or the corresponding proportions gives the same mean.
+Predictions are averaged on the **response scale**, not averaged on the
+log scale and then exponentiated. We reuse `lobster_model` from above;
+nothing is refitted. Monthly random effects are set to zero, as in the
+earlier index, not integrated over a population of new monthly effects.
+
+``` r
+
+area_cpue <- cpue_index(
+  lobster_model, year = "year",
+  reference_data = cpue_domain[c("depth", "soak")],
+  reference_weights = cpue_domain$area_km2,
+  units = "lobsters per pot"
+)
+knitr::kable(index_table(area_cpue), digits = 3, row.names = FALSE)
+```
+
+| Year |  Mean |    SD |    CV | Q0.025 | Q0.975 | Method       | Distribution | Link |
+|:-----|------:|------:|------:|-------:|-------:|:-------------|:-------------|:-----|
+| 2000 | 1.513 | 0.216 | 0.143 |  1.144 |  2.002 | standardised | nbinom2      | log  |
+| 2001 | 1.576 | 0.225 | 0.143 |  1.192 |  2.084 | standardised | nbinom2      | log  |
+| 2002 | 1.641 | 0.230 | 0.140 |  1.247 |  2.159 | standardised | nbinom2      | log  |
+| 2003 | 1.254 | 0.172 | 0.137 |  0.958 |  1.640 | standardised | nbinom2      | log  |
+| 2004 | 1.421 | 0.194 | 0.137 |  1.087 |  1.857 | standardised | nbinom2      | log  |
+| 2005 | 1.184 | 0.168 | 0.142 |  0.896 |  1.565 | standardised | nbinom2      | log  |
+| 2006 | 1.055 | 0.143 | 0.136 |  0.809 |  1.376 | standardised | nbinom2      | log  |
+| 2007 | 1.070 | 0.144 | 0.134 |  0.822 |  1.392 | standardised | nbinom2      | log  |
+| 2008 | 1.059 | 0.146 | 0.137 |  0.809 |  1.386 | standardised | nbinom2      | log  |
+| 2009 | 1.015 | 0.140 | 0.138 |  0.775 |  1.329 | standardised | nbinom2      | log  |
+| 2010 | 1.102 | 0.149 | 0.135 |  0.845 |  1.437 | standardised | nbinom2      | log  |
+| 2011 | 1.246 | 0.169 | 0.135 |  0.956 |  1.624 | standardised | nbinom2      | log  |
+| 2012 | 1.097 | 0.153 | 0.139 |  0.835 |  1.442 | standardised | nbinom2      | log  |
+| 2013 | 1.240 | 0.169 | 0.136 |  0.949 |  1.620 | standardised | nbinom2      | log  |
+| 2014 | 1.138 | 0.154 | 0.136 |  0.872 |  1.484 | standardised | nbinom2      | log  |
+| 2015 | 0.964 | 0.132 | 0.137 |  0.737 |  1.262 | standardised | nbinom2      | log  |
+| 2016 | 0.989 | 0.134 | 0.135 |  0.759 |  1.290 | standardised | nbinom2      | log  |
+| 2017 | 1.011 | 0.139 | 0.137 |  0.773 |  1.322 | standardised | nbinom2      | log  |
+
+``` r
+
+
+# A different target: each habitat has equal weight, irrespective of its area.
+equal_habitat_cpue <- cpue_index(
+  lobster_model, year = "year",
+  reference_data = cpue_domain[c("depth", "soak")],
+  units = "lobsters per pot"
+)
+```
+
+``` r
+
+plot_compare(list(`Area-weighted CPUE` = area_cpue,
+  `Equal-habitat CPUE` = equal_habitat_cpue)) +
+  labs(y = "Expected lobsters per pot", colour = "Reference weighting",
+    fill = "Reference weighting")
+```
+
+![Annual lobster CPUE with two overlapping uncertainty ribbons shows the
+difference between fixed area weights and equal habitat weights, with
+the y-axis starting at
+zero.](cpue-indices_files/figure-html/index-cpue-area-comparison-1.png)
+
+Area-weighted expected lobster CPUE compared with an equal-habitat mean
+from the same negative-binomial glmmTMB fit. Both use depths of 15, 25,
+and 35 m, a 24-hour soak, and zero monthly random effects. The
+area-weighted mean gives the three habitats weights of 10%, 30%, and
+60%; the equal-habitat mean gives each one-third. Ribbons are pointwise
+95% intervals for each expected-response index, not uncertainty in their
+difference or the spread of individual responses. Both series remain in
+CPUE units; neither is biomass. This additive log-link model changes the
+overall level, not the relative annual trajectory, when these fixed
+weights change.
+
+The equally weighted series is **not nominal observed CPUE**: it is
+another model-based reference mean. Equal weights would also be area
+weights if every prediction row represented an equal-area cell. Here the
+three habitat areas differ, so the two calculations answer different
+averaging questions.
+
+In this additive log-link model, the depth/soak relationship is shared
+across years. Changing fixed habitat weights therefore changes the level
+but not the relative year pattern. `rescale = 1` would make these two
+trajectories coincide. Models with supported year-by-habitat
+interactions or spatiotemporal fields can instead have
+weighting-sensitive annual trends. The distinction comes from the fitted
+model, not a different index-calculation rule.
+
+### Check the weighted mean and its joint uncertainty
+
+The following native prediction check makes the calculation explicit.
+The prediction rows are ordered by year, then habitat. Matrix `W`
+averages each year’s three expected responses. Its covariance
+calculation retains dependence among habitats **and years**: it does not
+add independent cell standard errors.
+
+``` r
+
+prediction_rows <- do.call(rbind, lapply(area_cpue$table$Year, function(y) {
+  transform(cpue_domain[c("depth", "soak")],
+    year = factor(y, levels = levels(lobsters_per_pot$year)),
+    month = factor(levels(lobsters_per_pot$month)[1],
+      levels = levels(lobsters_per_pot$month)))
+}))
+native_cpue <- predict(lobster_model, newdata = prediction_rows,
+  type = "response", re.form = NA, se.fit = TRUE, cov.fit = TRUE)
+W <- kronecker(diag(nrow(area_cpue$table)),
+  matrix(cpue_domain$area_proportion, nrow = 1))
+native_mean <- drop(W %*% native_cpue$fit)
+native_covariance <- W %*% native_cpue$cov.fit %*% t(W)
+stopifnot(
+  isTRUE(all.equal(unname(native_mean), area_cpue$table$Mean, tolerance = 1e-8)),
+  isTRUE(all.equal(unname(native_covariance),
+    unname(index_vcov(area_cpue, scale = "response")), tolerance = 1e-6))
+)
+```
+
+Uncertainty describes the estimated domain-mean CPUE, with areas and
+reference covariates treated as known. It excludes uncertainty in the
+habitat boundaries, area estimates, reference profiles, or an additional
+stock-assessment error term. The monthly zero-effect target is unchanged
+by area weighting.
+
+### Area-weighted mean versus area-integrated CPUE
+
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+instead calculates $`\sum_i A_i\widehat\mu_{it}`$. With the same fixed
+100 km² domain and no catchability conversion, its result is exactly 100
+times the mean above. The units are now **lobsters · km² per pot**, not
+lobsters. Multiplying a per-pot CPUE by area does not turn it into
+abundance or biomass. A defensible conversion to density would be a
+separate assumption.
+
+``` r
+
+area_cpue_total <- integrate_index(
+  lobster_model, reference_data = cpue_domain, area = "area_km2", year = "year",
+  area_units = "km^2", response_units = "lobsters per pot",
+  units = "lobsters * km^2 per pot"
+)
+total_area <- sum(cpue_domain$area_km2)
+stopifnot(
+  isTRUE(all.equal(area_cpue_total$table$Mean, total_area * area_cpue$table$Mean)),
+  isTRUE(all.equal(area_cpue_total$table$SD, total_area * area_cpue$table$SD)),
+  isTRUE(all.equal(index_vcov(area_cpue_total, scale = "response"),
+    total_area^2 * index_vcov(area_cpue, scale = "response"))),
+  isTRUE(all.equal(index_vcov(area_cpue_total), index_vcov(area_cpue)))
+)
+knitr::kable(data.frame(
+  Year = area_cpue$table$Year,
+  `Mean CPUE (lobsters per pot)` = area_cpue$table$Mean,
+  `Integrated CPUE (lobsters km² per pot)` = area_cpue_total$table$Mean,
+  check.names = FALSE
+), digits = 3, row.names = FALSE)
+```
+
+| Year | Mean CPUE (lobsters per pot) | Integrated CPUE (lobsters km² per pot) |
+|:-----|-----------------------------:|---------------------------------------:|
+| 2000 |                        1.513 |                                151.305 |
+| 2001 |                        1.576 |                                157.637 |
+| 2002 |                        1.641 |                                164.065 |
+| 2003 |                        1.254 |                                125.376 |
+| 2004 |                        1.421 |                                142.067 |
+| 2005 |                        1.184 |                                118.432 |
+| 2006 |                        1.055 |                                105.505 |
+| 2007 |                        1.070 |                                106.977 |
+| 2008 |                        1.059 |                                105.898 |
+| 2009 |                        1.015 |                                101.481 |
+| 2010 |                        1.102 |                                110.202 |
+| 2011 |                        1.246 |                                124.628 |
+| 2012 |                        1.097 |                                109.729 |
+| 2013 |                        1.240 |                                124.008 |
+| 2014 |                        1.138 |                                113.765 |
+| 2015 |                        0.964 |                                 96.448 |
+| 2016 |                        0.989 |                                 98.913 |
+| 2017 |                        1.011 |                                101.081 |
+
+SDs and interval limits scale by total area, response covariance by its
+square, and CVs and log covariance remain unchanged. We keep the mean
+and total in separate displays because they have different methods and
+units.
+
+For repeated month/season rows within each habitat or cell, area weights
+need the corresponding averaging proportions as well. Use
+`reference_weights = area * seasonal_proportion` for the mean, or `area`
+plus `averaging_weights` in
+[`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
+for the total. Seasonal proportions must sum to one within each habitat
+or cell. Repeated full areas inflate a total and can bias a mean when
+habitats have different numbers of reference profiles. See the seasonal
+example below.
+
 ## Area integration for ordinary and spatial models
 
 No specialist spatiotemporal model is required. Given a prediction grid,

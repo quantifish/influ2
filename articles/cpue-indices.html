@@ -830,6 +830,532 @@ over a new population of latent random effects is a different target,
 not implied by these methods.</p>
 </div>
 <div class="section level2">
+<h2 id="area-weighted-cpue-over-a-fixed-fishing-domain">Area-weighted CPUE over a fixed fishing domain<a class="anchor" aria-label="anchor" href="#area-weighted-cpue-over-a-fixed-fishing-domain"></a>
+</h2>
+<p>Area weighting does not require a density response or a specialist
+spatial model. Suppose the simulated lobster fishing domain contains
+three non-overlapping habitat areas, totalling 100 km². We represent
+each habitat by one depth profile, fix soak time at 24 hours, and use
+the same habitat areas in every year. The response remains
+<strong>lobsters per pot</strong>.</p>
+<p>These areas are illustrative, not inferred from the sampling
+frequency or the lobster dataset. The chosen depths lie within the
+observed depth range in every year. In an assessment, define the domain
+from defensible mapped areas and use enough prediction cells or
+representative profiles to describe its covariates. A single profile per
+habitat is a compact approximation, not a claim that real habitats have
+constant depth or CPUE.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cpue_domain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  habitat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Shallow"</span>, <span class="st">"Middle"</span>, <span class="st">"Deep"</span><span class="op">)</span>,</span>
+<span>  depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">25</span>, <span class="fl">35</span><span class="op">)</span>,</span>
+<span>  soak <span class="op">=</span> <span class="fl">24</span>,</span>
+<span>  area_km2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">30</span>, <span class="fl">60</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">cpue_domain</span><span class="op">$</span><span class="va">area_proportion</span> <span class="op">&lt;-</span> <span class="va">cpue_domain</span><span class="op">$</span><span class="va">area_km2</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cpue_domain</span><span class="op">$</span><span class="va">area_km2</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">cpue_domain</span>, digits <span class="op">=</span> <span class="fl">2</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">habitat</th>
+<th align="right">depth</th>
+<th align="right">soak</th>
+<th align="right">area_km2</th>
+<th align="right">area_proportion</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Shallow</td>
+<td align="right">15</td>
+<td align="right">24</td>
+<td align="right">10</td>
+<td align="right">0.1</td>
+</tr>
+<tr class="even">
+<td align="left">Middle</td>
+<td align="right">25</td>
+<td align="right">24</td>
+<td align="right">30</td>
+<td align="right">0.3</td>
+</tr>
+<tr class="odd">
+<td align="left">Deep</td>
+<td align="right">35</td>
+<td align="right">24</td>
+<td align="right">60</td>
+<td align="right">0.6</td>
+</tr>
+</tbody>
+</table>
+<p>If
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>A</mi><mi>i</mi></msub><annotation encoding="application/x-tex">A_i</annotation></semantics></math>
+is habitat area and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>μ</mi><mo accent="true">̂</mo></mover><mrow><mi>i</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">\widehat\mu_{it}</annotation></semantics></math>
+is its expected CPUE in year
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>,
+the area-weighted mean is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>I</mi><mo accent="true">̂</mo></mover><mi>t</mi></msub><mo>=</mo><mfrac><mrow><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>A</mi><mi>i</mi></msub><msub><mover><mi>μ</mi><mo accent="true">̂</mo></mover><mrow><mi>i</mi><mi>t</mi></mrow></msub></mrow><mrow><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>A</mi><mi>i</mi></msub></mrow></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+  \widehat I_t = \frac{\sum_i A_i\widehat\mu_{it}}{\sum_i A_i}.
+</annotation></semantics></math></p>
+<p>Use <code><a href="../reference/cpue_index.html">cpue_index()</a></code> with areas as
+<code>reference_weights</code>. They are normalised internally, so
+supplying km² or the corresponding proportions gives the same mean.
+Predictions are averaged on the <strong>response scale</strong>, not
+averaged on the log scale and then exponentiated. We reuse
+<code>lobster_model</code> from above; nothing is refitted. Monthly
+random effects are set to zero, as in the earlier index, not integrated
+over a population of new monthly effects.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">area_cpue</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_model</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  reference_data <span class="op">=</span> <span class="va">cpue_domain</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"depth"</span>, <span class="st">"soak"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  reference_weights <span class="op">=</span> <span class="va">cpue_domain</span><span class="op">$</span><span class="va">area_km2</span>,</span>
+<span>  units <span class="op">=</span> <span class="st">"lobsters per pot"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">area_cpue</span><span class="op">)</span>, digits <span class="op">=</span> <span class="fl">3</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="7%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="10%">
+<col width="10%">
+<col width="19%">
+<col width="19%">
+<col width="7%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Mean</th>
+<th align="right">SD</th>
+<th align="right">CV</th>
+<th align="right">Q0.025</th>
+<th align="right">Q0.975</th>
+<th align="left">Method</th>
+<th align="left">Distribution</th>
+<th align="left">Link</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2000</td>
+<td align="right">1.513</td>
+<td align="right">0.216</td>
+<td align="right">0.143</td>
+<td align="right">1.144</td>
+<td align="right">2.002</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2001</td>
+<td align="right">1.576</td>
+<td align="right">0.225</td>
+<td align="right">0.143</td>
+<td align="right">1.192</td>
+<td align="right">2.084</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2002</td>
+<td align="right">1.641</td>
+<td align="right">0.230</td>
+<td align="right">0.140</td>
+<td align="right">1.247</td>
+<td align="right">2.159</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2003</td>
+<td align="right">1.254</td>
+<td align="right">0.172</td>
+<td align="right">0.137</td>
+<td align="right">0.958</td>
+<td align="right">1.640</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2004</td>
+<td align="right">1.421</td>
+<td align="right">0.194</td>
+<td align="right">0.137</td>
+<td align="right">1.087</td>
+<td align="right">1.857</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2005</td>
+<td align="right">1.184</td>
+<td align="right">0.168</td>
+<td align="right">0.142</td>
+<td align="right">0.896</td>
+<td align="right">1.565</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2006</td>
+<td align="right">1.055</td>
+<td align="right">0.143</td>
+<td align="right">0.136</td>
+<td align="right">0.809</td>
+<td align="right">1.376</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2007</td>
+<td align="right">1.070</td>
+<td align="right">0.144</td>
+<td align="right">0.134</td>
+<td align="right">0.822</td>
+<td align="right">1.392</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2008</td>
+<td align="right">1.059</td>
+<td align="right">0.146</td>
+<td align="right">0.137</td>
+<td align="right">0.809</td>
+<td align="right">1.386</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2009</td>
+<td align="right">1.015</td>
+<td align="right">0.140</td>
+<td align="right">0.138</td>
+<td align="right">0.775</td>
+<td align="right">1.329</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2010</td>
+<td align="right">1.102</td>
+<td align="right">0.149</td>
+<td align="right">0.135</td>
+<td align="right">0.845</td>
+<td align="right">1.437</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2011</td>
+<td align="right">1.246</td>
+<td align="right">0.169</td>
+<td align="right">0.135</td>
+<td align="right">0.956</td>
+<td align="right">1.624</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2012</td>
+<td align="right">1.097</td>
+<td align="right">0.153</td>
+<td align="right">0.139</td>
+<td align="right">0.835</td>
+<td align="right">1.442</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2013</td>
+<td align="right">1.240</td>
+<td align="right">0.169</td>
+<td align="right">0.136</td>
+<td align="right">0.949</td>
+<td align="right">1.620</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2014</td>
+<td align="right">1.138</td>
+<td align="right">0.154</td>
+<td align="right">0.136</td>
+<td align="right">0.872</td>
+<td align="right">1.484</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2015</td>
+<td align="right">0.964</td>
+<td align="right">0.132</td>
+<td align="right">0.137</td>
+<td align="right">0.737</td>
+<td align="right">1.262</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="odd">
+<td align="left">2016</td>
+<td align="right">0.989</td>
+<td align="right">0.134</td>
+<td align="right">0.135</td>
+<td align="right">0.759</td>
+<td align="right">1.290</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="right">1.011</td>
+<td align="right">0.139</td>
+<td align="right">0.137</td>
+<td align="right">0.773</td>
+<td align="right">1.322</td>
+<td align="left">standardised</td>
+<td align="left">nbinom2</td>
+<td align="left">log</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># A different target: each habitat has equal weight, irrespective of its area.</span></span>
+<span><span class="va">equal_habitat_cpue</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_model</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  reference_data <span class="op">=</span> <span class="va">cpue_domain</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"depth"</span>, <span class="st">"soak"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  units <span class="op">=</span> <span class="st">"lobsters per pot"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_compare.html">plot_compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>`Area-weighted CPUE` <span class="op">=</span> <span class="va">area_cpue</span>,</span>
+<span>  `Equal-habitat CPUE` <span class="op">=</span> <span class="va">equal_habitat_cpue</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>y <span class="op">=</span> <span class="st">"Expected lobsters per pot"</span>, colour <span class="op">=</span> <span class="st">"Reference weighting"</span>,</span>
+<span>    fill <span class="op">=</span> <span class="st">"Reference weighting"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="cpue-indices_files/figure-html/index-cpue-area-comparison-1.png" class="r-plt" alt="Annual lobster CPUE with two overlapping uncertainty ribbons shows the difference between fixed area weights and equal habitat weights, with the y-axis starting at zero." width="768"><p class="caption">
+Area-weighted expected lobster CPUE compared with an equal-habitat mean
+from the same negative-binomial glmmTMB fit. Both use depths of 15, 25,
+and 35 m, a 24-hour soak, and zero monthly random effects. The
+area-weighted mean gives the three habitats weights of 10%, 30%, and
+60%; the equal-habitat mean gives each one-third. Ribbons are pointwise
+95% intervals for each expected-response index, not uncertainty in their
+difference or the spread of individual responses. Both series remain in
+CPUE units; neither is biomass. This additive log-link model changes the
+overall level, not the relative annual trajectory, when these fixed
+weights change.
+</p>
+</div>
+<p>The equally weighted series is <strong>not nominal observed
+CPUE</strong>: it is another model-based reference mean. Equal weights
+would also be area weights if every prediction row represented an
+equal-area cell. Here the three habitat areas differ, so the two
+calculations answer different averaging questions.</p>
+<p>In this additive log-link model, the depth/soak relationship is
+shared across years. Changing fixed habitat weights therefore changes
+the level but not the relative year pattern. <code>rescale = 1</code>
+would make these two trajectories coincide. Models with supported
+year-by-habitat interactions or spatiotemporal fields can instead have
+weighting-sensitive annual trends. The distinction comes from the fitted
+model, not a different index-calculation rule.</p>
+<div class="section level3">
+<h3 id="check-the-weighted-mean-and-its-joint-uncertainty">Check the weighted mean and its joint uncertainty<a class="anchor" aria-label="anchor" href="#check-the-weighted-mean-and-its-joint-uncertainty"></a>
+</h3>
+<p>The following native prediction check makes the calculation explicit.
+The prediction rows are ordered by year, then habitat. Matrix
+<code>W</code> averages each year’s three expected responses. Its
+covariance calculation retains dependence among habitats <strong>and
+years</strong>: it does not add independent cell standard errors.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prediction_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Year</span>, <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">cpue_domain</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"depth"</span>, <span class="st">"soak"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>    year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">y</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    month <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">month</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>      levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">month</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">native_cpue</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">lobster_model</span>, newdata <span class="op">=</span> <span class="va">prediction_rows</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"response"</span>, re.form <span class="op">=</span> <span class="cn">NA</span>, se.fit <span class="op">=</span> <span class="cn">TRUE</span>, cov.fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">W</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/kronecker.html" class="external-link">kronecker</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">cpue_domain</span><span class="op">$</span><span class="va">area_proportion</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">native_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">native_cpue</span><span class="op">$</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="va">native_covariance</span> <span class="op">&lt;-</span> <span class="va">W</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">native_cpue</span><span class="op">$</span><span class="va">cov.fit</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">W</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">native_mean</span><span class="op">)</span>, <span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Mean</span>, tolerance <span class="op">=</span> <span class="fl">1e-8</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">native_covariance</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">area_cpue</span>, scale <span class="op">=</span> <span class="st">"response"</span><span class="op">)</span><span class="op">)</span>, tolerance <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Uncertainty describes the estimated domain-mean CPUE, with areas and
+reference covariates treated as known. It excludes uncertainty in the
+habitat boundaries, area estimates, reference profiles, or an additional
+stock-assessment error term. The monthly zero-effect target is unchanged
+by area weighting.</p>
+</div>
+<div class="section level3">
+<h3 id="area-weighted-mean-versus-area-integrated-cpue">Area-weighted mean versus area-integrated CPUE<a class="anchor" aria-label="anchor" href="#area-weighted-mean-versus-area-integrated-cpue"></a>
+</h3>
+<p><code><a href="../reference/integrate_index.html">integrate_index()</a></code> instead calculates
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>i</mi></msub><msub><mi>A</mi><mi>i</mi></msub><msub><mover><mi>μ</mi><mo accent="true">̂</mo></mover><mrow><mi>i</mi><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\sum_i A_i\widehat\mu_{it}</annotation></semantics></math>.
+With the same fixed 100 km² domain and no catchability conversion, its
+result is exactly 100 times the mean above. The units are now
+<strong>lobsters · km² per pot</strong>, not lobsters. Multiplying a
+per-pot CPUE by area does not turn it into abundance or biomass. A
+defensible conversion to density would be a separate assumption.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">area_cpue_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobster_model</span>, reference_data <span class="op">=</span> <span class="va">cpue_domain</span>, area <span class="op">=</span> <span class="st">"area_km2"</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"lobsters per pot"</span>,</span>
+<span>  units <span class="op">=</span> <span class="st">"lobsters * km^2 per pot"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">total_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cpue_domain</span><span class="op">$</span><span class="va">area_km2</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">area_cpue_total</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Mean</span>, <span class="va">total_area</span> <span class="op">*</span> <span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Mean</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">area_cpue_total</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">SD</span>, <span class="va">total_area</span> <span class="op">*</span> <span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">SD</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">area_cpue_total</span>, scale <span class="op">=</span> <span class="st">"response"</span><span class="op">)</span>,</span>
+<span>    <span class="va">total_area</span><span class="op">^</span><span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">area_cpue</span>, scale <span class="op">=</span> <span class="st">"response"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">area_cpue_total</span><span class="op">)</span>, <span class="fu"><a href="../reference/index_vcov.html">index_vcov</a></span><span class="op">(</span><span class="va">area_cpue</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Year <span class="op">=</span> <span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Year</span>,</span>
+<span>  `Mean CPUE (lobsters per pot)` <span class="op">=</span> <span class="va">area_cpue</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Mean</span>,</span>
+<span>  `Integrated CPUE (lobsters km² per pot)` <span class="op">=</span> <span class="va">area_cpue_total</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">Mean</span>,</span>
+<span>  check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span>, digits <span class="op">=</span> <span class="fl">3</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="6%">
+<col width="39%">
+<col width="53%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Year</th>
+<th align="right">Mean CPUE (lobsters per pot)</th>
+<th align="right">Integrated CPUE (lobsters km² per pot)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2000</td>
+<td align="right">1.513</td>
+<td align="right">151.305</td>
+</tr>
+<tr class="even">
+<td align="left">2001</td>
+<td align="right">1.576</td>
+<td align="right">157.637</td>
+</tr>
+<tr class="odd">
+<td align="left">2002</td>
+<td align="right">1.641</td>
+<td align="right">164.065</td>
+</tr>
+<tr class="even">
+<td align="left">2003</td>
+<td align="right">1.254</td>
+<td align="right">125.376</td>
+</tr>
+<tr class="odd">
+<td align="left">2004</td>
+<td align="right">1.421</td>
+<td align="right">142.067</td>
+</tr>
+<tr class="even">
+<td align="left">2005</td>
+<td align="right">1.184</td>
+<td align="right">118.432</td>
+</tr>
+<tr class="odd">
+<td align="left">2006</td>
+<td align="right">1.055</td>
+<td align="right">105.505</td>
+</tr>
+<tr class="even">
+<td align="left">2007</td>
+<td align="right">1.070</td>
+<td align="right">106.977</td>
+</tr>
+<tr class="odd">
+<td align="left">2008</td>
+<td align="right">1.059</td>
+<td align="right">105.898</td>
+</tr>
+<tr class="even">
+<td align="left">2009</td>
+<td align="right">1.015</td>
+<td align="right">101.481</td>
+</tr>
+<tr class="odd">
+<td align="left">2010</td>
+<td align="right">1.102</td>
+<td align="right">110.202</td>
+</tr>
+<tr class="even">
+<td align="left">2011</td>
+<td align="right">1.246</td>
+<td align="right">124.628</td>
+</tr>
+<tr class="odd">
+<td align="left">2012</td>
+<td align="right">1.097</td>
+<td align="right">109.729</td>
+</tr>
+<tr class="even">
+<td align="left">2013</td>
+<td align="right">1.240</td>
+<td align="right">124.008</td>
+</tr>
+<tr class="odd">
+<td align="left">2014</td>
+<td align="right">1.138</td>
+<td align="right">113.765</td>
+</tr>
+<tr class="even">
+<td align="left">2015</td>
+<td align="right">0.964</td>
+<td align="right">96.448</td>
+</tr>
+<tr class="odd">
+<td align="left">2016</td>
+<td align="right">0.989</td>
+<td align="right">98.913</td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="right">1.011</td>
+<td align="right">101.081</td>
+</tr>
+</tbody>
+</table>
+<p>SDs and interval limits scale by total area, response covariance by
+its square, and CVs and log covariance remain unchanged. We keep the
+mean and total in separate displays because they have different methods
+and units.</p>
+<p>For repeated month/season rows within each habitat or cell, area
+weights need the corresponding averaging proportions as well. Use
+<code>reference_weights = area * seasonal_proportion</code> for the
+mean, or <code>area</code> plus <code>averaging_weights</code> in
+<code><a href="../reference/integrate_index.html">integrate_index()</a></code> for the total. Seasonal proportions must
+sum to one within each habitat or cell. Repeated full areas inflate a
+total and can bias a mean when habitats have different numbers of
+reference profiles. See the seasonal example below.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="area-integration-for-ordinary-and-spatial-models">Area integration for ordinary and spatial models<a class="anchor" aria-label="anchor" href="#area-integration-for-ordinary-and-spatial-models"></a>
 </h2>
 <p>No specialist spatiotemporal model is required. Given a prediction
@@ -843,7 +1369,7 @@ its other predictors, but its predictions can still be integrated.</p>
 multiplying by cell areas in km² yields kg. It is not a conversion of
 the lobster pot catches above into biomass. The changing survey
 footprint is deliberately imbalanced.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">710</span><span class="op">)</span></span>
 <span><span class="va">survey</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2011</span><span class="op">:</span><span class="fl">2016</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">survey</span><span class="op">$</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">survey</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span></span>
@@ -861,7 +1387,7 @@ footprint is deliberately imbalanced.</p>
 <span>                           y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">9.75</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">density_grid</span><span class="op">$</span><span class="va">depth</span> <span class="op">&lt;-</span> <span class="fl">20</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">density_grid</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">density_grid</span><span class="op">$</span><span class="va">y</span></span>
 <span><span class="va">density_grid</span><span class="op">$</span><span class="va">area_km2</span> <span class="op">&lt;-</span> <span class="fl">0.25</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gam_density</span> <span class="op">&lt;-</span> <span class="fu">mgcv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mgcv/man/gam.html" class="external-link">gam</a></span><span class="op">(</span><span class="va">density</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, k <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">Gamma</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">survey</span>, method <span class="op">=</span> <span class="st">"REML"</span><span class="op">)</span></span>
 <span><span class="va">glm_density</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">density</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">depth</span>,</span>
@@ -964,7 +1490,7 @@ footprint is deliberately imbalanced.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_compare.html">plot_compare</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>`Spatial GAM` <span class="op">=</span> <span class="va">gam_total</span>, `Depth GLM` <span class="op">=</span> <span class="va">glm_total</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="cpue-indices_files/figure-html/area-comparison-1.png" class="r-plt" alt="Area-integrated expected density over the same 100 km² domain, comparing a GAM with a spatial smooth against a GLM with a depth effect but no explicit spatial term. Both return totals in kg under the simulated density units. Pointwise 95% confidence intervals propagate joint coefficient uncertainty; they do not describe new catches or uncertainty in the difference between models." width="768"><p class="caption">
@@ -1003,7 +1529,7 @@ repeating the full cell area four times computes a sum over four seasons
 rather than an annual mean surface. This is also relevant to
 month-by-area GAM grids: the integration weights must represent the
 intended seasonal and spatial target.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seasonal_total</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/integrate_index.html">integrate_index</a></span><span class="op">(</span><span class="va">seasonal_model</span>, <span class="va">quarter_grid</span>,</span>
 <span>  area <span class="op">=</span> <span class="st">"area_km2"</span>, averaging_weights <span class="op">=</span> <span class="fl">1</span> <span class="op">/</span> <span class="fl">4</span>,</span>
 <span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"kg/km^2"</span>, units <span class="op">=</span> <span class="st">"kg"</span><span class="op">)</span></span></code></pre></div>

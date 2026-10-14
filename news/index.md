@@ -2,6 +2,11 @@
 
 ## influ2 1.1.0
 
+- The CPUE-indices article now demonstrates an area-weighted lobster
+  CPUE mean, equal-habitat weighting, native joint prediction/covariance
+  checks, and the distinct area-integrated CPUE total. The response
+  stays in CPUE units; no abundance or biomass conversion is implied.
+
 - Compact DHARMa residual calculations now use temporary disk-backed
   joint simulations and bounded observation blocks by default. Native
   DHARMa PIT and vector-based tests are retained; dispersion and outlier
