@@ -24,7 +24,8 @@ check_cpue(
   alpha = 0.05,
   dharma_max_mb = 256,
   trial_counts = NULL,
-  response_transform = "identity"
+  response_transform = "identity",
+  dharma_storage = c("auto", "disk", "memory")
 )
 
 # S3 method for class 'influ_check'
@@ -81,14 +82,15 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
   available.
 
 - nsim, batch_size, seed, component, conditioning, dharma_max_mb,
-  trial_counts, response_transform:
+  trial_counts, response_transform, dharma_storage:
 
   Passed to
   [`influ_residuals()`](https://www.quantifish.co.nz/influ2/reference/influ_residuals.md)
-  for new calculations. No MCMC or original model refit is run. DHARMa
-  temporarily needs a full response matrix; `dharma_max_mb` bounds that
-  matrix, not peak memory. `batch_size` does not eliminate this
-  allocation. Component selection is explicit for joint models.
+  for new calculations. No MCMC or original model refit is run. Compact
+  DHARMa calculations default to bounded response blocks and a temporary
+  disk cache; `dharma_max_mb` is a response-workspace budget, not a
+  process-wide memory bound. Component selection is explicit for joint
+  models.
 
 - residual_method:
 
@@ -101,10 +103,11 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 - residual_tests:
 
-  Native DHARMa test set for new calculations: `"none"`, `"standard"`,
-  or `"full"`. `NULL` selects `"standard"` for DHARMa and `"none"` for
-  simulation PIT. Full adds auxiliary quantile regressions and outlier
-  tests, with additional computation, but no original-model refits.
+  DHARMa-reference test set for new calculations: `"none"`,
+  `"standard"`, or `"full"`. `NULL` selects `"standard"` for DHARMa and
+  `"none"` for simulation PIT. Full adds auxiliary quantile regressions
+  and outlier tests, with additional computation, but no original-model
+  refits.
 
 - alpha:
 
@@ -165,13 +168,15 @@ smooth EDF/statistics are reported separately, not classified as
 residual failures. Joint/latent structures requiring an explicitly
 defined dependence check are reported as unassessed.
 
-Optional overall tests are genuinely calculated by DHARMa while its
-native simulation object exists. The compact report retains statistics
-and metadata, not that object's response matrix, the fitted model, or
-formula environments. Plotting and printing never repeat tests or
-consume RNG. Supplied residuals are compacted even if their original
-object retains native DHARMa simulations. Caller RNG is preserved during
-calculation.
+Optional uniformity/year/quantile tests use genuine DHARMa vector
+interfaces. Disk-based dispersion and outlier tests use labelled
+bounded-memory equivalents; `dharma_storage = "memory"` calls native
+object-based tests. The compact report retains statistics,
+implementation sources, and metadata, not that object's response matrix,
+the fitted model, or formula environments. Plotting and printing never
+repeat tests or consume RNG. Supplied residuals are compacted even if
+their original object retains native DHARMa simulations. Caller RNG is
+preserved during calculation.
 
 `"issue"` denotes a numerical fitting problem; `"review"` denotes
 evidence worth inspecting; `"no_flag"` means only that the particular

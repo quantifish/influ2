@@ -1297,7 +1297,7 @@ engine within the shared influ2 plotting framework:</p>
 <code class="sourceCode R"><span><span class="va">dharma_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">20260907</span>,</span>
 <span>  residual_method <span class="op">=</span> <span class="st">"dharma"</span>, conditioning <span class="op">=</span> <span class="st">"new_effects"</span>,</span>
-<span>  residual_tests <span class="op">=</span> <span class="st">"standard"</span></span>
+<span>  residual_tests <span class="op">=</span> <span class="st">"standard"</span>, dharma_storage <span class="op">=</span> <span class="st">"disk"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">dharma_checks</span></span>
 <span><span class="co">#&gt; DHARMa residual diagnostics (glmmTMB)</span></span>
@@ -1306,16 +1306,20 @@ engine within the shared influ2 plotting framework:</p>
 <span><span class="co">#&gt; Native simulations at fitted parameters; random effects resimulated</span></span>
 <span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span>
 <span><span class="co">#&gt; DHARMa 0/1 endpoints: 22; normal-score display limits +/-3.65. Uniform PIT values remain unchanged.</span></span>
-<span><span class="co">#&gt; No model or observation-by-simulation matrix retained</span></span></code></pre></div>
-<p><code>residual_method = "dharma"</code> sends the complete native
-response simulations to
-<code>DHARMa::createDHARMa(method = "PIT")</code>. DHARMa calculates its
-own uniform-scale residuals; this is not a new label on influ2’s
-finite-simulation ranks. It works through the simulation adapters for
-GLM, GAM, glmmTMB, lme4, brms, sdmTMB, and single-response tinyVAST
-models, subject to their existing family, conditioning, and component
-restrictions. No second model simulator, refitting, or MCMC is invoked.
-In particular, this example redraws random effects because we selected
+<span><span class="co">#&gt; Compact DHARMa PIT summaries; temporary response cache removed; no model or full response matrix retained</span></span></code></pre></div>
+<p><code>residual_method = "dharma"</code> uses DHARMa’s own
+uniform-scale PIT calculation; this is not a new label on influ2’s
+finite-simulation ranks. The default
+<code>dharma_storage = "auto"</code> uses a temporary disk cache for
+compact results. Whole native response simulations are generated once,
+in batches, and <code>DHARMa::getQuantile(method = "PIT")</code>
+calculates residuals from bounded blocks of observation rows. The
+example requests that disk route explicitly. It works through the
+simulation adapters for GLM, GAM, glmmTMB, lme4, brms, sdmTMB, and
+single-response tinyVAST models, subject to their existing family,
+conditioning, and component restrictions. No second model simulator,
+refitting, or MCMC is invoked. In particular, this example redraws
+random effects because we selected
 <code>conditioning = "new_effects"</code>; it does not inherit DHARMa
 0.5.0’s conditional-simulation default. DHARMa’s tie randomisation uses
 a separate deterministic seed derived from <code>seed</code>, recorded
@@ -1747,11 +1751,11 @@ warnings. Missing diagnostics are not passes.
 fitting report and the term inventory without residual simulation.
 Calling <code>check_cpue(fit)</code> without a residual object requests
 new DHARMa residuals and standard tests, using the backend’s recorded
-default conditioning. It can take time and temporarily allocate a
-response matrix. There is no silent engine fallback if DHARMa, a family,
-or a simulation target is unavailable: the report records an unassessed
-check and its reason. Hard numerical problems prevent automatic
-simulation. Saved TMB objectives are not secretly reinitialised.</p>
+default conditioning. It can take time and use temporary disk storage.
+There is no silent engine fallback if DHARMa, a family, or a simulation
+target is unavailable: the report records an unassessed check and its
+reason. Hard numerical problems prevent automatic simulation. Saved TMB
+objectives are not secretly reinitialised.</p>
 <p>For each fitted term, the current screens report <strong>Spearman
 rho</strong> for a raw numeric predictor or a <strong>Kruskal-Wallis H
 statistic</strong> for sufficiently sampled categories, including the
@@ -1767,30 +1771,54 @@ failure. Interactions, multivariate/latent processes, sparse groups, and
 unsupported component checks remain visible as
 <code>not_assessed</code>; the function does not replace them with
 arbitrary proxies.</p>
-<p>The standard native DHARMa tests supply the overall uniformity KS
-statistic and response-dispersion ratio, plus within-year KS checks and
-the median-centred Levene F statistic for year-to-year variation. Levene
-is <strong>not</strong> Kruskal-Wallis. The within-year KS tests have
-their own Holm family; no universal adjustment across all diagnostic
-questions is implied. Use <code>residual_tests = "full"</code> when
-calculating new residuals to add auxiliary quantile regressions and
-outlier checks. The former fits diagnostic qgam regressions, not the
-CPUE model; the latter uses explicit bootstrap references for integer
-responses. Both add calculation time. Simulation-test p-values have
-finite Monte Carlo precision; a reported zero is not an exact
-probability.</p>
+<p>The standard checks supply the overall uniformity KS statistic and
+response-dispersion ratio, plus within-year KS checks and the
+median-centred Levene F statistic for year-to-year variation. Uniformity
+and categorical checks call DHARMa with the stored PIT vector. The disk
+route’s dispersion test is an <strong>explicitly labelled bounded-memory
+equivalent</strong> of DHARMa’s nonparametric response-dispersion test,
+not a native call on a fabricated DHARMa object. It reads the same joint
+simulations from the cache to obtain the response-variance reference.
+Levene is <strong>not</strong> Kruskal-Wallis. The within-year KS tests
+have their own Holm family; no universal adjustment across all
+diagnostic questions is implied. Use
+<code>residual_tests = "full"</code> when calculating new residuals to
+add auxiliary quantile regressions and outlier checks. The former fits
+diagnostic qgam regressions, not the CPUE model; the latter uses
+explicit bootstrap references for integer responses. In disk mode, those
+outlier tests are also labelled bounded-memory equivalents: the
+bootstrap uses DHARMa’s quantile calculation and shared resampled
+simulation columns, rather than approximating it with only stored minima
+and maxima. Continuous-response outlier checks use the matching binomial
+reference. The retained memory route calls the native dispersion and
+outlier tests directly. Both full checks add calculation time. The
+stored test table records each method, so “DHARMa” in a plot annotation
+does not imply every disk-mode statistic was obtained from a native test
+call. The disk-mode dispersion annotation is explicitly labelled
+“DHARMa-equivalent response dispersion”. These equivalent test
+algorithms have been checked against DHARMa <strong>0.4.7 and
+0.5.0</strong>. Other dependency versions leave the equivalent tests
+<code>not_assessed</code>, rather than assume future native
+implementations are unchanged; choose
+<code>dharma_storage = "memory"</code> when a different version’s native
+dispersion/outlier implementation is required. Native PIT and
+vector-based checks do not acquire a new calibration guarantee from this
+implementation-equivalence check. Simulation-test p-values have finite
+Monte Carlo precision; a reported zero is not an exact probability.</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lobster_report</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-model-report-overview-1.png" class="r-plt" alt="The four-panel mixed-model overview includes native likelihood statistics and labelled stored residual-test summaries." width="1056"><p class="caption">
 The model-check report reuses the negative-binomial glmmTMB lobster
-residuals and adds available native model statistics and stored DHARMa
-tests. The Q-Q panel reports uniform-scale KS evidence, the year panel
-reports uniform-scale Levene and within-year KS evidence, and the
-response ECDF panel reports the separate native response-dispersion
-test, not an ECDF test. No quantile regression was requested in this
-standard report. Tests are exploratory, specific to new-effect
-conditioning, and not calibrated model acceptance rules.
+residuals and adds available native model statistics and stored
+DHARMa-based checks. The Q-Q panel reports uniform-scale KS evidence,
+the year panel reports uniform-scale Levene and within-year KS evidence,
+and the response ECDF panel reports the separate response-dispersion
+test, not an ECDF test. Here dispersion uses the explicitly labelled
+bounded-memory equivalent of DHARMa’s native test. No quantile
+regression was requested in this standard report. Tests are exploratory,
+specific to new-effect conditioning, and not calibrated model acceptance
+rules.
 </p>
 </div>
 <p><code>plot(report, type = "term", term = ...)</code> reuses a
@@ -1993,7 +2021,7 @@ conditional variance equal to its mean is too restrictive.</p>
 </tr>
 </tbody>
 </table>
-<p>The native DHARMa dispersion statistic compares observed
+<p>The DHARMa response-dispersion statistic compares observed
 response-residual variance with its simulated reference. Values above
 one indicate more variation than expected under that simulation target.
 In this run Poisson’s ratio is approximately <strong>2.29</strong>, with
@@ -2033,13 +2061,13 @@ overall model pass.
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-model-report-family-distribution-1.png" class="r-plt" alt="Poisson and negative-binomial response checks show their different dispersion ratios and matching predictive distributions." width="1056"><p class="caption">
 Matched Poisson (left) and negative-binomial (right)
-response-distribution checks, with their stored native DHARMa dispersion
-ratios. The purple curve is observed and the blue curve is the simulated
-median. Poisson’s ratio is about 2.29 and its finite Monte Carlo p-value
-is reported as zero from 250 simulations; the negative-binomial ratio is
-about 1.19 with p = 0.368. The grey predictive bands and response ECDFs
-are not themselves dispersion-test statistics, and these are not
-calibrated model acceptance tests.
+response-distribution checks, with their stored DHARMa-equivalent
+bounded-memory dispersion ratios. The purple curve is observed and the
+blue curve is the simulated median. Poisson’s ratio is about 2.29 and
+its finite Monte Carlo p-value is reported as zero from 250 simulations;
+the negative-binomial ratio is about 1.19 with p = 0.368. The grey
+predictive bands and response ECDFs are not themselves dispersion-test
+statistics, and these are not calibrated model acceptance tests.
 </p>
 </div>
 <p>The default <code>residual_method = "simulation_pit"</code> remains
@@ -2062,20 +2090,54 @@ endpoints. As before, their optional bayesplot reference assumes
 independent uniform values, not a calibrated fitted-data test.</p>
 </div>
 <div class="section level3">
-<h3 id="retain-the-native-object-only-when-needed">Retain the native object only when needed<a class="anchor" aria-label="anchor" href="#retain-the-native-object-only-when-needed"></a>
+<h3 id="bounded-memory-calculation-and-native-object-retention">Bounded-memory calculation and native-object retention<a class="anchor" aria-label="anchor" href="#bounded-memory-calculation-and-native-object-retention"></a>
 </h3>
-<p>DHARMa requires a full observation-by-simulation matrix during
-calculation, even when <code>batch_size</code> is small. It and the
-native simulator may allocate additional working copies.
-<code>dharma_max_mb</code> limits the matrix alone (256 MiB by default),
-and requests of at least 100 MiB warn; this is not a peak-memory bound.
-By default, we discard the matrix and DHARMa object, keeping only the
-compact influ2 result. Retain the original DHARMa object explicitly to
-use its tools:</p>
+<p>For compact results, <code>dharma_storage = "auto"</code> chooses the
+disk route used above. The temporary binary cache holds all response
+simulations on disk, without requiring a complete
+observation-by-simulation matrix in RAM. Observation blocks contain at
+most 1,000 rows and half the observations (rounded up); the workspace
+budget can reduce them further. Thus disk calculation does not read the
+whole response matrix into RAM, even for a small example. Each complete
+joint simulation is generated once; reading observation blocks later
+does not redraw random effects, select new posterior states, or break
+dependence within a replicate. Disk space grows with observation count
+times simulation count (about eight bytes per stored response), and
+additional reads increase I/O time. Full integer-response bootstrap
+outlier checks can require many such reads. The cache is removed after
+calculation, including when calculation fails; it is not retained in the
+saved diagnostic.</p>
+<p><code>batch_size</code> limits response simulations requested
+together. In disk mode, <code>dharma_max_mb</code> also guards the
+estimated response-block workspace, with a default budget of 256 MiB.
+The effective simulation batch is reduced if needed, and observation
+blocks are sized to that budget. A request that cannot hold even one
+simulation column or one observation row fails explicitly. The metadata
+records the actual storage mode, batch size, row-block size, and
+estimated cache/workspace sizes, not a persistent cache path. Native
+random number use can depend on simulation batch size, so use the
+recorded effective batch when reproducing a calculation. This is
+<strong>not a bound on total process memory</strong>: native model
+setup, latent-field factorisation, qgam diagnostic fits, compact
+ECDF/calibration arrays, and R overhead need additional storage. Disk
+batching addresses simulation-matrix memory, not conditioning-related
+residual correlation or false-positive rates. The scientific
+interpretation above is unchanged.</p>
+<p>Choose <code>dharma_storage = "memory"</code> to calculate with the
+complete response matrix and
+<code>DHARMa::createDHARMa(method = "PIT")</code>. Its matrix-size guard
+remains active; the native calculation can make additional working
+copies. Retain the genuine DHARMa object explicitly when its own
+plotting or aggregation tools are needed. With
+<code>retain_dharma = TRUE</code>, <code>"auto"</code> selects memory
+storage; <code>dharma_storage = "disk", retain_dharma = TRUE</code> is
+rejected rather than pretending a compact result is a complete native
+object:</p>
 <div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dharma_retained</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">20260907</span>,</span>
 <span>  residual_method <span class="op">=</span> <span class="st">"dharma"</span>, conditioning <span class="op">=</span> <span class="st">"new_effects"</span>,</span>
+<span>  residual_tests <span class="op">=</span> <span class="st">"standard"</span>, dharma_storage <span class="op">=</span> <span class="st">"memory"</span>,</span>
 <span>  retain_dharma <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co"># These reuse the existing responses, without fitting or simulating again:</span></span>
@@ -2089,6 +2151,199 @@ use its tools:</p>
 <span><span class="co">#&gt; data:  simulationOutput</span></span>
 <span><span class="co">#&gt; dispersion = 1.1686, p-value = 0.44</span></span>
 <span><span class="co">#&gt; alternative hypothesis: two.sided</span></span></code></pre></div>
+<p>The disk and memory calls above use the <strong>same model, seed,
+simulation count, batch size, and conditioning</strong>. Compare their
+stored results without further simulations. PIT values agree exactly,
+and the same predictive means and native vector-test statistics agree to
+numerical precision. For the validated DHARMa versions, the comparison
+also includes the bounded-memory equivalents; test-method labels
+deliberately distinguish them from native calls. With a different
+version, unavailable equivalent tests stay <code>not_assessed</code>,
+rather than being presumed numerically equivalent to that version’s
+native tests:</p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">statistics_columns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"check"</span>, <span class="st">"term"</span>, <span class="st">"statistic"</span>, <span class="st">"p_value"</span>, <span class="st">"p_adjusted"</span><span class="op">)</span></span>
+<span><span class="va">validated_equivalents</span> <span class="op">&lt;-</span> <span class="va">dharma_checks</span><span class="op">$</span><span class="va">metadata</span><span class="op">$</span><span class="va">dharma_version</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0.4.7"</span>, <span class="st">"0.5.0"</span><span class="op">)</span></span>
+<span><span class="va">comparison_rows</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">validated_equivalents</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">tests</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="op">!</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">tests</span><span class="op">$</span><span class="va">check</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dispersion"</span>, <span class="st">"outliers"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">observations</span><span class="op">$</span><span class="va">pit</span>,</span>
+<span>    <span class="va">dharma_retained</span><span class="op">$</span><span class="va">observations</span><span class="op">$</span><span class="va">pit</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">observations</span><span class="op">$</span><span class="va">predicted</span>,</span>
+<span>    <span class="va">dharma_retained</span><span class="op">$</span><span class="va">observations</span><span class="op">$</span><span class="va">predicted</span>, tolerance <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">tests</span><span class="op">[</span><span class="va">comparison_rows</span>, <span class="va">statistics_columns</span><span class="op">]</span>,</span>
+<span>    <span class="va">dharma_retained</span><span class="op">$</span><span class="va">tests</span><span class="op">[</span><span class="va">comparison_rows</span>, <span class="va">statistics_columns</span><span class="op">]</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span>,</span>
+<span>    check.attributes <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">dharma</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">inherits</a></span><span class="op">(</span><span class="va">dharma_retained</span><span class="op">$</span><span class="va">dharma</span>, <span class="st">"DHARMa"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">dharma_checks</span><span class="op">$</span><span class="va">tests</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"check"</span>, <span class="st">"term"</span>, <span class="st">"status"</span>, <span class="st">"method"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="15%">
+<col width="8%">
+<col width="7%">
+<col width="68%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">check</th>
+<th align="left">term</th>
+<th align="left">status</th>
+<th align="left">method</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">uniformity</td>
+<td align="left">response</td>
+<td align="left">review</td>
+<td align="left">Asymptotic one-sample Kolmogorov-Smirnov test</td>
+</tr>
+<tr class="even">
+<td align="left">dispersion</td>
+<td align="left">response</td>
+<td align="left">no_flag</td>
+<td align="left">influ2 bounded-memory equivalent of DHARMa
+nonparametric dispersion test</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2000</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2001</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2002</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2003</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2004</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2005</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2006</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2007</td>
+<td align="left">review</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2008</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2009</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2010</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2011</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2012</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2013</td>
+<td align="left">review</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2014</td>
+<td align="left">review</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2015</td>
+<td align="left">review</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_uniformity</td>
+<td align="left">2016</td>
+<td align="left">review</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="even">
+<td align="left">year_uniformity</td>
+<td align="left">2017</td>
+<td align="left">no_flag</td>
+<td align="left">DHARMa within-year KS; Holm correction across tested
+years</td>
+</tr>
+<tr class="odd">
+<td align="left">year_homogeneity</td>
+<td align="left">year</td>
+<td align="left">review</td>
+<td align="left">DHARMa median-centred Levene test</td>
+</tr>
+</tbody>
+</table>
 <p>This genuine <code>dharma_retained$dharma</code> object contains the
 response simulations, not a fitted model or Pearson residuals. DHARMa’s
 aggregation tools can aggregate observations and matching simulated
@@ -2104,7 +2359,11 @@ for counts, or <code>integer_response = FALSE</code> for
 continuous/mixed distributions. Bernoulli and grouped-binomial kinds
 supply <code>TRUE</code> automatically. All existing ID alignment and
 component declarations still apply. A combined hurdle/delta diagnostic
-is not a positive-component diagnostic.</p>
+is not a positive-component diagnostic. The constructor can use the disk
+route to avoid an additional complete simulation matrix during DHARMa
+calculation, but the matrix supplied by the caller is already in RAM and
+remains there until the caller releases it. It is not automatically
+offloaded or removed.</p>
 <p>Likelihood-based residual-implied effects do not use PIT or DHARMa
 scores, so this option does not change <code><a href="../reference/implied_effects.html">implied_effects()</a></code> or
 <code><a href="../reference/plot_implied_residuals.html">plot_implied_residuals()</a></code>. OSA remains a separate future
@@ -2118,7 +2377,7 @@ explicit ordering, not convert DHARMa values into OSA residuals.</p>
 variation while holding the mean formula fixed, using DHARMa’s own
 simulation entry point. Unlike the integrated example, these are
 fixed-effect models.</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dharma_poisson</span> <span class="op">&lt;-</span> <span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/simulateResiduals.html" class="external-link">simulateResiduals</a></span><span class="op">(</span></span>
 <span>  fittedModel <span class="op">=</span> <span class="va">lobster_poisson</span>, n <span class="op">=</span> <span class="fl">250</span>, refit <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">20260907</span></span>
 <span><span class="op">)</span></span>
@@ -2132,7 +2391,7 @@ example uses 250 simulations. For substantive work, increase that number
 and check stability. Simulation storage still scales with observations
 times simulations, independently of influ2’s compact
 uncertainty-retention settings.</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/plotQQunif.html" class="external-link">plotQQunif</a></span><span class="op">(</span></span>
 <span>  <span class="va">dharma_poisson</span>, testUniformity <span class="op">=</span> <span class="cn">FALSE</span>, testOutliers <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -2150,14 +2409,14 @@ accommodate the simulated overdispersion. Formal tests are suppressed
 here so interpretation starts with the diagnostic pattern.
 </p>
 </div>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>DHARMa residuals are approximately <strong>uniform on zero to
 one</strong> under an adequate simulation model, not normally
 distributed. Do not feed them into a normal Q-Q plot without a
 deliberate transformation. Distributional agreement does not rule out
 remaining covariate patterns:</p>
-<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/plotResiduals.html" class="external-link">plotResiduals</a></span><span class="op">(</span></span>
 <span>  <span class="va">dharma_poisson</span>, form <span class="op">=</span> <span class="va">lobsters_per_pot</span><span class="op">$</span><span class="va">depth</span>, quantreg <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -2175,14 +2434,14 @@ lobster models. The thin black dashed line marks the uniform median of
 rank-scaled. These are not independent validation tests.
 </p>
 </div>
-<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The simulated responses can also check quantities of direct fisheries
 interest. Compare the observed proportion of empty pots and the upper
 catch quantile with the same quantities calculated from each simulated
 dataset. These are predictive checks at fitted parameters, not posterior
 predictive checks or confidence intervals for an index.</p>
-<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">statistics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Empty-pot proportion"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  <span class="st">"95th catch percentile"</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.95</span><span class="op">)</span><span class="op">)</span></span>
@@ -2331,7 +2590,7 @@ residual reference</a> and <a href="https://sdmtmb.github.io/sdmTMB/articles/res
 residual examples</a>.</p>
 <p>For a single-response model such as <code>pcod_model</code> in <a href="spatial-spatiotemporal.html">Spatial and spatiotemporal
 diagnostics</a>, influ2’s unified Q-Q workflow is:</p>
-<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcod_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
 <span><span class="op">)</span></span>
@@ -2349,7 +2608,7 @@ These remain exploratory fitted-model diagnostics.</p>
 <p>sdmTMB also has a dedicated DHARMa bridge. The following recipe
 reuses an already fitted model; it is not evaluated again in this
 article.</p>
-<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">41</span><span class="op">)</span></span>
 <span><span class="va">pcod_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">pcod_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, type <span class="op">=</span> <span class="st">"mle-mvn"</span><span class="op">)</span></span>
 <span><span class="va">pcod_dharma</span> <span class="op">&lt;-</span> <span class="fu">sdmTMB</span><span class="fu">::</span><span class="fu"><a href="https://sdmTMB.github.io/sdmTMB/reference/dharma_residuals.html" class="external-link">dharma_residuals</a></span><span class="op">(</span></span>
@@ -2372,7 +2631,7 @@ target.</p>
 simulated normal-score ranks. Fitted-field conditioning remains the
 default, with one shared conditional latent draw now available
 explicitly:</p>
-<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tiny_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">tiny_model</span>, nsim <span class="op">=</span> <span class="fl">250</span>, seed <span class="op">=</span> <span class="fl">41</span>, conditioning <span class="op">=</span> <span class="st">"conditional_draw"</span></span>
 <span><span class="op">)</span></span>
@@ -2462,7 +2721,7 @@ values, and default four panels are unchanged. This fixes the display,
 <strong>not fitted-model calibration</strong>. The original study and
 its pre-correction results remain frozen and available for
 comparison.</p>
-<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span>,</span>
@@ -2509,7 +2768,7 @@ order. The unchanged default is
 chooses response calibration or a response ECDF using the original
 response metadata. For example, retain the response ECDF and replace the
 year panel with a PIT ECDF difference:</p>
-<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, panels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"pit_ecdf_diff"</span>, <span class="st">"distribution"</span><span class="op">)</span>,</span>
 <span>  response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -2529,7 +2788,7 @@ the needed summaries were calculated. There must be exactly four names;
 their order and repetition are allowed. Missing summaries produce an
 informative error rather than silently substituting a different
 diagnostic. For an optional PIT plot in the fourth position, use:</p>
-<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">nb_checks</span>, panels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"qq"</span>, <span class="st">"fitted"</span>, <span class="st">"year"</span>, <span class="st">"pit_ecdf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>That last layout omits the complementary response check, so inspect
 it separately with <code>plot(nb_checks, type = "distribution")</code>
@@ -2560,7 +2819,7 @@ start of this article. The first call below generates 100 whole-response
 replicates using glmmTMB itself. It simulates observation variation and
 redraws the monthly random effects at fitted parameters. The constructor
 then only summarises that existing matrix:</p>
-<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20260912</span><span class="op">)</span></span>
 <span><span class="va">response_simulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/simulate.html" class="external-link">simulate</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span>, nsim <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fitted_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/model.frame.html" class="external-link">model.frame</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span><span class="op">)</span><span class="op">)</span></span>
@@ -2582,7 +2841,7 @@ then only summarises that existing matrix:</p>
 <span><span class="co">#&gt; Time: year [ explicit external column ]</span></span>
 <span><span class="co">#&gt; Fitted parameters; monthly random effects resimulated</span></span>
 <span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span></code></pre></div>
-<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, response_scale <span class="op">=</span> <span class="st">"log1p"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="residual-diagnostics_files/figure-html/residual-external-overview-1.png" class="r-plt" alt="Four-panel residual overview using externally supplied glmmTMB lobster simulations." width="1056"><p class="caption">
@@ -2601,7 +2860,7 @@ mixed-model tests.
 <p>The returned object also works with the standalone Q-Q/PIT views and
 the existing residual helpers. The grouping columns must be retained
 during calculation, as above:</p>
-<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"qq"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">external_checks</span>, type <span class="op">=</span> <span class="st">"pit_ecdf_diff"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_predicted_residuals.html">plot_predicted_residuals</a></span><span class="op">(</span><span class="va">external_checks</span><span class="op">)</span></span>
@@ -2637,7 +2896,7 @@ column of <strong>original fitted success probabilities</strong>, not
 the average of simulated zero/ one responses. Record their conditioning
 separately from the response simulations. For example, given already
 aligned encounter data and simulations:</p>
-<div class="sourceCode" id="cb60"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">encounter_checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_influ_residuals.html">as_influ_residuals</a></span><span class="op">(</span></span>
 <span>  <span class="va">simulated_presence</span>, <span class="va">matched_data</span>,</span>
 <span>  response <span class="op">=</span> <span class="st">"present"</span>, year <span class="op">=</span> <span class="st">"year"</span>, response_kind <span class="op">=</span> <span class="st">"bernoulli"</span>,</span>

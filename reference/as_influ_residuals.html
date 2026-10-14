@@ -82,7 +82,8 @@ responses are simulated.</p>
 <span>  retain_dharma <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  dharma_max_mb <span class="op">=</span> <span class="fl">256</span>,</span>
 <span>  integer_response <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  residual_tests <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"standard"</span>, <span class="st">"full"</span><span class="op">)</span></span>
+<span>  residual_tests <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"standard"</span>, <span class="st">"full"</span><span class="op">)</span>,</span>
+<span>  dharma_storage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"disk"</span>, <span class="st">"memory"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -214,7 +215,7 @@ columns must not be defined from the outcome.</p></dd>
 <dt id="arg-residual-method">residual_method<a class="anchor" aria-label="anchor" href="#arg-residual-method"></a></dt>
 <dd><p><code>"simulation_pit"</code> (default) preserves influ2's
 compact finite-simulation ranks. <code>"dharma"</code> delegates the residual
-calculation to optional DHARMa &gt;= 0.4.7, using <code>createDHARMa(method = "PIT")</code>
+calculation to optional DHARMa &gt;= 0.4.7, using <code>getQuantile(method = "PIT")</code>
 on the same native response simulations and conditioning. It does not
 call <code>simulateResiduals()</code> or adopt DHARMa's model-specific defaults.</p></dd>
 
@@ -222,16 +223,17 @@ call <code>simulateResiduals()</code> or adopt DHARMa's model-specific defaults.
 <dt id="arg-retain-dharma">retain_dharma<a class="anchor" aria-label="anchor" href="#arg-retain-dharma"></a></dt>
 <dd><p>Keep the genuine DHARMa object in <code>result$dharma</code>,
 including its full response matrix, for DHARMa plotting, aggregation, and
-tests. Default <code>FALSE</code> discards it after calculating the compact summaries.
+tests. Default <code>FALSE</code> returns compact summaries without a native object.
 Requires <code>residual_method = "dharma"</code>. No fitted model is retained.</p></dd>
 
 
 <dt id="arg-dharma-max-mb">dharma_max_mb<a class="anchor" aria-label="anchor" href="#arg-dharma-max-mb"></a></dt>
-<dd><p>Maximum size of the full DHARMa response matrix in MiB,
-default 256. A larger request fails before simulation. Requests of at least
-100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
-native simulators allocate additional copies. <code>batch_size</code> cannot remove
-this full-matrix cost. Increase the limit explicitly only if appropriate.</p></dd>
+<dd><p>Response-workspace budget in MiB, default 256. Disk
+storage bounds estimated simulation-batch and quantile-slab workspace,
+reducing the effective batch size if needed. It fails if even one column
+or slab cannot fit. Memory storage guards the full matrix alone and warns
+at 100 MiB. Neither is a process-wide peak-memory bound: native backends,
+ECDF/calibration summaries, and auxiliary qgam fits use additional memory.</p></dd>
 
 
 <dt id="arg-integer-response">integer_response<a class="anchor" aria-label="anchor" href="#arg-integer-response"></a></dt>
@@ -243,16 +245,28 @@ PIT calculation randomises atoms in both discrete and mixed distributions.</p></
 
 
 <dt id="arg-residual-tests">residual_tests<a class="anchor" aria-label="anchor" href="#arg-residual-tests"></a></dt>
-<dd><p>Optional native DHARMa checks: <code>"none"</code> (default)
+<dd><p>Optional DHARMa-reference checks: <code>"none"</code> (default)
 leaves the existing result unchanged; <code>"standard"</code> calculates uniformity,
 simulation-based response dispersion, and supported year-level categorical
 checks. <code>"full"</code> also calculates auxiliary quantile regressions and an
 outlier test (bootstrap for integer responses, with extra calculation cost).
-Requires <code>residual_method = "dharma"</code>. Tests run once while the native
-object exists, retaining compact statistics only. They are exploratory,
+Requires <code>residual_method = "dharma"</code>. Uniformity, year, and quantile tests
+call native DHARMa vector interfaces. Disk dispersion and outlier tests
+use explicitly labelled bounded-memory equivalents of its non-refitted
+reference algorithms. Memory storage calls all tests on the genuine
+native object. Tests run once, retaining compact statistics only. They are exploratory,
 not fitted-model-calibrated acceptance tests, and do not refit the CPUE
 model, run MCMC, or use Pearson dispersion. Year KS p-values are Holm-
 adjusted across supported years; the other checks are not jointly adjusted.</p></dd>
+
+
+<dt id="arg-dharma-storage">dharma_storage<a class="anchor" aria-label="anchor" href="#arg-dharma-storage"></a></dt>
+<dd><p><code>"auto"</code> (default) uses a temporary disk cache for
+compact DHARMa results, or <code>"memory"</code> when <code>retain_dharma = TRUE</code>.
+Explicit <code>"disk"</code> processes observation slabs without assembling a full
+response matrix in RAM; <code>"memory"</code> uses <code>createDHARMa()</code>. Disk storage
+cannot retain a native DHARMa object. Simulations are generated once;
+temporary files are removed on success or error. Only used with DHARMa.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -294,8 +308,9 @@ original matrix still occupies memory until they release it. Temporary
 ECDF/calibration storage and the first-batch ECDF grid follow the existing
 <code><a href="influ_residuals.html">influ_residuals()</a></code> calculation. Changing batch size can change that grid,
 but not the ranks or sequentially calculated predictive means for fixed
-supplied simulations. With <code>residual_method = "dharma"</code>, an additional
-full matrix is assembled for DHARMa and discarded by default. Set
+supplied simulations. With <code>residual_method = "dharma"</code>, compact output
+defaults to a temporary disk cache instead of an additional full matrix.
+This does not release the caller's original in-memory input. Set
 <code>retain_dharma = TRUE</code> only when DHARMa's original object is needed.</p>
 <p>These remain exploratory predictive checks. Fitted-data ranks are not
 automatically uniform or calibrated for parameter estimation, posterior

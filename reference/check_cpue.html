@@ -75,7 +75,8 @@ term. The report does not refit or select the original model.</p>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  dharma_max_mb <span class="op">=</span> <span class="fl">256</span>,</span>
 <span>  trial_counts <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span></span>
+<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  dharma_storage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"disk"</span>, <span class="st">"memory"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_check'</span></span>
@@ -129,11 +130,11 @@ every term. Interaction, auxiliary-component, and latent-process terms
 remain visible even when no valid univariate residual screen is available.</p></dd>
 
 
-<dt id="arg-nsim-batch-size-seed-component-conditioning-dharma-max-mb-trial-counts-response-transform">nsim, batch_size, seed, component, conditioning, dharma_max_mb, trial_counts, response_transform<a class="anchor" aria-label="anchor" href="#arg-nsim-batch-size-seed-component-conditioning-dharma-max-mb-trial-counts-response-transform"></a></dt>
+<dt id="arg-nsim-batch-size-seed-component-conditioning-dharma-max-mb-trial-counts-response-transform-dharma-storage">nsim, batch_size, seed, component, conditioning, dharma_max_mb, trial_counts, response_transform, dharma_storage<a class="anchor" aria-label="anchor" href="#arg-nsim-batch-size-seed-component-conditioning-dharma-max-mb-trial-counts-response-transform-dharma-storage"></a></dt>
 <dd><p>Passed to <code><a href="influ_residuals.html">influ_residuals()</a></code> for new calculations. No MCMC or original
-model refit is run. DHARMa temporarily needs a full response matrix;
-<code>dharma_max_mb</code> bounds that matrix, not peak memory. <code>batch_size</code> does not
-eliminate this allocation. Component selection is explicit for joint models.</p></dd>
+model refit is run. Compact DHARMa calculations default to bounded response
+blocks and a temporary disk cache; <code>dharma_max_mb</code> is a response-workspace
+budget, not a process-wide memory bound. Component selection is explicit for joint models.</p></dd>
 
 
 <dt id="arg-residual-method">residual_method<a class="anchor" aria-label="anchor" href="#arg-residual-method"></a></dt>
@@ -144,7 +145,7 @@ fallback if an engine, family, or conditioning target is unavailable.</p></dd>
 
 
 <dt id="arg-residual-tests">residual_tests<a class="anchor" aria-label="anchor" href="#arg-residual-tests"></a></dt>
-<dd><p>Native DHARMa test set for new calculations: <code>"none"</code>,
+<dd><p>DHARMa-reference test set for new calculations: <code>"none"</code>,
 <code>"standard"</code>, or <code>"full"</code>. <code>NULL</code> selects <code>"standard"</code> for DHARMa and
 <code>"none"</code> for simulation PIT. Full adds auxiliary quantile regressions and
 outlier tests, with additional computation, but no original-model refits.</p></dd>
@@ -202,8 +203,10 @@ A raw-predictor check for <code>poly(x, 3)</code> is not a test of each polynomi
 coefficient. Native GAM smooth EDF/statistics are reported separately, not
 classified as residual failures. Joint/latent structures requiring an
 explicitly defined dependence check are reported as unassessed.</p>
-<p>Optional overall tests are genuinely calculated by DHARMa while its native
-simulation object exists. The compact report retains statistics and
+<p>Optional uniformity/year/quantile tests use genuine DHARMa vector interfaces.
+Disk-based dispersion and outlier tests use labelled bounded-memory
+equivalents; <code>dharma_storage = "memory"</code> calls native object-based tests.
+The compact report retains statistics, implementation sources, and
 metadata, not that object's response matrix, the fitted model, or formula
 environments. Plotting and printing never repeat tests or consume RNG.
 Supplied residuals are compacted even if their original object retains

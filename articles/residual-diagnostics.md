@@ -1262,7 +1262,7 @@ plotting framework:
 dharma_checks <- influ_residuals(
   lobster_nb_mixed, nsim = 250, seed = 20260907,
   residual_method = "dharma", conditioning = "new_effects",
-  residual_tests = "standard"
+  residual_tests = "standard", dharma_storage = "disk"
 )
 dharma_checks
 #> DHARMa residual diagnostics (glmmTMB)
@@ -1271,13 +1271,16 @@ dharma_checks
 #> Native simulations at fitted parameters; random effects resimulated
 #> Exploratory ranks; not a calibrated goodness-of-fit test
 #> DHARMa 0/1 endpoints: 22; normal-score display limits +/-3.65. Uniform PIT values remain unchanged.
-#> No model or observation-by-simulation matrix retained
+#> Compact DHARMa PIT summaries; temporary response cache removed; no model or full response matrix retained
 ```
 
-`residual_method = "dharma"` sends the complete native response
-simulations to `DHARMa::createDHARMa(method = "PIT")`. DHARMa calculates
-its own uniform-scale residuals; this is not a new label on influ2’s
-finite-simulation ranks. It works through the simulation adapters for
+`residual_method = "dharma"` uses DHARMa’s own uniform-scale PIT
+calculation; this is not a new label on influ2’s finite-simulation
+ranks. The default `dharma_storage = "auto"` uses a temporary disk cache
+for compact results. Whole native response simulations are generated
+once, in batches, and `DHARMa::getQuantile(method = "PIT")` calculates
+residuals from bounded blocks of observation rows. The example requests
+that disk route explicitly. It works through the simulation adapters for
 GLM, GAM, glmmTMB, lme4, brms, sdmTMB, and single-response tinyVAST
 models, subject to their existing family, conditioning, and component
 restrictions. No second model simulator, refitting, or MCMC is invoked.
@@ -1395,11 +1398,11 @@ warnings. Missing diagnostics are not passes.
 and the term inventory without residual simulation. Calling
 `check_cpue(fit)` without a residual object requests new DHARMa
 residuals and standard tests, using the backend’s recorded default
-conditioning. It can take time and temporarily allocate a response
-matrix. There is no silent engine fallback if DHARMa, a family, or a
-simulation target is unavailable: the report records an unassessed check
-and its reason. Hard numerical problems prevent automatic simulation.
-Saved TMB objectives are not secretly reinitialised.
+conditioning. It can take time and use temporary disk storage. There is
+no silent engine fallback if DHARMa, a family, or a simulation target is
+unavailable: the report records an unassessed check and its reason. Hard
+numerical problems prevent automatic simulation. Saved TMB objectives
+are not secretly reinitialised.
 
 For each fitted term, the current screens report **Spearman rho** for a
 raw numeric predictor or a **Kruskal-Wallis H statistic** for
@@ -1416,17 +1419,38 @@ multivariate/latent processes, sparse groups, and unsupported component
 checks remain visible as `not_assessed`; the function does not replace
 them with arbitrary proxies.
 
-The standard native DHARMa tests supply the overall uniformity KS
-statistic and response-dispersion ratio, plus within-year KS checks and
-the median-centred Levene F statistic for year-to-year variation. Levene
-is **not** Kruskal-Wallis. The within-year KS tests have their own Holm
-family; no universal adjustment across all diagnostic questions is
-implied. Use `residual_tests = "full"` when calculating new residuals to
-add auxiliary quantile regressions and outlier checks. The former fits
-diagnostic qgam regressions, not the CPUE model; the latter uses
-explicit bootstrap references for integer responses. Both add
-calculation time. Simulation-test p-values have finite Monte Carlo
-precision; a reported zero is not an exact probability.
+The standard checks supply the overall uniformity KS statistic and
+response-dispersion ratio, plus within-year KS checks and the
+median-centred Levene F statistic for year-to-year variation. Uniformity
+and categorical checks call DHARMa with the stored PIT vector. The disk
+route’s dispersion test is an **explicitly labelled bounded-memory
+equivalent** of DHARMa’s nonparametric response-dispersion test, not a
+native call on a fabricated DHARMa object. It reads the same joint
+simulations from the cache to obtain the response-variance reference.
+Levene is **not** Kruskal-Wallis. The within-year KS tests have their
+own Holm family; no universal adjustment across all diagnostic questions
+is implied. Use `residual_tests = "full"` when calculating new residuals
+to add auxiliary quantile regressions and outlier checks. The former
+fits diagnostic qgam regressions, not the CPUE model; the latter uses
+explicit bootstrap references for integer responses. In disk mode, those
+outlier tests are also labelled bounded-memory equivalents: the
+bootstrap uses DHARMa’s quantile calculation and shared resampled
+simulation columns, rather than approximating it with only stored minima
+and maxima. Continuous-response outlier checks use the matching binomial
+reference. The retained memory route calls the native dispersion and
+outlier tests directly. Both full checks add calculation time. The
+stored test table records each method, so “DHARMa” in a plot annotation
+does not imply every disk-mode statistic was obtained from a native test
+call. The disk-mode dispersion annotation is explicitly labelled
+“DHARMa-equivalent response dispersion”. These equivalent test
+algorithms have been checked against DHARMa **0.4.7 and 0.5.0**. Other
+dependency versions leave the equivalent tests `not_assessed`, rather
+than assume future native implementations are unchanged; choose
+`dharma_storage = "memory"` when a different version’s native
+dispersion/outlier implementation is required. Native PIT and
+vector-based checks do not acquire a new calibration guarantee from this
+implementation-equivalence check. Simulation-test p-values have finite
+Monte Carlo precision; a reported zero is not an exact probability.
 
 ``` r
 
@@ -1438,13 +1462,15 @@ statistics and labelled stored residual-test
 summaries.](residual-diagnostics_files/figure-html/residual-model-report-overview-1.png)
 
 The model-check report reuses the negative-binomial glmmTMB lobster
-residuals and adds available native model statistics and stored DHARMa
-tests. The Q-Q panel reports uniform-scale KS evidence, the year panel
-reports uniform-scale Levene and within-year KS evidence, and the
-response ECDF panel reports the separate native response-dispersion
-test, not an ECDF test. No quantile regression was requested in this
-standard report. Tests are exploratory, specific to new-effect
-conditioning, and not calibrated model acceptance rules.
+residuals and adds available native model statistics and stored
+DHARMa-based checks. The Q-Q panel reports uniform-scale KS evidence,
+the year panel reports uniform-scale Levene and within-year KS evidence,
+and the response ECDF panel reports the separate response-dispersion
+test, not an ECDF test. Here dispersion uses the explicitly labelled
+bounded-memory equivalent of DHARMa’s native test. No quantile
+regression was requested in this standard report. Tests are exploratory,
+specific to new-effect conditioning, and not calibrated model acceptance
+rules.
 
 `plot(report, type = "term", term = ...)` reuses a retained raw
 predictor and its stored screen. The descriptive smooth is not the curve
@@ -1549,7 +1575,7 @@ knitr::kable(term_comparison, digits = 4, row.names = FALSE)
 | Negative_binomial | poly(soak, 3)  | Spearman rho     |   0.0583 | 0.0001 | review  |
 | Negative_binomial | (1 \| month)   | Kruskal-Wallis H | 434.6092 | 0.0000 | review  |
 
-The native DHARMa dispersion statistic compares observed
+The DHARMa response-dispersion statistic compares observed
 response-residual variance with its simulated reference. Values above
 one indicate more variation than expected under that simulation target.
 In this run Poisson’s ratio is approximately **2.29**, with none of the
@@ -1599,13 +1625,13 @@ dispersion ratios and matching predictive
 distributions.](residual-diagnostics_files/figure-html/residual-model-report-family-distribution-1.png)
 
 Matched Poisson (left) and negative-binomial (right)
-response-distribution checks, with their stored native DHARMa dispersion
-ratios. The purple curve is observed and the blue curve is the simulated
-median. Poisson’s ratio is about 2.29 and its finite Monte Carlo p-value
-is reported as zero from 250 simulations; the negative-binomial ratio is
-about 1.19 with p = 0.368. The grey predictive bands and response ECDFs
-are not themselves dispersion-test statistics, and these are not
-calibrated model acceptance tests.
+response-distribution checks, with their stored DHARMa-equivalent
+bounded-memory dispersion ratios. The purple curve is observed and the
+blue curve is the simulated median. Poisson’s ratio is about 2.29 and
+its finite Monte Carlo p-value is reported as zero from 250 simulations;
+the negative-binomial ratio is about 1.19 with p = 0.368. The grey
+predictive bands and response ECDFs are not themselves dispersion-test
+statistics, and these are not calibrated model acceptance tests.
 
 The default `residual_method = "simulation_pit"` remains unchanged. Both
 engines use the same simulation targets, but their finite-simulation
@@ -1625,21 +1651,54 @@ the exact uniform values, including endpoints. As before, their optional
 bayesplot reference assumes independent uniform values, not a calibrated
 fitted-data test.
 
-### Retain the native object only when needed
+### Bounded-memory calculation and native-object retention
 
-DHARMa requires a full observation-by-simulation matrix during
-calculation, even when `batch_size` is small. It and the native
-simulator may allocate additional working copies. `dharma_max_mb` limits
-the matrix alone (256 MiB by default), and requests of at least 100 MiB
-warn; this is not a peak-memory bound. By default, we discard the matrix
-and DHARMa object, keeping only the compact influ2 result. Retain the
-original DHARMa object explicitly to use its tools:
+For compact results, `dharma_storage = "auto"` chooses the disk route
+used above. The temporary binary cache holds all response simulations on
+disk, without requiring a complete observation-by-simulation matrix in
+RAM. Observation blocks contain at most 1,000 rows and half the
+observations (rounded up); the workspace budget can reduce them further.
+Thus disk calculation does not read the whole response matrix into RAM,
+even for a small example. Each complete joint simulation is generated
+once; reading observation blocks later does not redraw random effects,
+select new posterior states, or break dependence within a replicate.
+Disk space grows with observation count times simulation count (about
+eight bytes per stored response), and additional reads increase I/O
+time. Full integer-response bootstrap outlier checks can require many
+such reads. The cache is removed after calculation, including when
+calculation fails; it is not retained in the saved diagnostic.
+
+`batch_size` limits response simulations requested together. In disk
+mode, `dharma_max_mb` also guards the estimated response-block
+workspace, with a default budget of 256 MiB. The effective simulation
+batch is reduced if needed, and observation blocks are sized to that
+budget. A request that cannot hold even one simulation column or one
+observation row fails explicitly. The metadata records the actual
+storage mode, batch size, row-block size, and estimated cache/workspace
+sizes, not a persistent cache path. Native random number use can depend
+on simulation batch size, so use the recorded effective batch when
+reproducing a calculation. This is **not a bound on total process
+memory**: native model setup, latent-field factorisation, qgam
+diagnostic fits, compact ECDF/calibration arrays, and R overhead need
+additional storage. Disk batching addresses simulation-matrix memory,
+not conditioning-related residual correlation or false-positive rates.
+The scientific interpretation above is unchanged.
+
+Choose `dharma_storage = "memory"` to calculate with the complete
+response matrix and `DHARMa::createDHARMa(method = "PIT")`. Its
+matrix-size guard remains active; the native calculation can make
+additional working copies. Retain the genuine DHARMa object explicitly
+when its own plotting or aggregation tools are needed. With
+`retain_dharma = TRUE`, `"auto"` selects memory storage;
+`dharma_storage = "disk", retain_dharma = TRUE` is rejected rather than
+pretending a compact result is a complete native object:
 
 ``` r
 
 dharma_retained <- influ_residuals(
   lobster_nb_mixed, nsim = 250, seed = 20260907,
   residual_method = "dharma", conditioning = "new_effects",
+  residual_tests = "standard", dharma_storage = "memory",
   retain_dharma = TRUE
 )
 # These reuse the existing responses, without fitting or simulating again:
@@ -1654,6 +1713,65 @@ DHARMa::testDispersion(dharma_retained$dharma, plot = FALSE)
 #> dispersion = 1.1686, p-value = 0.44
 #> alternative hypothesis: two.sided
 ```
+
+The disk and memory calls above use the **same model, seed, simulation
+count, batch size, and conditioning**. Compare their stored results
+without further simulations. PIT values agree exactly, and the same
+predictive means and native vector-test statistics agree to numerical
+precision. For the validated DHARMa versions, the comparison also
+includes the bounded-memory equivalents; test-method labels deliberately
+distinguish them from native calls. With a different version,
+unavailable equivalent tests stay `not_assessed`, rather than being
+presumed numerically equivalent to that version’s native tests:
+
+``` r
+
+statistics_columns <- c("check", "term", "statistic", "p_value", "p_adjusted")
+validated_equivalents <- dharma_checks$metadata$dharma_version %in%
+  c("0.4.7", "0.5.0")
+comparison_rows <- if (validated_equivalents) {
+  rep(TRUE, nrow(dharma_checks$tests))
+} else {
+  !dharma_checks$tests$check %in% c("dispersion", "outliers")
+}
+stopifnot(
+  identical(dharma_checks$observations$pit,
+    dharma_retained$observations$pit),
+  isTRUE(all.equal(dharma_checks$observations$predicted,
+    dharma_retained$observations$predicted, tolerance = 1e-12)),
+  isTRUE(all.equal(dharma_checks$tests[comparison_rows, statistics_columns],
+    dharma_retained$tests[comparison_rows, statistics_columns], tolerance = 1e-10,
+    check.attributes = FALSE)),
+  is.null(dharma_checks$dharma),
+  inherits(dharma_retained$dharma, "DHARMa")
+)
+knitr::kable(dharma_checks$tests[c("check", "term", "status", "method")],
+  row.names = FALSE)
+```
+
+| check | term | status | method |
+|:---|:---|:---|:---|
+| uniformity | response | review | Asymptotic one-sample Kolmogorov-Smirnov test |
+| dispersion | response | no_flag | influ2 bounded-memory equivalent of DHARMa nonparametric dispersion test |
+| year_uniformity | 2000 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2001 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2002 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2003 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2004 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2005 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2006 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2007 | review | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2008 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2009 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2010 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2011 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2012 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2013 | review | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2014 | review | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2015 | review | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2016 | review | DHARMa within-year KS; Holm correction across tested years |
+| year_uniformity | 2017 | no_flag | DHARMa within-year KS; Holm correction across tested years |
+| year_homogeneity | year | review | DHARMa median-centred Levene test |
 
 This genuine `dharma_retained$dharma` object contains the response
 simulations, not a fitted model or Pearson residuals. DHARMa’s
@@ -1671,7 +1789,11 @@ for counts, or `integer_response = FALSE` for continuous/mixed
 distributions. Bernoulli and grouped-binomial kinds supply `TRUE`
 automatically. All existing ID alignment and component declarations
 still apply. A combined hurdle/delta diagnostic is not a
-positive-component diagnostic.
+positive-component diagnostic. The constructor can use the disk route to
+avoid an additional complete simulation matrix during DHARMa
+calculation, but the matrix supplied by the caller is already in RAM and
+remains there until the caller releases it. It is not automatically
+offloaded or removed.
 
 Likelihood-based residual-implied effects do not use PIT or DHARMa
 scores, so this option does not change
