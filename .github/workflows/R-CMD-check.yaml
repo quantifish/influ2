@@ -46,7 +46,26 @@ jobs:
 
       - name: Install R manual fonts and index tool
         # R's Windows manual needs Courier and makeindex, absent from TinyTeX-1.
-        run: tlmgr install courier makeindex
+        # Refresh tlmgr first: a newly downloaded bundle can lag its repository.
+        shell: bash
+        run: |
+          tlmgr update --self
+          tlmgr install courier makeindex
+          Rscript --vanilla - <<'RSCRIPT'
+          manual_tools <- Sys.which(c("pdflatex", "makeindex"))
+          print(manual_tools)
+          if (any(!nzchar(manual_tools))) {
+            stop("The R manual's TeX tools are not available on R's PATH")
+          }
+          makeindex <- normalizePath(manual_tools[["makeindex"]], winslash = "/", mustWork = TRUE)
+          index_probe <- system2(makeindex, "-q", input = R"(\indexentry{influ2}{1})",
+                                 stdout = TRUE, stderr = TRUE)
+          if (!is.null(attr(index_probe, "status")) || !any(grepl("influ2, 1", index_probe, fixed = TRUE))) {
+            stop("The R manual's makeindex executable cannot run")
+          }
+          # R's texi2dvi emulation reads MAKEINDEX, including on Windows.
+          writeLines(paste0("MAKEINDEX=", makeindex), Sys.getenv("GITHUB_ENV"))
+          RSCRIPT
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
