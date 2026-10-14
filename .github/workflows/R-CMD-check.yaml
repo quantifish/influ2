@@ -49,9 +49,23 @@ jobs:
         # Refresh tlmgr first: a newly downloaded bundle can lag its repository.
         shell: bash
         run: |
-          tlmgr update --self
-          tlmgr install courier makeindex
           Rscript --vanilla - <<'RSCRIPT'
+          # Bash does not resolve Windows .bat launchers; use the native shell.
+          tlmgr_name <- if (.Platform$OS.type == "windows") "tlmgr.bat" else "tlmgr"
+          tlmgr <- Sys.which(tlmgr_name)
+          if (!nzchar(tlmgr)) stop("The TinyTeX package manager is not available")
+          run_tlmgr <- function(args) {
+            message("tlmgr ", paste(args, collapse = " "))
+            status <- if (.Platform$OS.type == "windows") {
+              system2(Sys.getenv("COMSPEC", "cmd.exe"),
+                      c("/d", "/c", "call", shQuote(tlmgr), args))
+            } else {
+              system2(tlmgr, args)
+            }
+            if (status != 0L) stop("TinyTeX provisioning failed: ", paste(args, collapse = " "))
+          }
+          run_tlmgr(c("update", "--self"))
+          run_tlmgr(c("install", "courier", "makeindex"))
           manual_tools <- Sys.which(c("pdflatex", "makeindex"))
           print(manual_tools)
           if (any(!nzchar(manual_tools))) {
