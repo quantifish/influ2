@@ -159,6 +159,33 @@ for predictive-envelope interpretation and grouped checks that can
 reveal missing structure even when pooled encounter calibration looks
 good.
 
+## Constrained model search
+
+Use one buildmer-style interface with native GLM, GAM, glmmTMB, lme4,
+brms, sdmTMB, and tinyVAST refitting. Year, offsets, fitted rows, and
+essential processes stay protected. The default is a preflight report,
+not a refit:
+
+``` r
+
+search_cpue(model, year = "year")
+search <- search_cpue(model, year = "year", direction = "backward",
+  criterion = "BIC", refit = TRUE, max_models = 30)
+search$candidates
+plot(search)
+best <- selected_model(search)
+```
+
+Failed fits and stopping reasons remain visible; each specification is
+evaluated once. The recommendation is the best eligible evaluated model,
+not a guaranteed global optimum. Use `check_cpue(best)` separately:
+residual p-values are not term-selection rules, and selected-model
+uncertainty does not include selection uncertainty. See the [Model
+search
+article](https://www.quantifish.co.nz/influ2/articles/model-search.html)
+for constraints, optional random terms, component handling, and memory
+limits.
+
 ## Installation
 
 ``` r
@@ -296,15 +323,25 @@ methods here display `influ_residuals` objects.
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
   : Plot predictive means against generalised residuals
 
-## Model comparison
+## Model comparison and search
 
-Model-specific likelihood and Bayesian criteria, with explicit
+Model-specific criteria and constrained native refitting, with explicit
 comparison safeguards.
 
 - [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md)
   : Summarise Bayesian R-squared for brms models
 - [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
   : Summarise criteria across CPUE model types
+- [`search_cpue()`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  [`print(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  [`summary(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  [`as.data.frame(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  : Search a constrained set of CPUE models
+- [`selected_model()`](https://www.quantifish.co.nz/influ2/reference/selected_model.md)
+  : Retrieve the recommended model from a CPUE search
+- [`plot(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_search.md)
+  [`autoplot(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_search.md)
+  : Plot a stored CPUE model search
 
 ## Data
 
@@ -336,6 +373,8 @@ Simulated data supplied with the package.
   indices](https://www.quantifish.co.nz/influ2/articles/regional-cpue.md):
 - [Model
   comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.md):
+- [Model
+  search](https://www.quantifish.co.nz/influ2/articles/model-search.md):
 - [Hurdle and zero-inflated
   models](https://www.quantifish.co.nz/influ2/articles/hurdle.md):
 - [Spatial and spatiotemporal

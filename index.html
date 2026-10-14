@@ -48,6 +48,7 @@
     <li><a class="dropdown-item" href="articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="articles/regional-cpue.html">Regional CPUE indices</a></li>
     <li><a class="dropdown-item" href="articles/model-comparison.html">Model comparison</a></li>
+    <li><a class="dropdown-item" href="articles/model-search.html">Model search</a></li>
     <li><a class="dropdown-item" href="articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
@@ -154,9 +155,22 @@
 <p>See <a href="https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#encounter-calibration">Residual diagnostics</a> for predictive-envelope interpretation and grouped checks that can reveal missing structure even when pooled encounter calibration looks good.</p>
 </div>
 <div class="section level2">
+<h2 id="constrained-model-search">Constrained model search<a class="anchor" aria-label="anchor" href="#constrained-model-search"></a>
+</h2>
+<p>Use one buildmer-style interface with native GLM, GAM, glmmTMB, lme4, brms, sdmTMB, and tinyVAST refitting. Year, offsets, fitted rows, and essential processes stay protected. The default is a preflight report, not a refit:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/search_cpue.html">search_cpue</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
+<span><span class="va">search</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_cpue.html">search_cpue</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span>, direction <span class="op">=</span> <span class="st">"backward"</span>,</span>
+<span>  criterion <span class="op">=</span> <span class="st">"BIC"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span>, max_models <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
+<span><span class="va">search</span><span class="op">$</span><span class="va">candidates</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">search</span><span class="op">)</span></span>
+<span><span class="va">best</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/selected_model.html">selected_model</a></span><span class="op">(</span><span class="va">search</span><span class="op">)</span></span></code></pre></div>
+<p>Failed fits and stopping reasons remain visible; each specification is evaluated once. The recommendation is the best eligible evaluated model, not a guaranteed global optimum. Use <code>check_cpue(best)</code> separately: residual p-values are not term-selection rules, and selected-model uncertainty does not include selection uncertainty. See the <a href="https://www.quantifish.co.nz/influ2/articles/model-search.html">Model search article</a> for constraints, optional random terms, component handling, and memory limits.</p>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"quantifish/influ2"</span><span class="op">)</span></span></code></pre></div>
 <p>See <code><a href="articles/influ2.html">vignette("influ2")</a></code> for the framework, memory strategy, and model examples. The separate <code><a href="articles/bentley-validation.html">vignette("bentley-validation")</a></code> documents and plots the frozen agreement check against the original Bentley implementation.</p>
 </div>

@@ -9,6 +9,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/articles/influ2.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/legacy-get-started.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/model-comparison.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/articles/model-search.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/regional-cpue.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/residual-validation.html</loc></url>
@@ -44,6 +45,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_check.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_residuals.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_search.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_steps.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_bubble.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_compare.html</loc></url>
@@ -53,6 +55,8 @@
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_index.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_step.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/search_cpue.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/selected_model.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/table_criterion.html</loc></url>
 </urlset>
 

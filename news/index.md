@@ -2,6 +2,20 @@
 
 ## influ2 1.1.0
 
+- Added
+  [`search_cpue()`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  and compact `influ_search` reports for constrained, buildmer-style
+  forward, backward, bidirectional, and order-then-backward searches
+  using seven native model backends. Annual blocks, offsets, fitted
+  rows, and essential processes stay protected; non-essential random
+  terms can be explicitly nominated. Preflight is the default, native
+  refitting requires `refit = TRUE`, candidate evaluations are cached
+  and bounded, and
+  [`selected_model()`](https://www.quantifish.co.nz/influ2/reference/selected_model.md)
+  retrieves the best eligible evaluated fit. Native numerical/criterion
+  failures remain visible, and no residual p-value selection, automatic
+  process toggling, or model averaging is implied.
+
 - The CPUE-indices article now demonstrates an area-weighted lobster
   CPUE mean, equal-habitat weighting, native joint prediction/covariance
   checks, and the distinct area-integrated CPUE total. The response

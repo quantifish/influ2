@@ -124,7 +124,8 @@ conditional Akaike information for nonlinear mixed-effects models.
 ## See also
 
 [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md),
-[`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
+[`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md),
+[`search_cpue()`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
 
 ## Examples
 

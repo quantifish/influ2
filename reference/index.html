@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/regional-cpue.html">Regional CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/model-search.html">Model search</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/legacy-get-started.html">Legacy Get Started (frozen)</a></li>
@@ -305,9 +306,9 @@
         </dt>
         <dd>Plot predictive means against generalised residuals</dd>
       </dl></div><div class="section level2">
-      <h2 id="model-comparison">Model comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a></h2>
+      <h2 id="model-comparison-and-search">Model comparison and search<a class="anchor" aria-label="anchor" href="#model-comparison-and-search"></a></h2>
 
-      <div class="section-desc"><p>Model-specific likelihood and Bayesian criteria, with explicit comparison safeguards.</p></div>
+      <div class="section-desc"><p>Model-specific criteria and constrained native refitting, with explicit comparison safeguards.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -327,6 +328,27 @@
 
         </dt>
         <dd>Summarise criteria across CPUE model types</dd>
+
+        <dt>
+
+          <code><a href="search_cpue.html">search_cpue()</a></code> <code><a href="search_cpue.html">print(<i>&lt;influ_search&gt;</i>)</a></code> <code><a href="search_cpue.html">summary(<i>&lt;influ_search&gt;</i>)</a></code> <code><a href="search_cpue.html">as.data.frame(<i>&lt;influ_search&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Search a constrained set of CPUE models</dd>
+
+        <dt>
+
+          <code><a href="selected_model.html">selected_model()</a></code>
+
+        </dt>
+        <dd>Retrieve the recommended model from a CPUE search</dd>
+
+        <dt>
+
+          <code><a href="plot.influ_search.html">plot(<i>&lt;influ_search&gt;</i>)</a></code> <code><a href="plot.influ_search.html">autoplot(<i>&lt;influ_search&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot a stored CPUE model search</dd>
       </dl></div><div class="section level2">
       <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h2>
 

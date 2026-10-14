@@ -159,6 +159,33 @@ for predictive-envelope interpretation and grouped checks that can
 reveal missing structure even when pooled encounter calibration looks
 good.
 
+## Constrained model search
+
+Use one buildmer-style interface with native GLM, GAM, glmmTMB, lme4,
+brms, sdmTMB, and tinyVAST refitting. Year, offsets, fitted rows, and
+essential processes stay protected. The default is a preflight report,
+not a refit:
+
+``` r
+
+search_cpue(model, year = "year")
+search <- search_cpue(model, year = "year", direction = "backward",
+  criterion = "BIC", refit = TRUE, max_models = 30)
+search$candidates
+plot(search)
+best <- selected_model(search)
+```
+
+Failed fits and stopping reasons remain visible; each specification is
+evaluated once. The recommendation is the best eligible evaluated model,
+not a guaranteed global optimum. Use `check_cpue(best)` separately:
+residual p-values are not term-selection rules, and selected-model
+uncertainty does not include selection uncertainty. See the [Model
+search
+article](https://www.quantifish.co.nz/influ2/articles/model-search.html)
+for constraints, optional random terms, component handling, and memory
+limits.
+
 ## Installation
 
 ``` r

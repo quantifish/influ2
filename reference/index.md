@@ -121,15 +121,25 @@ methods here display `influ_residuals` objects.
 - [`plot_predicted_residuals()`](https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.md)
   : Plot predictive means against generalised residuals
 
-## Model comparison
+## Model comparison and search
 
-Model-specific likelihood and Bayesian criteria, with explicit
+Model-specific criteria and constrained native refitting, with explicit
 comparison safeguards.
 
 - [`get_bayes_R2()`](https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.md)
   : Summarise Bayesian R-squared for brms models
 - [`table_criterion()`](https://www.quantifish.co.nz/influ2/reference/table_criterion.md)
   : Summarise criteria across CPUE model types
+- [`search_cpue()`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  [`print(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  [`summary(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  [`as.data.frame(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
+  : Search a constrained set of CPUE models
+- [`selected_model()`](https://www.quantifish.co.nz/influ2/reference/selected_model.md)
+  : Retrieve the recommended model from a CPUE search
+- [`plot(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_search.md)
+  [`autoplot(`*`<influ_search>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_search.md)
+  : Plot a stored CPUE model search
 
 ## Data
 
