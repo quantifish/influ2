@@ -28,7 +28,13 @@ population in every year. It produces the familiar assessment columns:
 `Year`, `Mean`, `Median`, `SD`, `CV`, `Qlower`, and `Qupper`, alongside method,
 distribution, and link metadata. The result is an `influ_index` object;
 `index_table()` gives a reporting table, omitting an unavailable median by
-default. `as.data.frame()` retains the full, stable schema for existing code.
+default and labelling interval columns with their stored probabilities.
+The default `probs = c(0.025, 0.975)` gives `Q0.025` and `Q0.975`, a central
+95% interval. With `probs = c(0.05, 0.95)`, the headings become `Q0.05` and
+`Q0.95`, a central 90% interval. These are headings for the calculated limits,
+not a change to the estimates or uncertainty.
+`as.data.frame()` retains the full, stable schema for existing code;
+`index_table(index, quantile_names = "generic")` also keeps `Qlower` and `Qupper`.
 
 For two regional series from one fitted model, see
 [Regional CPUE indices](regional-cpue.html). That worked example groups four

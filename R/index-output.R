@@ -10,6 +10,10 @@
 #' @param include_median `"auto"` omits `Median` only when every value is
 #'   missing; `"always"` retains it, and `"never"` omits it. An available brms
 #'   posterior median is never replaced by a lognormal approximation.
+#' @param quantile_names `"probability"` (default) labels interval columns
+#'   with the stored probabilities, for example `Q0.025` and `Q0.975` for
+#'   `probs = c(0.025, 0.975)`. `"generic"` keeps `Qlower` and `Qupper` for
+#'   code that needs fixed column names. This changes headings, not values.
 #' @details `Mean`, `SD`, and `CV` refer to the expected-response index and its
 #'   uncertainty, not variability among individual observations. With
 #'   `format = "lognormal"`, `SDlog = sqrt(log(1 + CV^2))`,
@@ -25,6 +29,12 @@
 #'   lognormal moment matching. Use the joint matrix for a correlated-index
 #'   assessment; do not combine its correlations with these approximate SDs
 #'   without explicitly choosing a different uncertainty model.
+#'
+#'   Probability headings use the index's stored `metadata$probs`, not an
+#'   assumed interval level. For `probs = c(0.05, 0.95)`, the headings are
+#'   `Q0.05` and `Q0.95` (a central 90% interval). If stored probabilities are
+#'   missing or invalid, generic headings are retained with a warning.
+#'   [as.data.frame.influ_index()] always keeps the stable generic schema.
 #' @return A data frame in the stored year order. The input is unchanged.
 #' @seealso [index_vcov()], [plot_index()], [cpue_index()]
 #' @examples
@@ -35,12 +45,14 @@
 #' head(index_table(index, format = "lognormal"))
 #' @export
 index_table <- function(x, format = c("summary", "lognormal"),
-    include_median = c("auto", "always", "never")) {
+    include_median = c("auto", "always", "never"),
+    quantile_names = c("probability", "generic")) {
   if (!inherits(x, "influ_index") || !is.data.frame(x$table)) {
     stop("Supply an `influ_index` calculated by `cpue_index()` or `integrate_index()`.", call. = FALSE)
   }
   format <- match.arg(format)
   include_median <- match.arg(include_median)
+  quantile_names <- match.arg(quantile_names)
   tab <- x$table
   if (include_median == "never" ||
       (include_median == "auto" && all(is.na(tab$Median)))) tab$Median <- NULL
@@ -61,7 +73,31 @@ index_table <- function(x, format = c("summary", "lognormal"),
     tab$SDlog <- sqrt(log_variance)
     tab$LognormalMedian <- exp(tab$Meanlog)
   }
+  if (quantile_names == "probability") {
+    probs <- if (is.list(x$metadata)) x$metadata$probs else NULL
+    if (!is.numeric(probs) || length(probs) != 2L || !is.null(dim(probs)) ||
+        any(!is.finite(probs)) || any(probs <= 0 | probs >= 1) ||
+        probs[1] >= probs[2]) {
+      warning("Stored interval probabilities are missing or invalid; retaining generic Qlower/Qupper headings. Use `quantile_names = 'generic'` to request those headings explicitly.", call. = FALSE)
+    } else {
+      labels <- vapply(probs, .index_probability_label, character(1))
+      positions <- match(c("Qlower", "Qupper"), names(tab))
+      present <- !is.na(positions)
+      names(tab)[positions[present]] <- labels[present]
+    }
+  }
   tab
+}
+
+.index_probability_label <- function(probability) {
+  # Prefer readable decimals, increasing precision when a shorter label does
+  # not parse back to the stored probability. Explicit decimal.mark ignores OutDec.
+  for (digits in 15:17) {
+    label <- trimws(formatC(probability, format = "fg", digits = digits,
+      decimal.mark = "."))
+    if (as.numeric(label) == probability) break
+  }
+  paste0("Q", label)
 }
 
 #' Extract covariance among calculated annual indices

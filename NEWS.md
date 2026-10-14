@@ -1,5 +1,11 @@
 # influ2 1.1.0
 
+* `index_table()` labels interval columns with their stored probabilities,
+  such as `Q0.025`/`Q0.975` or `Q0.05`/`Q0.95`, without changing any values.
+  `quantile_names = "generic"` and `as.data.frame()` retain fixed
+  `Qlower`/`Qupper` names. Year-effect indices retain their diagnostic's actual
+  interval probabilities, including when extracted from saved diagnostics.
+
 * Added `check_cpue()` with compact overall native model statistics, numerical
   fitting evidence, and an explicit inventory/check for every model term across
   seven backends. Raw-predictor PIT association screens are exploratory, with

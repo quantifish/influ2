@@ -949,16 +949,21 @@ Both `method = "standardised"` and `method = "standardized"` work. The
 calculated result contains the familiar assessment columns, plus method,
 distribution, and link information. The reporting columns are shown below.
 `Mean` is the estimated expected CPUE, `SD` is its standard error, and `CV`
-is `SD / Mean`. `Qlower` and `Qupper` give the pointwise 95% confidence interval.
+is `SD / Mean`. `Q0.025` and `Q0.975` give the pointwise 95% confidence interval.
+The headings follow the stored probabilities; requesting `probs = c(0.05, 0.95)`
+would instead give `Q0.05` and `Q0.95` for a central 90% interval.
 `index_table()` omits an unavailable `Median` column for this frequentist fit;
 it retains the genuine posterior median when using a complete brms fit.
 `as.data.frame()` still provides the full schema, including missing medians,
-for code that depends on those columns. None of these uncertainty columns
+and the generic `Qlower`/`Qupper` names for code that depends on those columns.
+`index_table(..., quantile_names = "generic")` also retains those generic names.
+None of these uncertainty columns
 describes variation among individual observations.
 
 ```{r lobster-assessment-table, eval=has_glmmTMB}
 knitr::kable(
-  lobster_index_table[c("Year", "Mean", "SD", "CV", "Qlower", "Qupper")],
+  lobster_index_table[c("Year", "Mean", "SD", "CV",
+    grep("^Q", names(lobster_index_table), value = TRUE))],
   digits = 3,
   caption = "Standardised lobster CPUE and uncertainty at the common reference profile."
 )

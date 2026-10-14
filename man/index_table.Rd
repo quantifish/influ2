@@ -7,7 +7,8 @@
 index_table(
   x,
   format = c("summary", "lognormal"),
-  include_median = c("auto", "always", "never")
+  include_median = c("auto", "always", "never"),
+  quantile_names = c("probability", "generic")
 )
 }
 \arguments{
@@ -20,6 +21,11 @@ uncertainty. This is not the fitted response distribution.}
 \item{include_median}{\code{"auto"} omits \code{Median} only when every value is
 missing; \code{"always"} retains it, and \code{"never"} omits it. An available brms
 posterior median is never replaced by a lognormal approximation.}
+
+\item{quantile_names}{\code{"probability"} (default) labels interval columns
+with the stored probabilities, for example \code{Q0.025} and \code{Q0.975} for
+\code{probs = c(0.025, 0.975)}. \code{"generic"} keeps \code{Qlower} and \code{Qupper} for
+code that needs fixed column names. This changes headings, not values.}
 }
 \value{
 A data frame in the stored year order. The input is unchanged.
@@ -44,6 +50,12 @@ from the actual joint delta method or log-index draws, not marginal
 lognormal moment matching. Use the joint matrix for a correlated-index
 assessment; do not combine its correlations with these approximate SDs
 without explicitly choosing a different uncertainty model.
+
+Probability headings use the index's stored \code{metadata$probs}, not an
+assumed interval level. For \code{probs = c(0.05, 0.95)}, the headings are
+\code{Q0.05} and \code{Q0.95} (a central 90\% interval). If stored probabilities are
+missing or invalid, generic headings are retained with a warning.
+\code{\link[=as.data.frame.influ_index]{as.data.frame.influ_index()}} always keeps the stable generic schema.
 }
 \examples{
 data(lobsters_per_pot)

@@ -183,6 +183,7 @@ cpue_index <- function(model, year = NULL,
       backend = diagnostic$backend, family = diagnostic$family$family,
       link = diagnostic$family$link, units = units, scale = unique(d$scale),
       uncertainty = if (uncertainty == "none") "none" else diagnostic$uncertainty$method,
+      probs = diagnostic$uncertainty$probs,
       interval_source = "original diagnostic", component = unique(d$component))))
   }
   if (length(list(...))) {

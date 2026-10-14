@@ -152,15 +152,20 @@ calculate_regions <- function(fit, refs, rescale = "raw", uncertainty = "auto") 
 }
 regional_indices <- calculate_regions(regional_fit, references)
 regional_tables <- do.call(rbind, lapply(names(regional_indices), function(r) {
-  data.frame(Region = r, index_table(regional_indices[[r]]), row.names = NULL)
+  data.frame(Region = r, index_table(regional_indices[[r]],
+    quantile_names = "generic"), row.names = NULL)
 }))
 knitr::kable(regional_tables[c("Region", "Year", "Mean", "SD", "CV",
-  "Qlower", "Qupper")], digits = 3, row.names = FALSE)
+  "Qlower", "Qupper")], digits = 3, row.names = FALSE,
+  col.names = c("Region", "Year", "Mean", "SD", "CV",
+    grep("^Q", names(index_table(regional_indices[[1]])), value = TRUE)))
 ```
 
 Both series come from the same `regional_fit`. Neither calculating another
 reference nor drawing another plot refits it. The table's SD is uncertainty
-in the estimated index, not the spread of individual responses.
+in the estimated index, not the spread of individual responses. The displayed
+quantile headings follow the stored probabilities. We keep generic column names
+in `regional_tables` for the later plotting code.
 
 ```{r regional-index-plot, eval=has_glmmTMB, fig.cap="Two standardised regional CPUE series from one negative-binomial glmmTMB fit. Each region averages its two areas equally over the same four depth/soak profiles, with vessel effects set to zero. Ribbons are pointwise 95% delta-method confidence intervals, including dependence among the weighted reference predictions. These are expected-response indices, not area-integrated biomass."}
 plot_compare(regional_indices) + labs(colour = "Region", fill = "Region")

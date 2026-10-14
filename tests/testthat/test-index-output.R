@@ -13,7 +13,8 @@ test_that("reporting omits unavailable medians without changing the full schema"
   expect_false("Median" %in% names(index_table(x)))
   expect_true("Median" %in% names(as.data.frame(x)))
   expect_true(all(is.na(as.data.frame(x)$Median)))
-  expect_identical(index_table(x, include_median = "always"), as.data.frame(x))
+  expect_identical(index_table(x, include_median = "always",
+    quantile_names = "generic"), as.data.frame(x))
   expect_identical(index_table(x, include_median = "never"), index_table(x))
   expect_identical(x, original)
   expect_false(any(grepl("Median", capture.output(print(x)))))
