@@ -4,19 +4,30 @@
 .resid_summarise_method <- function(adapter, time, group_data, nsim, batch_size, seed,
     grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
     residual_method = "simulation_pit", retain_dharma = FALSE, dharma_max_mb = 256,
-    integer_response = NULL, residual_tests = "none") {
+    integer_response = NULL, residual_tests = "none", dharma_storage = "auto") {
   dharma <- residual_method == "dharma"
+  storage <- .resid_dharma_storage(dharma_storage, residual_method, retain_dharma)
+  cache <- NULL
   if (dharma) {
-    matrix_mb <- .resid_dharma_memory(length(adapter$observed), nsim, dharma_max_mb)
-    full <- matrix(NA_real_, length(adapter$observed), nsim)
+    n <- length(adapter$observed)
+    if (storage == "disk") {
+      cache <- .resid_dharma_cache_new(n, nsim, dharma_max_mb, batch_size)
+      on.exit(.resid_dharma_cache_close(cache), add = TRUE)
+      batch_size <- cache$batch_size
+      matrix_mb <- cache$matrix_mb
+    } else {
+      matrix_mb <- .resid_dharma_memory(n, nsim, dharma_max_mb)
+      full <- matrix(NA_real_, n, nsim)
+    }
     native <- adapter$simulate
     adapter$simulate <- function(ids) {
       sims <- native(ids)
       # The original engine validates before use. Do not mask its error with
       # assignment/recycling when a native backend returns malformed output.
       if (is.matrix(sims) && is.numeric(sims) &&
-          identical(dim(sims), c(length(adapter$observed), length(ids)))) {
-        full[, ids] <<- sims
+          identical(dim(sims), c(n, length(ids))) && all(is.finite(sims))) {
+        if (storage == "disk") .resid_dharma_cache_write(cache, sims, ids) else
+          full[, ids] <<- sims
       }
       sims
     }
@@ -31,17 +42,23 @@
   # including brms draw selection. Reusing the original seed would reuse its
   # initial random numbers. Record this deterministic sub-seed for native replay.
   dharma_seed <- as.integer((as.double(seed) + 104729) %% .Machine$integer.max)
-  native_dharma <- .resid_dharma_calculate(full, adapter$observed,
-    result$observations$predicted, integer_response, dharma_seed)
-  pit <- native_dharma$scaledResiduals
+  native_dharma <- NULL
+  if (storage == "disk") {
+    pit <- .resid_dharma_cache_quantiles(cache, adapter$observed, integer_response, dharma_seed)
+  } else {
+    native_dharma <- .resid_dharma_calculate(full, adapter$observed,
+      result$observations$predicted, integer_response, dharma_seed)
+    pit <- native_dharma$scaledResiduals
+  }
   endpoints <- pit == 0 | pit == 1
   # Endpoint placeholders must not be less extreme than finite interior scores.
   # A fixed cap alone could put PIT=1 below PIT=.9999 and reverse the ordering.
   interior <- stats::qnorm(pit[!endpoints])
   bound <- max(stats::qnorm((nsim + 0.5) / (nsim + 1)), abs(interior))
   limits <- c(-bound, bound)
-  residual <- stats::residuals(native_dharma, quantileFunction = stats::qnorm,
-    outlierValues = limits)
+  residual <- stats::qnorm(pit)
+  residual[pit == 0] <- limits[1L]
+  residual[pit == 1] <- limits[2L]
   result$observations$pit <- pit
   result$observations$residual <- residual
   result$observations$simulation_outlier <- endpoints
@@ -54,8 +71,15 @@
   result$metadata$endpoint_count <- sum(endpoints)
   result$metadata$normal_score_limits <- limits
   result$metadata$dharma_matrix_mb <- matrix_mb
+  result$metadata$dharma_storage <- storage
+  if (storage == "disk") {
+    result$metadata$dharma_row_block_size <- cache$row_block_size
+    result$metadata$dharma_cache_mb <- cache$matrix_mb
+    result$metadata$dharma_working_mb <- cache$working_mb
+    result$metadata$retention <- "Compact DHARMa PIT summaries; temporary response cache removed; no model or full response matrix retained"
+  }
   if (residual_tests != "none") {
-    result$tests <- .resid_dharma_test_table(native_dharma, result, residual_tests)
+    result$tests <- .resid_dharma_test_table(native_dharma, result, residual_tests, cache = cache)
     result$metadata$residual_tests <- attr(result$tests, "test_metadata")
   }
   if (retain_dharma) {
@@ -112,12 +136,16 @@
   result <- DHARMa::createDHARMa(simulatedResponse = simulations,
     observedResponse = observed, fittedPredictedResponse = predicted,
     integerResponse = integer_response, seed = seed, method = "PIT")
-  pit <- result$scaledResiduals
-  if (!is.numeric(pit) || length(pit) != length(observed) ||
+  .resid_dharma_validate_pit(result$scaledResiduals, length(observed))
+  result
+}
+
+.resid_dharma_validate_pit <- function(pit, n) {
+  if (!is.numeric(pit) || length(pit) != n ||
       any(!is.finite(pit) | pit < 0 | pit > 1)) {
     stop("DHARMa returned invalid scaled residuals; no substitute residual calculation was used.", call. = FALSE)
   }
-  result
+  invisible(NULL)
 }
 
 .resid_method_label <- function(x) {

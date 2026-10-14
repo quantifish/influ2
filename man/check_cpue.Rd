@@ -24,7 +24,8 @@ check_cpue(
   alpha = 0.05,
   dharma_max_mb = 256,
   trial_counts = NULL,
-  response_transform = "identity"
+  response_transform = "identity",
+  dharma_storage = c("auto", "disk", "memory")
 )
 
 \method{print}{influ_check}(x, ...)
@@ -59,17 +60,17 @@ issue also prevents automatic residual simulation.}
 every term. Interaction, auxiliary-component, and latent-process terms
 remain visible even when no valid univariate residual screen is available.}
 
-\item{nsim, batch_size, seed, component, conditioning, dharma_max_mb, trial_counts, response_transform}{Passed to \code{\link[=influ_residuals]{influ_residuals()}} for new calculations. No MCMC or original
-model refit is run. DHARMa temporarily needs a full response matrix;
-\code{dharma_max_mb} bounds that matrix, not peak memory. \code{batch_size} does not
-eliminate this allocation. Component selection is explicit for joint models.}
+\item{nsim, batch_size, seed, component, conditioning, dharma_max_mb, trial_counts, response_transform, dharma_storage}{Passed to \code{\link[=influ_residuals]{influ_residuals()}} for new calculations. No MCMC or original
+model refit is run. Compact DHARMa calculations default to bounded response
+blocks and a temporary disk cache; \code{dharma_max_mb} is a response-workspace
+budget, not a process-wide memory bound. Component selection is explicit for joint models.}
 
 \item{residual_method}{Residual engine for a new report: \code{"dharma"} (the
 checker default, requiring optional DHARMa >= 0.4.7) or \code{"simulation_pit"}.
 This does not change the default of \code{\link[=influ_residuals]{influ_residuals()}}. There is no silent
 fallback if an engine, family, or conditioning target is unavailable.}
 
-\item{residual_tests}{Native DHARMa test set for new calculations: \code{"none"},
+\item{residual_tests}{DHARMa-reference test set for new calculations: \code{"none"},
 \code{"standard"}, or \code{"full"}. \code{NULL} selects \code{"standard"} for DHARMa and
 \code{"none"} for simulation PIT. Full adds auxiliary quantile regressions and
 outlier tests, with additional computation, but no original-model refits.}
@@ -121,8 +122,10 @@ coefficient. Native GAM smooth EDF/statistics are reported separately, not
 classified as residual failures. Joint/latent structures requiring an
 explicitly defined dependence check are reported as unassessed.
 
-Optional overall tests are genuinely calculated by DHARMa while its native
-simulation object exists. The compact report retains statistics and
+Optional uniformity/year/quantile tests use genuine DHARMa vector interfaces.
+Disk-based dispersion and outlier tests use labelled bounded-memory
+equivalents; \code{dharma_storage = "memory"} calls native object-based tests.
+The compact report retains statistics, implementation sources, and
 metadata, not that object's response matrix, the fitted model, or formula
 environments. Plotting and printing never repeat tests or consume RNG.
 Supplied residuals are compacted even if their original object retains

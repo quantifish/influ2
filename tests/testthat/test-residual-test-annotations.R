@@ -47,6 +47,7 @@ test_that("no-tests defaults preserve compact DHARMa output exactly", {
 test_that("standard saved tests agree with native DHARMa and restore state", {
   skip_if_not_installed("DHARMa", "0.4.7")
   args <- residual_test_args()
+  args$dharma_storage <- "memory"
   unchanged <- do.call(as_influ_residuals, args)
   args$residual_tests <- "standard"
   set.seed(30)
@@ -101,6 +102,7 @@ test_that("standard saved tests agree with native DHARMa and restore state", {
 test_that("full tests use bootstrap for counts without retaining diagnostic fits", {
   skip_if_not_installed("DHARMa", "0.4.7")
   args <- residual_test_args()
+  args$dharma_storage <- "memory"
   args$residual_tests <- "full"
   set.seed(52)
   rng <- .Random.seed
@@ -116,6 +118,7 @@ test_that("full tests use bootstrap for counts without retaining diagnostic fits
   expect_true(is.na(outlier$df))
   expect_null(x$dharma)
   args <- residual_test_args("continuous")
+  args$dharma_storage <- "memory"
   args$residual_tests <- "full"
   y <- do.call(as_influ_residuals, args)
   expect_identical(y$metadata$residual_tests$outlier_type, "binomial")

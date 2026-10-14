@@ -51,25 +51,35 @@
 #'   See the conditioning section below before comparing model diagnostics.
 #' @param residual_method `"simulation_pit"` (default) preserves influ2's
 #'   compact finite-simulation ranks. `"dharma"` delegates the residual
-#'   calculation to optional DHARMa >= 0.4.7, using `createDHARMa(method = "PIT")`
+#'   calculation to optional DHARMa >= 0.4.7, using `getQuantile(method = "PIT")`
 #'   on the same native response simulations and conditioning. It does not
 #'   call `simulateResiduals()` or adopt DHARMa's model-specific defaults.
 #' @param retain_dharma Keep the genuine DHARMa object in `result$dharma`,
 #'   including its full response matrix, for DHARMa plotting, aggregation, and
-#'   tests. Default `FALSE` discards it after calculating the compact summaries.
+#'   tests. Default `FALSE` returns compact summaries without a native object.
 #'   Requires `residual_method = "dharma"`. No fitted model is retained.
-#' @param dharma_max_mb Maximum size of the full DHARMa response matrix in MiB,
-#'   default 256. A larger request fails before simulation. Requests of at least
-#'   100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
-#'   native simulators allocate additional copies. `batch_size` cannot remove
-#'   this full-matrix cost. Increase the limit explicitly only if appropriate.
-#' @param residual_tests Optional native DHARMa checks: `"none"` (default)
+#' @param dharma_storage `"auto"` (default) uses a temporary disk cache for
+#'   compact DHARMa results, or `"memory"` when `retain_dharma = TRUE`.
+#'   Explicit `"disk"` processes observation slabs without assembling a full
+#'   response matrix in RAM; `"memory"` uses `createDHARMa()`. Disk storage
+#'   cannot retain a native DHARMa object. Simulations are generated once;
+#'   temporary files are removed on success or error. Only used with DHARMa.
+#' @param dharma_max_mb Response-workspace budget in MiB, default 256. Disk
+#'   storage bounds estimated simulation-batch and quantile-slab workspace,
+#'   reducing the effective batch size if needed. It fails if even one column
+#'   or slab cannot fit. Memory storage guards the full matrix alone and warns
+#'   at 100 MiB. Neither is a process-wide peak-memory bound: native backends,
+#'   ECDF/calibration summaries, and auxiliary qgam fits use additional memory.
+#' @param residual_tests Optional DHARMa-reference checks: `"none"` (default)
 #'   leaves the existing result unchanged; `"standard"` calculates uniformity,
 #'   simulation-based response dispersion, and supported year-level categorical
 #'   checks. `"full"` also calculates auxiliary quantile regressions and an
 #'   outlier test (bootstrap for integer responses, with extra calculation cost).
-#'   Requires `residual_method = "dharma"`. Tests run once while the native
-#'   object exists, retaining compact statistics only. They are exploratory,
+#'   Requires `residual_method = "dharma"`. Uniformity, year, and quantile tests
+#'   call native DHARMa vector interfaces. Disk dispersion and outlier tests
+#'   use explicitly labelled bounded-memory equivalents of its non-refitted
+#'   reference algorithms. Memory storage calls all tests on the genuine
+#'   native object. Tests run once, retaining compact statistics only. They are exploratory,
 #'   not fitted-model-calibrated acceptance tests, and do not refit the CPUE
 #'   model, run MCMC, or use Pearson dispersion. Year KS p-values are Holm-
 #'   adjusted across supported years; the other checks are not jointly adjusted.
@@ -128,8 +138,12 @@
 #'   grid-by-simulation matrix, plus compact bin/group simulation summaries.
 #'   Native backends may allocate additional memory.
 #'
-#'   With `residual_method = "dharma"`, working storage also includes the full
-#'   observation-by-simulation matrix. `observations$pit` contains DHARMa's
+#'   With `residual_method = "dharma"`, compact results default to a temporary
+#'   binary cache of the response simulations, read in bounded observation slabs.
+#'   Disk space is approximately `8 * nobs * nsim` bytes; extra I/O is needed for
+#'   dispersion and especially count bootstrap outliers. A genuine retained
+#'   DHARMa object still requires the full observation-by-simulation matrix in RAM.
+#'   `observations$pit` contains DHARMa's
 #'   unchanged uniform-scale residuals, which can equal zero or one. Their
 #'   normal scores would be infinite at these endpoints. For display and grouped
 #'   summaries only, endpoint scores are replaced by
@@ -142,8 +156,9 @@
 #'   Uniform PIT plots and the retained DHARMa object keep exact endpoints.
 #'   Grouped normal-score summaries include these display placeholders; use
 #'   the uniform values or DHARMa's own aggregation for tail-sensitive work.
-#'   Requested `residual_tests` are calculated before the native object is
-#'   discarded, with compact statistics retained. Other DHARMa tools require
+#'   Requested `residual_tests` are calculated before temporary storage is
+#'   discarded, with compact statistics and implementation sources retained.
+#'   Other DHARMa tools require
 #'   `retain_dharma = TRUE`; their interpretation still depends on fitting,
 #'   conditioning, and dependence. Native test p-values are not jointly adjusted
 #'   across the whole report, and a non-significant result is not proof of adequacy.
@@ -215,10 +230,12 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
                             residual_method = c("simulation_pit", "dharma"),
                             retain_dharma = FALSE, dharma_max_mb = 256,
                             response_transform = "identity",
-                            residual_tests = c("none", "standard", "full")) {
+                            residual_tests = c("none", "standard", "full"),
+                            dharma_storage = c("auto", "disk", "memory")) {
   component <- match.arg(component)
   residual_method <- .resid_method_options(residual_method, retain_dharma, dharma_max_mb)
   residual_tests <- .resid_test_options(residual_tests, residual_method)
+  storage <- .resid_dharma_storage(dharma_storage, residual_method, retain_dharma)
   .resid_integer(calibration_bins, "calibration_bins", 1L)
   .resid_integer(calibration_min_n, "calibration_min_n", 1L)
   .resid_integer(nsim, "nsim", 20L)
@@ -272,7 +289,8 @@ influ_residuals <- function(model, data = NULL, year = NULL, nsim = 250L,
   }
   result <- .resid_summarise_method(adapter, time, group_data, nsim, batch_size, seed,
     grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
-    residual_method, retain_dharma, dharma_max_mb, residual_tests = residual_tests)
+    residual_method, retain_dharma, dharma_max_mb, residual_tests = residual_tests,
+    dharma_storage = if (storage == "none") "auto" else storage)
   if (adapter$backend == "lme4") {
     result$metadata$response_transform <- adapter$response_transform
     result$metadata$native_response <- adapter$native_response

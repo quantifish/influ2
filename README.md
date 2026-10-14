@@ -102,9 +102,14 @@ checks <- influ_residuals(model, residual_method = "dharma")
 plot(checks)
 ```
 
-This leaves the default compact engine unchanged. DHARMa needs a full response
-matrix while calculating; it is discarded by default. Use `retain_dharma = TRUE`
-only when its original object is needed for DHARMa's own tools. See the
+This leaves the default compact engine unchanged. Compact DHARMa calculations
+now use a temporary disk cache and bounded observation blocks by default,
+rather than holding the full response-simulation matrix in RAM. Native DHARMa
+calculates the PIT values and vector-based tests; dispersion and outlier checks
+use explicitly labelled bounded-memory equivalents. Use `retain_dharma = TRUE`
+only when its genuine full-memory object is needed for DHARMa's own tools.
+Disk storage and extra I/O replace the matrix's RAM cost, not all backend or
+diagnostic memory. Conditioning and false-positive calibration are unchanged. See the
 [DHARMa example](https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#simulation-based-checks-with-dharma)
 for memory limits, endpoint handling, and interpretation.
 

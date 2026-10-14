@@ -59,7 +59,8 @@ Suggests:
     tinyVAST,
     tidyr,
     TMB,
-    vdiffr
+    vdiffr,
+    withr
 Additional_repositories: https://vast-lib.r-universe.dev
 LazyData: false
 VignetteBuilder: knitr

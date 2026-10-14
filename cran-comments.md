@@ -1,3 +1,27 @@
+## Bounded-memory DHARMa: 14 October 2026
+
+Compact DHARMa calculations now use temporary disk-backed joint simulations
+and bounded observation blocks. Native PIT/vector tests are preserved;
+non-refitted dispersion and outlier equivalents are explicitly labelled and
+validated for DHARMa 0.4.7/0.5.0. Caller RNG, component selection, and scientific
+conditioning are unchanged. Native-object retention remains a full-memory opt-in.
+
+Mac arm64 R 4.6.1 manual-enabled `--as-cran --timings` checking completes with
+zero errors, warnings, and notes (incoming-network checks disabled by devtools).
+All vignettes build and rebuild; PDF/HTML manuals pass. The checked archive
+passes 11,215 assertions without failures, warnings, or skips. An initial check
+identified the table tests' undeclared `withr` dependency; the corrected archive
+declares it. The 237 comparable shipped files and normalised DESCRIPTION match
+the reviewed source. Changed help pages and plots are visually checked.
+
+Archive: `data-raw/check-runs/2026-10-14-dharma-stream/final-check/influ2_1.1.0.tar.gz`.
+SHA256: `f64a388e73636f75bd8c7fa36290b12eff9deb343dfa527f3a52355415aa9187`.
+Coverage is 95.49665%. Minimal installation reopens all 19 saved results without
+optional modelling/DHARMa packages and passes 26 missing-package guards.
+Caption/lightbox/keyboard checks pass for ten pages and 110 images.
+Scientific calibration and release review remain open; this is not a CRAN or
+win-builder submission. Final GitHub validation is separate from these local checks.
+
 ## Vignette runtime, CDI ordering, and full manuals: 12 October 2026
 
 Reviewed source: `1d4a1c985f871899ae2fef1375c3fe12a9cf5849`.

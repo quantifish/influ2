@@ -67,16 +67,16 @@
 #' @param terms Optional subset of exact recorded term names. `NULL` includes
 #'   every term. Interaction, auxiliary-component, and latent-process terms
 #'   remain visible even when no valid univariate residual screen is available.
-#' @param nsim,batch_size,seed,component,conditioning,dharma_max_mb,trial_counts,response_transform
+#' @param nsim,batch_size,seed,component,conditioning,dharma_max_mb,trial_counts,response_transform,dharma_storage
 #'   Passed to [influ_residuals()] for new calculations. No MCMC or original
-#'   model refit is run. DHARMa temporarily needs a full response matrix;
-#'   `dharma_max_mb` bounds that matrix, not peak memory. `batch_size` does not
-#'   eliminate this allocation. Component selection is explicit for joint models.
+#'   model refit is run. Compact DHARMa calculations default to bounded response
+#'   blocks and a temporary disk cache; `dharma_max_mb` is a response-workspace
+#'   budget, not a process-wide memory bound. Component selection is explicit for joint models.
 #' @param residual_method Residual engine for a new report: `"dharma"` (the
 #'   checker default, requiring optional DHARMa >= 0.4.7) or `"simulation_pit"`.
 #'   This does not change the default of [influ_residuals()]. There is no silent
 #'   fallback if an engine, family, or conditioning target is unavailable.
-#' @param residual_tests Native DHARMa test set for new calculations: `"none"`,
+#' @param residual_tests DHARMa-reference test set for new calculations: `"none"`,
 #'   `"standard"`, or `"full"`. `NULL` selects `"standard"` for DHARMa and
 #'   `"none"` for simulation PIT. Full adds auxiliary quantile regressions and
 #'   outlier tests, with additional computation, but no original-model refits.
@@ -103,8 +103,10 @@
 #'   classified as residual failures. Joint/latent structures requiring an
 #'   explicitly defined dependence check are reported as unassessed.
 #'
-#'   Optional overall tests are genuinely calculated by DHARMa while its native
-#'   simulation object exists. The compact report retains statistics and
+#'   Optional uniformity/year/quantile tests use genuine DHARMa vector interfaces.
+#'   Disk-based dispersion and outlier tests use labelled bounded-memory
+#'   equivalents; `dharma_storage = "memory"` calls native object-based tests.
+#'   The compact report retains statistics, implementation sources, and
 #'   metadata, not that object's response matrix, the fitted model, or formula
 #'   environments. Plotting and printing never repeat tests or consume RNG.
 #'   Supplied residuals are compacted even if their original object retains
@@ -151,7 +153,7 @@ check_cpue <- function(model, data = NULL, year = NULL, residuals = NULL,
     conditioning = "backend_default",
     residual_method = c("dharma", "simulation_pit"), residual_tests = NULL,
     alpha = 0.05, dharma_max_mb = 256, trial_counts = NULL,
-    response_transform = "identity") {
+    response_transform = "identity", dharma_storage = c("auto", "disk", "memory")) {
   engine_requested <- !missing(residual_method)
   source_supplied <- !is.null(residuals)
   if (!is.logical(simulate) || length(simulate) != 1L || is.na(simulate))
@@ -160,6 +162,7 @@ check_cpue <- function(model, data = NULL, year = NULL, residuals = NULL,
     stop("`alpha` must be between zero and one.", call. = FALSE)
   component <- match.arg(component)
   residual_method <- match.arg(residual_method)
+  .resid_dharma_storage(dharma_storage, residual_method, FALSE)
   if (is.null(residual_tests)) residual_tests <- if (residual_method == "dharma") "standard" else "none"
   residual_tests <- .resid_test_options(residual_tests, residual_method)
   .resid_integer(nsim, "nsim", 20L)
@@ -204,7 +207,7 @@ check_cpue <- function(model, data = NULL, year = NULL, residuals = NULL,
         component = component, conditioning = conditioning,
         residual_method = residual_method, residual_tests = residual_tests,
         dharma_max_mb = dharma_max_mb, trial_counts = trial_counts,
-        response_transform = response_transform), warning = function(w) {
+        response_transform = response_transform, dharma_storage = dharma_storage), warning = function(w) {
           warnings <<- c(warnings, conditionMessage(w))
           invokeRestart("muffleWarning")
         }), error = function(e) e)

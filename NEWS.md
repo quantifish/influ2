@@ -1,5 +1,18 @@
 # influ2 1.1.0
 
+* Compact DHARMa residual calculations now use temporary disk-backed joint
+  simulations and bounded observation blocks by default. Native DHARMa PIT
+  and vector-based tests are retained; dispersion and outlier tests use
+  explicitly labelled bounded-memory equivalents. `dharma_storage` selects
+  automatic, disk, or full-memory storage, and native-object retention keeps
+  its complete matrix in memory. Temporary caches are removed on success
+  or failure. The residual article compares disk and native-memory results.
+  Equivalent tests are validated for DHARMa 0.4.7 and 0.5.0; other versions
+  leave those tests explicitly unassessed, with native memory-mode tools
+  available separately.
+  Simulation conditioning and fitted-model calibration are unchanged;
+  the workspace budget is not a total-process memory guarantee.
+
 * `index_table()` labels interval columns with their stored probabilities,
   such as `Q0.025`/`Q0.975` or `Q0.05`/`Q0.95`, without changing any values.
   `quantile_names = "generic"` and `as.data.frame()` retain fixed

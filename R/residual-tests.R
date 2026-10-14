@@ -1,4 +1,5 @@
-# Optional tests are calculated while the genuine native DHARMa object exists.
+# Optional tests use a genuine native object or genuine DHARMa PIT vectors plus
+# bounded-memory simulation reducers. Never fabricate a partial DHARMa object.
 # Saved plots format these compact results; they never invoke a test or RNG.
 .resid_test_options <- function(residual_tests, residual_method) {
   mode <- match.arg(residual_tests, c("none", "standard", "full"))
@@ -36,24 +37,32 @@
   DHARMa::testCategorical(native, catPred = year, plot = FALSE)
 }
 
-.resid_dharma_test_table <- function(native, result, mode = c("standard", "full")) {
+.resid_dharma_test_table <- function(native, result, mode = c("standard", "full"), cache = NULL) {
   mode <- match.arg(mode)
-  if (!inherits(native, "DHARMa") ||
+  disk <- !is.null(cache)
+  if ((!disk && !inherits(native, "DHARMa")) ||
       !identical(result$metadata$residual_method, "dharma")) {
     stop("Native DHARMa tests require a genuine DHARMa object and matching DHARMa residual metadata.", call. = FALSE)
   }
-  if (!identical(as.numeric(native$scaledResiduals), as.numeric(result$observations$pit))) {
+  if (!disk && !identical(as.numeric(native$scaledResiduals), as.numeric(result$observations$pit))) {
     stop("The native DHARMa object does not match the stored PIT values.", call. = FALSE)
   }
-  if (length(native$scaledResiduals) != nrow(result$observations) ||
+  if (!disk && (length(native$scaledResiduals) != nrow(result$observations) ||
       !identical(as.numeric(native$observedResponse), as.numeric(result$observations$observed)) ||
       !isTRUE(all.equal(as.numeric(native$fittedPredictedResponse),
-        as.numeric(result$observations$predicted), tolerance = 1e-12))) {
+        as.numeric(result$observations$predicted), tolerance = 1e-12)))) {
     stop("Native response data or predictive means do not match the compact residual result.", call. = FALSE)
   }
-  if (isTRUE(native$refit)) {
+  if (!disk && isTRUE(native$refit)) {
     stop("These compact tests require non-refitted response simulations; no Pearson/refitted dispersion substitution is made.", call. = FALSE)
   }
+  if (disk) {
+    .resid_dharma_stream_check(cache, result$observations$observed)
+    .resid_dharma_validate_pit(result$observations$pit, cache$n)
+  }
+  input <- if (disk) result$observations$pit else native
+  nsim <- if (disk) cache$nsim else native$nSim
+  integer <- if (disk) isTRUE(result$metadata$integer_response) else isTRUE(native$integerResponse)
   saved_seed <- if (exists(".Random.seed", .GlobalEnv, inherits = FALSE))
     get(".Random.seed", .GlobalEnv) else NULL
   on.exit({
@@ -65,7 +74,7 @@
   set.seed(seed)
   n <- nrow(result$observations)
   conditioning <- result$metadata$conditioning %||% result$metadata$scheme
-  limitation <- paste("Exploratory native DHARMa reference; not calibrated for this fitted model.",
+  limitation <- paste("Exploratory DHARMa reference; not calibrated for this fitted model.",
     "Parameter estimation, posterior-data reuse, latent conditioning, and dependence affect interpretation.",
     "No flag is not proof of model adequacy.")
   if (result$metadata$response_kind %in% c("bernoulli", "grouped_binomial")) {
@@ -94,13 +103,16 @@
   }
   native_test <- function(check, fun, term = "response", message = "") {
     run <- .resid_test_run(fun)
-    row(check, run$value, term = term, message = paste(message, run$error %||% ""), notes = run$notes)
+    failed_equivalent <- disk && is.null(run$value) && check %in% c("dispersion", "outliers")
+    row(check, run$value, term = term, message = paste(message, run$error %||% ""), notes = run$notes,
+      method = if (failed_equivalent) "Bounded-memory DHARMa equivalent unavailable" else NULL)
     run$value
   }
-  native_test("uniformity", function() DHARMa::testUniformity(native, plot = FALSE),
+  native_test("uniformity", function() DHARMa::testUniformity(input, plot = FALSE),
     message = "KS statistic D tests the uniform-scale DHARMa values, not normal-score display limits.")
-  native_test("dispersion", function() DHARMa::testDispersion(native,
-    type = "DHARMa", plot = FALSE),
+  native_test("dispersion", function() if (disk)
+    .resid_dharma_stream_dispersion(cache, result$observations$observed, result$observations$predicted) else
+    DHARMa::testDispersion(native, type = "DHARMa", plot = FALSE),
     message = "Observed/simulated raw-response residual variance ratio; no Pearson test or model refitting.")
   years <- droplevels(factor(result$observations$year))
   counts <- table(years)
@@ -121,9 +133,11 @@
     # Native per-year KS values are unaltered. Restrict sparse groups before
     # testing and record the Holm family explicitly in the saved rows.
     selected <- years %in% eligible
-    categorical_native <- native
-    categorical_native$scaledResiduals <- native$scaledResiduals[selected]
-    categorical_native$nObs <- sum(selected)
+    categorical_native <- if (disk) input[selected] else native
+    if (!disk) {
+      categorical_native$scaledResiduals <- native$scaledResiduals[selected]
+      categorical_native$nObs <- sum(selected)
+    }
     categorical_years <- droplevels(years[selected])
     run <- .resid_test_run(function() .resid_test_categorical(categorical_native, categorical_years))
     value <- run$value
@@ -155,7 +169,7 @@
       row("quantiles", term = "predictive_mean", status = "not_assessed",
         message = "Quantile regressions require at least 20 observations and five distinct predictive means.")
     } else {
-      value <- native_test("quantiles", function() DHARMa::testQuantiles(native,
+      value <- native_test("quantiles", function() DHARMa::testQuantiles(input,
         predictor = result$observations$predicted, plot = FALSE), term = "predictive_mean",
         message = "Auxiliary qgam regressions of uniform PIT quartiles; BH-adjusted combined p-value, not significance of the displayed loess or a CPUE refit.")
       if (!is.null(value) && any(!is.finite(value$pvals))) {
@@ -165,9 +179,11 @@
           "At least one requested quantile failed; no complete combined test is available.")
       }
     }
-    integer <- isTRUE(native$integerResponse)
-    native_test("outliers", function() DHARMa::testOutliers(native,
-      type = if (integer) "bootstrap" else "binomial", nBoot = min(100L, native$nSim), plot = FALSE),
+    native_test("outliers", function() if (disk)
+      .resid_dharma_stream_outliers(cache, result$observations$observed,
+        result$observations$pit, integer, nboot = min(100L, nsim)) else
+      DHARMa::testOutliers(native,
+        type = if (integer) "bootstrap" else "binomial", nBoot = min(100L, nsim), plot = FALSE),
       message = if (integer) paste("Bootstrap outlier reference resamples existing response simulations;",
         "up to 100 bootstrap replicates, extra calculation cost, finite Monte Carlo precision, no model refit.") else
         "Continuous-response binomial outlier reference; outside the finite simulation range is not a measure of response extremeness.")
@@ -177,11 +193,17 @@
   attr(out, "test_metadata") <- list(mode = mode,
     dharma_version = as.character(utils::packageVersion("DHARMa")),
     qgam_version = if (mode == "full") tryCatch(as.character(utils::packageVersion("qgam")), error = function(e) NULL) else NULL,
-    seed = seed, nsim = native$nSim, refit = FALSE,
+    seed = seed, nsim = nsim, refit = FALSE,
+    storage = if (disk) "disk" else "memory",
+    implementation = if (disk) c(uniformity = "native DHARMa vector test",
+      dispersion = "influ2 bounded-memory DHARMa equivalent",
+      year = "native DHARMa vector test", quantiles = "native DHARMa vector test",
+      outliers = "influ2 bounded-memory DHARMa equivalent") else "native DHARMa object tests",
+    equivalent_reference = if (disk) .resid_dharma_stream_source() else NULL,
     alpha = 0.05, year_adjustment = "Holm within eligible years",
     quantile_adjustment = "Native DHARMa BH within quantile tests; no across-check correction",
-    outlier_type = if (mode == "full") if (isTRUE(native$integerResponse)) "bootstrap" else "binomial" else NULL,
-    outlier_nboot = if (mode == "full" && isTRUE(native$integerResponse)) min(100L, native$nSim) else NULL,
+    outlier_type = if (mode == "full") if (integer) "bootstrap" else "binomial" else NULL,
+    outlier_nboot = if (mode == "full" && integer) min(100L, nsim) else NULL,
     calibration = limitation, retention = "Compact test statistics only; no response matrix or auxiliary diagnostic fits")
   out
 }
@@ -215,7 +237,12 @@
       " years with Holm-adjusted KS p < ", .resid_test_number(alpha)) else "Within-year KS tests unavailable"
     return(paste(one("year_homogeneity", "Uniform-PIT Levene", "F"), grouped, sep = "\n"))
   }
-  if (type == "distribution") return(one("dispersion", "DHARMa response dispersion", "ratio"))
+  if (type == "distribution") {
+    d <- select("dispersion")
+    equivalent <- any(grepl("bounded-memory equivalent", d$method, fixed = TRUE))
+    return(one("dispersion", if (equivalent) "DHARMa-equivalent response dispersion" else
+      "DHARMa response dispersion", "ratio"))
+  }
   "Probability calibration is exploratory; no automatic calibration p-value."
 }
 

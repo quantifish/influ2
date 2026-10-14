@@ -165,6 +165,7 @@ test_that("DHARMa external declarations and allocation failures preserve RNG", {
   expect_error(do.call(as_influ_residuals, args), "only used")
   args <- dharma_external_args()
   args$dharma_max_mb <- .001
+  args$dharma_storage <- "memory"
   set.seed(52)
   rng <- .Random.seed
   expect_error(do.call(as_influ_residuals, args), "exceeding")
@@ -188,6 +189,7 @@ test_that("malformed DHARMa output is not replaced by another residual", {
 test_that("endpoint placeholders cannot reverse interior tail ordering", {
   skip_if_not_installed("DHARMa", "0.4.7")
   args <- dharma_external_args("continuous")
+  args$dharma_storage <- "memory"
   for (all_endpoints in c(FALSE, TRUE)) {
     p <- c(0, 1, rep(if (all_endpoints) 0 else 1e-8, nrow(args$data) - 2L))
     local_mocked_bindings(.resid_dharma_calculate = function(...) {

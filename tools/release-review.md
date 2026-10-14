@@ -5,6 +5,47 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Bounded-memory DHARMa: 14 October 2026
+
+Compact DHARMa calculations now default to a temporary column-major binary
+cache, generating each native joint response simulation once. Original-order
+observation slabs call DHARMa's PIT implementation, with caller RNG restored.
+Native vector-based uniformity, year, and quantile tests remain available;
+dispersion and outliers use explicitly labelled bounded-memory equivalents
+validated against DHARMa 0.4.7 and 0.5.0. Unvalidated versions leave those
+equivalents unassessed without suppressing genuine vector tests. Full native
+object retention still requires the full matrix in memory. Conditioning,
+scientific calibration, component targets, N09, and IV01 are unchanged.
+
+The final source archive's 11,215 assertions pass without failures, warnings,
+or skips, including seven-backend agreement, whole-simulation dependence,
+PIT ties/endpoints, exact Monte Carlo reference ties, bootstrap RNG order,
+malformed output, cleanup, and saved-result reuse. The initial archive check
+caught an undeclared `withr` test dependency from the table-heading tests;
+it is now declared. The corrected Mac arm64 R 4.6.1 manual-enabled
+`--as-cran --timings` check passes with zero errors, warnings, and notes.
+devtools disables incoming-network checks locally. Every vignette builds and
+rebuilds; PDF/HTML manuals pass. Changed help pages and annotated figures are
+visually reviewed, and all ten-page/110-image lightbox checks pass. Minimal
+installation reopens 19 saved results without optional backends and passes
+26 missing-package guards. Coverage remains 95.49665%.
+
+The archive is retained at
+`data-raw/check-runs/2026-10-14-dharma-stream/final-check/influ2_1.1.0.tar.gz`,
+SHA256 `f64a388e73636f75bd8c7fa36290b12eff9deb343dfa527f3a52355415aa9187`.
+All 237 comparable shipped files and normalised DESCRIPTION fields match
+the reviewed source. The maintained benchmark is
+[`benchmark-dharma-storage.R`](benchmark-dharma-storage.R): for 25,000
+observations and 400 simulations, identical residuals and numerical test
+statistics use about 448 MiB peak process RSS on disk versus 626 MiB in
+memory (28.6% less). Its estimated response workspace is 8 MiB; package
+loading and other allocations explain the higher process RSS. Separate
+process elapsed times were 1.76 and 1.26 seconds. This is an illustrative Mac
+benchmark, not a universal performance guarantee. Temporary disk use replaces
+the full response-matrix RAM requirement, not all native/backend storage.
+No CRAN or win-builder submission is made; Nicholas's calibration and
+interpretation review remains separate.
+
 ## Overall/term model checking and DHARMa evidence: 13 October 2026
 
 The approved increment adds `check_cpue()` reports, overall native statistics

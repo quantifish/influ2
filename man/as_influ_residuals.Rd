@@ -28,7 +28,8 @@ as_influ_residuals(
   retain_dharma = FALSE,
   dharma_max_mb = 256,
   integer_response = NULL,
-  residual_tests = c("none", "standard", "full")
+  residual_tests = c("none", "standard", "full"),
+  dharma_storage = c("auto", "disk", "memory")
 )
 }
 \arguments{
@@ -117,20 +118,21 @@ columns must not be defined from the outcome.}
 
 \item{residual_method}{\code{"simulation_pit"} (default) preserves influ2's
 compact finite-simulation ranks. \code{"dharma"} delegates the residual
-calculation to optional DHARMa >= 0.4.7, using \code{createDHARMa(method = "PIT")}
+calculation to optional DHARMa >= 0.4.7, using \code{getQuantile(method = "PIT")}
 on the same native response simulations and conditioning. It does not
 call \code{simulateResiduals()} or adopt DHARMa's model-specific defaults.}
 
 \item{retain_dharma}{Keep the genuine DHARMa object in \code{result$dharma},
 including its full response matrix, for DHARMa plotting, aggregation, and
-tests. Default \code{FALSE} discards it after calculating the compact summaries.
+tests. Default \code{FALSE} returns compact summaries without a native object.
 Requires \code{residual_method = "dharma"}. No fitted model is retained.}
 
-\item{dharma_max_mb}{Maximum size of the full DHARMa response matrix in MiB,
-default 256. A larger request fails before simulation. Requests of at least
-100 MiB warn. This limits the matrix alone, not peak memory: DHARMa and
-native simulators allocate additional copies. \code{batch_size} cannot remove
-this full-matrix cost. Increase the limit explicitly only if appropriate.}
+\item{dharma_max_mb}{Response-workspace budget in MiB, default 256. Disk
+storage bounds estimated simulation-batch and quantile-slab workspace,
+reducing the effective batch size if needed. It fails if even one column
+or slab cannot fit. Memory storage guards the full matrix alone and warns
+at 100 MiB. Neither is a process-wide peak-memory bound: native backends,
+ECDF/calibration summaries, and auxiliary qgam fits use additional memory.}
 
 \item{integer_response}{For \code{residual_method = "dharma"}, declare whether
 the supplied response distribution is integer-valued. Required for general
@@ -138,16 +140,26 @@ response kinds; defaults to \code{TRUE} for Bernoulli/grouped binomial. This is
 distribution metadata, not inferred from realised observed values. DHARMa's
 PIT calculation randomises atoms in both discrete and mixed distributions.}
 
-\item{residual_tests}{Optional native DHARMa checks: \code{"none"} (default)
+\item{residual_tests}{Optional DHARMa-reference checks: \code{"none"} (default)
 leaves the existing result unchanged; \code{"standard"} calculates uniformity,
 simulation-based response dispersion, and supported year-level categorical
 checks. \code{"full"} also calculates auxiliary quantile regressions and an
 outlier test (bootstrap for integer responses, with extra calculation cost).
-Requires \code{residual_method = "dharma"}. Tests run once while the native
-object exists, retaining compact statistics only. They are exploratory,
+Requires \code{residual_method = "dharma"}. Uniformity, year, and quantile tests
+call native DHARMa vector interfaces. Disk dispersion and outlier tests
+use explicitly labelled bounded-memory equivalents of its non-refitted
+reference algorithms. Memory storage calls all tests on the genuine
+native object. Tests run once, retaining compact statistics only. They are exploratory,
 not fitted-model-calibrated acceptance tests, and do not refit the CPUE
 model, run MCMC, or use Pearson dispersion. Year KS p-values are Holm-
 adjusted across supported years; the other checks are not jointly adjusted.}
+
+\item{dharma_storage}{\code{"auto"} (default) uses a temporary disk cache for
+compact DHARMa results, or \code{"memory"} when \code{retain_dharma = TRUE}.
+Explicit \code{"disk"} processes observation slabs without assembling a full
+response matrix in RAM; \code{"memory"} uses \code{createDHARMa()}. Disk storage
+cannot retain a native DHARMa object. Simulations are generated once;
+temporary files are removed on success or error. Only used with DHARMa.}
 }
 \value{
 An \code{influ_residuals} object, using the same plotting and grouped
@@ -195,8 +207,9 @@ original matrix still occupies memory until they release it. Temporary
 ECDF/calibration storage and the first-batch ECDF grid follow the existing
 \code{\link[=influ_residuals]{influ_residuals()}} calculation. Changing batch size can change that grid,
 but not the ranks or sequentially calculated predictive means for fixed
-supplied simulations. With \code{residual_method = "dharma"}, an additional
-full matrix is assembled for DHARMa and discarded by default. Set
+supplied simulations. With \code{residual_method = "dharma"}, compact output
+defaults to a temporary disk cache instead of an additional full matrix.
+This does not release the caller's original in-memory input. Set
 \code{retain_dharma = TRUE} only when DHARMa's original object is needed.
 
 These remain exploratory predictive checks. Fitted-data ranks are not

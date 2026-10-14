@@ -93,8 +93,9 @@
 #'   ECDF/calibration storage and the first-batch ECDF grid follow the existing
 #'   [influ_residuals()] calculation. Changing batch size can change that grid,
 #'   but not the ranks or sequentially calculated predictive means for fixed
-#'   supplied simulations. With `residual_method = "dharma"`, an additional
-#'   full matrix is assembled for DHARMa and discarded by default. Set
+#'   supplied simulations. With `residual_method = "dharma"`, compact output
+#'   defaults to a temporary disk cache instead of an additional full matrix.
+#'   This does not release the caller's original in-memory input. Set
 #'   `retain_dharma = TRUE` only when DHARMa's original object is needed.
 #'
 #'   These remain exploratory predictive checks. Fitted-data ranks are not
@@ -127,9 +128,11 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
     calibration_bins = 10L, calibration_min_n = 20L, calibration_groups = NULL,
     residual_method = c("simulation_pit", "dharma"), retain_dharma = FALSE,
     dharma_max_mb = 256, integer_response = NULL,
-    residual_tests = c("none", "standard", "full")) {
+    residual_tests = c("none", "standard", "full"),
+    dharma_storage = c("auto", "disk", "memory")) {
   residual_method <- .resid_method_options(residual_method, retain_dharma, dharma_max_mb)
   residual_tests <- .resid_test_options(residual_tests, residual_method)
+  storage <- .resid_dharma_storage(dharma_storage, residual_method, retain_dharma)
   if (!is.matrix(simulations) || !is.numeric(simulations)) {
     stop("`simulations` must be a numeric observation-by-simulation matrix.", call. = FALSE)
   }
@@ -235,7 +238,8 @@ as_influ_residuals <- function(simulations, data, response, year, response_kind,
   set.seed(seed)
   result <- .resid_summarise_method(adapter, time, data[groups %||% character()], nsim,
     batch_size, seed, grid_size, level, calibration_bins, calibration_min_n, calibration_groups,
-    residual_method, retain_dharma, dharma_max_mb, integer_response, residual_tests)
+    residual_method, retain_dharma, dharma_max_mb, integer_response, residual_tests,
+    dharma_storage = if (storage == "none") "auto" else storage)
   result$metadata$input <- "external_response_matrix"
   result$metadata$observation_id <- observation_id %||% "row.names"
   result$metadata$alignment <- "Exact observation ID and row-order match; no automatic reordering"
