@@ -601,7 +601,7 @@ lme4_reference <- data.frame(
 lme4_index <- cpue_index(lobster_lme4, year = "year",
   reference_data = lme4_reference, units = "lobsters per pot")
 head(index_table(lme4_index))
-#>   Year     Mean        SD        CV    Qlower   Qupper       Method
+#>   Year     Mean        SD        CV    Q0.025   Q0.975       Method
 #> 1 2000 1.687169 0.2398386 0.1421545 1.2768989 2.229260 standardised
 #> 2 2001 1.759605 0.2494233 0.1417496 1.3327780 2.323126 standardised
 #> 3 2002 1.839602 0.2563302 0.1393400 1.3999658 2.417299 standardised
@@ -1301,26 +1301,31 @@ Both `method = "standardised"` and `method = "standardized"` work. The
 calculated result contains the familiar assessment columns, plus method,
 distribution, and link information. The reporting columns are shown
 below. `Mean` is the estimated expected CPUE, `SD` is its standard
-error, and `CV` is `SD / Mean`. `Qlower` and `Qupper` give the pointwise
-95% confidence interval.
+error, and `CV` is `SD / Mean`. `Q0.025` and `Q0.975` give the pointwise
+95% confidence interval. The headings follow the stored probabilities;
+requesting `probs = c(0.05, 0.95)` would instead give `Q0.05` and
+`Q0.95` for a central 90% interval.
 [`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
 omits an unavailable `Median` column for this frequentist fit; it
 retains the genuine posterior median when using a complete brms fit.
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) still
-provides the full schema, including missing medians, for code that
-depends on those columns. None of these uncertainty columns describes
-variation among individual observations.
+provides the full schema, including missing medians, and the generic
+`Qlower`/`Qupper` names for code that depends on those columns.
+`index_table(..., quantile_names = "generic")` also retains those
+generic names. None of these uncertainty columns describes variation
+among individual observations.
 
 ``` r
 
 knitr::kable(
-  lobster_index_table[c("Year", "Mean", "SD", "CV", "Qlower", "Qupper")],
+  lobster_index_table[c("Year", "Mean", "SD", "CV",
+    grep("^Q", names(lobster_index_table), value = TRUE))],
   digits = 3,
   caption = "Standardised lobster CPUE and uncertainty at the common reference profile."
 )
 ```
 
-| Year |  Mean |    SD |    CV | Qlower | Qupper |
+| Year |  Mean |    SD |    CV | Q0.025 | Q0.975 |
 |:-----|------:|------:|------:|-------:|-------:|
 | 2000 | 1.689 | 0.240 | 0.142 |  1.278 |  2.231 |
 | 2001 | 1.761 | 0.249 | 0.142 |  1.334 |  2.325 |
@@ -1801,7 +1806,7 @@ library(influ2)
 restored_results <- readRDS(result_file)
 
 head(index_table(restored_results$index))
-#>   Year     Mean        SD        CV    Qlower   Qupper       Method
+#>   Year     Mean        SD        CV    Q0.025   Q0.975       Method
 #> 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised
 #> 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised
 #> 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised

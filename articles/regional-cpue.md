@@ -184,13 +184,16 @@ calculate_regions <- function(fit, refs, rescale = "raw", uncertainty = "auto") 
 }
 regional_indices <- calculate_regions(regional_fit, references)
 regional_tables <- do.call(rbind, lapply(names(regional_indices), function(r) {
-  data.frame(Region = r, index_table(regional_indices[[r]]), row.names = NULL)
+  data.frame(Region = r, index_table(regional_indices[[r]],
+    quantile_names = "generic"), row.names = NULL)
 }))
 knitr::kable(regional_tables[c("Region", "Year", "Mean", "SD", "CV",
-  "Qlower", "Qupper")], digits = 3, row.names = FALSE)
+  "Qlower", "Qupper")], digits = 3, row.names = FALSE,
+  col.names = c("Region", "Year", "Mean", "SD", "CV",
+    grep("^Q", names(index_table(regional_indices[[1]])), value = TRUE)))
 ```
 
-| Region   | Year |  Mean |    SD |    CV | Qlower | Qupper |
+| Region   | Year |  Mean |    SD |    CV | Q0.025 | Q0.975 |
 |:---------|:-----|------:|------:|------:|-------:|-------:|
 | Region A | 2010 | 3.444 | 0.352 | 0.102 |  2.820 |  4.208 |
 | Region A | 2011 | 4.057 | 0.394 | 0.097 |  3.354 |  4.907 |
@@ -212,7 +215,9 @@ knitr::kable(regional_tables[c("Region", "Year", "Mean", "SD", "CV",
 Both series come from the same `regional_fit`. Neither calculating
 another reference nor drawing another plot refits it. The table’s SD is
 uncertainty in the estimated index, not the spread of individual
-responses.
+responses. The displayed quantile headings follow the stored
+probabilities. We keep generic column names in `regional_tables` for the
+later plotting code.
 
 ``` r
 

@@ -58,7 +58,8 @@ full, stable table is still available through <code><a href="cpue_index.html">as
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">index_table</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"summary"</span>, <span class="st">"lognormal"</span><span class="op">)</span>,</span>
-<span>  include_median <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"always"</span>, <span class="st">"never"</span><span class="op">)</span></span>
+<span>  include_median <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"always"</span>, <span class="st">"never"</span><span class="op">)</span>,</span>
+<span>  quantile_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"probability"</span>, <span class="st">"generic"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -81,6 +82,13 @@ uncertainty. This is not the fitted response distribution.</p></dd>
 missing; <code>"always"</code> retains it, and <code>"never"</code> omits it. An available brms
 posterior median is never replaced by a lognormal approximation.</p></dd>
 
+
+<dt id="arg-quantile-names">quantile_names<a class="anchor" aria-label="anchor" href="#arg-quantile-names"></a></dt>
+<dd><p><code>"probability"</code> (default) labels interval columns
+with the stored probabilities, for example <code>Q0.025</code> and <code>Q0.975</code> for
+<code>probs = c(0.025, 0.975)</code>. <code>"generic"</code> keeps <code>Qlower</code> and <code>Qupper</code> for
+code that needs fixed column names. This changes headings, not values.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -102,6 +110,11 @@ from the actual joint delta method or log-index draws, not marginal
 lognormal moment matching. Use the joint matrix for a correlated-index
 assessment; do not combine its correlations with these approximate SDs
 without explicitly choosing a different uncertainty model.</p>
+<p>Probability headings use the index's stored <code>metadata$probs</code>, not an
+assumed interval level. For <code>probs = c(0.05, 0.95)</code>, the headings are
+<code>Q0.05</code> and <code>Q0.95</code> (a central 90% interval). If stored probabilities are
+missing or invalid, generic headings are retained with a warning.
+<code><a href="cpue_index.html">as.data.frame.influ_index()</a></code> always keeps the stable generic schema.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -114,7 +127,7 @@ without explicitly choosing a different uncertainty model.</p>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">depth</span>, <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">index</span> <span class="op">&lt;-</span> <span class="fu"><a href="cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">fit</span>, reference_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>depth <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">index_table</span><span class="op">(</span><span class="va">index</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Year      Mean         SD         CV    Qlower    Qupper       Method</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Year      Mean         SD         CV    Q0.025    Q0.975       Method</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2000 0.9210196 0.05669518 0.06155697 0.8163408 1.0391213 standardised</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 2001 0.9936961 0.05969711 0.06007582 0.8833177 1.1178672 standardised</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 2002 1.0878984 0.06095491 0.05602997 0.9747551 1.2141745 standardised</span>
@@ -129,7 +142,7 @@ without explicitly choosing a different uncertainty model.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5      poisson  log</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6      poisson  log</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">index_table</span><span class="op">(</span><span class="va">index</span>, format <span class="op">=</span> <span class="st">"lognormal"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Year      Mean         SD         CV    Qlower    Qupper       Method</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Year      Mean         SD         CV    Q0.025    Q0.975       Method</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2000 0.9210196 0.05669518 0.06155697 0.8163408 1.0391213 standardised</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 2001 0.9936961 0.05969711 0.06007582 0.8833177 1.1178672 standardised</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 2002 1.0878984 0.06095491 0.05602997 0.9747551 1.2141745 standardised</span>

@@ -8,9 +8,16 @@ every year. It produces the familiar assessment columns: `Year`, `Mean`,
 `Median`, `SD`, `CV`, `Qlower`, and `Qupper`, alongside method,
 distribution, and link metadata. The result is an `influ_index` object;
 [`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
-gives a reporting table, omitting an unavailable median by default.
+gives a reporting table, omitting an unavailable median by default and
+labelling interval columns with their stored probabilities. The default
+`probs = c(0.025, 0.975)` gives `Q0.025` and `Q0.975`, a central 95%
+interval. With `probs = c(0.05, 0.95)`, the headings become `Q0.05` and
+`Q0.95`, a central 90% interval. These are headings for the calculated
+limits, not a change to the estimates or uncertainty.
 [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) retains
-the full, stable schema for existing code.
+the full, stable schema for existing code;
+`index_table(index, quantile_names = "generic")` also keeps `Qlower` and
+`Qupper`.
 
 For two regional series from one fitted model, see [Regional CPUE
 indices](https://www.quantifish.co.nz/influ2/articles/regional-cpue.md).
@@ -65,7 +72,7 @@ lobster_index <- cpue_index(
 knitr::kable(index_table(lobster_index), digits = 3)
 ```
 
-| Year |  Mean |    SD |    CV | Qlower | Qupper | Method       | Distribution | Link |
+| Year |  Mean |    SD |    CV | Q0.025 | Q0.975 | Method       | Distribution | Link |
 |:-----|------:|------:|------:|-------:|-------:|:-------------|:-------------|:-----|
 | 2000 | 1.674 | 0.238 | 0.142 |  1.267 |  2.212 | standardised | nbinom2      | log  |
 | 2001 | 1.744 | 0.247 | 0.142 |  1.321 |  2.303 | standardised | nbinom2      | log  |
@@ -467,7 +474,7 @@ glm_total <- integrate_index(glm_density, density_grid, area = "area_km2",
 knitr::kable(index_table(gam_total), digits = 3)
 ```
 
-| Year |    Mean |     SD |    CV |  Qlower |  Qupper | Method     | Distribution | Link |
+| Year |    Mean |     SD |    CV |  Q0.025 |  Q0.975 | Method     | Distribution | Link |
 |:-----|--------:|-------:|------:|--------:|--------:|:-----------|:-------------|:-----|
 | 2011 | 472.599 | 29.482 | 0.062 | 418.208 | 534.065 | integrated | Gamma        | log  |
 | 2012 | 548.591 | 30.319 | 0.055 | 492.273 | 611.352 | integrated | Gamma        | log  |

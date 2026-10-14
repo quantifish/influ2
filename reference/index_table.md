@@ -10,7 +10,8 @@ full, stable table is still available through
 index_table(
   x,
   format = c("summary", "lognormal"),
-  include_median = c("auto", "always", "never")
+  include_median = c("auto", "always", "never"),
+  quantile_names = c("probability", "generic")
 )
 ```
 
@@ -34,6 +35,13 @@ index_table(
   `"auto"` omits `Median` only when every value is missing; `"always"`
   retains it, and `"never"` omits it. An available brms posterior median
   is never replaced by a lognormal approximation.
+
+- quantile_names:
+
+  `"probability"` (default) labels interval columns with the stored
+  probabilities, for example `Q0.025` and `Q0.975` for
+  `probs = c(0.025, 0.975)`. `"generic"` keeps `Qlower` and `Qupper` for
+  code that needs fixed column names. This changes headings, not values.
 
 ## Value
 
@@ -59,6 +67,13 @@ matrix for a correlated-index assessment; do not combine its
 correlations with these approximate SDs without explicitly choosing a
 different uncertainty model.
 
+Probability headings use the index's stored `metadata$probs`, not an
+assumed interval level. For `probs = c(0.05, 0.95)`, the headings are
+`Q0.05` and `Q0.95` (a central 90% interval). If stored probabilities
+are missing or invalid, generic headings are retained with a warning.
+[`as.data.frame.influ_index()`](https://www.quantifish.co.nz/influ2/reference/cpue_index.md)
+always keeps the stable generic schema.
+
 ## See also
 
 [`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md),
@@ -72,7 +87,7 @@ data(lobsters_per_pot)
 fit <- glm(lobsters ~ year + depth, poisson(), data = lobsters_per_pot)
 index <- cpue_index(fit, reference_data = data.frame(depth = 40))
 head(index_table(index))
-#>   Year      Mean         SD         CV    Qlower    Qupper       Method
+#>   Year      Mean         SD         CV    Q0.025    Q0.975       Method
 #> 1 2000 0.9210196 0.05669518 0.06155697 0.8163408 1.0391213 standardised
 #> 2 2001 0.9936961 0.05969711 0.06007582 0.8833177 1.1178672 standardised
 #> 3 2002 1.0878984 0.06095491 0.05602997 0.9747551 1.2141745 standardised
@@ -87,7 +102,7 @@ head(index_table(index))
 #> 5      poisson  log
 #> 6      poisson  log
 head(index_table(index, format = "lognormal"))
-#>   Year      Mean         SD         CV    Qlower    Qupper       Method
+#>   Year      Mean         SD         CV    Q0.025    Q0.975       Method
 #> 1 2000 0.9210196 0.05669518 0.06155697 0.8163408 1.0391213 standardised
 #> 2 2001 0.9936961 0.05969711 0.06007582 0.8833177 1.1178672 standardised
 #> 3 2002 1.0878984 0.06095491 0.05602997 0.9747551 1.2141745 standardised

@@ -90,9 +90,17 @@ assessment columns: <code>Year</code>, <code>Mean</code>,
 <code>Qlower</code>, and <code>Qupper</code>, alongside method,
 distribution, and link metadata. The result is an
 <code>influ_index</code> object; <code><a href="../reference/index_table.html">index_table()</a></code> gives a
-reporting table, omitting an unavailable median by default.
-<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> retains the full, stable schema for
-existing code.</p>
+reporting table, omitting an unavailable median by default and labelling
+interval columns with their stored probabilities. The default
+<code>probs = c(0.025, 0.975)</code> gives <code>Q0.025</code> and
+<code>Q0.975</code>, a central 95% interval. With
+<code>probs = c(0.05, 0.95)</code>, the headings become
+<code>Q0.05</code> and <code>Q0.95</code>, a central 90% interval. These
+are headings for the calculated limits, not a change to the estimates or
+uncertainty. <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> retains the full, stable
+schema for existing code;
+<code>index_table(index, quantile_names = "generic")</code> also keeps
+<code>Qlower</code> and <code>Qupper</code>.</p>
 <p>For two regional series from one fitted model, see <a href="regional-cpue.html">Regional CPUE indices</a>. That worked example
 groups four statistical areas into two regions, holds reference weights
 fixed, and checks the annual uncertainty against native predictions.</p>
@@ -147,8 +155,8 @@ index.</p>
 <th align="right">Mean</th>
 <th align="right">SD</th>
 <th align="right">CV</th>
-<th align="right">Qlower</th>
-<th align="right">Qupper</th>
+<th align="right">Q0.025</th>
+<th align="right">Q0.975</th>
 <th align="left">Method</th>
 <th align="left">Distribution</th>
 <th align="left">Link</th>
@@ -881,8 +889,8 @@ footprint is deliberately imbalanced.</p>
 <th align="right">Mean</th>
 <th align="right">SD</th>
 <th align="right">CV</th>
-<th align="right">Qlower</th>
-<th align="right">Qupper</th>
+<th align="right">Q0.025</th>
+<th align="right">Q0.975</th>
 <th align="left">Method</th>
 <th align="left">Distribution</th>
 <th align="left">Link</th>

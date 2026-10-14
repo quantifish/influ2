@@ -607,7 +607,7 @@ lme4 adapter.</p>
 <span><span class="va">lme4_index</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">lobster_lme4</span>, year <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>  reference_data <span class="op">=</span> <span class="va">lme4_reference</span>, units <span class="op">=</span> <span class="st">"lobsters per pot"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">lme4_index</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Year     Mean        SD        CV    Qlower   Qupper       Method</span></span>
+<span><span class="co">#&gt;   Year     Mean        SD        CV    Q0.025   Q0.975       Method</span></span>
 <span><span class="co">#&gt; 1 2000 1.687169 0.2398386 0.1421545 1.2768989 2.229260 standardised</span></span>
 <span><span class="co">#&gt; 2 2001 1.759605 0.2494233 0.1417496 1.3327780 2.323126 standardised</span></span>
 <span><span class="co">#&gt; 3 2002 1.839602 0.2563302 0.1393400 1.3999658 2.417299 standardised</span></span>
@@ -1227,17 +1227,22 @@ contains the familiar assessment columns, plus method, distribution, and
 link information. The reporting columns are shown below.
 <code>Mean</code> is the estimated expected CPUE, <code>SD</code> is its
 standard error, and <code>CV</code> is <code>SD / Mean</code>.
-<code>Qlower</code> and <code>Qupper</code> give the pointwise 95%
-confidence interval. <code><a href="../reference/index_table.html">index_table()</a></code> omits an unavailable
-<code>Median</code> column for this frequentist fit; it retains the
-genuine posterior median when using a complete brms fit.
-<code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> still provides the full schema, including
-missing medians, for code that depends on those columns. None of these
-uncertainty columns describes variation among individual
-observations.</p>
+<code>Q0.025</code> and <code>Q0.975</code> give the pointwise 95%
+confidence interval. The headings follow the stored probabilities;
+requesting <code>probs = c(0.05, 0.95)</code> would instead give
+<code>Q0.05</code> and <code>Q0.95</code> for a central 90% interval.
+<code><a href="../reference/index_table.html">index_table()</a></code> omits an unavailable <code>Median</code>
+column for this frequentist fit; it retains the genuine posterior median
+when using a complete brms fit. <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code> still
+provides the full schema, including missing medians, and the generic
+<code>Qlower</code>/<code>Qupper</code> names for code that depends on
+those columns. <code>index_table(..., quantile_names = "generic")</code>
+also retains those generic names. None of these uncertainty columns
+describes variation among individual observations.</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
-<span>  <span class="va">lobster_index_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>, <span class="st">"Qlower"</span>, <span class="st">"Qupper"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  <span class="va">lobster_index_table</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^Q"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">lobster_index_table</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  caption <span class="op">=</span> <span class="st">"Standardised lobster CPUE and uncertainty at the common reference profile."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -1249,8 +1254,8 @@ reference profile.</caption>
 <th align="right">Mean</th>
 <th align="right">SD</th>
 <th align="right">CV</th>
-<th align="right">Qlower</th>
-<th align="right">Qupper</th>
+<th align="right">Q0.025</th>
+<th align="right">Q0.975</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -1996,7 +2001,7 @@ refits.</p>
 <span><span class="va">restored_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">result_file</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">restored_results</span><span class="op">$</span><span class="va">index</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Year     Mean        SD        CV    Qlower   Qupper       Method</span></span>
+<span><span class="co">#&gt;   Year     Mean        SD        CV    Q0.025   Q0.975       Method</span></span>
 <span><span class="co">#&gt; 1 2000 1.688662 0.2399914 0.1421192 1.2781173 2.231079 standardised</span></span>
 <span><span class="co">#&gt; 2 2001 1.761248 0.2494645 0.1416407 1.3343068 2.324799 standardised</span></span>
 <span><span class="co">#&gt; 3 2002 1.841306 0.2566028 0.1393591 1.4012103 2.419629 standardised</span></span>

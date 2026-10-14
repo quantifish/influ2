@@ -347,10 +347,13 @@ predictor in this model.</p>
 <span><span class="op">}</span></span>
 <span><span class="va">regional_indices</span> <span class="op">&lt;-</span> <span class="fu">calculate_regions</span><span class="op">(</span><span class="va">regional_fit</span>, <span class="va">references</span><span class="op">)</span></span>
 <span><span class="va">regional_tables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">regional_indices</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Region <span class="op">=</span> <span class="va">r</span>, <span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">regional_indices</span><span class="op">[[</span><span class="va">r</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Region <span class="op">=</span> <span class="va">r</span>, <span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">regional_indices</span><span class="op">[[</span><span class="va">r</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>    quantile_names <span class="op">=</span> <span class="st">"generic"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">regional_tables</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Region"</span>, <span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>,</span>
-<span>  <span class="st">"Qlower"</span>, <span class="st">"Qupper"</span><span class="op">)</span><span class="op">]</span>, digits <span class="op">=</span> <span class="fl">3</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="st">"Qlower"</span>, <span class="st">"Qupper"</span><span class="op">)</span><span class="op">]</span>, digits <span class="op">=</span> <span class="fl">3</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Region"</span>, <span class="st">"Year"</span>, <span class="st">"Mean"</span>, <span class="st">"SD"</span>, <span class="st">"CV"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^Q"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="../reference/index_table.html">index_table</a></span><span class="op">(</span><span class="va">regional_indices</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">Region</th>
@@ -358,8 +361,8 @@ predictor in this model.</p>
 <th align="right">Mean</th>
 <th align="right">SD</th>
 <th align="right">CV</th>
-<th align="right">Qlower</th>
-<th align="right">Qupper</th>
+<th align="right">Q0.025</th>
+<th align="right">Q0.975</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -511,7 +514,9 @@ predictor in this model.</p>
 <p>Both series come from the same <code>regional_fit</code>. Neither
 calculating another reference nor drawing another plot refits it. The
 table’s SD is uncertainty in the estimated index, not the spread of
-individual responses.</p>
+individual responses. The displayed quantile headings follow the stored
+probabilities. We keep generic column names in
+<code>regional_tables</code> for the later plotting code.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_compare.html">plot_compare</a></span><span class="op">(</span><span class="va">regional_indices</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"Region"</span>, fill <span class="op">=</span> <span class="st">"Region"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">

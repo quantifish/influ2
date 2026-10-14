@@ -2,6 +2,15 @@
 
 ## influ2 1.1.0
 
+- [`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
+  labels interval columns with their stored probabilities, such as
+  `Q0.025`/`Q0.975` or `Q0.05`/`Q0.95`, without changing any values.
+  `quantile_names = "generic"` and
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) retain
+  fixed `Qlower`/`Qupper` names. Year-effect indices retain their
+  diagnostic’s actual interval probabilities, including when extracted
+  from saved diagnostics.
+
 - Added
   [`check_cpue()`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
   with compact overall native model statistics, numerical fitting
