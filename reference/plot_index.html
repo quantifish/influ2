@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/regional-cpue.html">Regional CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/comparing-influence.html">Comparing influence and indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-search.html">Model search</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -96,6 +97,13 @@ latter two display the stored annual uncertainty matrix as a heatmap.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot object.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Annual trajectories and uncertainty ribbons retain gaps in calendar
+years and consistently formatted fishing years. Missing interval bounds
+interrupt the ribbon without removing a finite point estimate. Stored
+summaries are not interpolated, rescaled, or recalculated.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

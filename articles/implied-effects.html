@@ -45,6 +45,7 @@
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/regional-cpue.html">Regional CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/comparing-influence.html">Comparing influence and indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-search.html">Model search</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -272,7 +273,7 @@ fixed-effect fit with a mixed model.</p>
 <span>    std_error <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">standardised</span><span class="op">[</span><span class="va">keep</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">keep</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">estimate</span> <span class="op">-</span> <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">estimate</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1.110223e-16</span></span>
+<span><span class="co">#&gt; [1] 2.220446e-16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">estimate</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">manual</span><span class="op">$</span><span class="va">std_error</span>, <span class="va">historical</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">std_error</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -317,19 +318,19 @@ means by <code>exp(delta)</code>.</p>
 <span><span class="va">nb_implied</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/implied_effects.html">implied_effects</a></span><span class="op">(</span><span class="va">nb_fit</span>, groups <span class="op">=</span> <span class="st">"season"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">nb_implied</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   level        group   n    baseline  adjustment    estimate  std_error</span></span>
-<span><span class="co">#&gt; 1  2000 Early season 153  0.23187513  0.19752093  0.42939606 0.05137036</span></span>
-<span><span class="co">#&gt; 2  2001 Early season 143  0.21491857  0.12104119  0.33595976 0.05376133</span></span>
-<span><span class="co">#&gt; 3  2002 Early season 154  0.17412706  0.18936452  0.36349158 0.05169645</span></span>
-<span><span class="co">#&gt; 4  2003 Early season 160  0.09752276  0.13935863  0.23688140 0.05120521</span></span>
-<span><span class="co">#&gt; 5  2004 Early season  90 -0.06401782  0.13669585  0.07267802 0.06914226</span></span>
-<span><span class="co">#&gt; 6  2005 Early season  67 -0.13942676 -0.02277388 -0.16220063 0.08505897</span></span>
-<span><span class="co">#&gt;        lower      upper status</span></span>
-<span><span class="co">#&gt; 1  0.3296594 0.53107317     ok</span></span>
-<span><span class="co">#&gt; 2  0.2315614 0.44235340     ok</span></span>
-<span><span class="co">#&gt; 3  0.2630781 0.46577037     ok</span></span>
-<span><span class="co">#&gt; 4  0.1373659 0.33813076     ok</span></span>
-<span><span class="co">#&gt; 5 -0.0614247 0.20971555     ok</span></span>
-<span><span class="co">#&gt; 6 -0.3275419 0.00607389     ok</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  2000 Early season 153  0.23187481  0.19752139  0.42939619 0.05137036</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143  0.21491937  0.12104052  0.33595989 0.05376133</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154  0.17412683  0.18936487  0.36349170 0.05169645</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160  0.09752318  0.13935836  0.23688154 0.05120520</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90 -0.06401734  0.13669553  0.07267819 0.06914226</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67 -0.13942674 -0.02277379 -0.16220053 0.08505896</span></span>
+<span><span class="co">#&gt;         lower      upper status</span></span>
+<span><span class="co">#&gt; 1  0.32965956 0.53107330     ok</span></span>
+<span><span class="co">#&gt; 2  0.23156150 0.44235353     ok</span></span>
+<span><span class="co">#&gt; 3  0.26307818 0.46577048     ok</span></span>
+<span><span class="co">#&gt; 4  0.13736603 0.33813090     ok</span></span>
+<span><span class="co">#&gt; 5 -0.06142452 0.20971571     ok</span></span>
+<span><span class="co">#&gt; 6 -0.32754176 0.00607398     ok</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_implied_residuals.html">plot_implied_residuals</a></span><span class="op">(</span><span class="va">nb_implied</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1112,19 +1113,19 @@ rows.</p>
 <span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">gamma_combined</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   level        group   n n_positive baseline adjustment estimate std_error</span></span>
-<span><span class="co">#&gt; 1  2000 Early season 153         81 5.071513 0.18425856 6.097615 0.6241256</span></span>
-<span><span class="co">#&gt; 2  2001 Early season 143         88 6.019206 0.18497472 7.242237 0.6742032</span></span>
-<span><span class="co">#&gt; 3  2002 Early season 154         86 5.773592 0.09662582 6.359313 0.6208077</span></span>
-<span><span class="co">#&gt; 4  2003 Early season 160        100 5.454242 0.24130964 6.942787 0.6024737</span></span>
-<span><span class="co">#&gt; 5  2004 Early season  90         55 4.771928 0.22955168 6.003257 0.7088893</span></span>
-<span><span class="co">#&gt; 6  2005 Early season  67         44 3.505765 0.09122974 3.840638 0.4917417</span></span>
+<span><span class="co">#&gt; 1  2000 Early season 153         81 5.071488 0.18426332 6.097614 0.6241258</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143         88 6.019198 0.18497625 7.242238 0.6742036</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154         86 5.773590 0.09662628 6.359313 0.6208081</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160        100 5.454234 0.24131096 6.942786 0.6024739</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90         55 4.772002 0.22953605 6.003256 0.7088895</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67         44 3.505802 0.09121917 3.840638 0.4917421</span></span>
 <span><span class="co">#&gt;      lower    upper status encounter_adjustment positive_adjustment</span></span>
-<span><span class="co">#&gt; 1 4.958950 7.417438     ok          -0.03530077          0.20071557</span></span>
-<span><span class="co">#&gt; 2 6.002540 8.658244     ok           0.06385000          0.15993226</span></span>
-<span><span class="co">#&gt; 3 5.222343 7.667296     ok          -0.08917021          0.13502306</span></span>
-<span><span class="co">#&gt; 4 5.830201 8.202107     ok           0.10508480          0.20059792</span></span>
-<span><span class="co">#&gt; 5 4.721181 7.521535     ok           0.06213338          0.20492791</span></span>
-<span><span class="co">#&gt; 6 2.956195 4.903694     ok           0.15417422          0.03558374</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 4.958949 7.417437     ok          -0.03530788          0.20072362</span></span>
+<span><span class="co">#&gt; 2 6.002540 8.658246     ok           0.06384725          0.15993489</span></span>
+<span><span class="co">#&gt; 3 5.222343 7.667297     ok          -0.08916850          0.13502280</span></span>
+<span><span class="co">#&gt; 4 5.830201 8.202107     ok           0.10507036          0.20060501</span></span>
+<span><span class="co">#&gt; 5 4.721180 7.521535     ok           0.06212329          0.20491636</span></span>
+<span><span class="co">#&gt; 6 2.956196 4.903696     ok           0.15418546          0.03556891</span></span></code></pre></div>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">gamma_combined</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1154,23 +1155,23 @@ view:</p>
 <span>  component <span class="op">=</span> <span class="st">"combined"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">mixture_response</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   level        group   n n_positive baseline adjustment estimate std_error</span></span>
-<span><span class="co">#&gt; 1  2000 Early season 153        106 7.175751  0.2010503 8.773693 0.7110358</span></span>
-<span><span class="co">#&gt; 2  2001 Early season 143         92 6.219516  0.1037421 6.899398 0.6230327</span></span>
-<span><span class="co">#&gt; 3  2002 Early season 154        104 6.504191  0.1973964 7.923581 0.6583512</span></span>
-<span><span class="co">#&gt; 4  2003 Early season 160         98 5.607833  0.1286798 6.377933 0.5706983</span></span>
-<span><span class="co">#&gt; 5  2004 Early season  90         63 5.112214  0.1616548 6.009174 0.6329579</span></span>
-<span><span class="co">#&gt; 6  2005 Early season  67         41 3.632384  0.1624239 4.272987 0.6017527</span></span>
+<span><span class="co">#&gt; 1  2000 Early season 153        106 7.175695  0.2010581 8.773692 0.7110359</span></span>
+<span><span class="co">#&gt; 2  2001 Early season 143         92 6.219618  0.1037258 6.899399 0.6230330</span></span>
+<span><span class="co">#&gt; 3  2002 Early season 154        104 6.504148  0.1974031 7.923581 0.6583514</span></span>
+<span><span class="co">#&gt; 4  2003 Early season 160         98 5.607860  0.1286750 6.377933 0.5706984</span></span>
+<span><span class="co">#&gt; 5  2004 Early season  90         63 5.112249  0.1616477 6.009173 0.6329579</span></span>
+<span><span class="co">#&gt; 6  2005 Early season  67         41 3.632450  0.1624059 4.272987 0.6017528</span></span>
 <span><span class="co">#&gt;      lower     upper status encounter_adjustment positive_adjustment</span></span>
-<span><span class="co">#&gt; 1 7.454399 10.252663     ok         -0.004206822           0.2023111</span></span>
-<span><span class="co">#&gt; 2 5.751333  8.204157     ok          0.001287250           0.1032955</span></span>
-<span><span class="co">#&gt; 3 6.704182  9.295108     ok          0.085163696           0.1696449</span></span>
-<span><span class="co">#&gt; 4 5.326368  7.572293     ok         -0.068299854           0.1539312</span></span>
-<span><span class="co">#&gt; 5 4.854963  7.353755     ok          0.198694141           0.1016903</span></span>
-<span><span class="co">#&gt; 6 3.205144  5.588066     ok          0.071505080           0.1355238</span></span>
+<span><span class="co">#&gt; 1 7.454398 10.252662     ok         -0.004223281           0.2023238</span></span>
+<span><span class="co">#&gt; 2 5.751334  8.204159     ok          0.001272701           0.1032842</span></span>
+<span><span class="co">#&gt; 3 6.704182  9.295109     ok          0.085156318           0.1696540</span></span>
+<span><span class="co">#&gt; 4 5.326368  7.572294     ok         -0.068332697           0.1539383</span></span>
+<span><span class="co">#&gt; 5 4.854963  7.353755     ok          0.198724950           0.1016734</span></span>
+<span><span class="co">#&gt; 6 3.205144  5.588067     ok          0.071475746           0.1355170</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">mixture_response</span><span class="op">$</span><span class="va">table</span><span class="op">$</span><span class="va">status</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; failed_optimisation                  ok </span></span>
-<span><span class="co">#&gt;                   1                  53</span></span></code></pre></div>
+<span><span class="co">#&gt; ok </span></span>
+<span><span class="co">#&gt; 54</span></span></code></pre></div>
 <p>The extra-zero effect concerns the mixture gate. It is not an
 observed absence effect, and the count-process calculation does not
 discard zeros. Local cells with a boundary or unidentified component

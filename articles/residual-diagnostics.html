@@ -45,6 +45,7 @@
     <li><a class="dropdown-item" href="../articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/regional-cpue.html">Regional CPUE indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-comparison.html">Model comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/comparing-influence.html">Comparing influence and indices</a></li>
     <li><a class="dropdown-item" href="../articles/model-search.html">Model search</a></li>
     <li><a class="dropdown-item" href="../articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="../articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -1306,7 +1307,7 @@ engine within the shared influ2 plotting framework:</p>
 <span><span class="co">#&gt; Time: year [ year-name detection ]</span></span>
 <span><span class="co">#&gt; Native simulations at fitted parameters; random effects resimulated</span></span>
 <span><span class="co">#&gt; Exploratory ranks; not a calibrated goodness-of-fit test</span></span>
-<span><span class="co">#&gt; DHARMa 0/1 endpoints: 16; normal-score display limits +/-3.62. Uniform PIT values remain unchanged.</span></span>
+<span><span class="co">#&gt; DHARMa 0/1 endpoints: 22; normal-score display limits +/-3.65. Uniform PIT values remain unchanged.</span></span>
 <span><span class="co">#&gt; Compact DHARMa PIT summaries; temporary response cache removed; no model or full response matrix retained</span></span></code></pre></div>
 <p><code>residual_method = "dharma"</code> uses DHARMa’s own
 uniform-scale PIT calculation; this is not a new label on influ2’s
@@ -1373,7 +1374,7 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="right">-8851.785</td>
 <td align="right">17755.57</td>
 <td align="right">17925.27</td>
-<td align="right">5460.943</td>
+<td align="right">5460.928</td>
 </tr></tbody>
 </table>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
@@ -1441,15 +1442,15 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <tr class="odd">
 <td align="left">uniformity</td>
 <td align="left">review</td>
-<td align="right">0.0501</td>
-<td align="right">0.000</td>
+<td align="right">0.0456</td>
+<td align="right">0.00</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
 <td align="left">dispersion</td>
 <td align="left">no_flag</td>
-<td align="right">1.1888</td>
-<td align="right">0.368</td>
+<td align="right">1.1686</td>
+<td align="right">0.44</td>
 <td align="right">NA</td>
 </tr>
 </tbody>
@@ -1488,7 +1489,7 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">conditional</td>
 <td align="left">group_location</td>
 <td align="left">review</td>
-<td align="right">96.1261</td>
+<td align="right">99.5690</td>
 <td align="right">17</td>
 <td align="right">0.0000</td>
 <td align="right">0.0000</td>
@@ -1499,10 +1500,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">conditional</td>
 <td align="left">rank_association</td>
 <td align="left">no_flag</td>
-<td align="right">0.0137</td>
+<td align="right">0.0159</td>
 <td align="right">NA</td>
-<td align="right">0.3299</td>
-<td align="right">0.3299</td>
+<td align="right">0.2577</td>
+<td align="right">0.2577</td>
 </tr>
 <tr class="odd">
 <td align="left">3</td>
@@ -1510,10 +1511,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">conditional</td>
 <td align="left">rank_association</td>
 <td align="left">review</td>
-<td align="right">0.0636</td>
+<td align="right">0.0583</td>
 <td align="right">NA</td>
 <td align="right">0.0000</td>
-<td align="right">0.0000</td>
+<td align="right">0.0001</td>
 </tr>
 <tr class="even">
 <td align="left">4</td>
@@ -1521,7 +1522,7 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">conditional</td>
 <td align="left">group_location</td>
 <td align="left">review</td>
-<td align="right">440.5696</td>
+<td align="right">434.6092</td>
 <td align="right">11</td>
 <td align="right">0.0000</td>
 <td align="right">0.0000</td>
@@ -1532,10 +1533,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.1116</td>
+<td align="right">0.0988</td>
 <td align="right">NA</td>
-<td align="right">0.0066</td>
-<td align="right">0.0664</td>
+<td align="right">0.0228</td>
+<td align="right">0.1367</td>
 </tr>
 <tr class="even">
 <td align="left">41</td>
@@ -1543,10 +1544,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.1081</td>
+<td align="right">0.1146</td>
 <td align="right">NA</td>
-<td align="right">0.0099</td>
-<td align="right">0.0794</td>
+<td align="right">0.0052</td>
+<td align="right">0.0670</td>
 </tr>
 <tr class="odd">
 <td align="left">5</td>
@@ -1554,10 +1555,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0900</td>
+<td align="right">0.0967</td>
 <td align="right">NA</td>
-<td align="right">0.0355</td>
-<td align="right">0.2133</td>
+<td align="right">0.0190</td>
+<td align="right">0.1331</td>
 </tr>
 <tr class="even">
 <td align="left">6</td>
@@ -1565,10 +1566,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0723</td>
+<td align="right">0.0673</td>
 <td align="right">NA</td>
-<td align="right">0.0811</td>
-<td align="right">0.3242</td>
+<td align="right">0.1241</td>
+<td align="right">0.4059</td>
 </tr>
 <tr class="odd">
 <td align="left">7</td>
@@ -1576,9 +1577,9 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0386</td>
+<td align="right">0.0331</td>
 <td align="right">NA</td>
-<td align="right">0.8236</td>
+<td align="right">0.9320</td>
 <td align="right">1.0000</td>
 </tr>
 <tr class="even">
@@ -1587,9 +1588,9 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0312</td>
+<td align="right">0.0358</td>
 <td align="right">NA</td>
-<td align="right">0.9857</td>
+<td align="right">0.9478</td>
 <td align="right">1.0000</td>
 </tr>
 <tr class="odd">
@@ -1598,10 +1599,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0658</td>
+<td align="right">0.0710</td>
 <td align="right">NA</td>
-<td align="right">0.1542</td>
-<td align="right">0.4626</td>
+<td align="right">0.1015</td>
+<td align="right">0.4059</td>
 </tr>
 <tr class="even">
 <td align="left">10</td>
@@ -1609,21 +1610,21 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">review</td>
-<td align="right">0.1118</td>
+<td align="right">0.1069</td>
 <td align="right">NA</td>
-<td align="right">0.0007</td>
-<td align="right">0.0108</td>
+<td align="right">0.0014</td>
+<td align="right">0.0215</td>
 </tr>
 <tr class="odd">
 <td align="left">11</td>
 <td align="left">2008</td>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
-<td align="left">review</td>
-<td align="right">0.1031</td>
+<td align="left">no_flag</td>
+<td align="right">0.0949</td>
 <td align="right">NA</td>
-<td align="right">0.0032</td>
-<td align="right">0.0382</td>
+<td align="right">0.0085</td>
+<td align="right">0.0921</td>
 </tr>
 <tr class="even">
 <td align="left">12</td>
@@ -1631,10 +1632,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0901</td>
+<td align="right">0.0837</td>
 <td align="right">NA</td>
-<td align="right">0.0138</td>
-<td align="right">0.0963</td>
+<td align="right">0.0271</td>
+<td align="right">0.1367</td>
 </tr>
 <tr class="odd">
 <td align="left">13</td>
@@ -1642,10 +1643,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0963</td>
+<td align="right">0.0913</td>
 <td align="right">NA</td>
-<td align="right">0.0058</td>
-<td align="right">0.0635</td>
+<td align="right">0.0105</td>
+<td align="right">0.0941</td>
 </tr>
 <tr class="even">
 <td align="left">14</td>
@@ -1653,10 +1654,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0995</td>
+<td align="right">0.0993</td>
 <td align="right">NA</td>
-<td align="right">0.0077</td>
-<td align="right">0.0691</td>
+<td align="right">0.0078</td>
+<td align="right">0.0921</td>
 </tr>
 <tr class="odd">
 <td align="left">15</td>
@@ -1664,10 +1665,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">no_flag</td>
-<td align="right">0.0900</td>
+<td align="right">0.1102</td>
 <td align="right">NA</td>
-<td align="right">0.0488</td>
-<td align="right">0.2441</td>
+<td align="right">0.0077</td>
+<td align="right">0.0921</td>
 </tr>
 <tr class="even">
 <td align="left">16</td>
@@ -1675,10 +1676,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">review</td>
-<td align="right">0.1274</td>
+<td align="right">0.1430</td>
 <td align="right">NA</td>
-<td align="right">0.0004</td>
-<td align="right">0.0059</td>
+<td align="right">0.0000</td>
+<td align="right">0.0007</td>
 </tr>
 <tr class="odd">
 <td align="left">17</td>
@@ -1686,10 +1687,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">review</td>
-<td align="right">0.1258</td>
+<td align="right">0.1222</td>
 <td align="right">NA</td>
-<td align="right">0.0001</td>
-<td align="right">0.0019</td>
+<td align="right">0.0002</td>
+<td align="right">0.0031</td>
 </tr>
 <tr class="even">
 <td align="left">18</td>
@@ -1697,10 +1698,10 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">review</td>
-<td align="right">0.1098</td>
+<td align="right">0.1084</td>
 <td align="right">NA</td>
-<td align="right">0.0015</td>
-<td align="right">0.0212</td>
+<td align="right">0.0018</td>
+<td align="right">0.0254</td>
 </tr>
 <tr class="odd">
 <td align="left">19</td>
@@ -1708,7 +1709,7 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
 <td align="left">review</td>
-<td align="right">0.1346</td>
+<td align="right">0.1364</td>
 <td align="right">NA</td>
 <td align="right">0.0000</td>
 <td align="right">0.0001</td>
@@ -1718,11 +1719,11 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">2017</td>
 <td align="left">single</td>
 <td align="left">year_uniformity</td>
-<td align="left">review</td>
-<td align="right">0.1093</td>
+<td align="left">no_flag</td>
+<td align="right">0.0906</td>
 <td align="right">NA</td>
-<td align="right">0.0017</td>
-<td align="right">0.0220</td>
+<td align="right">0.0155</td>
+<td align="right">0.1242</td>
 </tr>
 <tr class="odd">
 <td align="left">21</td>
@@ -1730,9 +1731,9 @@ responses, refit the model, or repeat DHARMa tests:</p>
 <td align="left">single</td>
 <td align="left">year_homogeneity</td>
 <td align="left">review</td>
-<td align="right">1.9592</td>
+<td align="right">1.7480</td>
 <td align="right">17</td>
-<td align="right">0.0105</td>
+<td align="right">0.0288</td>
 <td align="right">NA</td>
 </tr>
 </tbody>
@@ -1912,7 +1913,7 @@ conditional variance equal to its mean is too restrictive.</p>
 <td align="right">25</td>
 <td align="right">19383.90</td>
 <td align="right">2.2879</td>
-<td align="right">0.000</td>
+<td align="right">0.00</td>
 <td align="left">review</td>
 </tr>
 <tr class="even">
@@ -1920,8 +1921,8 @@ conditional variance equal to its mean is too restrictive.</p>
 <td align="right">5049</td>
 <td align="right">26</td>
 <td align="right">17755.57</td>
-<td align="right">1.1888</td>
-<td align="right">0.368</td>
+<td align="right">1.1686</td>
+<td align="right">0.44</td>
 <td align="left">no_flag</td>
 </tr>
 </tbody>
@@ -1992,7 +1993,7 @@ conditional variance equal to its mean is too restrictive.</p>
 <td align="left">Negative_binomial</td>
 <td align="left">year</td>
 <td align="left">Kruskal-Wallis H</td>
-<td align="right">96.1261</td>
+<td align="right">99.5690</td>
 <td align="right">0.0000</td>
 <td align="left">review</td>
 </tr>
@@ -2000,23 +2001,23 @@ conditional variance equal to its mean is too restrictive.</p>
 <td align="left">Negative_binomial</td>
 <td align="left">poly(depth, 3)</td>
 <td align="left">Spearman rho</td>
-<td align="right">0.0137</td>
-<td align="right">0.3299</td>
+<td align="right">0.0159</td>
+<td align="right">0.2577</td>
 <td align="left">no_flag</td>
 </tr>
 <tr class="odd">
 <td align="left">Negative_binomial</td>
 <td align="left">poly(soak, 3)</td>
 <td align="left">Spearman rho</td>
-<td align="right">0.0636</td>
-<td align="right">0.0000</td>
+<td align="right">0.0583</td>
+<td align="right">0.0001</td>
 <td align="left">review</td>
 </tr>
 <tr class="even">
 <td align="left">Negative_binomial</td>
 <td align="left">(1 | month)</td>
 <td align="left">Kruskal-Wallis H</td>
-<td align="right">440.5696</td>
+<td align="right">434.6092</td>
 <td align="right">0.0000</td>
 <td align="left">review</td>
 </tr>
@@ -2143,14 +2144,14 @@ object:</p>
 <span><span class="op">)</span></span>
 <span><span class="co"># These reuse the existing responses, without fitting or simulating again:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dharma_retained</span><span class="op">$</span><span class="va">dharma</span><span class="op">$</span><span class="va">scaledResiduals</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.8095948 0.3141531 0.8532295 0.5088420 0.7079369 0.4978355</span></span>
+<span><span class="co">#&gt; [1] 0.7905301 0.3071788 0.8111885 0.5172210 0.7123883 0.4440402</span></span>
 <span><span class="fu">DHARMa</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/DHARMa/man/testDispersion.html" class="external-link">testDispersion</a></span><span class="op">(</span><span class="va">dharma_retained</span><span class="op">$</span><span class="va">dharma</span>, plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  DHARMa nonparametric dispersion test via sd of residuals fitted vs.</span></span>
 <span><span class="co">#&gt;  simulated</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; data:  simulationOutput</span></span>
-<span><span class="co">#&gt; dispersion = 1.1888, p-value = 0.368</span></span>
+<span><span class="co">#&gt; dispersion = 1.1686, p-value = 0.44</span></span>
 <span><span class="co">#&gt; alternative hypothesis: two.sided</span></span></code></pre></div>
 <p>The disk and memory calls above use the <strong>same model, seed,
 simulation count, batch size, and conditioning</strong>. Compare their
@@ -2270,7 +2271,7 @@ years</td>
 <tr class="odd">
 <td align="left">year_uniformity</td>
 <td align="left">2008</td>
-<td align="left">review</td>
+<td align="left">no_flag</td>
 <td align="left">DHARMa within-year KS; Holm correction across tested
 years</td>
 </tr>
@@ -2333,7 +2334,7 @@ years</td>
 <tr class="even">
 <td align="left">year_uniformity</td>
 <td align="left">2017</td>
-<td align="left">review</td>
+<td align="left">no_flag</td>
 <td align="left">DHARMa within-year KS; Holm correction across tested
 years</td>
 </tr>

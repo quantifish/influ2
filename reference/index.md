@@ -36,6 +36,8 @@ plots.
 - [`plot(`*`<influ_diag>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
   [`autoplot(`*`<influ_diag>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot.influ_diag.md)
   : Plot a model-neutral influence diagnostic
+- [`plot_cdi()`](https://www.quantifish.co.nz/influ2/reference/plot_cdi.md)
+  : Overlay coefficient, distribution, and influence diagnostics
 
 ## Additional diagnostics and comparisons
 
@@ -48,6 +50,15 @@ methods here display `influ_steps` objects.
   : Bubble plot of sampling composition
 - [`plot_compare()`](https://www.quantifish.co.nz/influ2/reference/plot_compare.md)
   : Compare standardised CPUE indices
+- [`index_ratio()`](https://www.quantifish.co.nz/influ2/reference/index_ratio.md)
+  [`as.data.frame(`*`<influ_index_ratio>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_ratio.md)
+  [`print(`*`<influ_index_ratio>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_ratio.md)
+  [`summary(`*`<influ_index_ratio>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_ratio.md)
+  : Calculate point-estimate ratios between stored annual indices
+- [`plot_index_ratio()`](https://www.quantifish.co.nz/influ2/reference/plot_index_ratio.md)
+  [`plot(`*`<influ_index_ratio>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index_ratio.md)
+  [`autoplot(`*`<influ_index_ratio>`*`)`](https://www.quantifish.co.nz/influ2/reference/plot_index_ratio.md)
+  : Plot a separate index-ratio diagnostic
 - [`influ_steps()`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
   [`print(`*`<influ_steps>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)
   [`summary(`*`<influ_steps>`*`)`](https://www.quantifish.co.nz/influ2/reference/influ_steps.md)

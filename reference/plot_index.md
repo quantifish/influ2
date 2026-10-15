@@ -50,6 +50,13 @@ autoplot(object, ...)
 
 A ggplot object.
 
+## Details
+
+Annual trajectories and uncertainty ribbons retain gaps in calendar
+years and consistently formatted fishing years. Missing interval bounds
+interrupt the ribbon without removing a finite point estimate. Stored
+summaries are not interpolated, rescaled, or recalculated.
+
 ## See also
 
 [`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md),

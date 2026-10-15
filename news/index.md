@@ -3,6 +3,25 @@
 ## influ2 1.1.0
 
 - Added
+  [`plot_cdi()`](https://www.quantifish.co.nz/influ2/reference/plot_cdi.md)
+  for one or more model runs in one shared CDI display. Coefficients and
+  composition bubbles use consistent model offsets and colours, and
+  annual influence lines share the year axis. Unequal year ranges,
+  unavailable categories, and internal gaps remain explicit. Saved
+  summaries retain their original centring and uncertainty; plotting
+  does not refit models or silently impose a common reference.
+
+- Added a separate
+  [`index_ratio()`](https://www.quantifish.co.nz/influ2/reference/index_ratio.md)
+  diagnostic and
+  [`plot_index_ratio()`](https://www.quantifish.co.nz/influ2/reference/plot_index_ratio.md)
+  for comparing calculated indices, standardised and nominal series, and
+  stored model steps. Ratios use matching years, a named denominator,
+  and optional common-period display normalisation. Undefined
+  denominators remain gaps; point ratios do not invent intervals from
+  marginal model uncertainty.
+
+- Added
   [`search_cpue()`](https://www.quantifish.co.nz/influ2/reference/search_cpue.md)
   and compact `influ_search` reports for constrained, buildmer-style
   forward, backward, bidirectional, and order-then-backward searches

@@ -16,6 +16,8 @@
   indices](https://www.quantifish.co.nz/influ2/articles/regional-cpue.md):
 - [Model
   comparison](https://www.quantifish.co.nz/influ2/articles/model-comparison.md):
+- [Comparing influence and
+  indices](https://www.quantifish.co.nz/influ2/articles/comparing-influence.md):
 - [Model
   search](https://www.quantifish.co.nz/influ2/articles/model-search.md):
 - [Hurdle and zero-inflated

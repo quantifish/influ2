@@ -38,6 +38,18 @@ plots across backends. brms posterior coefficients are projected
 directly into focus-by-term diagnostics, avoiding
 observation-by-draw-by-term arrays.
 
+Compare saved diagnostics from different model runs in one overlaid CDI:
+
+``` r
+
+plot_cdi(list(Full = diagnostic_full, Recent = diagnostic_recent),
+  term = "month", years = "union")
+```
+
+Coefficient estimates, composition bubbles, and influence lines use the
+same model colours. A common year axis leaves unavailable years blank;
+plotting does not silently recalculate each model’s centring reference.
+
 ``` r
 
 # Full posterior calculation, compact stored summaries.
@@ -96,6 +108,21 @@ for reference choices, compact uncertainty, and comparison examples.
 Area integration requires a stated domain and compatible response/area
 units; integrating CPUE does not automatically turn it into absolute
 biomass.
+
+For a separate view of multiplicative differences, calculate and plot
+index ratios from stored estimates:
+
+``` r
+
+ratios <- index_ratio(list(Full = index_full, Recent = index_recent),
+  reference = "Full")
+plot_index_ratio(ratios)
+```
+
+Ratios use matching years and retain gaps. Their point estimates are not
+between-model confidence intervals. The [Comparing influence and indices
+article](https://www.quantifish.co.nz/influ2/articles/comparing-influence.html)
+demonstrates unequal year ranges and separate ratio diagnostics.
 
 ## Residual diagnostics
 

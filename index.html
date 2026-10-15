@@ -48,6 +48,7 @@
     <li><a class="dropdown-item" href="articles/cpue-indices.html">CPUE indices</a></li>
     <li><a class="dropdown-item" href="articles/regional-cpue.html">Regional CPUE indices</a></li>
     <li><a class="dropdown-item" href="articles/model-comparison.html">Model comparison</a></li>
+    <li><a class="dropdown-item" href="articles/comparing-influence.html">Comparing influence and indices</a></li>
     <li><a class="dropdown-item" href="articles/model-search.html">Model search</a></li>
     <li><a class="dropdown-item" href="articles/hurdle.html">Hurdle, delta, and zero-inflated models</a></li>
     <li><a class="dropdown-item" href="articles/spatial-spatiotemporal.html">Spatial and spatiotemporal diagnostics</a></li>
@@ -102,7 +103,12 @@
 <code><a href="https://vast-lib.github.io/tinyVAST/reference/tinyVAST.html" class="external-link">tinyVAST::tinyVAST()</a></code>.</li>
 </ul>
 <p>The result is a compact <code>influ_diag</code> object with consistent tables and plots across backends. brms posterior coefficients are projected directly into focus-by-term diagnostics, avoiding observation-by-draw-by-term arrays.</p>
+<p>Compare saved diagnostics from different model runs in one overlaid CDI:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/plot_cdi.html">plot_cdi</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Full <span class="op">=</span> <span class="va">diagnostic_full</span>, Recent <span class="op">=</span> <span class="va">diagnostic_recent</span><span class="op">)</span>,</span>
+<span>  term <span class="op">=</span> <span class="st">"month"</span>, years <span class="op">=</span> <span class="st">"union"</span><span class="op">)</span></span></code></pre></div>
+<p>Coefficient estimates, composition bubbles, and influence lines use the same model colours. A common year axis leaves unavailable years blank; plotting does not silently recalculate each model’s centring reference.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Full posterior calculation, compact stored summaries.</span></span>
 <span><span class="va">diagnostic</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ.html">influ</a></span><span class="op">(</span><span class="va">brms_fit</span>, focus <span class="op">=</span> <span class="st">"year"</span>, retain <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span>
 <span></span>
@@ -118,7 +124,7 @@
 <p>Supported base families in the first implementation are Gaussian, binomial, Poisson, negative binomial, lognormal, Gamma, and Tweedie. Hurdle/delta and zero-inflated components are kept explicit.</p>
 <p>Year-effect indices from <code><a href="reference/influ.html">influ()</a></code> require an unambiguous focus effect. Offset/exposure diagnostics currently support single-component log-link ratios and identity-link contrasts, not combined or nonlinear-probability outputs. Lognormal support follows each backend’s parameterisation; see the main vignette for the supported location, scale, and link combinations.</p>
 <p>For an assessment-ready expected-response table, use <code><a href="reference/cpue_index.html">cpue_index()</a></code> with an explicit common reference profile or population. Both <code>"standardised"</code> and <code>"standardized"</code> are accepted. GLM, GAM, glmmTMB, lme4, complete brms, sdmTMB, and univariate tinyVAST fits are supported for response standardisation. <code><a href="reference/integrate_index.html">integrate_index()</a></code> separately calculates area-weighted totals for these same seven backends, whether or not the fitted model includes spatial effects.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">index</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpue_index.html">cpue_index</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span>, reference_data <span class="op">=</span> <span class="va">reference_profile</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">index</span><span class="op">)</span>  <span class="co"># Year, Mean, Median, SD, CV, Qlower, Qupper, and metadata.</span></span>
 <span><span class="fu"><a href="reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">index</span><span class="op">)</span></span>
@@ -129,21 +135,27 @@
 <span>  area_units <span class="op">=</span> <span class="st">"km^2"</span>, response_units <span class="op">=</span> <span class="st">"kg/km^2"</span>, units <span class="op">=</span> <span class="st">"kg"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/plot_index.html">plot_index</a></span><span class="op">(</span><span class="va">total</span><span class="op">)</span></span></code></pre></div>
 <p>These response indices are distinct from the year-effect contrasts used in the step plots. See the <a href="https://www.quantifish.co.nz/influ2/articles/cpue-indices.html">CPUE indices article</a> for reference choices, compact uncertainty, and comparison examples. Area integration requires a stated domain and compatible response/area units; integrating CPUE does not automatically turn it into absolute biomass.</p>
+<p>For a separate view of multiplicative differences, calculate and plot index ratios from stored estimates:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ratios</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/index_ratio.html">index_ratio</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Full <span class="op">=</span> <span class="va">index_full</span>, Recent <span class="op">=</span> <span class="va">index_recent</span><span class="op">)</span>,</span>
+<span>  reference <span class="op">=</span> <span class="st">"Full"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/plot_index_ratio.html">plot_index_ratio</a></span><span class="op">(</span><span class="va">ratios</span><span class="op">)</span></span></code></pre></div>
+<p>Ratios use matching years and retain gaps. Their point estimates are not between-model confidence intervals. The <a href="https://www.quantifish.co.nz/influ2/articles/comparing-influence.html">Comparing influence and indices article</a> demonstrates unequal year ranges and separate ratio diagnostics.</p>
 <div class="section level2">
 <h2 id="residual-diagnostics">Residual diagnostics<a class="anchor" aria-label="anchor" href="#residual-diagnostics"></a>
 </h2>
 <p>Residual overviews also adapt to the response: Bernoulli encounter models use fixed-bin probability calibration, while positive and combined responses retain the observed-versus-simulated CDF. No model is refitted by these calls.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span><span class="op">)</span>                          <span class="co"># Automatic fourth panel.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span>  <span class="co"># Explicit original CDF.</span></span></code></pre></div>
 <p>DHARMa is an optional residual engine using the same native simulations and conditioning choices:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">checks</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/influ_residuals.html">influ_residuals</a></span><span class="op">(</span><span class="va">model</span>, residual_method <span class="op">=</span> <span class="st">"dharma"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">checks</span><span class="op">)</span></span></code></pre></div>
 <p>This leaves the default compact engine unchanged. Compact DHARMa calculations now use a temporary disk cache and bounded observation blocks by default, rather than holding the full response-simulation matrix in RAM. Native DHARMa calculates the PIT values and vector-based tests; dispersion and outlier checks use explicitly labelled bounded-memory equivalents. Use <code>retain_dharma = TRUE</code> only when its genuine full-memory object is needed for DHARMa’s own tools. Disk storage and extra I/O replace the matrix’s RAM cost, not all backend or diagnostic memory. Conditioning and false-positive calibration are unchanged. See the <a href="https://www.quantifish.co.nz/influ2/articles/residual-diagnostics.html#simulation-based-checks-with-dharma">DHARMa example</a> for memory limits, endpoint handling, and interpretation.</p>
 <p>For native fitting evidence and a term-by-term residual report:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/check_cpue.html">check_cpue</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">original_data</span><span class="op">)</span></span>
 <span><span class="va">report</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span><span class="op">$</span><span class="va">terms</span></span>
@@ -158,7 +170,7 @@
 <h2 id="constrained-model-search">Constrained model search<a class="anchor" aria-label="anchor" href="#constrained-model-search"></a>
 </h2>
 <p>Use one buildmer-style interface with native GLM, GAM, glmmTMB, lme4, brms, sdmTMB, and tinyVAST refitting. Year, offsets, fitted rows, and essential processes stay protected. The default is a preflight report, not a refit:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/search_cpue.html">search_cpue</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
 <span><span class="va">search</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/search_cpue.html">search_cpue</a></span><span class="op">(</span><span class="va">model</span>, year <span class="op">=</span> <span class="st">"year"</span>, direction <span class="op">=</span> <span class="st">"backward"</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="st">"BIC"</span>, refit <span class="op">=</span> <span class="cn">TRUE</span>, max_models <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
@@ -170,7 +182,7 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"quantifish/influ2"</span><span class="op">)</span></span></code></pre></div>
 <p>See <code><a href="articles/influ2.html">vignette("influ2")</a></code> for the framework, memory strategy, and model examples. The separate <code><a href="articles/bentley-validation.html">vignette("bentley-validation")</a></code> documents and plots the frozen agreement check against the original Bentley implementation.</p>
 </div>

@@ -87,7 +87,7 @@ knitr::kable(index_table(lobster_index), digits = 3)
 | 2010 | 1.219 | 0.167 | 0.137 |  0.932 |  1.595 | standardised | nbinom2      | log  |
 | 2011 | 1.379 | 0.189 | 0.137 |  1.055 |  1.803 | standardised | nbinom2      | log  |
 | 2012 | 1.214 | 0.170 | 0.140 |  0.922 |  1.598 | standardised | nbinom2      | log  |
-| 2013 | 1.372 | 0.187 | 0.136 |  1.050 |  1.792 | standardised | nbinom2      | log  |
+| 2013 | 1.372 | 0.187 | 0.136 |  1.051 |  1.792 | standardised | nbinom2      | log  |
 | 2014 | 1.259 | 0.171 | 0.136 |  0.965 |  1.642 | standardised | nbinom2      | log  |
 | 2015 | 1.067 | 0.146 | 0.137 |  0.816 |  1.395 | standardised | nbinom2      | log  |
 | 2016 | 1.094 | 0.148 | 0.135 |  0.840 |  1.426 | standardised | nbinom2      | log  |
@@ -199,7 +199,7 @@ knitr::kable(assessment_marginals[c("Year", "Mean", "SD", "CV",
 | 2014 | 1.259 | 0.171 | 0.136 |   0.221 | 0.135 |           1.247 |
 | 2015 | 1.067 | 0.146 | 0.137 |   0.056 | 0.136 |           1.057 |
 | 2016 | 1.094 | 0.148 | 0.135 |   0.081 | 0.134 |           1.084 |
-| 2017 | 1.118 | 0.153 | 0.137 |   0.102 | 0.136 |           1.108 |
+| 2017 | 1.118 | 0.153 | 0.137 |   0.103 | 0.136 |           1.108 |
 
 ``` r
 
@@ -379,6 +379,17 @@ switch to response predictions.
 [`plot_step()`](https://www.quantifish.co.nz/influ2/reference/plot_step.md)
 also remains a year-effect comparison.
 
+For a separate ratio diagnostic, use
+[`index_ratio()`](https://www.quantifish.co.nz/influ2/reference/index_ratio.md)
+on the saved indices, then
+[`plot_index_ratio()`](https://www.quantifish.co.nz/influ2/reference/plot_index_ratio.md).
+This uses matching years and a clearly identified denominator, without
+refitting models or treating marginal intervals as an interval for their
+ratio. See [Comparing influence and
+indices](https://www.quantifish.co.nz/influ2/articles/comparing-influence.md)
+for unequal time windows, explicit common-period normalisation, and
+standardised-versus-nominal comparisons.
+
 ## Current boundaries
 
 Response standardisation and area integration support all seven backends
@@ -493,7 +504,7 @@ knitr::kable(index_table(area_cpue), digits = 3, row.names = FALSE)
 | 2002 | 1.641 | 0.230 | 0.140 |  1.247 |  2.159 | standardised | nbinom2      | log  |
 | 2003 | 1.254 | 0.172 | 0.137 |  0.958 |  1.640 | standardised | nbinom2      | log  |
 | 2004 | 1.421 | 0.194 | 0.137 |  1.087 |  1.857 | standardised | nbinom2      | log  |
-| 2005 | 1.184 | 0.168 | 0.142 |  0.897 |  1.565 | standardised | nbinom2      | log  |
+| 2005 | 1.184 | 0.168 | 0.142 |  0.896 |  1.565 | standardised | nbinom2      | log  |
 | 2006 | 1.055 | 0.143 | 0.136 |  0.809 |  1.376 | standardised | nbinom2      | log  |
 | 2007 | 1.070 | 0.144 | 0.134 |  0.822 |  1.392 | standardised | nbinom2      | log  |
 | 2008 | 1.059 | 0.146 | 0.137 |  0.809 |  1.386 | standardised | nbinom2      | log  |
@@ -626,24 +637,24 @@ knitr::kable(data.frame(
 
 | Year | Mean CPUE (lobsters per pot) | Integrated CPUE (lobsters km² per pot) |
 |:-----|-----------------------------:|---------------------------------------:|
-| 2000 |                        1.513 |                                151.303 |
-| 2001 |                        1.576 |                                157.634 |
-| 2002 |                        1.641 |                                164.062 |
-| 2003 |                        1.254 |                                125.374 |
-| 2004 |                        1.421 |                                142.064 |
-| 2005 |                        1.184 |                                118.434 |
-| 2006 |                        1.055 |                                105.503 |
+| 2000 |                        1.513 |                                151.305 |
+| 2001 |                        1.576 |                                157.637 |
+| 2002 |                        1.641 |                                164.065 |
+| 2003 |                        1.254 |                                125.376 |
+| 2004 |                        1.421 |                                142.067 |
+| 2005 |                        1.184 |                                118.432 |
+| 2006 |                        1.055 |                                105.505 |
 | 2007 |                        1.070 |                                106.977 |
-| 2008 |                        1.059 |                                105.895 |
-| 2009 |                        1.015 |                                101.480 |
-| 2010 |                        1.102 |                                110.201 |
-| 2011 |                        1.246 |                                124.627 |
-| 2012 |                        1.097 |                                109.728 |
-| 2013 |                        1.240 |                                124.006 |
-| 2014 |                        1.138 |                                113.761 |
+| 2008 |                        1.059 |                                105.898 |
+| 2009 |                        1.015 |                                101.481 |
+| 2010 |                        1.102 |                                110.202 |
+| 2011 |                        1.246 |                                124.628 |
+| 2012 |                        1.097 |                                109.729 |
+| 2013 |                        1.240 |                                124.008 |
+| 2014 |                        1.138 |                                113.765 |
 | 2015 |                        0.964 |                                 96.448 |
 | 2016 |                        0.989 |                                 98.913 |
-| 2017 |                        1.011 |                                101.078 |
+| 2017 |                        1.011 |                                101.081 |
 
 SDs and interval limits scale by total area, response covariance by its
 square, and CVs and log covariance remain unchanged. We keep the mean

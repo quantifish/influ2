@@ -2,6 +2,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/404.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/LICENSE-text.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/bentley-validation.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/articles/comparing-influence.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/cpue-indices.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/hurdle.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/articles/implied-effects.html</loc></url>
@@ -24,6 +25,7 @@
 <url><loc>https://www.quantifish.co.nz/influ2/reference/get_bayes_R2.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/implied_effects.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/index.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/index_ratio.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/index_table.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/index_vcov.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/influ.brmsfit.html</loc></url>
@@ -48,11 +50,13 @@
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_search.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot.influ_steps.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_bubble.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/plot_cdi.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_compare.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_data_extent.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_grouped_residuals.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_implied_residuals.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_index.html</loc></url>
+<url><loc>https://www.quantifish.co.nz/influ2/reference/plot_index_ratio.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_predicted_residuals.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/plot_step.html</loc></url>
 <url><loc>https://www.quantifish.co.nz/influ2/reference/search_cpue.html</loc></url>
