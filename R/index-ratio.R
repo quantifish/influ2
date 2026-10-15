@@ -416,7 +416,7 @@ plot_index_ratio <- function(x, log = FALSE, ...) {
     rows <- rows[ordering]
     positions <- position[ordering]
     valid <- good[rows]
-    separated <- c(TRUE, !head(valid, -1L) | !tail(valid, -1L) |
+    separated <- c(TRUE, !utils::head(valid, -1L) | !utils::tail(valid, -1L) |
       diff(positions) != 1L)
     if (numeric_axis && all(numeric == floor(numeric))) {
       separated <- separated | c(TRUE, diff(d$x[rows]) > 1)
