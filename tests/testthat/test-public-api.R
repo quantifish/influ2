@@ -15,11 +15,12 @@ test_that("approved legacy retirements stay outside the runtime namespace", {
 test_that("triage preserves the maintained diagnostic and comparison API", {
   retained <- c(
     "influ", "influ_steps", "influ_effects", "influ_indices",
-    "plot_bubble", "plot_data_extent", "plot_compare", "plot_step",
+    "plot_bubble", "plot_data_extent", "plot_compare", "plot_step", "plot_cdi",
     "plot_grouped_residuals", "plot_implied_residuals", "implied_effects",
     "plot_predicted_residuals", "influ_residuals",
     "get_bayes_R2", "table_criterion", "geo_mean", "cpue_index", "plot_index",
-    "as_influ_residuals", "index_table", "index_vcov", "integrate_index"
+    "as_influ_residuals", "index_table", "index_vcov", "integrate_index",
+    "index_ratio", "plot_index_ratio"
   )
 
   expect_true(all(retained %in% getNamespaceExports("influ2")))

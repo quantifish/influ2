@@ -242,10 +242,31 @@
   }
   random_uncertainty <- if (uncertainty == "auto") "analytic" else uncertainty
 
-  .influ_linear_engine(
+  # A single random intercept has named, observed strata. Retain those
+  # identities rather than binning its fitted mode values, which differ
+  # between model runs and cannot serve as common category identifiers.
+  random_data <- data
+  random_terms <- model$modelInfo$reTrms$cond$cnms
+  random_groups <- model$modelInfo$reTrms$cond$flist
+  random_group <- NULL
+  if (length(random_terms) == 1L &&
+      identical(unname(random_terms[[1L]]), "(Intercept)") &&
+      length(random_groups) == 1L &&
+      length(random_groups[[1L]]) == nrow(data) &&
+      nlevels(random_groups[[1L]]) == ncol(Z)) {
+    random_group <- names(random_terms)[1L]
+    group <- random_groups[[1L]]
+    if (random_group %in% names(data) &&
+        !identical(as.character(data[[random_group]]), as.character(group))) {
+      stop("The glmmTMB grouping data do not match the fitted random-effect rows.", call. = FALSE)
+    }
+    random_data$random_effects <- group
+  }
+
+  out <- .influ_linear_engine(
     backend = "glmmTMB",
     model = model,
-    data = data,
+    data = random_data,
     response = NULL,
     focus = focus,
     family_spec = family_spec,
@@ -269,14 +290,18 @@
       "conditional latent covariance from glmmTMB."
     )
   )
+  out$metadata$random_cdi_group <- random_group
+  out
 }
 
 #' Influence diagnostics for glmmTMB models
 #'
 #' The conditional model is handled with joint fixed-effect covariance.
 #' Zero-inflation or hurdle occurrence terms are returned as a separate
-#' component. Random-effect modes are included as a compact aggregate term,
-#' with uncertainty propagated from their joint conditional latent covariance.
+#' component. Random-effect modes are included as a compact aggregate term.
+#' A single random-intercept grouping variable retains its actual stratum
+#' labels for CDI displays; more complex random structures remain aggregates.
+#' Random-effect uncertainty uses the joint conditional latent covariance.
 #' Lognormal models require a log link for their arithmetic mean. Dispersion
 #' may vary, but its effects are not decomposed: the diagnostics describe
 #' mean-model terms. Unlike brms, glmmTMB does not parameterise log-location.
@@ -360,6 +385,9 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
       "Hurdle and zero-inflation fixed components include joint unconditional-mean influence.",
       "Random-effect influence includes joint conditional latent uncertainty."
     )
+  )
+  out$metadata$glmmTMB <- list(
+    random_cdi_group = components$random$metadata$random_cdi_group
   )
 
   if (retain == "disk") {

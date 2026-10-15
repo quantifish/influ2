@@ -1,6 +1,23 @@
 # Development ideas and decisions
 
-Last reviewed: 14 October 2026.
+Last reviewed: 15 October 2026.
+
+## Overlaid CDI and separate index ratios: 15 October 2026
+
+The approved increment is implemented as `plot_cdi()` for one shared,
+multi-model CDI display and `index_ratio()` / `plot_index_ratio()` for Simon
+Hoyle's separate proportional-index diagnostic. The worked comparison article
+uses full and shorter lobster model windows, including an internal missing
+year. Saved results can be replotted without backend packages or refitting.
+Exact verified strata, component targets, native per-model centring, common
+normalisation, gap handling, and undefined ratios are explicit. These are not
+side-by-side CDIs or automatically added ratio panels in existing plots.
+
+Cross-model uncertainty for ratios, common-reference coefficient
+recalculation, and automatic alignment of different continuous bin boundaries
+are not part of this increment. Scientific calibration, Nicholas's review,
+and remaining release/legacy decisions remain separate. Verification is in
+the dated release review; this task does not authorise CRAN submission.
 
 ## Constrained model search: 14 October 2026
 

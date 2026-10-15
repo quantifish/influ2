@@ -36,6 +36,12 @@ A ggplot object.
 \description{
 Display assessment indices without refitting or recalculating predictions.
 }
+\details{
+Annual trajectories and uncertainty ribbons retain gaps in calendar
+years and consistently formatted fishing years. Missing interval bounds
+interrupt the ribbon without removing a finite point estimate. Stored
+summaries are not interpolated, rescaled, or recalculated.
+}
 \seealso{
 \code{\link[=index_vcov]{index_vcov()}}, \code{\link[=index_table]{index_table()}}, \code{\link[=cpue_index]{cpue_index()}}, \code{\link[=integrate_index]{integrate_index()}}, \code{\link[=plot_compare]{plot_compare()}}
 }

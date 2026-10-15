@@ -24,7 +24,16 @@ saved_plot_signature <- function(p) {
 }
 
 saved_result_view <- function(x) {
-  if (inherits(x, "influ_search")) {
+  if (inherits(x, "influ_index_ratio")) {
+    tables <- list(ratios = as.data.frame(x), summary = summary(x),
+      metadata = x$metadata)
+    plots <- list(ratios = plot(x))
+  } else if (is.list(x) && length(x) &&
+      all(vapply(x, inherits, logical(1), "influ_diag"))) {
+    tables <- lapply(x, function(d) d[c("coefficients", "composition", "influence")])
+    terms <- setdiff(unique(x[[1L]]$influence$term), x[[1L]]$focus)
+    plots <- list(cdi = influ2::plot_cdi(x, term = terms[1L]))
+  } else if (inherits(x, "influ_search")) {
     tables <- list(candidates = as.data.frame(x), summary = summary(x))
     plots <- list(search = plot(x))
   } else if (inherits(x, "influ_check")) {

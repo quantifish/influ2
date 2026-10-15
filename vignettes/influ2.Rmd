@@ -741,9 +741,15 @@ The same function can include `sdmTMB` and `tinyVAST` models when their indices
 represent the same response, population, and time period on a compatible
 scale. Their demonstrations above use different data, so they are deliberately
 excluded here. For other comparisons, also check the reference distribution,
-component (for example, unconditional mean versus positive catch), and shared
+component (for example, unconditional mean versus the positive component), and shared
 years before overlaying indices. A common plotting interface does not by
 itself make those quantities comparable.
+
+For overlaid coefficient, distribution, and influence displays from several
+runs, use `plot_cdi()`. A separate `index_ratio()` diagnostic makes
+multiplicative index differences visible even when both curves are near
+zero. The [Comparing influence and indices article](comparing-influence.html)
+works through both interfaces with unequal year ranges and missing years.
 
 ## Refitted step plots
 

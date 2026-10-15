@@ -24,6 +24,8 @@ navbar:
         href: articles/regional-cpue.html
       - text: Model comparison
         href: articles/model-comparison.html
+      - text: Comparing influence and indices
+        href: articles/comparing-influence.html
       - text: Model search
         href: articles/model-search.html
       - text: Hurdle, delta, and zero-inflated models
@@ -46,6 +48,7 @@ articles:
   - cpue-indices
   - regional-cpue
   - model-comparison
+  - comparing-influence
   - model-search
   - hurdle
   - spatial-spatiotemporal
@@ -72,6 +75,7 @@ reference:
   - influ_metrics
   - influ_families
   - plot.influ_diag
+  - plot_cdi
 
 - title: Additional diagnostics and comparisons
   desc: >
@@ -80,6 +84,8 @@ reference:
   contents:
   - plot_bubble
   - plot_compare
+  - index_ratio
+  - plot_index_ratio
   - influ_steps
   - plot.influ_steps
   - plot_step

@@ -64,10 +64,17 @@ test_that("all four compact result types survive a fresh R session", {
   full <- fixture$model
   reduced <- stats::update(full, . ~ year + area, data = fixture$data)
   reference <- unique(fixture$data[c("area", "vessel")])
+  full_diagnostic <- influ(full, focus = "year")
+  reduced_diagnostic <- influ(reduced, focus = "year")
+  full_index <- cpue_index(full, reference_data = reference)
+  reduced_index <- cpue_index(reduced, reference_data = reference)
   results <- list(
-    influence = influ(full, focus = "year"),
+    influence = full_diagnostic,
+    cdi_comparison = list(Full = full_diagnostic, Reduced = reduced_diagnostic),
     residuals = influ_residuals(full, nsim = 40, seed = 281),
-    index = cpue_index(full, reference_data = reference),
+    index = full_index,
+    index_ratios = index_ratio(list(Full = full_index, Reduced = reduced_index),
+      reference = "Full"),
     steps = influ_steps(list(Reduced = reduced, Full = full), year = "year")
   )
   expect_null(results$influence$model)

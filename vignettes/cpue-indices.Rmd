@@ -281,6 +281,13 @@ When supplied fitted models or `influ_diag` objects instead, `plot_compare()`
 keeps its existing year-effect-contrast behaviour. It does not silently switch
 to response predictions. `plot_step()` also remains a year-effect comparison.
 
+For a separate ratio diagnostic, use `index_ratio()` on the saved indices,
+then `plot_index_ratio()`. This uses matching years and a clearly identified
+denominator, without refitting models or treating marginal intervals as an
+interval for their ratio. See [Comparing influence and indices](comparing-influence.html)
+for unequal time windows, explicit common-period normalisation, and
+standardised-versus-nominal comparisons.
+
 ## Current boundaries
 
 Response standardisation and area integration support all seven backends above,

@@ -9,6 +9,10 @@
 #'   latter two display the stored annual uncertainty matrix as a heatmap.
 #' @param scale For matrix displays, `"log"` (default) or `"response"`.
 #' @param ... Reserved for future use; unused.
+#' @details Annual trajectories and uncertainty ribbons retain gaps in calendar
+#'   years and consistently formatted fishing years. Missing interval bounds
+#'   interrupt the ribbon without removing a finite point estimate. Stored
+#'   summaries are not interpolated, rescaled, or recalculated.
 #' @return A ggplot object.
 #' @seealso [index_vcov()], [index_table()], [cpue_index()], [integrate_index()], [plot_compare()]
 #' @export
@@ -96,11 +100,31 @@ autoplot.influ_index <- function(object, ...) plot_index(object, ...)
     data$Model <- trimws(labels[i])
     data
   }))
-  d$x <- .plot_level(d$Year)
+  year_axis <- .cdi_year_axis(d$Year)
+  year_number <- suppressWarnings(as.numeric(year_axis$labels))
+  numeric_axis <- all(is.finite(year_number)) && !anyDuplicated(year_number)
+  d$x <- if (numeric_axis) as.numeric(as.character(d$Year)) else {
+    factor(d$Year, levels = year_axis$labels)
+  }
+  d$year_position <- match(as.character(d$Year), year_axis$labels)
+  d$line_segment <- d$ribbon_segment <- integer(nrow(d))
+  for (model in unique(d$Model)) {
+    rows <- which(d$Model == model)
+    rows <- rows[order(d$year_position[rows])]
+    gap <- c(TRUE, diff(d$year_position[rows]) != 1L)
+    finite <- is.finite(d$Mean[rows])
+    d$line_segment[rows] <- cumsum(gap | c(TRUE,
+      !utils::head(finite, -1L) | !utils::tail(finite, -1L)))
+    bounded <- finite & is.finite(d$Qlower[rows]) & is.finite(d$Qupper[rows])
+    d$ribbon_segment[rows] <- cumsum(gap | c(TRUE,
+      !utils::head(bounded, -1L) | !utils::tail(bounded, -1L)))
+  }
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$x, y = .data$Mean,
-    colour = .data$Model, fill = .data$Model, group = .data$Model))
+    colour = .data$Model, fill = .data$Model,
+    group = interaction(.data$Model, .data$line_segment)))
   if (isTRUE(show_probs) && any(is.finite(d$Qlower) & is.finite(d$Qupper))) {
-    p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$Qlower, ymax = .data$Qupper),
+    p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$Qlower, ymax = .data$Qupper,
+      group = interaction(.data$Model, .data$ribbon_segment)),
       alpha = 0.18, colour = NA, na.rm = TRUE)
   }
   ylabel <- if (reference$method == "year_effect") {
@@ -112,9 +136,12 @@ autoplot.influ_index <- function(object, ...) plot_index(object, ...)
   } else if (reference$scale == "ratio") "Relative standardised CPUE" else {
     paste0("Standardised CPUE", if (!is.null(reference$units)) paste0(" (", reference$units, ")"))
   }
-  p <- p + ggplot2::geom_line() + ggplot2::geom_point() +
+  p <- p + ggplot2::geom_line(na.rm = TRUE) + ggplot2::geom_point(na.rm = TRUE) +
     ggplot2::labs(x = reference$year, y = ylabel, colour = NULL, fill = NULL)
-  if (all(d$Mean >= 0) && reference$scale %in% c("response", "ratio")) {
+  if (!numeric_axis) {
+    p <- p + ggplot2::scale_x_discrete(limits = year_axis$labels, drop = FALSE)
+  }
+  if (all(d$Mean >= 0, na.rm = TRUE) && reference$scale %in% c("response", "ratio")) {
     p <- p + ggplot2::scale_y_continuous(limits = c(0, NA),
       expand = ggplot2::expansion(mult = c(0, 0.05)))
   }

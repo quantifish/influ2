@@ -5,6 +5,44 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Overlaid CDI and separate index ratios: 15 October 2026
+
+`plot_cdi()` now overlays named diagnostic objects or fitted models in one
+shared coefficient/composition/influence layout. Model colours, fixed dodge
+positions, coefficient intervals, and proportion area scales are shared.
+Exact stratum identities and compatible component/link/scale contracts are
+required. Union and overlap year displays preserve internal missing years;
+lines never bridge those gaps. Each model retains its own stored coefficient
+and influence centring, explicitly stated in the caption. This is not an
+implicit common-reference recalculation. Single-model rendering is unchanged.
+Continuous quantile bins and opaque aggregate latent-field bins cannot be
+safely aligned by their rounded labels and fail explicitly.
+
+For a native glmmTMB fit with one random intercept, CDI composition now uses
+the verified native grouping labels rather than fitted random-effect values.
+Modes, covariance, annual influence calculations, and uncertainty are unchanged.
+More complex random structures are not relabelled as a single known group.
+
+`index_ratio()` and `plot_index_ratio()` provide a separate, compact,
+point-estimate diagnostic using saved indices, diagnostic series, or fitted
+step summaries, without prediction or refitting. Exact year matching, optional
+common-year geometric normalisation, missing/zero/overflow statuses, compatible
+targets, and collision-proof comparison IDs are tested. No cross-model
+covariance or ratio intervals are invented. Ordinary index overlays also break
+lines and ribbons at missing annual positions; two intentionally updated
+visual baselines previously bridged a missing 2011.
+
+The Comparing influence and indices article fits the existing 5,049-record
+simulated lobster NB2 example over 2000--2017 and a shorter 2007--2017 window
+with 2012 absent. It demonstrates overlaid random-month CDI, unequal-year
+index overlays, separate ratios, explicit common-baseline shape comparisons,
+and a clearly labelled arithmetic near-zero example. Routine examples do not
+run MCMC. The complete source suite passes 12,230 assertions without failures,
+warnings, or skips. Coverage is 95.55%; isolated minimal installation reopens
+23 saved results and passes 31 optional-dependency guards. The final archive
+check and GitHub publication results will be recorded after completion.
+No CRAN or win-builder submission is authorised or made.
+
 ## Constrained model search: 14 October 2026
 
 `search_cpue()` implements a fresh buildmer-style constrained controller over

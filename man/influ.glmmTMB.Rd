@@ -60,8 +60,10 @@ An [influ_diag] object.
 \description{
 The conditional model is handled with joint fixed-effect covariance.
 Zero-inflation or hurdle occurrence terms are returned as a separate
-component. Random-effect modes are included as a compact aggregate term,
-with uncertainty propagated from their joint conditional latent covariance.
+component. Random-effect modes are included as a compact aggregate term.
+A single random-intercept grouping variable retains its actual stratum
+labels for CDI displays; more complex random structures remain aggregates.
+Random-effect uncertainty uses the joint conditional latent covariance.
 Lognormal models require a log link for their arithmetic mean. Dispersion
 may vary, but its effects are not decomposed: the diagnostics describe
 mean-model terms. Unlike brms, glmmTMB does not parameterise log-location.

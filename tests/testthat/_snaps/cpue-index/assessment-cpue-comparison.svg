@@ -27,14 +27,16 @@
 </defs>
 <g clip-path='url(#cpMjcuOTB8NjM5LjcxfDIyLjc4fDU0NS4xMQ==)'>
 <rect x='27.90' y='22.78' width='611.81' height='522.33' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<polygon points='55.71,262.31 426.50,122.63 611.90,49.29 611.90,152.13 426.50,214.36 55.71,335.59 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #F8766D; fill-opacity: 0.18;' />
-<polyline points='55.71,262.31 426.50,122.63 611.90,49.29 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
-<polyline points='611.90,152.13 426.50,214.36 55.71,335.59 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
-<polygon points='55.71,266.30 426.50,120.94 611.90,47.66 611.90,145.82 426.50,211.35 55.71,338.43 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #00BFC4; fill-opacity: 0.18;' />
-<polyline points='55.71,266.30 426.50,120.94 611.90,47.66 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
-<polyline points='611.90,145.82 426.50,211.35 55.71,338.43 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
-<polyline points='55.71,301.70 426.50,171.30 611.90,103.70 ' style='stroke-width: 1.07; stroke: #F8766D; stroke-linecap: butt;' />
-<polyline points='55.71,305.06 426.50,168.85 611.90,99.43 ' style='stroke-width: 1.07; stroke: #00BFC4; stroke-linecap: butt;' />
+<polygon points='55.71,262.31 55.71,335.59 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #F8766D; fill-opacity: 0.18;' />
+<polygon points='55.71,266.30 55.71,338.43 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #00BFC4; fill-opacity: 0.18;' />
+<polygon points='426.50,122.63 611.90,49.29 611.90,152.13 426.50,214.36 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #F8766D; fill-opacity: 0.18;' />
+<polyline points='426.50,122.63 611.90,49.29 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
+<polyline points='611.90,152.13 426.50,214.36 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
+<polygon points='426.50,120.94 611.90,47.66 611.90,145.82 426.50,211.35 ' style='stroke-width: 0.00; stroke: none; stroke-linecap: butt; fill: #00BFC4; fill-opacity: 0.18;' />
+<polyline points='426.50,120.94 611.90,47.66 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
+<polyline points='611.90,145.82 426.50,211.35 ' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt;' />
+<polyline points='426.50,171.30 611.90,103.70 ' style='stroke-width: 1.07; stroke: #F8766D; stroke-linecap: butt;' />
+<polyline points='426.50,168.85 611.90,99.43 ' style='stroke-width: 1.07; stroke: #00BFC4; stroke-linecap: butt;' />
 <circle cx='55.71' cy='305.06' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 <circle cx='426.50' cy='168.85' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 <circle cx='611.90' cy='99.43' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />

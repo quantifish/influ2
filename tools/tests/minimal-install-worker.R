@@ -40,10 +40,17 @@ local({
       refit = TRUE, keep_fits = "none", seed = 281)
     # Elapsed wall time is not a reproducible scientific result.
     search$candidates$elapsed <- NULL
-    list(influence = influ(full, focus = "year"),
+    full_diagnostic <- influ(full, focus = "year")
+    reduced_diagnostic <- influ(reduced, focus = "year")
+    full_index <- cpue_index(full, reference_data = reference)
+    reduced_index <- cpue_index(reduced, reference_data = reference)
+    list(influence = full_diagnostic,
+      cdi_comparison = list(Full = full_diagnostic, Reduced = reduced_diagnostic),
       preview = influ(full, focus = "year", uncertainty = "none"),
       residuals = influ_residuals(full, nsim = 40, seed = 281),
-      index = cpue_index(full, reference_data = reference),
+      index = full_index,
+      index_ratios = index_ratio(list(Full = full_index, Reduced = reduced_index),
+        reference = "Full"),
       integrated = integrate_index(full, reference, area = seq_len(nrow(reference)),
         area_units = "km^2", response_units = "individuals/km^2"),
       steps = influ_steps(list(Reduced = reduced, Full = full), year = "year"),
