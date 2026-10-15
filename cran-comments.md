@@ -1,3 +1,38 @@
+## Overlaid CDI and separate index ratios: 15 October 2026
+
+The approved increment adds one overlaid CDI display for named model runs and
+a separate stored-index ratio diagnostic. The new worked article uses the
+existing lobster NB2 glmmTMB example over full and shorter year ranges, with
+an internal missing year. Model-native centring, verified categorical strata,
+component/scale compatibility, common-baseline normalisation, undefined
+ratios, and the absence of between-model ratio uncertainty are explicit.
+
+The source suite passes 12,230 assertions without failures, warnings, or
+skips. Final Mac arm64 R 4.6.1 manual-enabled `--as-cran --timings` checking
+finishes Status OK: zero errors, warnings, and notes. All 12 vignettes rebuild;
+PDF/HTML manuals pass. Archive tests pass 12,226 assertions, with one expected
+source-only test skipped that passes separately in the source checkout.
+Incoming-network checks are disabled; no manual, vignette, or optional-package
+checks are excluded. All 261 comparable shipped files and normalised
+DESCRIPTION match reviewed source `22eed128c174a2be8f0b4dfc497fc2b5e09af9a5`.
+
+Archive: `data-raw/release-candidates/2026-10-15-overlaid-comparisons/verified/influ2_1.1.0.tar.gz`.
+SHA256: `50ddba8c7ed98662f5b8b695168381ef1e08d21e478625691ce56a3387d55cfc`.
+Local coverage is 95.55%; GitHub coverage is 95.54%, with successful Codecov
+upload. Isolated installation reopens 23 compact results and passes 31
+optional-dependency guards. The checked archive is installed locally; a
+fresh native full/recent NB2 workflow passes. New help pages and figures are
+visually reviewed. Site/Pages publication and 12-page/119-image lightbox checks
+pass; the new article is live. The later utils namespace qualification changes
+neither calculations nor rendered output; coverage/site runs are reused for
+that narrow correction. GitHub R-CMD-check `38695811286` passes on Ubuntu
+release and Windows release for `22eed128`: each passes 12,226 assertions,
+with zero test failures/warnings and the same one expected source-only skip.
+All vignettes and PDF manuals pass. Each runner has one existing NOTE for
+unavailable HTML-validation tools (V8, plus tidy on Ubuntu); the full local
+check has zero notes. Final record-only changes are source-excluded and do
+not rerun unchanged packaged code. No CRAN or win-builder submission is made.
+
 ## Bounded-memory DHARMa: 14 October 2026
 
 Compact DHARMa calculations now use temporary disk-backed joint simulations

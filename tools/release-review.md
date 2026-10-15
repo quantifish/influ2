@@ -39,8 +39,45 @@ index overlays, separate ratios, explicit common-baseline shape comparisons,
 and a clearly labelled arithmetic near-zero example. Routine examples do not
 run MCMC. The complete source suite passes 12,230 assertions without failures,
 warnings, or skips. Coverage is 95.55%; isolated minimal installation reopens
-23 saved results and passes 31 optional-dependency guards. The final archive
-check and GitHub publication results will be recorded after completion.
+23 saved results and passes 31 optional-dependency guards. A fresh installed
+native NB2 full/recent workflow also passes, including the missing 2012.
+
+The final archive is
+`data-raw/release-candidates/2026-10-15-overlaid-comparisons/verified/influ2_1.1.0.tar.gz`,
+SHA256 `50ddba8c7ed98662f5b8b695168381ef1e08d21e478625691ce56a3387d55cfc`.
+All 261 comparable shipped files and normalised DESCRIPTION fields match
+source `22eed128c174a2be8f0b4dfc497fc2b5e09af9a5`. Private review/developer
+paths are absent. Mac arm64 R 4.6.1 `--as-cran --timings` checking finishes
+**Status OK**, with zero errors, warnings, and notes. The archive passes
+12,226 assertions; its one expected source-file-only skip passes in the
+separate source suite. All 12 vignettes independently rebuild in 187 seconds;
+PDF and HTML manuals pass. The corrected archive reuses 36 byte-identical,
+fully executed article artefacts from the initial complete build, followed
+by that independent full rebuild. Incoming-network checks are disabled;
+manual, vignette, and optional-dependency checks are not excluded.
+
+The initial check caught unqualified `head()`/`tail()` calls; the final source
+qualifies them through utils without changing calculations or rendered output.
+The superseded GitHub package check was cancelled early, and only the two
+platform checks were restarted for that correction. Coverage and site outputs
+from `7f1d749` remain representative: coverage run `38695339862` passes at
+95.54% with successful Codecov upload; 12,081 assertions pass, with six
+source-unavailable checks skipped in the bare coverage installation. Site run
+`38695339875` and Pages `38696894019` pass, publishing gh-pages
+`039658023eedc00f579ce7adab23480f00caab92`. Twelve-page/119-image
+caption/lightbox checks pass; the live comparison article bytes match the
+published site, and the published CDI figure is visually reviewed. The new
+help topics are also visually reviewed in both platform preflight PDFs using
+the PDF review workflow. The exact archive is installed in the normal Mac
+library. R-CMD-check `38695811286` passes on Ubuntu release and Windows
+release for `22eed128`: each passes 12,226 assertions, zero test failures or
+warnings, and the same one source-only skip. All vignettes and PDF manuals
+pass. Each runner has one existing HTML-validation NOTE for unavailable V8;
+Ubuntu also lacks tidy. These are runner-tool availability notes, not source
+code findings; the complete local check has zero notes. Ubuntu's isolated
+23-result minimal-installation check passes too. Final verification-only
+record changes are source-excluded and use `[skip ci]`, avoiding duplicate
+coverage, site, or platform runs for unchanged packaged code.
 No CRAN or win-builder submission is authorised or made.
 
 ## Constrained model search: 14 October 2026
