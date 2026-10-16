@@ -74,18 +74,21 @@
     obj <- TMB::MakeADFun(data = td, parameters = parameters,
       map = model$tmb_map, random = model$tmb_random,
       profile = model$control$profile, DLL = "sdmTMB", silent = TRUE)
+    uses_truncated <- any(model$family$family %in%
+      c("truncated_nbinom1", "truncated_nbinom2"))
     response <- function(par) {
       r <- obj$report(par)
       eta <- .index_sdmtmb_eta(r, fields)
       if (!is.matrix(eta) || nrow(eta) != nrow(data)) {
         stop("Native sdmTMB response predictors could not be aligned.", call. = FALSE)
       }
-      if (isTRUE(model$family$delta)) {
-        # Also correct for the Poisson-link delta parameterisation: the
-        # combined expectation is intensity times positive-event weight.
-        mu <- model$family[[1L]]$linkinv(eta[, 1L]) *
-          model$family[[2L]]$linkinv(eta[, 2L])
-      } else mu <- model$family$linkinv(eta[, 1L])
+      # Native inverse links for truncated negative binomials otherwise
+      # close over the fitted dispersion, silently ignoring joint draws.
+      # Reconstruct mapped component parameters, rather than indexing the
+      # free parameter vector (a delta encounter dispersion can be mapped out).
+      p <- if (uses_truncated) obj$env$parList(
+        x = par[setdiff(seq_along(par), obj$env$random)], par = par) else NULL
+      mu <- .index_sdmtmb_response(model, p, eta)
       .index_check_prediction(mu, nrow(data))
     }
   } else {
@@ -128,6 +131,39 @@
     none = report$proj_eta - report$proj_rf,
     spatial = report$proj_eta - report$proj_epsilon_st_A_vec,
     spatiotemporal = report$proj_eta - report$proj_rf + report$proj_epsilon_st_A_vec)
+}
+
+.index_sdmtmb_response <- function(model, parameters, eta) {
+  families <- if (isTRUE(model$family$delta)) model$family[1:2] else list(model$family)
+  if (!is.matrix(eta) || !is.numeric(eta) ||
+      ncol(eta) != length(families) || any(!is.finite(eta))) {
+    stop("Native sdmTMB response predictors must align with the fitted family components.", call. = FALSE)
+  }
+  mu <- rep(1, nrow(eta))
+  for (m in seq_along(families)) {
+    family <- families[[m]]
+    if (!is.function(family$linkinv)) {
+      stop("The native sdmTMB family must provide its inverse link.", call. = FALSE)
+    }
+    if (family$family %in% c("truncated_nbinom1", "truncated_nbinom2")) {
+      log_phi <- parameters$ln_phi
+      if (!is.numeric(log_phi) || length(log_phi) != length(families) ||
+          !is.finite(log_phi[m])) {
+        stop("Truncated sdmTMB response predictions require native component-aligned dispersion parameters.", call. = FALSE)
+      }
+      phi <- exp(log_phi[m])
+      if (!is.finite(phi) || phi <= 0) {
+        stop("Truncated sdmTMB response dispersion must be finite and positive in every joint draw.", call. = FALSE)
+      }
+      value <- family$linkinv(eta[, m], phi = phi)
+    } else value <- family$linkinv(eta[, m])
+    # For Poisson-link delta models the first inverse link returns intensity,
+    # not encounter probability; its product with the second mean is native.
+    # Mixture-family adjustments are already included in proj_eta, so are
+    # deliberately not applied a second time here.
+    mu <- mu * value
+  }
+  mu
 }
 
 .index_spatial_sampler <- function(info, obj) {

@@ -24,7 +24,25 @@ saved_plot_signature <- function(p) {
 }
 
 saved_result_view <- function(x) {
-  if (inherits(x, "influ_index_ratio")) {
+  if (inherits(x, "influ_domain")) {
+    kinds <- c("coverage", "decomposition", "omission", "sampled_only",
+      "partition", "trend")
+    tables <- stats::setNames(lapply(kinds, function(kind) {
+      list(table = as.data.frame(x, what = kind),
+        summary = summary(x, what = kind))
+    }), kinds)
+    tables$metadata <- x$metadata
+    tables$domain_summaries <- x[c("domains", "counts", "unsampled_share",
+      "comparison_summary", "partition_draws", "retained_cells", "flags")]
+    types <- c("sampled_only", "coverage", "decomposition", "omission",
+      "partition", "share")
+    plots <- stats::setNames(lapply(types, function(type) plot(x, type = type)), types)
+    if (is.data.frame(x$retained_cells) && nrow(x$retained_cells)) {
+      plots$map <- plot(x, type = "map", years = x$retained_cells$Year[1L],
+        terms = x$retained_cells$term[1L],
+        components = x$retained_cells$component[1L])
+    }
+  } else if (inherits(x, "influ_index_ratio")) {
     tables <- list(ratios = as.data.frame(x), summary = summary(x),
       metadata = x$metadata)
     plots <- list(ratios = plot(x))

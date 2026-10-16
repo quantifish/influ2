@@ -93,6 +93,23 @@ for reference choices, compact uncertainty, and comparison examples.
 Area integration requires a stated domain and compatible response/area units;
 integrating CPUE does not automatically turn it into absolute biomass.
 
+For GAM, sdmTMB, and univariate tinyVAST fits, `index_domain()` reports
+sampling coverage, native link contributions, restricted-domain indices,
+and masked term-omission comparisons without refitting:
+
+```r
+domain <- index_domain(model, reference_data = prediction_grid, year = "year",
+  sampled = list(coords = c("X", "Y"), distance = 5))
+plot(domain)
+```
+
+The sampling rule is explicit, and missing responses or zero likelihood
+weights do not count as observations. GAM spatial/spatiotemporal smooths
+are grouped only by declared native labels. Shared joint draws preserve
+dependence across years and counterfactuals, with blocked prediction and
+compact retained results. See the [spatial article](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.html#sampling-support-and-index-domain-counterfactuals)
+for executed examples and interpretation limits.
+
 For a separate view of multiplicative differences, calculate and plot index
 ratios from stored estimates:
 

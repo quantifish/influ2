@@ -24,7 +24,17 @@ cpue_index(
   spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
   seed = 1L,
   prediction_offset = NULL,
-  response_transform = "identity"
+  response_transform = "identity",
+  omit_terms = NULL,
+  omit_where = c("unsampled", "never_sampled", "all"),
+  sampled = NULL,
+  sampled_definition = "cell_time",
+  min_obs = 1L,
+  min_years = 1,
+  covariate_reference = "sampled_mean",
+  data = NULL,
+  spatial_terms = NULL,
+  spatiotemporal_terms = NULL
 )
 
 \method{as.data.frame}{influ_index}(x, row.names = NULL, optional = FALSE, ...)
@@ -99,6 +109,36 @@ fixed-effect covariance is propagated; uncertainty in sigma and random-effect
 variance parameters is not included. REML fits may describe indices, but
 must not rank different fixed-effect structures by likelihood criteria.}
 
+\item{omit_terms}{Optional single native prediction term to omit. Supported
+only for standardised GAM/sdmTMB/tinyVAST indices with \code{spatial_fields = "all"}.
+Supply one term per call; use \code{\link[=index_domain]{index_domain()}} to compare several separate
+omissions. This changes predictions, never refits the model.}
+
+\item{omit_where}{Where to omit the term: \code{"unsampled"} (default),
+\code{"never_sampled"}, or \code{"all"}. Only one target is selected per call.}
+
+\item{sampled}{Sampling rule passed to \code{\link[=index_domain]{index_domain()}}. With omissions,
+\code{NULL} infers a half-grid-spacing distance and warns; an explicit cell ID,
+coordinate/distance rule, or logical cell-by-year matrix is preferable.}
+
+\item{sampled_definition}{One sampling definition for omissions:
+\code{"cell_time"} (default), \code{"cell_ever"}, or \code{"cell_always"}.}
+
+\item{min_obs, min_years}{Sampling thresholds passed to \code{\link[=index_domain]{index_domain()}}.}
+
+\item{covariate_reference}{Covariate omission rule passed to \code{\link[=index_domain]{index_domain()}}.
+\code{"sampled_mean"} replaces the additive link contribution by its weighted
+mean over sampled cells in each year, draw, and response component, not by
+prediction at the mean raw covariate. Fields are set to zero; year terms
+use the first-year contribution. See \code{\link[=index_domain]{index_domain()}} for explicit rules.}
+
+\item{data, spatial_terms, spatiotemporal_terms}{GAM omission options passed to
+\code{\link[=index_domain]{index_domain()}}: aligned fitted observation data and explicit native smooth
+labels to group as spatial or spatiotemporal fields. An explicit sampling
+rule is required. Field grouping is only accepted with \code{omit_terms}.
+For \code{method = "year_effect"}, \code{data} retains its use as observation data
+passed to \code{\link[=influ]{influ()}}.}
+
 \item{x}{An `influ_index` object.}
 
 \item{row.names, optional}{Passed to the data-frame method.}
@@ -160,6 +200,10 @@ This is not a Laplace bias-corrected index or integration over a new
 population of random effects. Grid predictions are immediately reduced
 to annual values; a grid-by-draw array is never retained.
 Use \code{\link[=integrate_index]{integrate_index()}} for area-weighted totals, which have different units.
+GAM omissions use paired Gaussian coefficient simulation via
+\code{\link[=index_domain]{index_domain()}}, rather than the delta-method intervals of ordinary GAM
+indices. Native inverse links and smooths are preserved; nuisance parameters
+remain fitted. Draw retention is supported on this omission path.
 Year-effect results preserve the original diagnostic estimand and cannot
 be rescaled by this function. These indices are not biomass estimates.
 }

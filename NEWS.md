@@ -1,5 +1,32 @@
 # influ2 1.1.0
 
+* Added `index_domain()` for explicit sampled-domain coverage, link-scale
+  decomposition, sampled-only indices, and prediction-omission counterfactuals.
+  Stored `influ_domain` results have table, summary, print, and plotting methods,
+  including stacked coverage and response partitions, full-index comparisons,
+  paired-draw combined unsampled shares, omission ratios, retained-cell maps,
+  and a sampled-only comparison with a coverage panel. Area totals are
+  individually normalised over common years to compare trend shapes. These diagnostics
+  do not refit reduced models or turn a changing sampled domain into a
+  fixed-domain abundance index.
+  Sampled-only results compare all three support definitions; omission uses
+  one definition (`"cell_time"` by default). Omitting a sampling rule uses
+  half the reference-grid spacing with a warning, not an inferred footprint.
+  `cpue_index()` also supports term-omission counterfactuals through
+  `omit_terms`, `omit_where`, and explicit sampling/reference rules.
+  Domain diagnostics and omissions also support single-predictor mgcv GAMs,
+  using native smooth contributions and paired joint Gaussian coefficient
+  draws. Spatial and spatiotemporal smooth grouping is explicit. Executed
+  GAM, sdmTMB, and tinyVAST examples demonstrate the workflow.
+
+* Domain coverage now excludes missing-response and zero-likelihood-weight
+  fitted rows, default plots handle empty always-sampled cores explicitly,
+  and restricted integrated indices retain their actual areas rather than
+  inheriting full-domain areas. Truncated negative-binomial native response
+  predictions now use each draw's dispersion, including delta positive
+  components. Saved domain summaries and plots are restart- and
+  locale-stable without loading the fitting backends.
+
 * Added `plot_cdi()` for one or more model runs in one shared CDI display.
   Coefficients and composition bubbles use consistent model offsets and
   colours, and annual influence lines share the year axis. Unequal year
