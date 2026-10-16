@@ -19,7 +19,8 @@ test_that("native projection terms are recomputed for joint draws", {
   })
   adapter <- .domain_projection
   scope <- new.env(parent = environment(adapter))
-  scope$.index_spatial_projection <- function(...) list(obj = obj)
+  scope$.index_spatial_projection <- function(...) list(obj = obj,
+    response = function(par) stop("Baseline response must reuse the cached report"))
   scope$.index_free_tmb <- function(...) stop("Unexpected objective disposal")
   environment(adapter) <- scope
   block <- adapter(model, "sdmTMB", data.frame(row = 1:2))
@@ -32,6 +33,13 @@ test_that("native projection terms are recomputed for joint draws", {
   expect_equal(block$response(c(4, 5, 6), subtract = two[["depth"]]),
     exp(4 + c(0, 5) + td$proj_offset_i))
   expect_equal(reports, 2L)
+  expect_equal(block$response(c(4, 5, 6)),
+    model$family$linkinv(as.numeric(X %*% c(4, 5, 6) + td$proj_offset_i)))
+  expect_equal(block$response(c(4, 5, 6), subtract = z), block$response(c(4, 5, 6)))
+  expect_equal(reports, 2L)
+  block$response(c(4, 5, 7))
+  block$terms(c(4, 5, 7))
+  expect_equal(reports, 3L)
   expect_error(block$response(c(4, 5, 6), matrix(0, 1, 2)),
     "row-by-component")
 })
@@ -46,10 +54,31 @@ test_that("domain terms normalize year and covariates without hiding interaction
     1, zero, c("survey_year", "depth"))
   raw <- .domain_term_add(raw, "smooth:s(depth)", c(7, 8), 2, zero, "depth")
   normalized <- .domain_normalize_terms(raw, "survey_year")
-  expect_named(normalized, c("year", "survey_year:depth", "depth"))
+  expect_named(normalized, c("year", "survey_year:depth", "s(depth)"))
   expect_equal(normalized$year, cbind(c(1, 2), c(3, 4)))
   expect_equal(attr(normalized, "variables")$year, "survey_year")
   expect_equal(normalized[["survey_year:depth"]], raw[["fixed:survey_year:depth"]])
+  expect_equal(Reduce(`+`, normalized), Reduce(`+`, raw))
+  raw <- .domain_term_add(raw, "svc:depth", c(1, 2), 1, zero, "depth")
+  raw <- .domain_term_add(raw, "svc:temperature", c(3, 4), 1, zero, "temperature")
+  normalized <- .domain_normalize_terms(raw, "survey_year")
+  expect_equal(normalized[["svc:depth"]][, 1], c(1, 2))
+  expect_equal(normalized[["svc:temperature"]][, 1], c(3, 4))
+  expect_equal(attr(normalized, "variables")[["svc:depth"]], "depth")
+  expect_equal(Reduce(`+`, normalized), Reduce(`+`, raw))
+})
+
+test_that("native transformed covariates remain separate scientific terms", {
+  zero <- matrix(0, 2, 1)
+  raw <- .domain_term_add(list(), "fixed:x", c(1, 2), 1, zero, "x")
+  raw <- .domain_term_add(raw, "fixed:I(x^2)", c(3, 4), 1, zero, "x")
+  raw <- .domain_term_add(raw, "smooth:s(x)", c(5, 6), 1, zero, "x")
+  raw <- .domain_term_add(raw, "fixed:factor(region)", c(7, 8), 1, zero, "region")
+  normalized <- .domain_normalize_terms(raw, "year")
+  expect_named(normalized, c("x", "I(x^2)", "s(x)", "factor(region)"))
+  expect_equal(normalized$x, raw[["fixed:x"]])
+  expect_equal(normalized[["I(x^2)"]], raw[["fixed:I(x^2)"]])
+  expect_equal(normalized[["s(x)"]], raw[["smooth:s(x)"]])
   expect_equal(Reduce(`+`, normalized), Reduce(`+`, raw))
 })
 
@@ -64,6 +93,31 @@ test_that("decomposition rejects hidden residuals and misaligned components", {
     b = matrix(2, 2, 2)), matrix(3, 2, 2)))
 })
 
+test_that("tinyVAST baseline and masked responses share one native report", {
+  model <- list(internal = list(family = list("poisson"), variables = "response"))
+  env <- new.env(parent = emptyenv())
+  env$data <- list(components_e = 1L, link_ez = matrix(1L, 1, 1))
+  env$last.par <- c(1, 2)
+  env$random <- integer()
+  env$parList <- function(x, par) list(alpha_j = par)
+  reports <- 0L
+  obj <- list(env = env, report = function(par) {
+    reports <<- reports + 1L
+    list(p1_g = par, mu_g = exp(par))
+  })
+  adapter <- .domain_projection
+  scope <- new.env(parent = environment(adapter))
+  scope$.index_spatial_projection <- function(...) list(obj = obj,
+    response = function(par) stop("Baseline response must reuse the cached report"))
+  scope$.index_free_tmb <- function(...) stop("Unexpected objective disposal")
+  environment(adapter) <- scope
+  block <- adapter(model, "tinyVAST", data.frame(row = 1:2))
+  expect_equal(block$eta(c(1, 2)), matrix(c(1, 2), 2, 1))
+  expect_equal(block$response(c(1, 2)), exp(c(1, 2)))
+  expect_equal(block$response(c(1, 2), subtract = matrix(0, 2, 1)), exp(c(1, 2)))
+  expect_equal(reports, 1L)
+})
+
 test_that("delta response adapters retain native component semantics", {
   eta <- cbind(c(-2, 1), c(1, 2))
   standard <- list(family = list(stats::binomial(), stats::Gamma(link = "log"),
@@ -71,23 +125,34 @@ test_that("delta response adapters retain native component semantics", {
   expect_equal(.domain_sdmtmb_response(standard, list(), list(), eta),
     stats::plogis(eta[, 1]) * exp(eta[, 2]))
   standard$family$type <- "poisson_link_delta"
+  standard$family[[1L]] <- stats::binomial(link = "log")
   expect_equal(.domain_sdmtmb_response(standard, list(), list(), eta),
     exp(rowSums(eta)))
-  truncated <- list(family = list(family = "truncated_nbinom2", link = "log"))
+  truncated <- list(family = list(family = "truncated_nbinom2", link = "log",
+    linkinv = function(eta) {
+      mu <- exp(eta)
+      mu / (1 - (2 / (2 + mu))^2)
+    }))
   mu <- exp(eta[, 1])
   expect_equal(.domain_sdmtmb_response(truncated, list(), list(ln_phi = log(2)),
     eta[, 1, drop = FALSE]), mu / (1 - (2 / (2 + mu))^2))
   expect_equal(.domain_native_linkinv(eta[, 1], 3L), -expm1(-exp(eta[, 1])))
+  custom <- list(family = list(family = "custom",
+    linkinv = function(eta) exp(eta) + 2))
+  expect_equal(.domain_sdmtmb_response(custom, list(), list(),
+    eta[, 1, drop = FALSE]), exp(eta[, 1]) + 2)
 })
 
 test_that("tinyVAST components include offsets, SVCs and native temporal fields", {
   X <- stats::model.matrix(~ x, data.frame(x = c(2, 3)))
+  assign <- attr(X, "assign")
+  attr(X, "assign") <- NULL
   td <- list(X_gj = X, X2_gj = X, Z_gk = matrix(0, 2, 0),
     Z2_gk = matrix(0, 2, 0), W_gl = matrix(c(2, 3), 2, 1,
       dimnames = list(NULL, "depth")), W2_gl = matrix(0, 2, 0),
     A_gs = diag(2), offset_g = c(0.1, 0.2))
-  model <- list(internal = list(gam_setup = list(pterms = stats::terms(~ x)),
-    delta_gam_setup = list(pterms = stats::terms(~ x))))
+  model <- list(internal = list(gam_setup = list(pterms = stats::terms(~ x), assign = assign),
+    delta_gam_setup = list(pterms = stats::terms(~ x), assign = assign)))
   p <- list(alpha_j = c(1, 2), alpha2_j = c(3, 4), gamma_k = numeric(),
     gamma2_k = numeric(), xi_sl = matrix(c(5, 6), 2, 1), xi2_sl = matrix(0, 2, 0))
   r <- list(log_tau = log(2))
@@ -131,6 +196,30 @@ test_that("sdmTMB smooth blocks and temporal coefficients stay draw dependent", 
   for (Z in design$rand) expected <- expected + as.numeric(Z %*% rep(0.1, ncol(Z)))
   expect_equal(out[[paste0("smooth:", b$label)]], unname(cbind(expected, expected)))
   expect_equal(out[["temporal:depth"]][, 2], d$depth * rep(3:4, n / 2))
+  component_model <- model
+  component_model$smoothers <- list(model$smoothers, model$smoothers)
+  component_out <- .domain_sdmtmb_terms(component_model, td, p, r, matrix(0, n, 2))
+  expect_equal(component_out, out)
+  component_p <- p
+  component_p$b_smooth[, 2] <- component_p$b_smooth[, 2] * 3
+  component_changed <- .domain_sdmtmb_terms(component_model, td,
+    component_p, r, matrix(0, n, 2))
+  expect_equal(component_changed[[paste0("smooth:", b$label)]][, 1],
+    out[[paste0("smooth:", b$label)]][, 1])
+  expect_false(isTRUE(all.equal(component_changed[[paste0("smooth:", b$label)]][, 2],
+    out[[paste0("smooth:", b$label)]][, 2])))
+  single_model <- model
+  single_model$family <- stats::poisson()
+  single_model$smoothers <- list(model$smoothers)
+  single_td <- td
+  single_td$proj_X_ij <- td$proj_X_ij[1]
+  single_r <- lapply(r, function(x) x[, 1, drop = FALSE])
+  single_out <- .domain_sdmtmb_terms(single_model, single_td, p, single_r,
+    matrix(0, n, 1))
+  expect_equal(single_out[[paste0("smooth:", b$label)]][, 1], expected)
+  single_model$smoothers <- list(list())
+  expect_error(.domain_sdmtmb_terms(single_model, single_td, p, single_r,
+    matrix(0, n, 1)), "smoother metadata")
   p$b_smooth <- p$b_smooth * 2
   changed <- .domain_sdmtmb_terms(model, td, p, r, matrix(0, n, 2))
   expect_false(isTRUE(all.equal(changed[[paste0("smooth:", b$label)]],

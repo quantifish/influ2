@@ -263,7 +263,9 @@ domain_expect_native_decomposition <- function(fixture, delta = FALSE) {
   }
   expect_equal(unname(reconstructed), unname(as.matrix(native)),
     tolerance = 1e-8)
-  expect_true(all(is.finite(result$decomposition$mean)))
+  populated <- result$decomposition$class %in% c("all", "sampled")
+  expect_true(all(is.finite(result$decomposition$mean[populated])))
+  expect_true(all(is.na(result$decomposition$mean[!populated])))
   expect_null(index_domain(f$model, f$reference, year = f$year,
     sampled = domain_all_sampled(f), uncertainty = "none")$retained_cells)
 }

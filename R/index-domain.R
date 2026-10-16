@@ -27,7 +27,9 @@
 #'   are within-cell averaging weights, multiplied by area.
 #' @param decompose Summarise link-scale terms by year and domain class?
 #' @param omit Native term names to omit, including `"year"`, `"spatial"`,
-#'   `"spatiotemporal"` and `"svc"`. Unknown names are errors.
+#'   `"spatiotemporal"` and `"svc"`. `"spatial"` removes persistent and SVC
+#'   fields together, matching `spatial_fields = "spatiotemporal"` in
+#'   [cpue_index()]; `"svc"` removes only SVC fields. Unknown names are errors.
 #' @param where One or more of `"unsampled"`, `"never_sampled"`, `"all"`.
 #' @param covariate_reference `"sampled_mean"` (default), `"zero"`, or a named
 #'   list of rules per omitted covariate. A fixed rule is
@@ -139,8 +141,9 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
       anyDuplicated(names(reference_data)) || year %in% names(reference_data)) {
     stop("Supply non-empty `reference_data` without the year column.", call. = FALSE)
   }
-  if (is.null(sampled)) {
-    coords <- if (backend == "sdmTMB") model$mesh$xy_cols else NULL
+  sampled_heuristic <- is.null(sampled)
+  if (sampled_heuristic) {
+    coords <- if (backend == "sdmTMB") model$mesh$xy_cols else model$internal$space_columns
     if (length(coords) != 2L) coords <- c("X", "Y")
     sampled <- .domain_default_sampled(reference_data, coords = coords)
   }
@@ -190,7 +193,7 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
     min_obs, min_years, weights, core_threshold)
   # Match cpue_index: discard zero-weight rows before native predictions.
   positive <- which(weights > 0)
-  reference_data <- reference_data[positive, , drop = FALSE]
+  reference_data <- as.data.frame(reference_data[positive, , drop = FALSE])
   weights <- weights[positive]
   if (!integrated) weights <- (weights / max(weights)) / sum(weights / max(weights))
   classes <- sampling$class[positive, , drop = FALSE]
@@ -219,26 +222,28 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
     reference_rows = length(weights), reference_variables = names(reference_data),
     spatial_fields = "all", prediction_offset = prediction_offset,
     bias_correction = "none (plug-in expected response)", seed = seed,
+    ndraws = if (uncertainty == "auto") ndraws else NULL,
     sampled_definition = sampled_definition,
     omission_definition = omission_definition, min_obs = min_obs,
     min_years = sampling$min_years, area_units = area_units, response_units = response_units,
+    sampled_rule = if (is.matrix(sampled)) "user-supplied logical matrix" else sampled,
+    sampled_heuristic = sampled_heuristic,
+    covariate_reference = covariate_reference, year_reference = "first year",
     reference = if (integrated) "fixed common domain; area-weighted response total" else
       "fixed common population; response-scale weighted mean",
     total_area = if (integrated) sum(weights) else NULL,
     catchability = if (integrated) "not adjusted" else NULL)
   result <- .domain_reduce(model, info, years, newdata, weights, classes,
-    masks, cell_time, omit, where, covariate_reference, decompose, retain_cells,
+    masks[sampled_definition], cell_time, omit, where, covariate_reference, decompose, retain_cells,
     positive, reference_data, settings, uncertainty == "auto", ndraws,
     batch_size, draw_batch_size, seed, prediction_offset, sampled_only)
   result$coverage <- sampling$coverage
   result$domains <- sampling$domains
   result$counts <- sampling$counts
   result$metadata <- c(settings, list(
-    sampled_rule = if (is.matrix(sampled)) "user-supplied logical matrix" else sampled,
     variable_domain = "cell_time",
     quantile_method = "1024-bin reference-weighted histogram; error at most one bin width",
-    quantile_bins = 1024L, covariate_reference = covariate_reference,
-    year_reference = "first year", core_threshold = core_threshold,
+    quantile_bins = 1024L, core_threshold = core_threshold,
     trend_window = if (!is.null(trend_window)) as.character(trend_window) else NULL,
     counterfactual = "prediction target only; no refitting",
     trend_time = if (all(is.finite(suppressWarnings(as.numeric(years)))) &&

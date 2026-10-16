@@ -87,6 +87,8 @@ test_that("domain API keeps omission definitions independent of comparisons", {
         masks, cell_time, omit, where, covariate_reference, decompose,
         retain_cells, positive, reference_data, settings, ...) {
       captured$settings <- settings
+      captured$omission_definition <- settings$omission_definition
+      captured$definitions <- names(masks)
       captured$weights <- weights
       captured$newdata <- newdata(c(1L, 2L), c(1L, 2L))
       index <- .domain_index(stats::setNames(c(1, 2), years), NULL, settings)
@@ -105,11 +107,26 @@ test_that("domain API keeps omission definitions independent of comparisons", {
   expect_s3_class(domain, "influ_domain")
   expect_identical(captured$settings$sampled_definition, "cell_ever")
   expect_identical(captured$settings$omission_definition, "cell_time")
+  expect_identical(captured$omission_definition, "cell_time")
+  expect_identical(captured$definitions, "cell_ever")
   expect_equal(captured$weights, c(0.25, 0.75))
   expect_identical(captured$coords, c("X", "Y"))
   expect_identical(captured$sampled$distance, 1)
   expect_identical(as.character(captured$newdata$year), c("1", "2"))
   expect_identical(domain$metadata$sampled_rule, captured$sampled)
+  expect_true(domain$metadata$sampled_heuristic)
+  expect_identical(domain$baseline$metadata$sampled_rule, captured$sampled)
+  expect_identical(domain$baseline$metadata$covariate_reference, "sampled_mean")
+  expect_identical(domain$baseline$metadata$year_reference, "first year")
+  index_domain(model, ref, sampled = "cell", sampled_definition = "cell_time",
+    omission_definition = "cell_always", uncertainty = "none")
+  expect_identical(captured$omission_definition, "cell_always")
+  tiny <- structure(list(internal = list(space_columns = c("east", "north"))),
+    class = "tinyVAST")
+  tiny_ref <- stats::setNames(ref, c("cell", "east", "north"))
+  expect_warning(index_domain(tiny, tiny_ref, uncertainty = "none"),
+    "half the grid spacing")
+  expect_identical(captured$coords, c("east", "north"))
   expect_error(index_domain(model, ref, sampled = "cell",
     prediction_offset = c("x", "y")), "prediction_offset")
   expect_error(index_domain(model, ref, sampled = "cell",

@@ -726,24 +726,34 @@ plot(pcod_domain, type = "map", coords = c("X", "Y"),
 
 `cell_time` restricts predictions to that year's sampled cells and can change
 the target population from year to year. `cell_ever` retains cells sampled in
-any year. `cell_always` applies the explicit `min_years` threshold; use the
-number of observed years to require sampling in every year. A fixed domain
-can still be small or unrepresentative. Empty restricted means are undefined,
+at least `min_years` years (one year by default); a proportion strictly between
+zero and one is converted to a year count by rounding up. `cell_always`
+requires sampling in every requested year, independently of `min_years`.
+A fixed domain can still be small or unrepresentative. Empty restricted means are undefined,
 not zero. Coverage is a deterministic description of the declared rule, not a
 confidence interval or proof of representative sampling.
 All three sampled-only indices are calculated by default; omission uses the
 single `omission_definition`, which defaults to `"cell_time"`. Choosing a
 different omission definition does not change the coverage reporting classes.
 
-The sampled-only plot divides all series by the same full-index geometric mean
-over common positive years. It does not independently centre each trajectory;
-stored values are unchanged. Response partitions sum to the full index.
+For weighted means, the sampled-only plot divides all series by the same
+full-index geometric mean over common positive years. For area totals, each
+series is instead divided by its own geometric mean over that common period:
+the comparison then shows trend shapes rather than different domain areas.
+Stored values are unchanged. The `cell_time` series is explicitly labelled as
+a variable-domain diagnostic. Coverage and response partitions are stacked
+by class; response partitions sum to the overlaid full index. The share plot
+combines previously sampled and never sampled cells, with intervals from
+paired joint draws. Omission plots add a lower omitted/full ratio panel.
 Link contributions instead add separately within each native component,
 **not on the response scale**. Their decomposition quantiles describe spatial
 variation across weighted reference cells, not confidence intervals.
 
-Omitting a spatial field sets its contribution to zero without re-estimating
-anything. Year omission substitutes the first year's contribution at the
+`omit = "spatial"` sets both the persistent spatial field and all spatially
+varying coefficient (SVC) fields to zero, matching
+`spatial_fields = "spatiotemporal"` in `cpue_index()`. Use `"svc"` to remove
+only SVC fields, or `"spatiotemporal"` to remove only the time-varying field.
+Nothing is re-estimated. Year omission substitutes the first year's contribution at the
 same reference location. By default a covariate contribution is replaced by
 its reference-weighted mean over that year's sampled cells, separately for
 each joint draw and component. This is not prediction at a mean raw covariate
@@ -761,7 +771,7 @@ tiny_domain <- index_domain(
   tiny_model, reference_data = tiny_domain_reference, year = "time",
   sampled = list(coords = c("x", "ycoord"), distance = 0),
   omission_definition = "cell_time",
-  min_years = length(unique(tiny_data$time)),
+  min_years = 1,
   omit = c("year", "spatial", "spatiotemporal"),
   where = "unsampled", ndraws = 200, seed = 74,
   retain_cells = 1

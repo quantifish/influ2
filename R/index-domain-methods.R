@@ -1,4 +1,5 @@
 #' @rdname index_domain
+#' @md
 #' @param x,object An `influ_domain` result from `index_domain()`.
 #' @param what Stored table to extract or summarise: `"coverage"` (default),
 #'   `"decomposition"`, `"omission"`, `"sampled_only"`, `"partition"`, or
@@ -31,6 +32,7 @@ as.data.frame.influ_domain <- function(x, row.names = NULL, optional = FALSE,
 }
 
 #' @rdname index_domain
+#' @md
 #' @export
 summary.influ_domain <- function(object, ...,
     what = c("coverage", "decomposition", "omission", "sampled_only",
@@ -39,14 +41,26 @@ summary.influ_domain <- function(object, ...,
 }
 
 #' @rdname index_domain
+#' @md
 #' @export
 print.influ_domain <- function(x, ...) {
   cat("Index domain diagnostic\n")
   cat("Backend:", x$metadata$backend, "\n")
   cat("Years:", nrow(x$baseline$table), "\n")
-  cat("Sampled definitions:", paste(names(x$sampled_only), collapse = ", "), "\n")
+  cat("Sampled definitions:",
+    paste(x$metadata$sampled_definition, collapse = ", "), "\n")
   if (!is.null(x$metadata$omission_definition)) {
     cat("Omission definition:", x$metadata$omission_definition, "\n")
+  }
+  cat("Sampling thresholds: min_obs =", x$metadata$min_obs,
+    "; min_years =", x$metadata$min_years, "\n")
+  if (!is.null(x$metadata$sampled_rule)) {
+    cat("Sampling rule:", paste(utils::capture.output(utils::str(x$metadata$sampled_rule,
+      give.attr = FALSE)), collapse = " "), "\n")
+    if (isTRUE(attr(x$metadata$sampled_rule, "heuristic")) ||
+        isTRUE(x$metadata$sampled_heuristic)) {
+      cat("WARNING: half-grid-spacing heuristic; not an inferred survey footprint.\n")
+    }
   }
   cat("Omission scenarios:", paste(names(x$omission), collapse = ", "), "\n")
   if (length(x$metadata$caveats)) {
@@ -58,6 +72,7 @@ print.influ_domain <- function(x, ...) {
 }
 
 #' @rdname index_domain
+#' @md
 #' @param type Plot `"sampled_only"` (default), `"coverage"`,
 #'   `"decomposition"`, `"omission"`, `"partition"`, `"share"`, or `"map"`.
 #' @param show_probs Display stored pointwise intervals when available.
@@ -67,9 +82,12 @@ print.influ_domain <- function(x, ...) {
 #'   components, matching the stored labels.
 #' @details Plotting and table extraction reuse stored results; they do not
 #'   predict again or refit a model. Sampled-only comparisons divide every
-#'   displayed series and its interval by the same geometric mean of the full
-#'   index over years with finite positive estimates in every displayed series.
-#'   This display-only normalisation preserves differences in level; the lower
+#'   displayed series and its interval by the geometric mean over years with
+#'   finite positive estimates in every displayed series. Weighted means use
+#'   the full index's geometric mean for every series, preserving level
+#'   differences. Area totals use each series' own geometric mean over that
+#'   common period to compare shapes rather than different domain areas.
+#'   This display-only normalisation leaves stored results unchanged; the lower
 #'   panel shows coverage, not uncertainty in the sampling process. Unavailable
 #'   years remain gaps. Other index panels retain the stored index scale.
 #'   Decomposition ribbons show stored spatial contribution quantiles
@@ -89,7 +107,7 @@ print.influ_domain <- function(x, ...) {
 #'   reference; this is not prediction at a mean response-scale covariate.
 #' @return Table methods return a data frame, with index metadata attached for
 #'   index comparisons. `print()` invisibly returns its input. Plot methods
-#'   return a ggplot, or a patchwork for sampled-only comparisons.
+#'   return a ggplot, or a patchwork for sampled-only and omission comparisons.
 #' @export
 plot.influ_domain <- function(x,
     type = c("sampled_only", "coverage", "decomposition", "omission",
@@ -98,15 +116,32 @@ plot.influ_domain <- function(x,
   type <- match.arg(type)
   if (type %in% c("sampled_only", "omission")) {
     d <- as.data.frame(x, what = type)
-    if (type == "sampled_only") d <- .domain_common_scale(d)
+    area_total <- identical(x$baseline$metadata$method, "integrated")
+    if (type == "sampled_only") {
+      d <- .domain_common_scale(d, per_series = area_total)
+    }
     p <- .domain_series_plot(d, "Mean", "Series", "Qlower", "Qupper",
       show_probs) +
       ggplot2::labs(y = if (type == "sampled_only") {
-        "Index / common full-index geometric mean"
+        if (area_total) "Index / series geometric mean (common years)" else {
+          "Index / common full-index geometric mean"
+        }
       } else "Index (stored scale)", title = if (type == "omission") {
         "Prediction counterfactuals (not refits)"
       } else "Full and sampled-only indices")
-    if (type == "omission") return(p)
+    if (type == "omission") {
+      ratio <- x$omission_summary
+      if (!is.data.frame(ratio) || !nrow(ratio)) return(p)
+      ratio <- ratio[ratio$series %in% names(x$omission), , drop = FALSE]
+      if (!nrow(ratio)) return(p)
+      lower <- .domain_series_plot(ratio, "ratio", "series", "ratio_lower",
+        "ratio_upper", show_probs) +
+        ggplot2::geom_hline(yintercept = 1, linetype = 2, colour = "grey50") +
+        ggplot2::labs(y = "Omitted / full index",
+          subtitle = "Intervals use paired joint draws")
+      return(patchwork::wrap_plots(p, lower, ncol = 1, heights = c(2, 1)))
+    }
+    p <- p + ggplot2::labs(subtitle = "cell_time is a variable-domain diagnostic")
     coverage <- if (is.data.frame(x$domains) && nrow(x$domains)) {
       .domain_series_plot(x$domains, "share", "definition", show_probs = FALSE) +
         ggplot2::labs(y = "Sampled-domain weight share")
@@ -117,45 +152,54 @@ plot.influ_domain <- function(x,
   if (type == "map") {
     return(.domain_map(x, coords, years, terms, components))
   }
-  d <- if (type == "share") x$partition else x[[type]]
+  d <- if (type == "share") x$unsampled_share else x[[type]]
   if (!is.data.frame(d) || !nrow(d)) {
     stop("No stored data for the requested domain plot.", call. = FALSE)
   }
   if (type == "coverage") {
-    return(.domain_series_plot(d, "share", "class", show_probs = FALSE) +
-      ggplot2::labs(y = "Reference-weight coverage", colour = "Domain class"))
+    return(.domain_stacked_plot(d, "share") +
+      ggplot2::labs(y = "Reference-weight coverage", fill = "Domain class"))
   }
   if (type == "decomposition") {
     p <- .domain_series_plot(d, "mean", "class", "Q10", "Q90", show_probs) +
       ggplot2::geom_hline(yintercept = 0, linetype = 2, colour = "grey50") +
-      ggplot2::facet_wrap(ggplot2::vars(.data$term, .data$component),
+      ggplot2::facet_wrap(ggplot2::vars(.data$term, .data$component, .data$class),
         scales = "free_y") +
       ggplot2::labs(y = "Mean link-scale contribution",
         subtitle = "Additive on the link scale, not the response scale")
     return(p)
   }
   if (type == "share") {
-    full <- data.frame(Year = x$baseline$table$Year, class = "Full index",
-      share = 1, share_lower = 1, share_upper = 1)
-    columns <- intersect(names(d), names(full))
-    d <- rbind(d[, columns, drop = FALSE], full[, columns, drop = FALSE])
-    return(.domain_series_plot(d, "share", "class", "share_lower",
-      "share_upper", show_probs) +
-      ggplot2::labs(y = "Share of full index"))
+    d$Series <- "Combined unsampled"
+    return(.domain_series_plot(d, "share", "Series", "lower",
+      "upper", show_probs) +
+      ggplot2::geom_hline(yintercept = 1, linetype = 2, colour = "grey50") +
+      ggplot2::labs(y = "Unsampled share of full index",
+        subtitle = "Previously sampled + never sampled; paired-draw interval"))
   }
   full <- x$baseline$table
-  full$class <- "Full index"
-  columns <- intersect(names(d), names(full))
-  d <- rbind(d[, columns, drop = FALSE], full[, columns, drop = FALSE])
-  .domain_series_plot(d, "Mean", "class", "Qlower", "Qupper", show_probs) +
-    ggplot2::labs(y = "Contribution to full index (stored scale)")
+  p <- .domain_stacked_plot(d, "Mean")
+  full$.series <- "Full index"
+  full <- .domain_series_plot(full, "Mean", ".series",
+    show_probs = FALSE)$data
+  p + ggplot2::geom_line(data = full, ggplot2::aes(x = .data$.year,
+    y = .data$Mean, colour = .data$.series,
+    group = interaction(.data$.series, .data$.segment)),
+    inherit.aes = FALSE, na.rm = TRUE) +
+    ggplot2::geom_point(data = full, ggplot2::aes(x = .data$.year,
+      y = .data$Mean, colour = .data$.series),
+      inherit.aes = FALSE, na.rm = TRUE) +
+    ggplot2::scale_colour_manual(values = c("Full index" = "black")) +
+    ggplot2::labs(y = "Contribution to full index (stored scale)",
+      fill = "Domain class", colour = NULL)
 }
 
 #' @rdname index_domain
+#' @md
 #' @export
 autoplot.influ_domain <- function(object, ...) plot(object, ...)
 
-.domain_common_scale <- function(d) {
+.domain_common_scale <- function(d, per_series = FALSE) {
   series <- unique(d$Series)
   eligible <- lapply(series, function(z) {
     rows <- d$Series == z & is.finite(d$Mean) & d$Mean > 0
@@ -166,11 +210,35 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
     stop("No common years with finite positive indices for display normalisation.",
       call. = FALSE)
   }
-  rows <- d$Series == "Full index" & as.character(d$Year) %in% common
-  divisor <- exp(mean(log(d$Mean[rows])))
+  reference <- if (per_series) series else "Full index"
+  divisors <- vapply(reference, function(label) {
+    rows <- d$Series == label & as.character(d$Year) %in% common
+    exp(mean(log(d$Mean[rows])))
+  }, numeric(1))
+  divisor <- if (per_series) divisors[match(d$Series, reference)] else divisors
   for (column in intersect(c("Mean", "SD", "Median", "Qlower", "Qupper"),
       names(d))) d[[column]] <- d[[column]] / divisor
   d
+}
+
+.domain_year_values <- function(years, reference = years) {
+  labels <- .cdi_year_axis(reference)$labels
+  number <- suppressWarnings(as.numeric(labels))
+  if (all(is.finite(number)) && !anyDuplicated(number)) {
+    as.numeric(as.character(years))
+  } else factor(years, levels = labels)
+}
+
+.domain_stacked_plot <- function(d, value) {
+  d$.year <- .domain_year_values(d$Year)
+  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$.year,
+    y = .data[[value]], fill = .data$class)) +
+    ggplot2::geom_col(na.rm = TRUE) + ggplot2::theme_bw() +
+    ggplot2::labs(x = "Year")
+  if (is.factor(d$.year)) {
+    p <- p + ggplot2::scale_x_discrete(limits = levels(d$.year), drop = FALSE)
+  }
+  p
 }
 
 .domain_series_plot <- function(d, value, group, lower = NULL, upper = NULL,

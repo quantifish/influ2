@@ -69,11 +69,15 @@
     out
   }
   response <- function(par, subtract = NULL) {
-    value <- eta(par)
-    if (!is.null(subtract)) {
-      value <- value - .domain_term_matrix(subtract, n, nc)
+    state <- native(par)
+    if (is.null(subtract)) {
+      mu <- if (backend == "tinyVAST") state$report$mu_g else {
+        .domain_sdmtmb_response(model, td, state$parameters, eta(par))
+      }
+      return(.index_check_prediction(mu, n))
     }
-    r <- native(par)$report
+    value <- eta(par)
+    value <- value - .domain_term_matrix(subtract, n, nc)
     p <- native(par)$parameters
     mu <- if (backend == "sdmTMB") {
       .domain_sdmtmb_response(model, td, p, value)
@@ -82,14 +86,6 @@
       if (nc == 2L) mu <- mu *
         .domain_native_linkinv(value[, 2L], td$link_ez[1L, 2L])
       mu
-    }
-    # Detect upstream family changes rather than silently returning a different
-    # estimand. These reports contain the native expected response, not data.
-    expected <- if (backend == "tinyVAST") r$mu_g else r$proj_response_combined
-    if (is.null(subtract) && !is.null(expected) &&
-        (length(expected) != length(mu) ||
-         any(!is.finite(expected)) || max(abs(mu - expected)) > 1e-8)) {
-      stop("Native family response does not match the domain adapter.", call. = FALSE)
     }
     .index_check_prediction(mu, n)
   }
@@ -105,15 +101,15 @@
   for (name in names(terms)) {
     label <- name
     vars <- variables[[name]]
-    if (startsWith(name, "svc:")) label <- "svc"
     if (grepl("^(fixed|smooth):", name)) {
       label <- sub("^(fixed|smooth):", "", name)
-      if (length(vars) == 1L && !grepl(":", label, fixed = TRUE)) {
-        label <- if (identical(vars, year)) "year" else vars
+      if (length(vars) == 1L && identical(vars, year) &&
+          !grepl(":", label, fixed = TRUE)) {
+        label <- "year"
       }
       if (label %in% reserved) label <- name
     }
-    if (label != "svc" && !is.null(out[[label]]) &&
+    if (!is.null(out[[label]]) &&
         !setequal(attr(out, "variables")[[label]], vars)) {
       stop("Distinct native predictor terms have the same normalized label: ",
         label, ".", call. = FALSE)
@@ -209,37 +205,45 @@
   if (isTRUE(as.logical(td$has_smooths))) {
     # Each smooth may have several random blocks (tensor products/by levels)
     # and an unpenalized block. Keep these together as one scientific term.
-    random <- linear <- 0L
-    for (i in seq_along(model$smoothers$basis_out)) {
-      basis <- model$smoothers$basis_out[[i]]
-      label <- model$smoothers$labels[[i]]
-      if (is.null(label)) label <- basis[[1L]]$label
-      variables <- unique(unlist(lapply(basis, function(b) {
-        c(b$term, if (!identical(b$by, "NA")) b$by)
-      })))
-      value <- zero
-      for (b in basis) {
-        design <- mgcv::smooth2random(b, names(model$data), type = 2)
-        for (unused in seq_along(design$rand)) {
-          random <- random + 1L
-          Z <- td$proj_Zs[[random]]
-          ids <- td$b_smooth_start[random] + seq_len(ncol(Z))
-          for (m in seq_len(nc)) value[, m] <- value[, m] +
-            as.numeric(Z %*% p$b_smooth[ids, m])
-        }
-        k <- ncol(design$Xf)
-        if (!is.null(k) && k > 0L) {
-          ids <- linear + seq_len(k)
-          for (m in seq_len(nc)) value[, m] <- value[, m] +
-            as.numeric(td$proj_Xs[, ids, drop = FALSE] %*% p$bs[ids, m])
-          linear <- linear + k
-        }
+    for (m in seq_len(nc)) {
+      sm <- model$smoothers
+      if (is.null(sm$basis_out)) {
+        sm <- sm[[if (length(sm) == 1L) 1L else m]]
       }
-      for (m in seq_len(nc)) out <- .domain_term_add(out, paste0("smooth:", label),
-        value[, m], m, zero, variables)
-    }
-    if (random != length(td$proj_Zs) || linear != ncol(td$proj_Xs)) {
-      stop("Native smoother basis blocks could not be aligned.", call. = FALSE)
+      if (is.null(sm$basis_out) || !length(sm$basis_out)) {
+        stop("Native smoother metadata are unavailable for a prediction component.", call. = FALSE)
+      }
+      random <- linear <- 0L
+      for (i in seq_along(sm$basis_out)) {
+        basis <- sm$basis_out[[i]]
+        label <- sm$labels[[i]]
+        if (is.null(label)) label <- basis[[1L]]$label
+        variables <- unique(unlist(lapply(basis, function(b) {
+          c(b$term, if (!identical(b$by, "NA")) b$by)
+        })))
+        value <- numeric(n)
+        for (b in basis) {
+          design <- mgcv::smooth2random(b, names(model$data), type = 2)
+          for (unused in seq_along(design$rand)) {
+            random <- random + 1L
+            Z <- td$proj_Zs[[random]]
+            ids <- td$b_smooth_start[random] + seq_len(ncol(Z))
+            value <- value + as.numeric(Z %*% p$b_smooth[ids, m])
+          }
+          k <- ncol(design$Xf)
+          if (!is.null(k) && k > 0L) {
+            ids <- linear + seq_len(k)
+            value <- value +
+              as.numeric(td$proj_Xs[, ids, drop = FALSE] %*% p$bs[ids, m])
+            linear <- linear + k
+          }
+        }
+        out <- .domain_term_add(out, paste0("smooth:", label),
+          value, m, zero, variables)
+      }
+      if (random != length(td$proj_Zs) || linear != ncol(td$proj_Xs)) {
+        stop("Native smoother basis blocks could not be aligned.", call. = FALSE)
+      }
     }
   }
   if (isTRUE(as.logical(td$ar1_time)) ||
@@ -290,6 +294,9 @@
     second <- m == 2L
     X <- td[[if (second) "X2_gj" else "X_gj"]]
     gam <- model$internal[[if (second) "delta_gam_setup" else "gam_setup"]]
+    if (is.null(attr(X, "assign")) && length(gam$assign) == ncol(X)) {
+      attr(X, "assign") <- gam$assign
+    }
     out <- .domain_fixed_terms(out, X, p[[if (second) "alpha2_j" else "alpha_j"]],
       m, zero, gam$pterms)
     Z <- td[[if (second) "Z2_gk" else "Z_gk"]]
@@ -337,31 +344,14 @@
 
 .domain_sdmtmb_response <- function(model, td, p, eta) {
   nc <- ncol(eta)
-  if (nc == 2L && (identical(model$family$type, "poisson_link_delta") ||
-      identical(model$family$type, "poisson-link"))) {
-    return(exp(eta[, 1L] + eta[, 2L]))
-  }
   families <- if (nc == 2L) model$family[1:2] else list(model$family)
   mu <- rep(1, nrow(eta))
   for (m in seq_len(nc)) {
     family <- families[[m]]
-    value <- stats::make.link(family$link)$linkinv(eta[, m])
-    if (family$family %in% c("truncated_nbinom1", "truncated_nbinom2")) {
-      slot <- if (!is.null(td$ln_phi_slot)) td$ln_phi_slot[1L] + 1L else m
-      phi <- exp(p$ln_phi[slot])
-      log_prob0 <- if (family$family == "truncated_nbinom1") {
-        -value / phi * log1p(phi)
-      } else -phi * log1p(value / phi)
-      value <- value / (-expm1(log_prob0))
+    if (!is.function(family$linkinv)) {
+      stop("The native sdmTMB family must provide its inverse link.", call. = FALSE)
     }
-    if (identical(family$family, "ordbeta")) {
-      lower <- p$psi[1L]
-      upper <- lower + exp(p$psi[2L])
-      p0 <- stats::plogis(lower - eta[, m])
-      p1 <- stats::plogis(eta[, m] - upper)
-      value <- p1 + (1 - p0 - p1) * value
-    }
-    mu <- mu * value
+    mu <- mu * family$linkinv(eta[, m])
   }
   mu
 }

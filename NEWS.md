@@ -3,8 +3,10 @@
 * Added `index_domain()` for explicit sampled-domain coverage, link-scale
   decomposition, sampled-only indices, and prediction-omission counterfactuals.
   Stored `influ_domain` results have table, summary, print, and plotting methods,
-  including full-index comparisons, partition shares, retained-cell maps, and
-  a common-scale sampled-only comparison with a coverage panel. These diagnostics
+  including stacked coverage and response partitions, full-index comparisons,
+  paired-draw combined unsampled shares, omission ratios, retained-cell maps,
+  and a sampled-only comparison with a coverage panel. Area totals are
+  individually normalised over common years to compare trend shapes. These diagnostics
   do not refit reduced models or turn a changing sampled domain into a
   fixed-domain abundance index.
   Sampled-only results compare all three support definitions; omission uses

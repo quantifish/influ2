@@ -24,7 +24,14 @@ cpue_index(
   spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
   seed = 1L,
   prediction_offset = NULL,
-  response_transform = "identity"
+  response_transform = "identity",
+  omit_terms = NULL,
+  omit_where = c("unsampled", "never_sampled", "all"),
+  sampled = NULL,
+  sampled_definition = "cell_time",
+  min_obs = 1,
+  min_years = 1,
+  covariate_reference = "sampled_mean"
 )
 
 \method{as.data.frame}{influ_index}(x, row.names = NULL, optional = FALSE, ...)
@@ -99,6 +106,29 @@ fixed-effect covariance is propagated; uncertainty in sigma and random-effect
 variance parameters is not included. REML fits may describe indices, but
 must not rank different fixed-effect structures by likelihood criteria.}
 
+\item{omit_terms}{Optional single native prediction term to omit. Supported
+only for standardised sdmTMB/tinyVAST indices with \code{spatial_fields = "all"}.
+Supply one term per call; use \code{\link[=index_domain]{index_domain()}} to compare several separate
+omissions. This changes predictions, never refits the model.}
+
+\item{omit_where}{Where to omit the term: \code{"unsampled"} (default),
+\code{"never_sampled"}, or \code{"all"}. Only one target is selected per call.}
+
+\item{sampled}{Sampling rule passed to \code{\link[=index_domain]{index_domain()}}. With omissions,
+\code{NULL} infers a half-grid-spacing distance and warns; an explicit cell ID,
+coordinate/distance rule, or logical cell-by-year matrix is preferable.}
+
+\item{sampled_definition}{One sampling definition for omissions:
+\code{"cell_time"} (default), \code{"cell_ever"}, or \code{"cell_always"}.}
+
+\item{min_obs, min_years}{Sampling thresholds passed to \code{\link[=index_domain]{index_domain()}}.}
+
+\item{covariate_reference}{Covariate omission rule passed to \code{\link[=index_domain]{index_domain()}}.
+\code{"sampled_mean"} replaces the additive link contribution by its weighted
+mean over sampled cells in each year, draw, and response component, not by
+prediction at the mean raw covariate. Fields are set to zero; year terms
+use the first-year contribution. See \code{\link[=index_domain]{index_domain()}} for explicit rules.}
+
 \item{x}{An `influ_index` object.}
 
 \item{row.names, optional}{Passed to the data-frame method.}
@@ -129,7 +159,7 @@ smoothing-parameter correction is used when available. glmmTMB uses the
 joint fitted-parameter covariance and numerical derivatives of native
 response predictions, with conditional random effects set to zero. REML
 and zero-component random effects are not yet supported for glmmTMB here.
-brms uses \code{\link[brms:posterior_epred]{brms::posterior_epred()}} with group-level effects set to zero.
+brms uses \code{\link[brms:posterior_epred.brmsfit]{brms::posterior_epred()}} with group-level effects set to zero.
 Setting a random effect to zero is \strong{not} integration over its population
 distribution. brms smooths and other population-level terms remain present.
 

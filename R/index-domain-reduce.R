@@ -1,7 +1,8 @@
 .domain_reduce <- function(model, info, years, newdata, weights, classes,
     masks, cell_time, omit, where, covariate_reference, decompose, retain_cells,
     positive, reference_data, settings, uncertainty, ndraws,
-    batch_size, draw_batch_size, seed, offset, sampled_only) {
+    batch_size, draw_batch_size, seed, offset, sampled_only,
+    omission_definition = settings$omission_definition %||% "cell_time") {
   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
     get(".Random.seed", envir = .GlobalEnv)
   } else NULL
@@ -12,15 +13,25 @@
   } else assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
   ny <- length(years)
   nc <- length(weights)
+  if (!is.character(omission_definition) || length(omission_definition) != 1L ||
+      is.na(omission_definition) || !omission_definition %in%
+      c("cell_time", "cell_ever", "cell_always")) {
+    stop("`omission_definition` must select one sampling definition.", call. = FALSE)
+  }
+  omission_mask <- switch(omission_definition, cell_time = cell_time,
+    cell_ever = masks$cell_ever %||%
+      matrix(rowSums(cell_time) >= (settings$min_years %||% 1L), nc, ny),
+    cell_always = masks$cell_always %||% matrix(rowSums(cell_time) == ny, nc, ny))
   nr <- if (uncertainty) ndraws + 1L else 1L
   class_names <- c("sampled", "previously_sampled", "never_sampled")
   blank <- function() matrix(0, nr, ny, dimnames = list(NULL, years))
-  partition <- setNames(lapply(class_names, function(x) blank()), class_names)
-  restricted <- if (sampled_only) lapply(masks, function(x) blank()) else list()
+  partition <- stats::setNames(lapply(class_names, function(x) blank()), class_names)
+  definitions <- settings$sampled_definition %||% names(masks)
+  restricted <- if (sampled_only) lapply(masks[definitions], function(x) blank()) else list()
   unsampled <- blank()
   specs <- list()
   for (term in omit) for (location in where) {
-    definitions <- if (location == "unsampled") names(masks) else ""
+    definitions <- if (location == "unsampled") omission_definition else ""
     for (definition in definitions) {
       name <- paste(c(term, location, if (nzchar(definition)) definition), collapse = ":")
       specs[[name]] <- list(term = term, where = location, definition = definition)
@@ -28,7 +39,7 @@
   }
   omission <- lapply(specs, function(x) blank())
   field_terms <- c("spatial", "spatiotemporal", "svc", "temporal", "iid",
-    omit[grepl("^(svc|iid):", omit)])
+    omit[grepl("^(svc|iid|temporal):", omit)])
   rules <- list()
   sampled_terms <- character()
   sampled_means <- list()
@@ -39,9 +50,14 @@
   term_names <- NULL
   components <- NULL
   term_value <- function(value, term) {
+    if (identical(term, "spatial") && !is.null(value$spatial)) {
+      svc <- if (!is.null(value[["svc"]])) value["svc"] else
+        value[startsWith(names(value), "svc:")]
+      return(Reduce(`+`, c(value["spatial"], svc)))
+    }
     if (!is.null(value[[term]])) return(value[[term]])
     pieces <- value[startsWith(names(value), paste0(term, ":"))]
-    if (term %in% c("svc", "iid") && length(pieces)) return(Reduce(`+`, pieces))
+    if (term %in% c("svc", "iid", "temporal") && length(pieces)) return(Reduce(`+`, pieces))
     stop("Unknown omission term: ", term, ".", call. = FALSE)
   }
   check_terms <- function(value, n) {
@@ -63,14 +79,14 @@
       stop("Native domain term components do not align.", call. = FALSE)
     }
     if (is.null(term_names)) {
-      aliases <- c("svc", "iid")[vapply(c("svc", "iid"),
+      aliases <- c("svc", "iid", "temporal")[vapply(c("svc", "iid", "temporal"),
         function(term) any(startsWith(names(value), paste0(term, ":"))), logical(1))]
       unknown <- setdiff(omit, c(names(value), aliases))
       if (length(unknown)) stop("Unknown omission term: ", paste(unknown, collapse = ", "), ".", call. = FALSE)
       term_names <<- names(value)
       components <<- colnames(value[[1L]])
       covariates <- setdiff(omit, c(field_terms, "year"))
-      rules <<- setNames(lapply(covariates,
+      rules <<- stats::setNames(lapply(covariates,
         function(term) .domain_rule(term, covariate_reference)), covariates)
       sampled_terms <<- names(rules)[vapply(rules,
         function(x) identical(x$rule, "sampled_mean"), logical(1))]
@@ -131,8 +147,8 @@
             term = term, component = components[component],
             contribution = z[ids], sampled = cell_time[cbind(rows[ids], y[ids])],
             stringsAsFactors = FALSE)
-          for (coord in intersect(c("X", "Y"), names(reference_data))) {
-            d[[coord]] <- reference_data[[coord]][rows[ids]]
+          for (variable in setdiff(names(reference_data), names(d))) {
+            d[[variable]] <- reference_data[[variable]][rows[ids]]
           }
           retained[[length(retained) + 1L]] <<- d
         }
@@ -206,7 +222,7 @@
               }
               mask <- switch(spec$where, all = rep(TRUE, length(rows)),
                 never_sampled = classes[cbind(rows, y)] == "never_sampled",
-                unsampled = !masks[[spec$definition]][cbind(rows, y)])
+                unsampled = !omission_mask[cbind(rows, y)])
               if (any(!is.finite(subtract[mask, , drop = FALSE]))) {
                 stop("A sampled-mean covariate reference has no sampled weight in a requested year.", call. = FALSE)
               }
@@ -243,13 +259,13 @@
     if (any(!is.finite(value) & !is.na(value))) {
       stop("Domain predictions or joint draws are non-finite.", call. = FALSE)
     }
-    .domain_index(setNames(value[1L, ], years),
+    .domain_index(stats::setNames(value[1L, ], years),
       if (uncertainty) value[-1L, , drop = FALSE] else NULL, metadata)
   }
-  restrict_index <- function(value, mask, definition) {
+  restrict_index <- function(value, mask, definition, warn_empty = TRUE) {
     weight <- colSums(mask * weights)
     empty <- weight == 0
-    if (any(empty)) warning("Empty ", definition, " domain in year(s): ",
+    if (any(empty) && warn_empty) warning("Empty ", definition, " domain in year(s): ",
       paste(years[empty], collapse = ", "), if (settings$method == "integrated")
         "; totals are zero." else "; means are undefined (NA).", call. = FALSE)
     if (settings$method != "integrated") {
@@ -257,10 +273,11 @@
     }
     metadata <- settings
     metadata$domain_definition <- definition
+    metadata$definition <- definition
     metadata$sampled_definition <- definition
     metadata$variable_domain <- definition %in% c("cell_time", "unsampled_cell_time")
-    metadata$retained_weight <- setNames(weight, years)
-    metadata$retained_share <- setNames(weight / sum(weights), years)
+    metadata$retained_weight <- stats::setNames(weight, years)
+    metadata$retained_share <- stats::setNames(weight / sum(weights), years)
     metadata$reference <- paste(settings$reference, "; restricted to", definition)
     build(value, metadata)
   }
@@ -268,12 +285,17 @@
     restrict_index(restricted[[definition]], masks[[definition]], definition)
   })
   names(sampled_indices) <- names(restricted)
-  unsampled_index <- restrict_index(unsampled, !cell_time, "unsampled_cell_time")
+  unsampled_index <- restrict_index(unsampled, !cell_time, "unsampled_cell_time",
+    warn_empty = FALSE)
   omission_indices <- lapply(names(omission), function(name) {
     metadata <- settings
     metadata$omitted_term <- specs[[name]]$term
     metadata$where <- specs[[name]]$where
     metadata$domain_definition <- specs[[name]]$definition
+    metadata$omission_definition <- omission_definition
+    if (identical(specs[[name]]$term, "spatial")) {
+      metadata$omission_bundle <- c("spatial", "svc")
+    }
     metadata$counterfactual <- "prediction target only; no refitting"
     build(omission[[name]], metadata)
   })
@@ -293,6 +315,15 @@
     tab[, c("Year", "class", "Mean", "SD", "Qlower", "Qupper",
       "share", "share_lower", "share_upper")]
   }))
+  unsampled_partition <- partition$previously_sampled + partition$never_sampled
+  unsampled_intervals <- vapply(seq_len(ny), function(y) {
+    if (!uncertainty || any(full[-1L, y] == 0)) return(c(NA_real_, NA_real_))
+    .domain_interval(unsampled_partition[-1L, y] / full[-1L, y], settings$probs)
+  }, numeric(2))
+  unsampled_share <- data.frame(Year = years,
+    share = ifelse(full[1L, ] != 0, unsampled_partition[1L, ] / full[1L, ], NA_real_),
+    lower = unsampled_intervals[1L, ], upper = unsampled_intervals[2L, ],
+    definition = "cell_time", variable_domain = TRUE)
   decomposition <- NULL
   if (decompose) {
     groups <- expand.grid(year = seq_len(ny), class = c("all", class_names),
@@ -357,7 +388,11 @@
   }
   list(baseline = baseline, sampled_only = sampled_indices,
     unsampled_only = unsampled_index, omission = omission_indices,
-    omission_summary = omission_summary, partition = partition_table,
+    omission_summary = omission_summary,
+    sampled_only_summary = omission_summary[
+      omission_summary$series %in% names(sampled_indices), , drop = FALSE],
+    comparison_summary = omission_summary,
+    partition = partition_table, unsampled_share = unsampled_share,
     partition_draws = lapply(partition, function(x) if (uncertainty)
       x[-1L, , drop = FALSE] else NULL), decomposition = decomposition,
     retained_cells = retained_cells)
