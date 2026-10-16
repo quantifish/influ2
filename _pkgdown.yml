@@ -99,6 +99,7 @@ reference:
   contents:
   - cpue_index
   - integrate_index
+  - index_domain
   - index_table
   - index_vcov
   - plot_index

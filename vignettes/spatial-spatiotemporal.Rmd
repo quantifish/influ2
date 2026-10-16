@@ -682,6 +682,116 @@ interface applies even when the fitted model has no spatial terms. Multivariate
 tinyVAST influence diagnostics below remain supported, but their response
 integration is explicitly rejected until separate response/unit targets exist.
 
+## Sampling support and index-domain counterfactuals
+
+`index_domain()` separates three questions: how much reference weight is
+sampled, which native terms contribute on the link scale, and how the annual
+index changes under an explicitly defined prediction counterfactual. It never
+refits the model. These contrasts are therefore different from the refitted
+`influ_steps()` comparisons above.
+
+Prefer an explicit sampling rule: shared cell IDs, a coordinate/distance
+rule, or a reference-cell-by-year logical matrix. If `sampled` is omitted,
+the default uses half the reference-grid spacing and issues a warning.
+That convenience rule is not an inferred survey footprint: a mesh boundary
+or the presence of prediction covariates is not evidence of sampling.
+Here, **5 km**
+is a deliberately chosen support radius around Pacific cod observations, not
+an inferred survey footprint. The units match the projected `X` and `Y`
+coordinates; a different scientifically justified radius answers a different
+question. These examples are not run during the vignette build.
+
+```{r sdmtmb-index-domain, eval=FALSE}
+pcod_domain <- index_domain(
+  pcod_model, reference_data = qcs_grid, year = "year",
+  sampled = list(coords = c("X", "Y"), distance = 5),
+  sampled_definition = c("cell_time", "cell_ever", "cell_always"),
+  omission_definition = "cell_time",
+  min_obs = 1, min_years = 1,
+  omit = c("spatial", "spatiotemporal", "depth_scaled"),
+  where = c("unsampled", "all"),
+  ndraws = 200, seed = 73,
+  retain_cells = sort(unique(pcod$year))[1]
+)
+summary(pcod_domain, what = "coverage")
+as.data.frame(pcod_domain, what = "omission")
+plot(pcod_domain) # Full and sampled-only indices, with coverage below.
+plot(pcod_domain, type = "decomposition")
+plot(pcod_domain, type = "omission")
+plot(pcod_domain, type = "partition")
+plot(pcod_domain, type = "share")
+plot(pcod_domain, type = "map", coords = c("X", "Y"),
+     terms = "spatial")
+```
+
+`cell_time` restricts predictions to that year's sampled cells and can change
+the target population from year to year. `cell_ever` retains cells sampled in
+any year. `cell_always` applies the explicit `min_years` threshold; use the
+number of observed years to require sampling in every year. A fixed domain
+can still be small or unrepresentative. Empty restricted means are undefined,
+not zero. Coverage is a deterministic description of the declared rule, not a
+confidence interval or proof of representative sampling.
+All three sampled-only indices are calculated by default; omission uses the
+single `omission_definition`, which defaults to `"cell_time"`. Choosing a
+different omission definition does not change the coverage reporting classes.
+
+The sampled-only plot divides all series by the same full-index geometric mean
+over common positive years. It does not independently centre each trajectory;
+stored values are unchanged. Response partitions sum to the full index.
+Link contributions instead add separately within each native component,
+**not on the response scale**. Their decomposition quantiles describe spatial
+variation across weighted reference cells, not confidence intervals.
+
+Omitting a spatial field sets its contribution to zero without re-estimating
+anything. Year omission substitutes the first year's contribution at the
+same reference location. By default a covariate contribution is replaced by
+its reference-weighted mean over that year's sampled cells, separately for
+each joint draw and component. This is not prediction at a mean raw covariate
+or a mean response; choose `"zero"` only for deliberately centred terms, or
+supply an explicit fixed-value rule. Pacific cod predictions above remain
+encounter probabilities, not biomass.
+
+The tinyVAST simulation has exact shared cell coordinates. A zero-distance
+rule therefore identifies observations at the same cell without rounding or
+nearest-neighbour assignment. The reference still includes unsampled cells:
+
+```{r tinyvast-index-domain, eval=FALSE}
+tiny_domain_reference <- unique(tiny_grid[c("x", "ycoord", "var", "dist")])
+tiny_domain <- index_domain(
+  tiny_model, reference_data = tiny_domain_reference, year = "time",
+  sampled = list(coords = c("x", "ycoord"), distance = 0),
+  omission_definition = "cell_time",
+  min_years = length(unique(tiny_data$time)),
+  omit = c("year", "spatial", "spatiotemporal"),
+  where = "unsampled", ndraws = 200, seed = 74,
+  retain_cells = 1
+)
+plot(tiny_domain)
+plot(tiny_domain, type = "map", coords = c("x", "ycoord"),
+     years = 1, terms = "spatiotemporal")
+summary(tiny_domain, what = "trend")
+```
+
+For an index-only counterfactual, the same omission rules are available through
+`cpue_index()`. This returns an ordinary `influ_index`, without the coverage,
+partition, and decomposition report:
+
+```{r sdmtmb-cpue-omission, eval=FALSE}
+pcod_without_unsampled_spatial <- cpue_index(
+  pcod_model, reference_data = qcs_grid, year = "year",
+  omit_terms = "spatial", omit_where = "unsampled",
+  sampled = list(coords = c("X", "Y"), distance = 5),
+  sampled_definition = "cell_time", ndraws = 200, seed = 73
+)
+plot_index(pcod_without_unsampled_spatial)
+```
+
+Area totals can be requested with `area`, `area_units`, and `response_units`,
+using the same unit conventions as `integrate_index()`. A sampled-domain
+total is over less area than the full total, so a level difference is not
+automatically a model failure. Trend and omission summaries use paired joint
+draws from one fit, not independent uncertainty from separate models.
+
 ## Multivariate tinyVAST responses
 
 `tinyVAST` can fit multiple responses, including responses with different

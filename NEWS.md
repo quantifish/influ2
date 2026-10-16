@@ -1,5 +1,18 @@
 # influ2 1.1.0
 
+* Added `index_domain()` for explicit sampled-domain coverage, link-scale
+  decomposition, sampled-only indices, and prediction-omission counterfactuals.
+  Stored `influ_domain` results have table, summary, print, and plotting methods,
+  including full-index comparisons, partition shares, retained-cell maps, and
+  a common-scale sampled-only comparison with a coverage panel. These diagnostics
+  do not refit reduced models or turn a changing sampled domain into a
+  fixed-domain abundance index.
+  Sampled-only results compare all three support definitions; omission uses
+  one definition (`"cell_time"` by default). Omitting a sampling rule uses
+  half the reference-grid spacing with a warning, not an inferred footprint.
+  `cpue_index()` also supports term-omission counterfactuals through
+  `omit_terms`, `omit_where`, and explicit sampling/reference rules.
+
 * Added `plot_cdi()` for one or more model runs in one shared CDI display.
   Coefficients and composition bubbles use consistent model offsets and
   colours, and annual influence lines share the year axis. Unequal year
