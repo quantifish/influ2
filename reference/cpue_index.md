@@ -25,7 +25,17 @@ cpue_index(
   spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
   seed = 1L,
   prediction_offset = NULL,
-  response_transform = "identity"
+  response_transform = "identity",
+  omit_terms = NULL,
+  omit_where = c("unsampled", "never_sampled", "all"),
+  sampled = NULL,
+  sampled_definition = "cell_time",
+  min_obs = 1L,
+  min_years = 1,
+  covariate_reference = "sampled_mean",
+  data = NULL,
+  spatial_terms = NULL,
+  spatiotemporal_terms = NULL
 )
 
 # S3 method for class 'influ_index'
@@ -148,6 +158,60 @@ print(x, ...)
   describe indices, but must not rank different fixed-effect structures
   by likelihood criteria.
 
+- omit_terms:
+
+  Optional single native prediction term to omit. Supported only for
+  standardised GAM/sdmTMB/tinyVAST indices with
+  `spatial_fields = "all"`. Supply one term per call; use
+  [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  to compare several separate omissions. This changes predictions, never
+  refits the model.
+
+- omit_where:
+
+  Where to omit the term: `"unsampled"` (default), `"never_sampled"`, or
+  `"all"`. Only one target is selected per call.
+
+- sampled:
+
+  Sampling rule passed to
+  [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md).
+  With omissions, `NULL` infers a half-grid-spacing distance and warns;
+  an explicit cell ID, coordinate/distance rule, or logical cell-by-year
+  matrix is preferable.
+
+- sampled_definition:
+
+  One sampling definition for omissions: `"cell_time"` (default),
+  `"cell_ever"`, or `"cell_always"`.
+
+- min_obs, min_years:
+
+  Sampling thresholds passed to
+  [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md).
+
+- covariate_reference:
+
+  Covariate omission rule passed to
+  [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md).
+  `"sampled_mean"` replaces the additive link contribution by its
+  weighted mean over sampled cells in each year, draw, and response
+  component, not by prediction at the mean raw covariate. Fields are set
+  to zero; year terms use the first-year contribution. See
+  [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  for explicit rules.
+
+- data, spatial_terms, spatiotemporal_terms:
+
+  GAM omission options passed to
+  [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md):
+  aligned fitted observation data and explicit native smooth labels to
+  group as spatial or spatiotemporal fields. An explicit sampling rule
+  is required. Field grouping is only accepted with `omit_terms`. For
+  `method = "year_effect"`, `data` retains its use as observation data
+  passed to
+  [`influ()`](https://www.quantifish.co.nz/influ2/reference/influ.md).
+
 - x:
 
   An \`influ_index\` object.
@@ -219,7 +283,12 @@ This is not a Laplace bias-corrected index or integration over a new
 population of random effects. Grid predictions are immediately reduced
 to annual values; a grid-by-draw array is never retained. Use
 [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
-for area-weighted totals, which have different units. Year-effect
+for area-weighted totals, which have different units. GAM omissions use
+paired Gaussian coefficient simulation via
+[`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md),
+rather than the delta-method intervals of ordinary GAM indices. Native
+inverse links and smooths are preserved; nuisance parameters remain
+fitted. Draw retention is supported on this omission path. Year-effect
 results preserve the original diagnostic estimand and cannot be rescaled
 by this function. These indices are not biomass estimates.
 

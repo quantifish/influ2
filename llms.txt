@@ -109,6 +109,26 @@ Area integration requires a stated domain and compatible response/area
 units; integrating CPUE does not automatically turn it into absolute
 biomass.
 
+For GAM, sdmTMB, and univariate tinyVAST fits,
+[`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+reports sampling coverage, native link contributions, restricted-domain
+indices, and masked term-omission comparisons without refitting:
+
+``` r
+
+domain <- index_domain(model, reference_data = prediction_grid, year = "year",
+  sampled = list(coords = c("X", "Y"), distance = 5))
+plot(domain)
+```
+
+The sampling rule is explicit, and missing responses or zero likelihood
+weights do not count as observations. GAM spatial/spatiotemporal smooths
+are grouped only by declared native labels. Shared joint draws preserve
+dependence across years and counterfactuals, with blocked prediction and
+compact retained results. See the [spatial
+article](https://www.quantifish.co.nz/influ2/articles/spatial-spatiotemporal.html#sampling-support-and-index-domain-counterfactuals)
+for executed examples and interpretation limits.
+
 For a separate view of multiplicative differences, calculate and plot
 index ratios from stored estimates:
 
@@ -313,6 +333,13 @@ to display the resulting `influ_index` objects.
   : Calculate an assessment-ready CPUE index
 - [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
   : Calculate an area-integrated expected-response index
+- [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`as.data.frame(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`summary(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`print(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`plot(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`autoplot(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  : Diagnose prediction-domain support and index dependence
 - [`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
   : Format a calculated index for assessment reporting
 - [`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)

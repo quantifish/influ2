@@ -78,7 +78,17 @@ No model is fitted or updated by this function.</p>
 <span>  spatial_fields <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"spatial"</span>, <span class="st">"spatiotemporal"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  prediction_offset <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span></span>
+<span>  response_transform <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  omit_terms <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  omit_where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"unsampled"</span>, <span class="st">"never_sampled"</span>, <span class="st">"all"</span><span class="op">)</span>,</span>
+<span>  sampled <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sampled_definition <span class="op">=</span> <span class="st">"cell_time"</span>,</span>
+<span>  min_obs <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  min_years <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  covariate_reference <span class="op">=</span> <span class="st">"sampled_mean"</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spatial_terms <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spatiotemporal_terms <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'influ_index'</span></span>
@@ -195,6 +205,50 @@ variance parameters is not included. REML fits may describe indices, but
 must not rank different fixed-effect structures by likelihood criteria.</p></dd>
 
 
+<dt id="arg-omit-terms">omit_terms<a class="anchor" aria-label="anchor" href="#arg-omit-terms"></a></dt>
+<dd><p>Optional single native prediction term to omit. Supported
+only for standardised GAM/sdmTMB/tinyVAST indices with <code>spatial_fields = "all"</code>.
+Supply one term per call; use <code><a href="index_domain.html">index_domain()</a></code> to compare several separate
+omissions. This changes predictions, never refits the model.</p></dd>
+
+
+<dt id="arg-omit-where">omit_where<a class="anchor" aria-label="anchor" href="#arg-omit-where"></a></dt>
+<dd><p>Where to omit the term: <code>"unsampled"</code> (default),
+<code>"never_sampled"</code>, or <code>"all"</code>. Only one target is selected per call.</p></dd>
+
+
+<dt id="arg-sampled">sampled<a class="anchor" aria-label="anchor" href="#arg-sampled"></a></dt>
+<dd><p>Sampling rule passed to <code><a href="index_domain.html">index_domain()</a></code>. With omissions,
+<code>NULL</code> infers a half-grid-spacing distance and warns; an explicit cell ID,
+coordinate/distance rule, or logical cell-by-year matrix is preferable.</p></dd>
+
+
+<dt id="arg-sampled-definition">sampled_definition<a class="anchor" aria-label="anchor" href="#arg-sampled-definition"></a></dt>
+<dd><p>One sampling definition for omissions:
+<code>"cell_time"</code> (default), <code>"cell_ever"</code>, or <code>"cell_always"</code>.</p></dd>
+
+
+<dt id="arg-min-obs-min-years">min_obs, min_years<a class="anchor" aria-label="anchor" href="#arg-min-obs-min-years"></a></dt>
+<dd><p>Sampling thresholds passed to <code><a href="index_domain.html">index_domain()</a></code>.</p></dd>
+
+
+<dt id="arg-covariate-reference">covariate_reference<a class="anchor" aria-label="anchor" href="#arg-covariate-reference"></a></dt>
+<dd><p>Covariate omission rule passed to <code><a href="index_domain.html">index_domain()</a></code>.
+<code>"sampled_mean"</code> replaces the additive link contribution by its weighted
+mean over sampled cells in each year, draw, and response component, not by
+prediction at the mean raw covariate. Fields are set to zero; year terms
+use the first-year contribution. See <code><a href="index_domain.html">index_domain()</a></code> for explicit rules.</p></dd>
+
+
+<dt id="arg-data-spatial-terms-spatiotemporal-terms">data, spatial_terms, spatiotemporal_terms<a class="anchor" aria-label="anchor" href="#arg-data-spatial-terms-spatiotemporal-terms"></a></dt>
+<dd><p>GAM omission options passed to
+<code><a href="index_domain.html">index_domain()</a></code>: aligned fitted observation data and explicit native smooth
+labels to group as spatial or spatiotemporal fields. An explicit sampling
+rule is required. Field grouping is only accepted with <code>omit_terms</code>.
+For <code>method = "year_effect"</code>, <code>data</code> retains its use as observation data
+passed to <code><a href="influ.html">influ()</a></code>.</p></dd>
+
+
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>An `influ_index` object.</p></dd>
 
@@ -254,6 +308,10 @@ This is not a Laplace bias-corrected index or integration over a new
 population of random effects. Grid predictions are immediately reduced
 to annual values; a grid-by-draw array is never retained.
 Use <code><a href="integrate_index.html">integrate_index()</a></code> for area-weighted totals, which have different units.
+GAM omissions use paired Gaussian coefficient simulation via
+<code><a href="index_domain.html">index_domain()</a></code>, rather than the delta-method intervals of ordinary GAM
+indices. Native inverse links and smooths are preserved; nuisance parameters
+remain fitted. Draw retention is supported on this omission path.
 Year-effect results preserve the original diagnostic estimand and cannot
 be rescaled by this function. These indices are not biomass estimates.</p>
     </div>

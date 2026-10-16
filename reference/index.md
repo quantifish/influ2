@@ -84,6 +84,13 @@ to display the resulting `influ_index` objects.
   : Calculate an assessment-ready CPUE index
 - [`integrate_index()`](https://www.quantifish.co.nz/influ2/reference/integrate_index.md)
   : Calculate an area-integrated expected-response index
+- [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`as.data.frame(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`summary(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`print(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`plot(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  [`autoplot(`*`<influ_domain>`*`)`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
+  : Diagnose prediction-domain support and index dependence
 - [`index_table()`](https://www.quantifish.co.nz/influ2/reference/index_table.md)
   : Format a calculated index for assessment reporting
 - [`index_vcov()`](https://www.quantifish.co.nz/influ2/reference/index_vcov.md)
