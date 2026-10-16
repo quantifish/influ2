@@ -4,14 +4,19 @@
 #' and compare full-domain indices with restricted-domain and term-omission
 #' predictions. No model is refitted.
 #' @md
-#' @param model A complete fitted sdmTMB or univariate tinyVAST model.
+#' @name index_domain
+#' @order 1
+#' @param model A complete fitted sdmTMB, univariate tinyVAST, or
+#'   single-predictor [mgcv::gam()] model.
 #' @param reference_data A non-empty prediction data frame without `year`.
-#' @param year Year column; defaults to the model's native time variable.
+#' @param year Year column; defaults to the model's native time variable,
+#'   or the first formula predictor for a GAM.
 #' @param sampled Sampling rule: a shared cell-ID column, a list
 #'   `list(coords = c("X", "Y"), distance = d)`, or a logical matrix with
 #'   reference rows and years in index order. When omitted or `NULL`, use half
 #'   the nearest distinct grid-centre spacing, with a warning. Supply a rule
 #'   explicitly when this default does not describe the sampling design.
+#'   GAMs always require an explicit rule; coordinates are not inferred.
 #' @param sampled_definition One or more of `"cell_time"`, `"cell_ever"`,
 #'   `"cell_always"`. All are computed by default for sampled-only comparisons.
 #' @param omission_definition A single definition for unsampled omission masks;
@@ -41,6 +46,15 @@
 #' @param core_threshold Warn below this retained-weight share for fixed domains.
 #' @param unsampled_threshold,share_change_threshold Flag years exceeding these
 #'   unsampled-share and consecutive-share-change thresholds.
+#' @param data For GAMs, optional original observation data retaining fitted
+#'   row names and values. Use this to supply cell IDs or coordinates not in
+#'   the saved model frame. Without it only the retained frame is used; mutable
+#'   external fitting calls are not reevaluated. Native spatial fits use their
+#'   stored data and do not accept this argument.
+#' @param spatial_terms,spatiotemporal_terms For GAMs only, explicit native
+#'   smooth labels to group under `"spatial"` or `"spatiotemporal"`. No smooth
+#'   is classified from its name or dimensionality automatically. Ungrouped
+#'   smooths retain labels such as `"s(X,Y)"` and can be omitted by that label.
 #'
 #' @details The default sampling distance is a warned grid-spacing heuristic,
 #'   not inferred cell areas. Sampling interpretation depends on the supplied
@@ -70,8 +84,20 @@
 #'   Weighted-mean restricted indices renormalise weights each year. An empty
 #'   restricted mean is undefined (`NA`); an empty restricted total is zero.
 #'   `"cell_time"` is a variable-domain diagnostic, not an alternative index.
-#'   For area totals compare shapes using [index_ratio()] with common
-#'   normalisation, or [plot_compare()] with `rescale = 1`.
+#'   Use this object's sampled-only plot for intentional comparisons of
+#'   different domain areas. Ordinary [index_ratio()] and [plot_compare()]
+#'   preserve their equal-area safeguards; do not change area metadata to
+#'   bypass them.
+#'
+#'   GAMs use blocked native linear-predictor matrices and jointly sampled
+#'   coefficients. Smoothing-parameter corrected covariance is used when
+#'   available; otherwise it is conditional on fitted smoothing parameters.
+#'   Likelihood nuisance parameters are held fitted. This is Gaussian
+#'   coefficient-simulation uncertainty, not new MCMC or the delta-method
+#'   approximation used by ordinary [cpue_index()] GAM summaries. Natural
+#'   single-response Gaussian, binomial, Poisson, Gamma, negative-binomial,
+#'   and Tweedie GAMs are supported; multi-predictor distributional families
+#'   and transformed responses fail explicitly. Formula offsets are retained.
 #'   Slopes use numeric year labels when available, otherwise ordered year
 #'   positions. All comparisons use paired joint Gaussian draws, not
 #'   independent marginal intervals. Nonpositive series have undefined log
@@ -93,12 +119,22 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
     probs = c(0.025, 0.975), trend_window = NULL, core_threshold = 0.05,
     unsampled_threshold = 0.5, share_change_threshold = 0.2,
     prediction_offset = NULL, units = NULL,
-    omission_definition = c("cell_time", "cell_ever", "cell_always")) {
+    omission_definition = c("cell_time", "cell_ever", "cell_always"),
+    data = NULL, spatial_terms = NULL, spatiotemporal_terms = NULL) {
   backend <- if (inherits(model, "sdmTMB")) "sdmTMB" else if (
-    inherits(model, "tinyVAST")) "tinyVAST" else {
-    stop("`index_domain()` requires an sdmTMB or univariate tinyVAST fit.", call. = FALSE)
+    inherits(model, "tinyVAST")) "tinyVAST" else if (inherits(model, "gam")) "gam" else {
+    stop("`index_domain()` requires an sdmTMB or univariate tinyVAST fit, or a complete mgcv::gam() fit.", call. = FALSE)
   }
-  info <- .index_spatial_info(model, backend, year)
+  if (backend != "gam" && (!is.null(data) || !is.null(spatial_terms) ||
+      !is.null(spatiotemporal_terms))) {
+    stop("`data`, `spatial_terms`, and `spatiotemporal_terms` are GAM domain options.", call. = FALSE)
+  }
+  info <- if (backend == "gam") .domain_gam_info(model, year, data) else {
+    .index_spatial_info(model, backend, year)
+  }
+  gam_fields <- if (backend == "gam") {
+    .domain_gam_fields(model, spatial_terms, spatiotemporal_terms)
+  } else NULL
   year <- info$year
   if (!is.character(year) || length(year) != 1L || is.na(year) ||
       !year %in% names(info$data)) {
@@ -141,8 +177,12 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
       anyDuplicated(names(reference_data)) || year %in% names(reference_data)) {
     stop("Supply non-empty `reference_data` without the year column.", call. = FALSE)
   }
+  if (backend == "gam") .index_reference_predictors(model, backend, year, reference_data)
   sampled_heuristic <- is.null(sampled)
   if (sampled_heuristic) {
+    if (backend == "gam") {
+      stop("Supply `sampled` explicitly for GAM domain diagnostics; no coordinate pair or sampling distance is inferred.", call. = FALSE)
+    }
     coords <- if (backend == "sdmTMB") model$mesh$xy_cols else model$internal$space_columns
     if (length(coords) != 2L) coords <- c("X", "Y")
     sampled <- .domain_default_sampled(reference_data, coords = coords)
@@ -188,7 +228,9 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
       anyDuplicated(trend_window) || !all(as.character(trend_window) %in% years))) {
     stop("`trend_window` must select at least two unique observed years.", call. = FALSE)
   }
-  sampling <- .domain_sampling(info$data, reference_data, year, years, sampled,
+  sampling_data <- .domain_sampling_data(model, backend, info)
+  sampling_support <- attr(sampling_data, "domain_sampling_support")
+  sampling <- .domain_sampling(sampling_data, reference_data, year, years, sampled,
     unique(c(sampled_definition, omission_definition)),
     min_obs, min_years, weights, core_threshold)
   # Match cpue_index: discard zero-weight rows before native predictions.
@@ -218,7 +260,9 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
   settings <- list(backend = backend, method = if (integrated) "integrated" else "standardised",
     year = year, family = info$family, link = info$link, units = units,
     scale = "response", rescale = "raw", probs = probs,
-    uncertainty = if (uncertainty == "none") "none" else "joint Gaussian parameter/field simulation",
+    uncertainty = if (uncertainty == "none") "none" else if (backend == "gam") {
+      "joint Gaussian GAM coefficient simulation"
+    } else "joint Gaussian parameter/field simulation",
     reference_rows = length(weights), reference_variables = names(reference_data),
     spatial_fields = "all", prediction_offset = prediction_offset,
     bias_correction = "none (plug-in expected response)", seed = seed,
@@ -231,12 +275,22 @@ index_domain <- function(model, reference_data, year = NULL, sampled = NULL,
     covariate_reference = covariate_reference, year_reference = "first year",
     reference = if (integrated) "fixed common domain; area-weighted response total" else
       "fixed common population; response-scale weighted mean",
+    sampling_support = sampling_support, gam_field_terms = gam_fields,
+    gam_covariance_target = info$covariance_target,
     total_area = if (integrated) sum(weights) else NULL,
+    parent_total_area = if (integrated) sum(weights) else NULL,
+    area_convention = if (integrated) paste("sum(cell area * reference averaging weight);",
+      "averaging weights are not normalised internally") else NULL,
+    parent_row_area = if (integrated) sum(area[positive]) else NULL,
+    row_area_interpretation = if (integrated) paste("Sum of supplied cell areas over",
+      "prediction rows; repeated within-cell strata repeat cell areas, so",
+      "this is not necessarily unique geographic area") else NULL,
     catchability = if (integrated) "not adjusted" else NULL)
   result <- .domain_reduce(model, info, years, newdata, weights, classes,
     masks[sampled_definition], cell_time, omit, where, covariate_reference, decompose, retain_cells,
     positive, reference_data, settings, uncertainty == "auto", ndraws,
-    batch_size, draw_batch_size, seed, prediction_offset, sampled_only)
+    batch_size, draw_batch_size, seed, prediction_offset, sampled_only,
+    area = if (integrated) area[positive] else NULL)
   result$coverage <- sampling$coverage
   result$domains <- sampling$domains
   result$counts <- sampling$counts

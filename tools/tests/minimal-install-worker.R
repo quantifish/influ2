@@ -83,6 +83,19 @@ local({
       refit = TRUE, keep_fits = "none", seed = 281)
     mixed_search$candidates$elapsed <- NULL
     results$mixed_search <- mixed_search
+    stopifnot(requireNamespace("mgcv", quietly = TRUE))
+    gam <- mgcv::gam(catch ~ year + area + vessel, family = poisson(), data = data)
+    domain_reference <- unique(data[c("area", "vessel")])
+    domain_reference$X <- seq_len(nrow(domain_reference))
+    domain_reference$Y <- 0
+    years <- levels(data$year)
+    domain_sampled <- matrix(TRUE, nrow(domain_reference), length(years))
+    domain_sampled[nrow(domain_reference), ] <- FALSE
+    domain_sampled[nrow(domain_reference) - 1L, -1L] <- FALSE
+    results$domain <- index_domain(gam, domain_reference, year = "year",
+      sampled = domain_sampled, omit = "area", where = "all",
+      covariate_reference = "zero", retain_cells = years[1L],
+      ndraws = 20L, seed = 281L)
     stopifnot(requireNamespace("lme4", quietly = TRUE))
     lme <- lme4::glmer(catch ~ year + area + (1 | vessel), family = poisson(), data = data)
     results <- c(results, list(lme_influence = influ(lme, focus = "year"),
@@ -101,6 +114,10 @@ local({
   before <- results
   set.seed(907)
   rng <- .Random.seed
+  if (!is.null(results$domain)) {
+    saved_result_view(results$domain)
+    stopifnot(!"mgcv" %in% loadedNamespaces())
+  }
   views <- lapply(results, saved_result_view)
   stopifnot(identical(results, before), identical(.Random.seed, rng),
     !any(vapply(results, saved_result_has_live_state, logical(1))))
@@ -108,7 +125,7 @@ local({
     comparison <- all.equal(views[[name]], expected[[name]], tolerance = 1e-12)
     if (!isTRUE(comparison)) stop("Restored result differs: ", name, ": ", paste(comparison, collapse = "; "))
   }
-  message("All ", length(results), " saved results reproduce tables, labels, panel layouts, and plot coordinates without their backends, including DHARMa.")
+  message("All ", length(results), " saved results reproduce tables, labels, panel layouts, and plot coordinates without their backends, including DHARMa and domain diagnostics.")
 
   fresh <- make_core_results()
   stopifnot(isTRUE(all.equal(fresh, results[names(fresh)], tolerance = 1e-12)),

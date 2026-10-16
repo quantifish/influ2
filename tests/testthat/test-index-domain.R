@@ -120,9 +120,11 @@ test_that("sampled-only means renormalise weights and empty years stay unavailab
   sampled <- domain_all_sampled(f)
   sampled[3, ] <- FALSE
   sampled[, 2] <- FALSE
-  expect_warning(result <- index_domain(f$model, f$reference, year = f$year,
+  expect_warning(expect_warning(expect_warning(result <- index_domain(f$model, f$reference, year = f$year,
     sampled = sampled, reference_weights = f$reference$area,
-    uncertainty = "none", min_years = 2), "cell_always.*empty")
+    uncertainty = "none", min_years = 2), "Empty cell_time domain in year\\(s\\): 2013"),
+    "Empty cell_always domain in year\\(s\\): 2011, 2013, 2015, 2017"),
+    "fixed `cell_always` sampled domain is empty")
   expected <- cpue_index(f$model,
     reference_data = f$reference[1:2, ], year = f$year,
     reference_weights = f$reference$area[1:2], uncertainty = "none")
@@ -132,9 +134,12 @@ test_that("sampled-only means renormalise weights and empty years stay unavailab
   expect_true(is.na(result$sampled_only$cell_time$table$Mean[2]))
   expect_equal(result$sampled_only$cell_ever$table$Mean, expected$table$Mean)
   expect_true(all(is.na(result$sampled_only$cell_always$table$Mean)))
-  expect_warning(total <- index_domain(f$model, f$reference, year = f$year,
+  expect_warning(expect_warning(expect_warning(total <- index_domain(f$model, f$reference, year = f$year,
     sampled = sampled, area = "area", area_units = "km^2",
-    response_units = "kg/km^2", uncertainty = "none"), "cell_always.*empty")
+    response_units = "kg/km^2", uncertainty = "none"),
+    "Empty cell_time domain in year\\(s\\): 2013"),
+    "Empty cell_always domain in year\\(s\\): 2011, 2013, 2015, 2017"),
+    "fixed `cell_always` sampled domain is empty")
   expect_equal(total$sampled_only$cell_time$table$Mean[2], 0)
   expect_equal(total$sampled_only$cell_always$table$Mean, rep(0, length(f$years)))
   expect_equal(total$sampled_only$cell_time$table$Mean[keep],
@@ -307,13 +312,17 @@ test_that("a known drifting surface exposes dependence on a never-sampled region
   d$count <- rpois(nrow(d), exp(eta[cbind(d$cell, d$year)]))
   ref <- grid[grid$x <= 4 | grid$x >= 6, ]
   ref$area <- ifelse(ref$x >= 6, 10, 1)
-  mesh <- sdmTMB::make_mesh(d, xy_cols = c("x", "y"), n_knots = 20)
+  # Mesh support covers the declared prediction domain, but only western
+  # observations enter the likelihood. Do not confuse mesh support with data.
+  domain_mesh <- sdmTMB::make_mesh(grid, xy_cols = c("x", "y"), cutoff = 1.1)
+  mesh <- sdmTMB::make_mesh(d, xy_cols = c("x", "y"), mesh = domain_mesh$mesh)
   model <- sdmTMB::sdmTMB(count ~ factor(year) + x:year, data = d,
     mesh = mesh, family = poisson(), time = "year", spatial = "on",
     spatiotemporal = "iid", silent = TRUE)
   result <- index_domain(model, ref, year = "year", sampled = "cell",
     reference_weights = ref$area, uncertainty = "none",
-    trend_window = 3:6, unsampled_threshold = 0.5)
+    trend_window = 3:6, unsampled_threshold = 0.5,
+    retain_cells = c(1, 6), batch_size = nrow(ref) * nt)
   never <- result$partition$class == "never_sampled"
   expect_gt(mean(result$partition$share[never]), 0.5)
   expect_true(any(result$flags$high_unsampled_share))
@@ -334,4 +343,19 @@ test_that("a known drifting surface exposes dependence on a never-sampled region
   expect_equal(trend$slope[sampled_row], slope(sampled))
   expect_equal(trend$slope_difference[sampled_row],
     slope(sampled) - slope(full))
+  # Confirm that unsampled cells really have native field projections. This
+  # does not assert recovery of the unknown true trajectory in those cells.
+  native_data <- rbind(transform(ref, year = 1), transform(ref, year = 6))
+  native <- predict(model, native_data, return_tmb_report = TRUE)
+  unobserved <- native_data$x >= 6
+  expect_gt(max(abs(native$proj_omega_s_A[unobserved, 1])), 1e-6)
+  expect_gt(max(abs(native$proj_epsilon_st_A_vec[unobserved, 1])), 1e-6)
+  for (term in c("spatial", "spatiotemporal")) {
+    cells <- result$retained_cells[result$retained_cells$term == term, ]
+    cells <- cells[order(match(cells$Year, c("1", "6")), cells$cell), ]
+    expected <- native[[if (term == "spatial") "proj_omega_s_A" else
+      "proj_epsilon_st_A_vec"]][, 1]
+    expect_equal(cells$contribution[unobserved], expected[unobserved],
+      tolerance = 1e-8)
+  }
 })

@@ -343,15 +343,5 @@
 }
 
 .domain_sdmtmb_response <- function(model, td, p, eta) {
-  nc <- ncol(eta)
-  families <- if (nc == 2L) model$family[1:2] else list(model$family)
-  mu <- rep(1, nrow(eta))
-  for (m in seq_len(nc)) {
-    family <- families[[m]]
-    if (!is.function(family$linkinv)) {
-      stop("The native sdmTMB family must provide its inverse link.", call. = FALSE)
-    }
-    mu <- mu * family$linkinv(eta[, m])
-  }
-  mu
+  .index_sdmtmb_response(model, p, eta)
 }

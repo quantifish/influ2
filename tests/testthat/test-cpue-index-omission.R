@@ -157,6 +157,19 @@ test_that("ordinary GLM CPUE indices do not enter omission machinery", {
     omit_terms = "x"), "standardised sdmTMB or tinyVAST")
 })
 
+test_that("GAM domain data argument preserves year-effect observation-data forwarding", {
+  data <- data.frame(year = factor(rep(2001:2003, each = 10)), x = rep(1:10, 3))
+  data$response <- rep(2:11, 3)
+  model <- glm(response ~ year + x, data = data, family = poisson())
+  expected <- influ(model, focus = "year", data = data, uncertainty = "none")
+  index <- cpue_index(model, year = "year", method = "year_effect",
+    data = data, uncertainty = "none")
+  stored <- cpue_index(expected, year = "year", method = "year_effect",
+    uncertainty = "none")
+  expect_equal(index$table, stored$table)
+  expect_equal(index$metadata$method, "year_effect")
+})
+
 test_that("CPUE omission agrees with real spatial domain counterfactuals", {
   skip_if_not_installed("sdmTMB")
   data("pcod_2011", package = "sdmTMB")

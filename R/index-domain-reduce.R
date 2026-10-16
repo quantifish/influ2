@@ -2,7 +2,8 @@
     masks, cell_time, omit, where, covariate_reference, decompose, retain_cells,
     positive, reference_data, settings, uncertainty, ndraws,
     batch_size, draw_batch_size, seed, offset, sampled_only,
-    omission_definition = settings$omission_definition %||% "cell_time") {
+    omission_definition = settings$omission_definition %||% "cell_time",
+    area = NULL) {
   old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
     get(".Random.seed", envir = .GlobalEnv)
   } else NULL
@@ -13,6 +14,25 @@
   } else assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
   ny <- length(years)
   nc <- length(weights)
+  if (!is.null(area) && (!is.numeric(area) || !is.null(dim(area)) ||
+      length(area) != nc || any(!is.finite(area)) || any(area <= 0))) {
+    stop("Native domain cell areas must align with positive-weight reference rows.",
+      call. = FALSE)
+  }
+  if (identical(settings$method, "integrated")) {
+    # Like integrate_index(), total_area is area times within-cell averaging
+    # weight, not the unweighted sum of repeated seasonal cell-area rows.
+    settings$total_area <- sum(weights)
+    settings$parent_total_area <- sum(weights)
+    settings$area_convention <- paste("sum(cell area * reference averaging weight);",
+      "averaging weights are not normalised internally")
+    if (!is.null(area)) {
+      settings$parent_row_area <- sum(area)
+      settings$row_area_interpretation <- paste("Sum of supplied cell areas over",
+        "prediction rows; repeated within-cell strata repeat cell areas, so",
+        "this is not necessarily unique geographic area")
+    }
+  }
   if (!is.character(omission_definition) || length(omission_definition) != 1L ||
       is.na(omission_definition) || !omission_definition %in%
       c("cell_time", "cell_ever", "cell_always")) {
@@ -49,6 +69,12 @@
   sampler <- NULL
   term_names <- NULL
   components <- NULL
+  project <- function(d) {
+    if (settings$backend == "gam") {
+      .domain_gam_projection(model, d, year = info$year,
+        field_terms = settings$gam_field_terms)
+    } else .domain_projection(model, settings$backend, d, offset, year = info$year)
+  }
   term_value <- function(value, term) {
     if (identical(term, "spatial") && !is.null(value$spatial)) {
       svc <- if (!is.null(value[["svc"]])) value["svc"] else
@@ -162,7 +188,7 @@
       y <- as.integer((index - 1L) %/% nc + 1L)
       rows <- as.integer((index - 1L) %% nc + 1L)
       d <- newdata(y, rows)
-      block <- .domain_projection(model, settings$backend, d, offset, year = info$year)
+      block <- project(d)
       alternatives <- list()
       tryCatch({
         mode_terms <- check_terms(block$terms(info$mode), length(rows))
@@ -171,8 +197,7 @@
         }
         if (pass == 2L) {
           if ("year" %in% omit) {
-            alternatives$year <- .domain_projection(model, settings$backend,
-              newdata(rep(1L, length(rows)), rows), offset, year = info$year)
+            alternatives$year <- project(newdata(rep(1L, length(rows)), rows))
           }
           for (term in names(rules)) if (identical(rules[[term]]$rule, "fixed")) {
             alternate <- d
@@ -188,8 +213,7 @@
                 alternate[[variable]][] <- as.character(value)
               } else alternate[[variable]][] <- value
             }
-            alternatives[[term]] <- .domain_projection(model, settings$backend,
-              alternate, offset, year = info$year)
+            alternatives[[term]] <- project(alternate)
           }
         }
         evaluate <- function(par, draw, terms = NULL) {
@@ -234,7 +258,9 @@
         }
         evaluate(info$mode, 1L, mode_terms)
         if (uncertainty && (pass == 1L || length(omit))) {
-          if (is.null(sampler)) sampler <- .index_spatial_sampler(info, block$obj)
+          if (is.null(sampler)) sampler <- if (settings$backend == "gam") {
+            .domain_gam_sampler(info)
+          } else .index_spatial_sampler(info, block$obj)
           set.seed(as.integer(seed))
           for (start in seq.int(1L, ndraws, by = draw_batch_size)) {
             ids <- seq.int(start, min(ndraws, start + draw_batch_size - 1L))
@@ -244,8 +270,8 @@
           }
         }
       }, finally = {
-        for (a in alternatives) .index_free_tmb(a$obj)
-        .index_free_tmb(block$obj)
+        for (a in alternatives) if (!is.null(a$obj)) .index_free_tmb(a$obj)
+        if (!is.null(block$obj)) .index_free_tmb(block$obj)
       })
     }
   }
@@ -278,6 +304,17 @@
     metadata$variable_domain <- definition %in% c("cell_time", "unsampled_cell_time")
     metadata$retained_weight <- stats::setNames(weight, years)
     metadata$retained_share <- stats::setNames(weight / sum(weights), years)
+    if (identical(settings$method, "integrated")) {
+      metadata$retained_area <- stats::setNames(weight, years)
+      # Keep the ordinary index-target guard truthful: fixed restrictions have
+      # their own scalar area, and genuinely varying areas retain annual labels.
+      metadata$total_area <- if (all(weight == weight[1L])) unname(weight[1L]) else {
+        stats::setNames(weight, years)
+      }
+      if (!is.null(area)) {
+        metadata$retained_row_area <- stats::setNames(colSums(mask * area), years)
+      }
+    }
     metadata$reference <- paste(settings$reference, "; restricted to", definition)
     build(value, metadata)
   }
@@ -342,7 +379,14 @@
       width <- (m$max - m$min) / 1024
       quantile <- function(p) {
         if (width == 0) return(m$min)
-        bin <- which(cumsum(m$histogram) >= p * m$weight)[1L]
+        cumulative <- cumsum(m$histogram)
+        total <- utils::tail(cumulative, 1L)
+        # Use the histogram's own total, and resolve floating-point ties at
+        # a probability boundary consistently. Otherwise an exactly 10%-mass
+        # bin can be skipped after a different blocking order, jumping across
+        # an arbitrarily large run of empty bins.
+        tolerance <- 128 * .Machine$double.eps * total
+        bin <- which(cumulative >= p * total - tolerance)[1L]
         if (is.na(bin)) bin <- 1024L
         m$min + (bin - 0.5) * width
       }

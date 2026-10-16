@@ -129,9 +129,9 @@ test_that("delta response adapters retain native component semantics", {
   expect_equal(.domain_sdmtmb_response(standard, list(), list(), eta),
     exp(rowSums(eta)))
   truncated <- list(family = list(family = "truncated_nbinom2", link = "log",
-    linkinv = function(eta) {
+    linkinv = function(eta, phi) {
       mu <- exp(eta)
-      mu / (1 - (2 / (2 + mu))^2)
+      mu / (1 - (phi / (phi + mu))^phi)
     }))
   mu <- exp(eta[, 1])
   expect_equal(.domain_sdmtmb_response(truncated, list(), list(ln_phi = log(2)),

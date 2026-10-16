@@ -69,6 +69,7 @@ test_that("domain API keeps omission definitions independent of comparisons", {
     family = "poisson", link = "log")
   local_mocked_bindings(
     .index_spatial_info = function(...) info,
+    .domain_sampling_data = function(model, backend, info) info$data,
     .domain_default_sampled = function(reference_data, coords) {
       captured$coords <- coords
       warning("Using half the grid spacing", call. = FALSE)

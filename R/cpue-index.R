@@ -48,7 +48,7 @@
 #'   (one unit of exposure for a log-exposure offset). Other backends obtain
 #'   offsets from their formula and the supplied reference predictors.
 #' @param omit_terms Optional single native prediction term to omit. Supported
-#'   only for standardised sdmTMB/tinyVAST indices with `spatial_fields = "all"`.
+#'   only for standardised GAM/sdmTMB/tinyVAST indices with `spatial_fields = "all"`.
 #'   Supply one term per call; use [index_domain()] to compare several separate
 #'   omissions. This changes predictions, never refits the model.
 #' @param omit_where Where to omit the term: `"unsampled"` (default),
@@ -64,6 +64,12 @@
 #'   mean over sampled cells in each year, draw, and response component, not by
 #'   prediction at the mean raw covariate. Fields are set to zero; year terms
 #'   use the first-year contribution. See [index_domain()] for explicit rules.
+#' @param data,spatial_terms,spatiotemporal_terms GAM omission options passed to
+#'   [index_domain()]: aligned fitted observation data and explicit native smooth
+#'   labels to group as spatial or spatiotemporal fields. An explicit sampling
+#'   rule is required. Field grouping is only accepted with `omit_terms`.
+#'   For `method = "year_effect"`, `data` retains its use as observation data
+#'   passed to [influ()].
 #' @param ... Arguments passed to [influ()] only for `method = "year_effect"`.
 #'
 #' @details For standardisation, predictions are averaged on the **response**
@@ -112,6 +118,10 @@
 #'   population of random effects. Grid predictions are immediately reduced
 #'   to annual values; a grid-by-draw array is never retained.
 #'   Use [integrate_index()] for area-weighted totals, which have different units.
+#'   GAM omissions use paired Gaussian coefficient simulation via
+#'   [index_domain()], rather than the delta-method intervals of ordinary GAM
+#'   indices. Native inverse links and smooths are preserved; nuisance parameters
+#'   remain fitted. Draw retention is supported on this omission path.
 #'   Year-effect results preserve the original diagnostic estimand and cannot
 #'   be rescaled by this function. These indices are not biomass estimates.
 #'
@@ -146,13 +156,19 @@ cpue_index <- function(model, year = NULL,
     seed = 1L, prediction_offset = NULL, response_transform = "identity",
     omit_terms = NULL, omit_where = c("unsampled", "never_sampled", "all"),
     sampled = NULL, sampled_definition = "cell_time", min_obs = 1L,
-    min_years = 1, covariate_reference = "sampled_mean") {
+    min_years = 1, covariate_reference = "sampled_mean", data = NULL,
+    spatial_terms = NULL, spatiotemporal_terms = NULL) {
   if (!is.null(omit_terms) && length(omit_terms)) {
     return(.cpue_index_omission(model, year, method, reference_data,
       reference_weights, uncertainty, probs, rescale, ndraws, batch_size,
       draw_batch_size, retain, units, spatial_fields, seed, prediction_offset,
       response_transform, omit_terms, omit_where, sampled, sampled_definition,
-      min_obs, min_years, covariate_reference, ...))
+      min_obs, min_years, covariate_reference, data = data,
+      spatial_terms = spatial_terms, spatiotemporal_terms = spatiotemporal_terms, ...))
+  }
+  if (!is.null(spatial_terms) || !is.null(spatiotemporal_terms) ||
+      (!is.null(data) && match.arg(method) != "year_effect")) {
+    stop("GAM domain options require `omit_terms`; use `index_domain()` for other domain comparisons.", call. = FALSE)
   }
   .require_model_backend(model)
   if (!inherits(model, "merMod") && response_transform != "identity") stop("`response_transform` is an lme4 option only.", call. = FALSE)
@@ -193,7 +209,13 @@ cpue_index <- function(model, year = NULL,
       stop("Year-effect extraction does not accept reference data, rescaling, or draw retention; configure `influ()` first.", call. = FALSE)
     }
     diagnostic <- if (inherits(model, "influ_diag")) model else {
-      if (inherits(model, "merMod")) influ(model, focus = year, uncertainty = uncertainty,
+      if (!is.null(data)) {
+        if (inherits(model, "merMod")) {
+          influ(model, focus = year, data = data, uncertainty = uncertainty,
+            probs = probs, response_transform = response_transform, ...)
+        } else influ(model, focus = year, data = data,
+          uncertainty = uncertainty, probs = probs, ...)
+      } else if (inherits(model, "merMod")) influ(model, focus = year, uncertainty = uncertainty,
         probs = probs, response_transform = response_transform, ...) else
         influ(model, focus = year, uncertainty = uncertainty, probs = probs, ...)
     }
@@ -401,7 +423,8 @@ cpue_index <- function(model, year = NULL,
     reference_weights, uncertainty, probs, rescale, ndraws, batch_size,
     draw_batch_size, retain, units, spatial_fields, seed, prediction_offset,
     response_transform, omit_terms, omit_where, sampled, sampled_definition,
-    min_obs, min_years, covariate_reference, ...) {
+    min_obs, min_years, covariate_reference, data = NULL, spatial_terms = NULL,
+    spatiotemporal_terms = NULL, ...) {
   method <- match.arg(method, c("standardised", "standardized", "year_effect"))
   uncertainty <- match.arg(uncertainty, c("auto", "none"))
   retain <- match.arg(retain, c("summary", "draws"))
@@ -410,8 +433,8 @@ cpue_index <- function(model, year = NULL,
   sampled_definition <- match.arg(sampled_definition,
     c("cell_time", "cell_ever", "cell_always"))
   if (method == "year_effect" ||
-      !inherits(model, c("sdmTMB", "tinyVAST"))) {
-    stop("`omit_terms` requires a standardised sdmTMB or tinyVAST index.", call. = FALSE)
+      !inherits(model, c("gam", "sdmTMB", "tinyVAST"))) {
+    stop("`omit_terms` requires a standardised sdmTMB or tinyVAST index, or an mgcv GAM.", call. = FALSE)
   }
   if (!is.character(omit_terms) || length(omit_terms) != 1L ||
       is.na(omit_terms) || !nzchar(trimws(omit_terms))) {
@@ -434,7 +457,7 @@ cpue_index <- function(model, year = NULL,
   if (retain == "draws" && uncertainty == "none") {
     stop("Draw retention requires `uncertainty = 'auto'`.", call. = FALSE)
   }
-  domain <- index_domain(model, reference_data = reference_data, year = year,
+  args <- list(model = model, reference_data = reference_data, year = year,
     sampled = sampled, sampled_definition = sampled_definition,
     omission_definition = sampled_definition,
     min_obs = min_obs, min_years = min_years, sampled_only = FALSE,
@@ -443,6 +466,10 @@ cpue_index <- function(model, year = NULL,
     ndraws = ndraws, seed = seed, batch_size = batch_size,
     draw_batch_size = draw_batch_size, uncertainty = uncertainty, probs = probs,
     prediction_offset = prediction_offset, units = units)
+  if (!is.null(data)) args$data <- data
+  if (!is.null(spatial_terms)) args$spatial_terms <- spatial_terms
+  if (!is.null(spatiotemporal_terms)) args$spatiotemporal_terms <- spatiotemporal_terms
+  domain <- do.call(index_domain, args)
   if (length(domain$omission) != 1L ||
       !inherits(domain$omission[[1L]], "influ_index")) {
     stop("`index_domain()` did not return exactly one omission index.", call. = FALSE)

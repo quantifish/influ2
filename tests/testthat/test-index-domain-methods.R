@@ -87,7 +87,9 @@ test_that("domain plots include full index and share one display divisor", {
   expect_identical(partition$layers[[2]]$data$Mean, x$baseline$table$Mean)
   expect_identical(plot(x, type = "share")$data$share, x$unsampled_share$share)
   x$sampled_only[[1]]$table$Mean[] <- NA_real_
-  expect_error(plot(x), "No common years")
+  expect_warning(p <- plot(x), "excluded from display normalisation")
+  expect_true(all(is.finite(p[[1]]$data$Mean[p[[1]]$data$Series == "Full index"])))
+  expect_true(all(is.na(p[[1]]$data$Mean[p[[1]]$data$Series == "cell_time"])))
 })
 
 test_that("domain maps validate retained cells and selectors", {
@@ -133,4 +135,54 @@ test_that("area totals compare individually normalised shapes on common years", 
   x$sampled_only[[1]]$table$Mean[1] <- NA_real_
   d <- plot(x)[[1]]$data
   expect_equal(d$Mean[2:3], d$Mean[5:6])
+})
+
+test_that("an empty always-sampled core does not prevent a useful default plot", {
+  for (integrated in c(FALSE, TRUE)) {
+    x <- .domain_method_fixture()
+    if (integrated) x$baseline$metadata$method <- "integrated"
+    x$sampled_only$cell_ever <- x$sampled_only$cell_time
+    x$sampled_only$cell_always <- x$sampled_only$cell_time
+    x$sampled_only$cell_always$table[c("Mean", "SD", "Qlower", "Qupper")] <-
+      if (integrated) 0 else NA_real_
+    expect_warning(p <- plot(x), "cell_always.*coverage remains shown")
+    expect_s3_class(p, "patchwork")
+    expect_no_error(ggplot2::ggplot_build(p[[1]]))
+    expect_identical(p[[2]]$data$share, x$domains$share)
+    d <- p[[1]]$data
+    expect_true(all(is.finite(d$Mean[d$Series %in% c("Full index", "cell_time", "cell_ever")])))
+    expect_identical(attr(d, "domain_display")$excluded_from_normalisation,
+      "cell_always")
+    expect_identical(attr(d, "domain_display")$common_years,
+      as.character(x$baseline$table$Year))
+    expect_equal(d$Mean[d$Series == "Full index"], c(0.5, 1, 2))
+    if (integrated) expect_true(all(is.na(d$Mean[d$Series == "cell_always"])))
+  }
+})
+
+test_that("display normalisation still rejects unavailable full and disjoint series", {
+  x <- .domain_method_fixture()
+  x$baseline$table$Mean[] <- NA_real_
+  expect_error(plot(x), "full index has no finite positive")
+  x <- .domain_method_fixture()
+  x$baseline$table$Mean[1:2] <- NA_real_
+  x$sampled_only[[1]]$table$Mean[3] <- NA_real_
+  expect_error(plot(x), "No common years")
+})
+
+test_that("domain plotting fixes legend, grouping, and facet order independently of locale", {
+  d <- data.frame(Year = rep(1:2, 3), Mean = 1:6,
+    Series = rep(c("z model", "A model", "b model"), each = 2),
+    term = rep(c("z term", "A term", "b term"), each = 2),
+    component = rep(c("positive", "encounter", "conditional"), each = 2))
+  p <- .domain_series_plot(d, "Mean", "Series", show_probs = FALSE)
+  expect_identical(levels(p$data$.colour), unique(d$Series))
+  expect_identical(levels(p$data$term), unique(d$term))
+  expect_identical(levels(p$data$component), unique(d$component))
+  expect_identical(levels(p$data$.group), c("z model.z term.positive",
+    "A model.A term.encounter", "b model.b term.conditional"))
+  d$class <- rep(c("never_sampled", "sampled", "previously_sampled"), each = 2)
+  p <- .domain_stacked_plot(d, "Mean")
+  expect_identical(levels(p$data$.class),
+    c("sampled", "previously_sampled", "never_sampled"))
 })

@@ -139,6 +139,14 @@ plot.influ_domain <- function(x,
         ggplot2::geom_hline(yintercept = 1, linetype = 2, colour = "grey50") +
         ggplot2::labs(y = "Omitted / full index",
           subtitle = "Intervals use paired joint draws")
+      # A scenario keeps its colour in the index and ratio panels, even
+      # though the ratio panel has no full-index series of its own.
+      series <- unique(as.character(d$Series))
+      p <- p + ggplot2::scale_colour_discrete(limits = series) +
+        ggplot2::scale_fill_discrete(limits = series)
+      lower <- lower + ggplot2::scale_colour_discrete(limits = series,
+        breaks = names(x$omission)) +
+        ggplot2::scale_fill_discrete(limits = series, breaks = names(x$omission))
       return(patchwork::wrap_plots(p, lower, ncol = 1, heights = c(2, 1)))
     }
     p <- p + ggplot2::labs(subtitle = "cell_time is a variable-domain diagnostic")
@@ -205,12 +213,22 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
     rows <- d$Series == z & is.finite(d$Mean) & d$Mean > 0
     as.character(d$Year[rows])
   })
-  common <- Reduce(intersect, eligible)
+  unavailable <- lengths(eligible) == 0L
+  if (any(unavailable)) {
+    if ("Full index" %in% series[unavailable]) {
+      stop("The full index has no finite positive estimates for display normalisation.",
+        call. = FALSE)
+    }
+    warning("Series with no finite positive estimates are excluded from display ",
+      "normalisation: ", paste(series[unavailable], collapse = ", "),
+      ". Their coverage remains shown.", call. = FALSE)
+  }
+  common <- Reduce(intersect, eligible[!unavailable])
   if (!length(common)) {
     stop("No common years with finite positive indices for display normalisation.",
       call. = FALSE)
   }
-  reference <- if (per_series) series else "Full index"
+  reference <- if (per_series) series[!unavailable] else "Full index"
   divisors <- vapply(reference, function(label) {
     rows <- d$Series == label & as.character(d$Year) %in% common
     exp(mean(log(d$Mean[rows])))
@@ -218,6 +236,8 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
   divisor <- if (per_series) divisors[match(d$Series, reference)] else divisors
   for (column in intersect(c("Mean", "SD", "Median", "Qlower", "Qupper"),
       names(d))) d[[column]] <- d[[column]] / divisor
+  attr(d, "domain_display") <- list(common_years = common,
+    excluded_from_normalisation = series[unavailable], divisors = divisors)
   d
 }
 
@@ -231,8 +251,9 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
 
 .domain_stacked_plot <- function(d, value) {
   d$.year <- .domain_year_values(d$Year)
+  d$.class <- factor(d$class, levels = c("sampled", "previously_sampled", "never_sampled"))
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$.year,
-    y = .data[[value]], fill = .data$class)) +
+    y = .data[[value]], fill = .data$.class)) +
     ggplot2::geom_col(na.rm = TRUE) + ggplot2::theme_bw() +
     ggplot2::labs(x = "Year")
   if (is.factor(d$.year)) {
@@ -251,8 +272,21 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
     factor(d$Year, levels = labels)
   }
   grouping <- intersect(c(group, "term", "component"), names(d))
-  key <- do.call(interaction, c(d[grouping], list(drop = TRUE)))
+  # Character-to-factor coercion otherwise sorts by LC_COLLATE, changing both
+  # native group IDs and legend colours after a saved result is reloaded.
+  levels_in_order <- function(x) {
+    labels <- as.character(x)
+    factor(labels, levels = unique(labels))
+  }
+  d$.colour <- levels_in_order(d[[group]])
+  for (column in intersect(c("term", "component"), names(d))) {
+    d[[column]] <- levels_in_order(d[[column]])
+  }
+  if ("class" %in% names(d)) d$class <- factor(d$class,
+    levels = c("all", "sampled", "previously_sampled", "never_sampled"))
+  key <- do.call(interaction, c(lapply(d[grouping], levels_in_order), list(drop = TRUE)))
   d$.segment <- d$.ribbon <- integer(nrow(d))
+  d$.isolated_interval <- rep(FALSE, nrow(d))
   bounded <- !is.null(lower) && !is.null(upper) &&
     all(c(lower, upper) %in% names(d))
   for (level in unique(key)) {
@@ -267,10 +301,14 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
     } else FALSE
     d$.ribbon[rows] <- cumsum(gap | !finite |
       c(TRUE, !utils::head(finite, -1L)))
+    for (segment in unique(d$.ribbon[rows[finite]])) {
+      ids <- rows[finite & d$.ribbon[rows] == segment]
+      if (length(ids) == 1L) d$.isolated_interval[ids] <- TRUE
+    }
   }
   d$.group <- key
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$.year,
-    y = .data[[value]], colour = .data[[group]], fill = .data[[group]],
+    y = .data[[value]], colour = .data$.colour, fill = .data$.colour,
     group = interaction(.data$.group, .data$.segment)))
   if (isTRUE(show_probs) && bounded) {
     p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin = .data[[lower]],
@@ -281,6 +319,14 @@ autoplot.influ_domain <- function(object, ...) plot(object, ...)
   p <- p + ggplot2::geom_line(na.rm = TRUE) +
     ggplot2::geom_point(na.rm = TRUE) + ggplot2::theme_bw() +
     ggplot2::labs(x = "Year", colour = NULL, fill = NULL)
+  # A ribbon has no visible area at an isolated survey year. Show its stored
+  # pointwise interval without drawing across an absent year or an NA bound.
+  if (isTRUE(show_probs) && bounded && any(d$.isolated_interval)) {
+    p <- p + ggplot2::geom_linerange(
+      data = d[d$.isolated_interval, , drop = FALSE],
+      ggplot2::aes(ymin = .data[[lower]], ymax = .data[[upper]]),
+      na.rm = TRUE)
+  }
   if (!numeric_axis) {
     p <- p + ggplot2::scale_x_discrete(limits = labels, drop = FALSE)
   }

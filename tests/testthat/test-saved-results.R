@@ -40,6 +40,7 @@ expect_saved_results_restart <- function(results) {
       unchanged = identical(objects, before), rng_unchanged = identical(.Random.seed, rng),
       package_path = normalizePath(getNamespaceInfo(asNamespace("influ2"), "path"),
         winslash = "/", mustWork = TRUE),
+      loaded_namespaces = loadedNamespaces(),
       backend_namespaces = intersect(loadedNamespaces(),
         c("brms", "rstan", "glmmTMB", "sdmTMB", "tinyVAST")))
   }, args = list(paths = paths,
@@ -50,6 +51,9 @@ expect_saved_results_restart <- function(results) {
   expect_false(identical(restored$pid, Sys.getpid()))
   expect_identical(restored$package_path, package_path)
   expect_length(restored$backend_namespaces, 0L)
+  if (all(vapply(results, inherits, logical(1), "influ_domain"))) {
+    expect_false("mgcv" %in% restored$loaded_namespaces)
+  }
   expect_true(restored$unchanged)
   expect_true(restored$rng_unchanged)
   for (name in names(results)) {
@@ -106,6 +110,28 @@ test_that("mixed-model results reopen without loading glmmTMB", {
     steps = influ_steps(list(Reduced = reduced, Full = full), year = "year")
   )
   expect_saved_results_restart(results)
+})
+
+test_that("domain results reopen every stored view without their GAM or mgcv", {
+  skip_if_not_installed("mgcv")
+  fixture <- bentley_fixture()
+  fit <- mgcv::gam(catch ~ year + area + vessel, family = poisson(),
+    data = fixture$data)
+  reference <- unique(fixture$data[c("area", "vessel")])
+  reference$X <- seq_len(nrow(reference))
+  reference$Y <- 0
+  years <- levels(fixture$data$year)
+  sampled <- matrix(TRUE, nrow(reference), length(years))
+  sampled[nrow(reference), ] <- FALSE
+  sampled[nrow(reference) - 1L, -1L] <- FALSE
+  result <- index_domain(fit, reference, year = "year", sampled = sampled,
+    omit = "area", where = "all", covariate_reference = "zero",
+    retain_cells = years[1L], ndraws = 20L, seed = 281L)
+  expect_s3_class(result, "influ_domain")
+  expect_true(all(result$baseline$table$SD > 0))
+  expect_true(nrow(result$retained_cells) > 0L)
+  expect_false(saved_result_has_live_state(result))
+  expect_saved_results_restart(list(domain = result))
 })
 
 test_that("saved Bayesian residual summaries reopen without their fit or brms", {

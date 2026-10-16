@@ -351,6 +351,7 @@ test_that("the public domain entry point passes its independent omission definit
     list(data = data.frame(year = rep(1:2, each = 3)), year = "year",
       time = "year", mode = 0, family = "poisson", link = "log")
   }
+  f$env$.domain_sampling_data <- function(model, backend, info) info$data
   x <- public(structure(list(), class = "sdmTMB"), f$args$reference_data,
     sampled = f$args$cell_time, sampled_definition = "cell_ever",
     omit = "spatial", where = "unsampled", uncertainty = "none",
