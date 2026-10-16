@@ -145,7 +145,7 @@ cpue_index <- function(model, year = NULL,
     spatial_fields = c("all", "spatial", "spatiotemporal", "none"),
     seed = 1L, prediction_offset = NULL, response_transform = "identity",
     omit_terms = NULL, omit_where = c("unsampled", "never_sampled", "all"),
-    sampled = NULL, sampled_definition = "cell_time", min_obs = 1,
+    sampled = NULL, sampled_definition = "cell_time", min_obs = 1L,
     min_years = 1, covariate_reference = "sampled_mean") {
   if (!is.null(omit_terms) && length(omit_terms)) {
     return(.cpue_index_omission(model, year, method, reference_data,
