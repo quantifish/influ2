@@ -1,5 +1,14 @@
 # influ2 1.1.0
 
+* Compatible with sdmTMB 1.2.0 while retaining 1.1.0 support. Private native
+  objectives preserve the fitted TMB or RTMB backend, simulation conditioning,
+  maps, and joint parameter order. Prediction no longer uses the deprecated
+  `return_tmb_object` option. RTMB tapes are released by their native R
+  finalisers rather than compiled-TMB cleanup. Delta dispersion is aligned
+  across the old and new native layouts, and implied effects retain native
+  observation-specific dispersion where supplied. Sampling tests verify the
+  fitted row IDs when sdmTMB omits missing responses before storage.
+
 * glmmTMB and lme4 random effects now form one influence term per grouping
   factor, named after the factor as for brms (for example `vessel`,
   `month`, or `area:vessel`), instead of one `random_effects` term. Terms

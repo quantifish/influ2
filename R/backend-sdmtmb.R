@@ -219,9 +219,7 @@
       smooth_terms$components[[component_index]]$values)
   }
   reference_report <- if (is.null(reference_data)) NULL else {
-    prediction <- stats::predict(
-      model, newdata = reference_data, return_tmb_object = TRUE
-    )
+    prediction <- .sdmTMB_prediction_object(model, newdata = reference_data)
     prediction$obj$report(model$last.par.best)
   }
   smooth <- if (is.null(reference_data)) NULL else {
@@ -294,6 +292,46 @@
     return(rowSums(value[, , component_index, drop = FALSE], dims = 1L))
   }
   NULL
+}
+
+# Native dispersion with one value per response component. sdmTMB < 1.2.0
+# stores a placeholder for the delta encounter component; sdmTMB >= 1.2.0
+# stores only the positive component's value. The encounter (binomial)
+# likelihood has no dispersion, so its slot is a neutral 1 (0 on log scale).
+.sdmTMB_component_dispersion <- function(values, n_components, log = FALSE) {
+  values <- as.numeric(values)
+  if (n_components == 2L && length(values) == 1L) {
+    values <- c(if (log) 0 else 1, values)
+  }
+  values
+}
+
+# A dispersion model in 1.2.0 reports phi_i on observation rows instead of
+# scalar phi. Preserve that fitted dispersion; never recycle a partially
+# aligned vector or reinterpret native Gamma shape as a scale parameter here.
+.sdmTMB_observation_dispersion <- function(report, n, n_components) {
+  value <- report$phi_i
+  if (is.null(value)) {
+    component <- .sdmTMB_component_dispersion(report$phi, n_components)
+    if (length(component) != n_components) {
+      stop("Finite component-aligned native sdmTMB dispersion is required.",
+        call. = FALSE)
+    }
+    value <- matrix(rep(component, each = n), n, n_components)
+  } else {
+    if (is.null(dim(value)) && length(value) == n) value <- matrix(value, n, 1L)
+    if (n_components == 2L && identical(dim(value), c(n, 1L))) {
+      value <- cbind(1, value)
+    }
+    if (!is.numeric(value) || !identical(dim(value), c(n, n_components))) {
+      stop("Native sdmTMB observation dispersion does not align with fitted rows and components.",
+        call. = FALSE)
+    }
+  }
+  if (any(!is.finite(value) | value <= 0)) {
+    stop("Native sdmTMB dispersion must be finite and positive.", call. = FALSE)
+  }
+  value
 }
 
 .sdmTMB_projected_names <- c(
@@ -516,10 +554,8 @@
   prediction_obj <- NULL
   smooth <- NULL
   if (!is.null(reference_data)) {
-    prediction_obj <- stats::predict(
-      model,
-      newdata = reference_data,
-      return_tmb_object = TRUE
+    prediction_obj <- .sdmTMB_prediction_object(
+      model, newdata = reference_data
     )$obj
     smooth <- .sdmTMB_reference_smooth(model, reference_data, smooth_terms)
     reference_mode <- prediction_obj$report(model$last.par.best)

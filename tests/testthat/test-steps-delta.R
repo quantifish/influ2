@@ -135,6 +135,9 @@ test_that("delta step references, uncertainty, and structure guards are explicit
   names(bad$sd_report$par.fixed)[1] <- "absent"
   expect_error(calculate(bad), "joint fixed-effect covariance")
   bad <- m
+  # Native weights may be shared (n rows, since sdmTMB 1.2.0) or stored
+  # separately by component. Construct the paired layout before corrupting it.
+  bad$tmb_data$weights_i <- rep_len(bad$tmb_data$weights_i, 2L * nrow(m$data))
   bad$tmb_data$weights_i[nrow(m$data) + 1L] <- 2
   expect_error(.step_locked_data(bad, bad$formula, "sdmTMB"), "different likelihood weights")
   bad$offset <- NULL

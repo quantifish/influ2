@@ -29,6 +29,10 @@
   ready <- FALSE
   on.exit(if (!ready) .index_free_tmb(obj), add = TRUE)
   td <- obj$env$data
+  # RTMB captures native data in its objective closure, rather than env$data.
+  # Keep the sanitised TMB data for compiled fits and use the explicit native
+  # prediction data only when that environment has no data entries.
+  if (!length(td)) td <- block$data
   if (is.null(td)) stop("Native prediction data are unavailable.", call. = FALSE)
   n <- nrow(data)
   nc <- if (backend == "sdmTMB") {

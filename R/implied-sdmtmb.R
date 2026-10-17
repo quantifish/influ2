@@ -2,9 +2,8 @@
 # fn(): that would reoptimise latent effects. A private objective also avoids
 # evaluating or modifying the caller's TMB environment (including saved fits).
 .implied_sdmtmb_report <- function(model) {
-  obj <- TMB::MakeADFun(data = model$tmb_data, parameters = model$parlist,
-    map = model$tmb_map, random = model$tmb_random,
-    profile = model$control$profile, DLL = "sdmTMB", silent = TRUE)
+  obj <- .sdmTMB_make_object(model, data = model$tmb_data,
+    parameters = model$parlist)
   mode <- model$last.par.best
   if (!identical(names(obj$env$last.par.best), names(mode)) ||
       !isTRUE(all.equal(as.numeric(obj$env$last.par.best), as.numeric(mode), tolerance = 1e-10))) {
@@ -90,15 +89,15 @@
   }
   r <- .implied_sdmtmb_report(model)
   if (!joint && family$family %in% c("binomial", "poisson")) r$phi <- 1
+  dispersion <- .sdmTMB_observation_dispersion(r, n, response_k)
   if (!is.matrix(r$eta_i) || !identical(dim(r$eta_i), c(n, response_k)) ||
-      any(!is.finite(r$eta_i)) || length(r$phi) != response_k ||
-      any(!is.finite(r$phi) | r$phi <= 0)) {
+      any(!is.finite(r$eta_i))) {
     stop("Finite aligned sdmTMB predictors and native log-scale SD are required.", call. = FALSE)
   }
   if (identical(component, "combined")) {
     if (!is.null(year_term)) stop("Combined implied responses use fitted observation means, not a selected year-term baseline.", call. = FALSE)
     a <- list(backend = "sdmTMB", data = aligned, year = time$name,
-      observed = y, eta = r$eta_i, dispersion = rep(r$phi[2L], n),
+      observed = y, eta = r$eta_i, dispersion = dispersion[, 2L],
       response = response, component = "combined")
     if (model$family[[2L]]$family == "Gamma") {
       a$joint_kind <- "hurdle"
@@ -147,7 +146,7 @@
   included <- if (identical(component, "positive")) positive else rep(TRUE, n)
   a <- list(backend = "sdmTMB", family = family$family, link = family$link, frame = frame,
     data = aligned, year = time$name, observed = if (identical(component, "encounter")) as.numeric(positive) else as.numeric(y), eta = r$eta_i[, k],
-    dispersion = rep(r$phi[k], n), baseline = term - mean(term),
+    dispersion = dispersion[, k], baseline = term - mean(term),
     baseline_terms = labels[selected], response = response, log_response = FALSE,
     included = included, component = if (joint) component else "single fitted response",
     year_term = year_term, component_index = k,

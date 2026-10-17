@@ -97,10 +97,9 @@ test_that("sdmTMB field CDI retains joint centring uncertainty with compact bins
   reference <- fixture$data[c(5, 13, 27, 46), , drop = FALSE]
   reference_weights <- c(1, 2, 1, 5)
   testthat::local_mocked_bindings(
-    predict = function(object, newdata, ...) {
+    .sdmTMB_prediction_object = function(object, newdata, ...) {
       list(obj = list(report = function(par) report(par, newdata, projected = TRUE)))
-    },
-    .package = "stats"
+    }
   )
   probs <- c(0.1, 0.8)
   for (use_grid in c(FALSE, TRUE)) {

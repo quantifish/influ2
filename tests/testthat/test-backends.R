@@ -515,7 +515,7 @@ test_that("sdmTMB reference grids retain smooth and IID contributions", {
   smooth <- influ2:::.sdmTMB_reference_smooth(model, grid, smooth_terms)
   projected <- influ2:::.sdmTMB_reference_contribution(NULL, "s(depth)", 1L,
     nrow(grid), smooth, parameters)
-  predictor <- stats::predict(model, newdata = grid, return_tmb_object = TRUE)
+  predictor <- influ2:::.sdmTMB_prediction_object(model, newdata = grid)
   remainder <- as.numeric(predictor$obj$report(model$last.par.best)$proj_eta) - projected
   expect_gt(stats::sd(projected), 0.01)
   expect_lt(diff(range(remainder)), 1e-10)
