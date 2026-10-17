@@ -420,17 +420,17 @@ lme4_diagnostic <- influ(lobster_lme4, focus = "year")
 summary(lme4_diagnostic)
 ```
 
-```{r lobster-lme4-influence, eval=has_lme4, fig.cap="Native lme4 influence ratios for the simulated lobster example. Fixed terms and the aggregate monthly random-effect contribution use the native joint conditional coefficient covariance. Random-effect variance and negative-binomial size are held at their fitted values; these intervals are not Bayesian posterior intervals.", fig.alt="Influence components from an lme4 negative-binomial mixed model fitted to the same simulated lobster records."}
+```{r lobster-lme4-influence, eval=has_lme4, fig.cap="Native lme4 influence ratios for the simulated lobster example. Fixed terms and the monthly random effect use the native joint conditional coefficient covariance. Random-effect variance and negative-binomial size are held at their fitted values; these intervals are not Bayesian posterior intervals.", fig.alt="Influence components from an lme4 negative-binomial mixed model fitted to the same simulated lobster records."}
 plot(lme4_diagnostic, type = "components")
 ```
 
-CDI plots use the same layout, including for the aggregate random term.
-With one random intercept, its categories use the fitted grouping labels
-(months here), rather than numeric contribution values. Random slopes or
-crossed effects retain an aggregate contribution display.
+CDI plots use the same layout for random effects. Each grouping factor is its
+own term, named after the factor (`month` here), and its categories are the
+fitted group levels. A factor with a random slope stays one term, so crossed
+effects such as `(1 | month) + (1 | vessel)` give `month` and `vessel` terms.
 
-```{r lobster-lme4-cdi, eval=has_lme4, fig.height=7, fig.cap="CDI display of the aggregate monthly random-effect contribution in the lme4 lobster model. The term is a fitted random contribution, not twelve independent fixed coefficients. Its reference and uncertainty follow the same conventions as the influence calculation.", fig.alt="An lme4 random-effect CDI display aligns relative effects, sampled composition, and annual influence."}
-plot(lme4_diagnostic, type = "cdi", term = "random_effects")
+```{r lobster-lme4-cdi, eval=has_lme4, fig.height=7, fig.cap="CDI display of the monthly random effect in the lme4 lobster model. The term is a fitted random contribution, not twelve independent fixed coefficients. Its reference and uncertainty follow the same conventions as the influence calculation.", fig.alt="An lme4 random-effect CDI display aligns relative effects, sampled composition, and annual influence."}
+plot(lme4_diagnostic, type = "cdi", term = "month")
 ```
 
 ### Expected-response indices and assessment covariance

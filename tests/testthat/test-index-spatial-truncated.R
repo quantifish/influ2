@@ -28,8 +28,12 @@ test_that("native response means use component-aligned truncated dispersion", {
       expect_error(.index_sdmtmb_response(list(family = f),
         list(ln_phi = bad), eta), "finite and positive")
     }
-    expect_error(.index_sdmtmb_response(delta, list(ln_phi = log(5)), both),
-      "component-aligned dispersion")
+    # sdmTMB >= 1.2.0 removes the unused encounter dispersion; this must
+    # yield exactly the same response as the older component-aligned layout.
+    expect_equal(.index_sdmtmb_response(delta, list(ln_phi = log(5)), both),
+      .index_sdmtmb_response(delta, list(ln_phi = c(0, log(5))), both))
+    expect_error(.index_sdmtmb_response(delta,
+      list(ln_phi = c(0, log(5), log(2))), both), "component-aligned dispersion")
   }
 })
 
@@ -92,11 +96,11 @@ test_that("real single and delta truncated families retain dispersion in joint p
       draw[i] <- draw[i] + 1
       p <- b$obj$env$parList(x = draw[setdiff(seq_along(draw), b$obj$env$random)],
         par = draw)
-      expect_length(p$ln_phi, if (delta) 2L else 1L)
+      expect_length(p$ln_phi, length(m$parlist$ln_phi))
       eta <- b$obj$report(draw)$proj_eta
       positive <- if (delta) 2L else 1L
       f <- if (delta) m$family[[2L]] else m$family
-      expected <- f$linkinv(eta[, positive], phi = exp(p$ln_phi[positive]))
+      expected <- f$linkinv(eta[, positive], phi = exp(tail(p$ln_phi, 1L)))
       if (delta) expected <- expected * m$family[[1L]]$linkinv(eta[, 1L])
       expect_equal(b$response(draw), expected)
       expect_equal(domain$response(draw), expected)
@@ -143,7 +147,7 @@ test_that("truncated delta indices share correct paired draws independently of b
       report <- block$obj$report(draw)
       eta <- report$proj_eta
       mean_response <- function(z) m$family[[1L]]$linkinv(z[, 1]) *
-        m$family[[2L]]$linkinv(z[, 2], phi = exp(p$ln_phi[2]))
+        m$family[[2L]]$linkinv(z[, 2], phi = exp(tail(p$ln_phi, 1L)))
       expected[j, ] <- colMeans(matrix(mean_response(eta), nrow = nrow(ref)))
       terms <- block$terms(draw)
       omitted[j, ] <- colMeans(matrix(mean_response(eta - terms$x), nrow = nrow(ref)))

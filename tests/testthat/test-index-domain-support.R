@@ -138,7 +138,14 @@ for (backend in c("sdmTMB", "tinyVAST")) local({
     f <- .domain_native_support_fixture(selected)
     info <- .index_spatial_info(f$model, selected, "year")
     observed <- .domain_sampling_data(f$model, selected, info)
-    expect_identical(nrow(info$data), 120L)
+    expect_identical(nrow(f$data), 120L)
+    # sdmTMB 1.2.0 omits missing responses before storing fitted data; older
+    # releases and tinyVAST retain them as non-contributing likelihood rows.
+    native_keep <- if (selected == "sdmTMB" &&
+      utils::packageVersion("sdmTMB") >= "1.2.0") !is.na(f$data$y) else
+      rep(TRUE, nrow(f$data))
+    expect_identical(rownames(info$data), rownames(f$data)[native_keep])
+    expect_identical(nrow(info$data), sum(native_keep))
     expect_identical(nrow(observed), 80L)
     expect_true(all(observed$cell == "observed"))
     expect_true(all(is.finite(observed$y)))

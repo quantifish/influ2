@@ -1,5 +1,56 @@
 # influ2 1.1.0
 
+* Compatible with sdmTMB 1.2.0 while retaining 1.1.0 support. Private native
+  objectives preserve the fitted TMB or RTMB backend, simulation conditioning,
+  maps, and joint parameter order. Prediction no longer uses the deprecated
+  `return_tmb_object` option. RTMB tapes are released by their native R
+  finalisers rather than compiled-TMB cleanup. Delta dispersion is aligned
+  across the old and new native layouts, and implied effects retain native
+  observation-specific dispersion where supplied. Sampling tests verify the
+  fitted row IDs when sdmTMB omits missing responses before storage.
+
+* glmmTMB and lme4 random effects now form one influence term per grouping
+  factor, named after the factor as for brms (for example `vessel`,
+  `month`, or `area:vessel`), instead of one `random_effects` term. Terms
+  sharing a factor, such as a random intercept and slope, stay together, and
+  each term's CDI categories are the factor's fitted levels. On the link
+  scale the factor terms add up to the former combined influence. Their
+  component is unchanged (`random_effects`, or a zero-probability or
+  occurrence component for zero-inflation random effects), and grouping
+  factors containing the year never define the standardised index.
+  sdmTMB smooths likewise form one term per smooth, named by its label (for
+  example `s(depth)`), after checking that the pieces reproduce sdmTMB's
+  combined smooth; otherwise a combined `smooths` term is kept with a
+  warning. Saved diagnostics with a `random_effects` term still plot, and
+  `plot_cdi()` overlays a random-effect term only when its levels were
+  identified.
+
+* Fixed ordering, data-alignment, and mixed-model reference bugs:
+  - A character focus variable now uses the same sorted level order as its
+    model coding. Previously its levels followed data row order, changing the
+    trend metric and the year order of `cpue_index()` tables. CDI categories
+    likewise follow declared factor levels and increasing bins or values;
+    binned continuous terms were previously plotted in row order.
+  - glmmTMB models with zero-inflation or hurdle random effects no longer
+    fail. Those random effects are a separate `zi_random_effects` term on
+    the probability scale, with joint uncertainty from the inverse joint
+    precision; on the conditional block this reproduces glmmTMB's own
+    latent covariance.
+  - glmmTMB probability-scale influence for nonlinear links now uses each
+    component's full fixed-plus-random reference predictor, as lme4 does.
+    Random-effect differences were previously evaluated near p = 0.5 and
+    overstated, by about a third in a binomial example. Log-link ratios,
+    identity-link differences, and link-scale values are unchanged.
+  - sdmTMB diagnostics with `reference_data` now project smooth, IID, and
+    time-varying contributions onto the reference grid instead of silently
+    omitting them. Smooths use sdmTMB's reference bases and coefficients,
+    after checking that the same calculation reproduces the fitted smooth.
+    Any term that cannot be projected is named in a warning.
+  - `influ()` for GLM, GAM, and glmmTMB fits stops when the recovered or
+    supplied data no longer reproduce the fitted model frame, for example
+    after the data frame was changed following fitting. Previously CDI
+    composition could be built from the changed values.
+
 * Clarified the distinction between numerical verification and scientific
   calibration in residual diagnostics, and the nominal, conditional meaning
   of implied-effect intervals. Conditioning tables now include lme4.

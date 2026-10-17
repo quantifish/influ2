@@ -267,3 +267,99 @@ test_that("summary handles non-finite influence estimates", {
   expect_true(is.na(observed$maximum_absolute_link_influence))
   expect_true(is.na(observed$level_at_maximum))
 })
+
+test_that("a character focus is ordered like its factor coding, not by row", {
+  data("lobsters_per_pot", package = "influ2", envir = environment())
+  shuffled <- lobsters_per_pot[withr::with_seed(1, sample(nrow(lobsters_per_pot))), ]
+  shuffled$year_chr <- as.character(shuffled$year)
+  shuffled$year_fac <- factor(shuffled$year_chr)
+  expect_false(identical(unique(shuffled$year_chr), sort(unique(shuffled$year_chr))))
+
+  character_fit <- stats::glm(lobsters ~ year_chr + month,
+    family = stats::poisson(), data = shuffled)
+  factor_fit <- stats::glm(lobsters ~ year_fac + month,
+    family = stats::poisson(), data = shuffled)
+  character_diag <- influ(character_fit, focus = "year_chr")
+  factor_diag <- influ(factor_fit, focus = "year_fac")
+
+  expected_levels <- levels(shuffled$year_fac)
+  expect_identical(unique(influ_effects(character_diag)$level), expected_levels)
+  # The trend metric is positional, so row-ordered levels changed it.
+  expect_equal(influ_metrics(character_diag)$estimate,
+    influ_metrics(factor_diag)$estimate, tolerance = 1e-10)
+  month_rows <- function(x) {
+    e <- influ_effects(x)
+    e[e$term == "month", c("level", "scale", "estimate")]
+  }
+  expect_equal(month_rows(character_diag), month_rows(factor_diag),
+    ignore_attr = TRUE, tolerance = 1e-10)
+
+  reference <- data.frame(month = "06")
+  character_index <- as.data.frame(cpue_index(character_fit, year = "year_chr",
+    reference_data = reference))
+  factor_index <- as.data.frame(cpue_index(factor_fit, year = "year_fac",
+    reference_data = reference))
+  expect_identical(character_index$Year, expected_levels)
+  expect_equal(character_index$Mean, factor_index$Mean, tolerance = 1e-10)
+})
+
+test_that("CDI categories follow their natural order, not data row order", {
+  data("lobsters_per_pot", package = "influ2", envir = environment())
+  shuffled <- lobsters_per_pot[withr::with_seed(2, sample(nrow(lobsters_per_pot))), ]
+  shuffled$gear <- withr::with_seed(3, sample(c("pot", "trap", "creel"),
+    nrow(shuffled), TRUE))
+  fit <- stats::glm(lobsters ~ year + month + gear + stats::poly(depth, 2),
+    family = stats::poisson(), data = shuffled)
+  diagnostic <- influ(fit, focus = "year")
+  coefficient_levels <- function(term) {
+    diagnostic$coefficients$level[diagnostic$coefficients$term == term]
+  }
+
+  expect_identical(coefficient_levels("month"), levels(shuffled$month))
+  expect_identical(coefficient_levels("gear"), sort(unique(shuffled$gear)))
+  depth_bins <- coefficient_levels("stats::poly(depth, 2)")
+  lower_bounds <- as.numeric(sub("^[[(]([^,]+),.*$", "\\1", depth_bins))
+  expect_length(depth_bins, 20L)
+  expect_false(is.unsorted(lower_bounds, strictly = TRUE))
+
+  plot_levels <- ggplot2::ggplot_build(
+    plot(diagnostic, type = "cdi", term = "stats::poly(depth, 2)")[[1]]
+  )$layout$panel_params[[1]]$x$get_limits()
+  expect_identical(plot_levels, depth_bins)
+})
+
+test_that("data changed after fitting cannot be paired with the fitted design", {
+  data("lobsters_per_pot", package = "influ2", envir = environment())
+  lobsters <- lobsters_per_pot
+  fit <- stats::glm(lobsters ~ year + month + stats::poly(depth, 2),
+    family = stats::poisson(), data = lobsters)
+  baseline <- influ(fit, focus = "year")
+  expect_equal(influ_composition(influ(fit, focus = "year", data = lobsters)),
+    influ_composition(baseline))
+
+  # A changed factor column would mislabel the CDI composition.
+  lobsters$month <- lobsters$month[withr::with_seed(1, sample(nrow(lobsters)))]
+  expect_error(influ(fit, focus = "year"),
+    "no longer reproduce the fitted model frame \\(month\\)")
+
+  # A changed raw variable behind a basis term would mis-bin the CDI.
+  lobsters <- lobsters_per_pot
+  lobsters$depth <- rev(lobsters$depth)
+  expect_error(influ(fit, focus = "year"), "stats::poly\\(depth, 2\\)")
+
+  # Explicit data in a different row order are rejected too.
+  reordered <- lobsters_per_pot[rev(seq_len(nrow(lobsters_per_pot))), ]
+  expect_error(influ(fit, focus = "year", data = reordered),
+    "supplied `data` do not reproduce the fitted model frame")
+
+  # GAM designs are rebuilt from these data, so they need the same check.
+  skip_if_not_installed("mgcv")
+  gam_fit <- mgcv::gam(lobsters ~ year + s(depth), family = stats::poisson(),
+    data = lobsters_per_pot)
+  expect_s3_class(influ(gam_fit, focus = "year", data = lobsters_per_pot),
+    "influ_diag")
+  changed <- lobsters_per_pot
+  changed$depth <- rev(changed$depth)
+  expect_error(influ(gam_fit, focus = "year", data = changed),
+    "supplied `data` do not reproduce the fitted model frame \\(depth\\)")
+})

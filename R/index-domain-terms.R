@@ -29,6 +29,10 @@
   ready <- FALSE
   on.exit(if (!ready) .index_free_tmb(obj), add = TRUE)
   td <- obj$env$data
+  # RTMB captures native data in its objective closure, rather than env$data.
+  # Keep the sanitised TMB data for compiled fits and use the explicit native
+  # prediction data only when that environment has no data entries.
+  if (!length(td)) td <- block$data
   if (is.null(td)) stop("Native prediction data are unavailable.", call. = FALSE)
   n <- nrow(data)
   nc <- if (backend == "sdmTMB") {
@@ -206,43 +210,22 @@
     # Each smooth may have several random blocks (tensor products/by levels)
     # and an unpenalized block. Keep these together as one scientific term.
     for (m in seq_len(nc)) {
-      sm <- model$smoothers
-      if (is.null(sm$basis_out)) {
-        sm <- sm[[if (length(sm) == 1L) 1L else m]]
-      }
-      if (is.null(sm$basis_out) || !length(sm$basis_out)) {
+      layout <- .sdmTMB_smooth_layout(model, m)
+      if (is.null(layout)) {
         stop("Native smoother metadata are unavailable for a prediction component.", call. = FALSE)
       }
-      random <- linear <- 0L
-      for (i in seq_along(sm$basis_out)) {
-        basis <- sm$basis_out[[i]]
-        label <- sm$labels[[i]]
-        if (is.null(label)) label <- basis[[1L]]$label
-        variables <- unique(unlist(lapply(basis, function(b) {
-          c(b$term, if (!identical(b$by, "NA")) b$by)
-        })))
-        value <- numeric(n)
-        for (b in basis) {
-          design <- mgcv::smooth2random(b, names(model$data), type = 2)
-          for (unused in seq_along(design$rand)) {
-            random <- random + 1L
-            Z <- td$proj_Zs[[random]]
-            ids <- td$b_smooth_start[random] + seq_len(ncol(Z))
-            value <- value + as.numeric(Z %*% p$b_smooth[ids, m])
-          }
-          k <- ncol(design$Xf)
-          if (!is.null(k) && k > 0L) {
-            ids <- linear + seq_len(k)
-            value <- value +
-              as.numeric(td$proj_Xs[, ids, drop = FALSE] %*% p$bs[ids, m])
-            linear <- linear + k
-          }
-        }
-        out <- .domain_term_add(out, paste0("smooth:", label),
-          value, m, zero, variables)
-      }
-      if (random != length(td$proj_Zs) || linear != ncol(td$proj_Xs)) {
+      if (attr(layout, "n_blocks") != length(td$proj_Zs) ||
+          attr(layout, "n_columns") != ncol(td$proj_Xs)) {
         stop("Native smoother basis blocks could not be aligned.", call. = FALSE)
+      }
+      for (piece in layout) {
+        value <- .sdmTMB_smooth_contribution(td$proj_Xs, td$proj_Zs,
+          td$b_smooth_start, p, m, piece$columns, piece$blocks)
+        if (is.null(value)) {
+          stop("Native smoother basis blocks could not be aligned.", call. = FALSE)
+        }
+        out <- .domain_term_add(out, paste0("smooth:", piece$label),
+          value, m, zero, piece$variables)
       }
     }
   }

@@ -263,10 +263,7 @@
   contribution_levels <- .term_level_values(
     data[keep, , drop = FALSE], term, contribution[keep]
   )
-  level_rows <- split(
-    which(keep),
-    factor(contribution_levels, levels = unique(contribution_levels))
-  )
+  level_rows <- split(which(keep), droplevels(contribution_levels))
   coefficient_rows <- lapply(names(level_rows), function(level) {
     rows <- level_rows[[level]]
     design <- numeric(length(beta))

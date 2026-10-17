@@ -62,18 +62,15 @@
         length(offset_value) != nrow(data) || any(!is.finite(offset_value))) {
       stop("`prediction_offset` must name a finite link-scale offset column in reference_data.", call. = FALSE)
     }
-    td <- stats::predict(model, newdata = data, return_tmb_data = TRUE,
+    prediction <- .sdmTMB_prediction_object(model, newdata = data,
       offset = offset_value, re_form_iid = NA)
+    td <- prediction$pred_tmb_data
     if (nrow(td$proj_X_ij[[1L]]) != nrow(data)) {
       stop("Native sdmTMB prediction rows do not match the reference rows.", call. = FALSE)
     }
-    # Parameter reconstruction uses a copy of the fitted values. The original
-    # objective is never evaluated or optimised by this adapter.
-    parameters <- model$tmb_obj$env$parList(x = model$model$par,
-      par = model$last.par.best)
-    obj <- TMB::MakeADFun(data = td, parameters = parameters,
-      map = model$tmb_map, random = model$tmb_random,
-      profile = model$control$profile, DLL = "sdmTMB", silent = TRUE)
+    # The private native objective retains the saved joint mode and backend;
+    # the original objective is never evaluated or optimised by this adapter.
+    obj <- prediction$obj
     uses_truncated <- any(model$family$family %in%
       c("truncated_nbinom1", "truncated_nbinom2"))
     response <- function(par) {
@@ -119,7 +116,7 @@
       profile = model$internal$control$profile, DLL = "tinyVAST", silent = TRUE)
     response <- function(par) .index_check_prediction(obj$report(par)$mu_g, nrow(data))
   }
-  list(obj = obj, response = response)
+  list(obj = obj, response = response, data = td)
 }
 
 .index_sdmtmb_eta <- function(report, fields) {
@@ -146,7 +143,8 @@
       stop("The native sdmTMB family must provide its inverse link.", call. = FALSE)
     }
     if (family$family %in% c("truncated_nbinom1", "truncated_nbinom2")) {
-      log_phi <- parameters$ln_phi
+      log_phi <- .sdmTMB_component_dispersion(parameters$ln_phi,
+        length(families), log = TRUE)
       if (!is.numeric(log_phi) || length(log_phi) != length(families) ||
           !is.finite(log_phi[m])) {
         stop("Truncated sdmTMB response predictions require native component-aligned dispersion parameters.", call. = FALSE)
@@ -257,6 +255,11 @@
 }
 
 .index_free_tmb <- function(obj) {
+  # RTMB tapes are owned by their Rcpp objects and released by R finalisers.
+  # FreeADFun() frees the same pointer without clearing that ownership: a
+  # later garbage collection then double-frees it and can abort the process.
+  # Let normal garbage collection release private RTMB prediction objectives.
+  if (identical(obj$env$DLL, "RTMB")) return(invisible(NULL))
   # TMB may lazily construct spHess. Force it BEFORE FreeADFun frees the
   # gradient tape on which construction depends (not afterwards inside that
   # function). Otherwise cleanup of an unevaluated random-effects objective
