@@ -83,9 +83,11 @@ Interval-labelled continuous bins cannot safely be matched from rounded
 compact summaries, so multi-model comparisons reject them. To compare such
 covariates, define shared categorical strata before calculating diagnostics.
 Aggregate latent-field effects are also rejected when their stored levels
-are field values rather than identified strata. An aggregate
-\code{random_effects} term is comparable only when both diagnostics record the
-same single random-intercept grouping variable and retain its level IDs.
+are field values rather than identified strata. Random-effect terms are
+named after their grouping factor and compared by its fitted level IDs.
+An aggregate \code{random_effects} term saved from an earlier version is
+comparable only when both diagnostics record the same single
+random-intercept grouping variable and retain its level IDs.
 
 The comparison caption identifies model-native centring. Model-coded
 coefficients (\code{coefficient_reference = "model"}) remain available for a

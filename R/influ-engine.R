@@ -637,7 +637,8 @@
                                  draws_path = NULL, keep_model = FALSE,
                                  notes = character(), reference_eta = NULL,
                                  reference_eta_draws = NULL,
-                                 reference_eta_offset = 0) {
+                                 reference_eta_offset = 0,
+                                 standardise = TRUE) {
   uncertainty <- match.arg(
     uncertainty,
     c("auto", "none", "analytic", "posterior", "simulation")
@@ -810,9 +811,13 @@
   derived_draws <- if (length(retained_list)) do.call(cbind, retained_list) else NULL
   stored <- .save_derived_draws(derived_draws, retain, draws_path)
 
+  # Random-effect group terms (for example year:area) never define the index;
+  # the fixed component supplies it.
   indices <- rbind(
     .nominal_indices(data, response, focus, focus_info, weights, probs),
-    .standardised_indices(influence, focus, .focus_terms(term_columns, focus, data))
+    if (standardise) {
+      .standardised_indices(influence, focus, .focus_terms(term_columns, focus, data))
+    } else data.frame()
   )
   rownames(indices) <- NULL
   if (nrow(indices)) indices$component <- component

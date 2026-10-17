@@ -47,9 +47,11 @@
 #'   compact summaries, so multi-model comparisons reject them. To compare such
 #'   covariates, define shared categorical strata before calculating diagnostics.
 #'   Aggregate latent-field effects are also rejected when their stored levels
-#'   are field values rather than identified strata. An aggregate
-#'   `random_effects` term is comparable only when both diagnostics record the
-#'   same single random-intercept grouping variable and retain its level IDs.
+#'   are field values rather than identified strata. Random-effect terms are
+#'   named after their grouping factor and compared by its fitted level IDs.
+#'   An aggregate `random_effects` term saved from an earlier version is
+#'   comparable only when both diagnostics record the same single
+#'   random-intercept grouping variable and retain its level IDs.
 #'
 #'   The comparison caption identifies model-native centring. Model-coded
 #'   coefficients (`coefficient_reference = "model"`) remain available for a
@@ -240,6 +242,17 @@ plot_cdi <- function(fits, labels = NULL, year = NULL, term = NULL,
 }
 
 .cdi_strata_signature <- function(x, term) {
+  # Random effects are named after their grouping factor, and their CDI
+  # levels are that factor's fitted levels, so they align as named strata.
+  random <- x$metadata$random_effect_terms
+  if (is.data.frame(random) && term %in% random$term) {
+    if (!all(random$identified[random$term == term])) {
+      stop("Random-effect term '", term, "' has no identified grouping-factor levels, so its CDI cannot be overlaid.", call. = FALSE)
+    }
+    return(list(kind = "named_term", term = term))
+  }
+  # Aggregate terms from diagnostics calculated before random effects were
+  # split by grouping factor.
   if (term %in% c("random_effects", "zi_random_effects")) {
     group <- if (term == "zi_random_effects") {
       x$metadata$glmmTMB$zi_random_cdi_group

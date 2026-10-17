@@ -246,12 +246,15 @@ test_that("glmmTMB zero-inflation random effects form their own term", {
     unname(as.numeric(tapply(contribution, data$year, mean) - mean(contribution)))
   }
 
-  # Each random-effect term uses its own block of modes.
-  expect_equal(link_rows("random_effects")$estimate,
+  # Each random-effect term uses its own block of modes and is named after
+  # its grouping factor.
+  conditional_link <- link_rows("random_effects")
+  expect_identical(unique(conditional_link$term), "vessel")
+  expect_equal(conditional_link$estimate,
     contrast(as.numeric(Z %*% glmmTMB::ranef(model)$cond$vessel[[1]])),
     tolerance = 1e-10)
   zero_link <- link_rows("zero_probability_random_effects")
-  expect_identical(unique(zero_link$term), "zi_random_effects")
+  expect_identical(unique(zero_link$term), "area")
   expect_equal(zero_link$estimate,
     contrast(as.numeric(Zzi %*% glmmTMB::ranef(model)$zi$area[[1]])),
     tolerance = 1e-10)
@@ -260,13 +263,15 @@ test_that("glmmTMB zero-inflation random effects form their own term", {
   # Probability differences are evaluated at the full zero-inflation predictor.
   eta <- diagnostic$metadata$glmmTMB$reference_predictor[["zero_inflation"]]
   zero_difference <- subset(diagnostic$influence,
-    term == "zi_random_effects" & scale == "difference")
+    component == "zero_probability_random_effects" & scale == "difference")
   expect_equal(zero_difference$estimate,
     stats::plogis(eta + zero_link$estimate) - stats::plogis(eta),
     tolerance = 1e-10)
-  expect_identical(diagnostic$metadata$glmmTMB$zi_random_cdi_group, "area")
-  expect_s3_class(plot(diagnostic, type = "cdi", term = "zi_random_effects"),
-    "patchwork")
+  expect_identical(diagnostic$metadata$random_effect_terms,
+    data.frame(term = c("vessel", "area"),
+      component = c("random_effects", "zero_probability_random_effects"),
+      identified = TRUE))
+  expect_s3_class(plot(diagnostic, type = "cdi", term = "area"), "patchwork")
 })
 
 test_that("glmmTMB covariance for zero-inflation random effects matches latent covariance", {
@@ -484,7 +489,7 @@ test_that("sdmTMB reference grids retain smooth and IID contributions", {
   # The fitted rows as an explicit grid define the same reference
   # distribution, so every term, including the smooth, must be unchanged.
   observed <- influ(model, focus = "year", uncertainty = "none")
-  expect_true(all(c("smooths", "iid_random_effects") %in% observed$influence$term))
+  expect_true(all(c("s(depth)", "iid_random_effects") %in% observed$influence$term))
   expect_no_warning(gridded <- influ(model, focus = "year",
     uncertainty = "none", reference_data = data))
   expect_equal(link_rows(gridded), link_rows(observed),
@@ -493,7 +498,7 @@ test_that("sdmTMB reference grids retain smooth and IID contributions", {
   joint_observed <- influ(model, focus = "year", ndraws = 20, seed = 1)
   joint_gridded <- influ(model, focus = "year", ndraws = 20, seed = 1,
     reference_data = data)
-  expect_true(all(c("smooths", "iid_random_effects") %in%
+  expect_true(all(c("s(depth)", "iid_random_effects") %in%
     joint_gridded$influence$term))
   expect_equal(link_rows(joint_gridded), link_rows(joint_observed),
     ignore_attr = TRUE, tolerance = 1e-8)
@@ -504,9 +509,12 @@ test_that("sdmTMB reference grids retain smooth and IID contributions", {
     year = factor("2003", levels = levels(data$year)),
     group = factor("c", levels = levels(data$group)))
   report <- model$tmb_obj$report(model$last.par.best)
-  smooth <- influ2:::.sdmTMB_reference_smooth(model, grid, report)
-  projected <- influ2:::.sdmTMB_reference_contribution(NULL, "smooths", 1L,
-    nrow(grid), smooth, influ2:::.sdmTMB_smooth_parameters(model))
+  parameters <- influ2:::.sdmTMB_smooth_parameters(model)
+  smooth_terms <- influ2:::.sdmTMB_smooth_terms(model, report, parameters, 1L)
+  expect_true(smooth_terms$split)
+  smooth <- influ2:::.sdmTMB_reference_smooth(model, grid, smooth_terms)
+  projected <- influ2:::.sdmTMB_reference_contribution(NULL, "s(depth)", 1L,
+    nrow(grid), smooth, parameters)
   predictor <- stats::predict(model, newdata = grid, return_tmb_object = TRUE)
   remainder <- as.numeric(predictor$obj$report(model$last.par.best)$proj_eta) - projected
   expect_gt(stats::sd(projected), 0.01)
@@ -515,7 +523,9 @@ test_that("sdmTMB reference grids retain smooth and IID contributions", {
   # A native layout that no longer reproduces eta_smooth_i is not used.
   broken <- model
   broken$tmb_data$b_smooth_start <- broken$tmb_data$b_smooth_start + 1L
-  expect_null(influ2:::.sdmTMB_reference_smooth(broken, grid, report))
+  broken_terms <- influ2:::.sdmTMB_smooth_terms(broken, report, parameters, 1L)
+  expect_false(broken_terms$total_valid)
+  expect_null(influ2:::.sdmTMB_reference_smooth(broken, grid, broken_terms))
 
   expect_null(influ2:::.sdmTMB_reference_contribution(list(), "unknown", 1L, 3L))
   expect_warning(influ2:::.sdmTMB_warn_unprojected("unknown"),
@@ -536,7 +546,7 @@ test_that("sdmTMB delta reference grids retain each component's smooth", {
   model <- sdmTMB::sdmTMB(density ~ year + s(depth), data = data,
     family = sdmTMB::delta_gamma(), spatial = "off", silent = TRUE)
   rows <- function(x) {
-    e <- subset(influ_effects(x), term == "smooths" & scale == "link")
+    e <- subset(influ_effects(x), term == "s(depth)" & scale == "link")
     e[order(e$component, e$level), c("component", "level", "estimate")]
   }
 
@@ -544,9 +554,59 @@ test_that("sdmTMB delta reference grids retain each component's smooth", {
   expect_no_warning(gridded <- influ(model, focus = "year",
     uncertainty = "none", reference_data = data))
   expect_setequal(unique(rows(gridded)$component),
-    c("occurrence:smooths", "positive:smooths"))
+    c("occurrence:s(depth)", "positive:s(depth)"))
   expect_equal(rows(gridded), rows(observed), ignore_attr = TRUE,
     tolerance = 1e-8)
+})
+
+test_that("sdmTMB smooths are separate terms that add up to the combined smooth", {
+  skip_if_not_installed("sdmTMB")
+  set.seed(44)
+  n <- 400
+  data <- data.frame(
+    year = factor(sample(2001:2005, n, TRUE)),
+    depth = stats::runif(n, 10, 100),
+    soak = stats::runif(n, 5, 50)
+  )
+  data$y <- stats::rpois(n, exp(0.3 + 0.012 * data$depth -
+    0.00012 * data$depth^2 + 0.02 * data$soak - 0.0003 * data$soak^2 +
+    0.1 * as.integer(data$year)))
+  model <- sdmTMB::sdmTMB(y ~ year + s(depth) + s(soak, k = 5), data = data,
+    family = stats::poisson(), spatial = "off", silent = TRUE)
+  report <- model$tmb_obj$report(model$last.par.best)
+  contrast <- function(x) {
+    unname(as.numeric(tapply(x, data$year, mean) - mean(x)))
+  }
+
+  expect_no_warning(diagnostic <- influ(model, focus = "year", uncertainty = "none"))
+  smooth_rows <- subset(influ_effects(diagnostic),
+    scale == "link" & term %in% c("s(depth)", "s(soak)"))
+  expect_setequal(unique(smooth_rows$term), c("s(depth)", "s(soak)"))
+  expect_false("smooths" %in% diagnostic$influence$term)
+  expect_equal(unname(as.numeric(tapply(smooth_rows$estimate, smooth_rows$level, sum))),
+    contrast(as.numeric(report$eta_smooth_i)), tolerance = 1e-10)
+  # Each smooth's CDI uses bins of its own variable.
+  depth_bins <- subset(diagnostic$coefficients, term == "s(depth)")$level
+  expect_length(depth_bins, 20L)
+  expect_match(depth_bins[1L], "^\\[")
+
+  # Draw by draw, the split terms add up to the combined smooth.
+  terms <- .sdmTMB_smooth_terms(model, report,
+    .sdmTMB_smooth_parameters(model, model$last.par.best), 1L)
+  specs <- .sdmTMB_family_specs(model)
+  split <- .sdmTMB_joint_field_projections(model, data, "year", specs, NULL,
+    ndraws = 15L, seed = 3L, smooth_terms = terms)[[1L]]
+  combined <- .sdmTMB_joint_field_projections(model, data, "year", specs, NULL,
+    ndraws = 15L, seed = 3L)[[1L]]
+  expect_equal(split$term_deltas[["s(depth)"]] + split$term_deltas[["s(soak)"]],
+    combined$term_deltas$smooths, tolerance = 1e-10)
+
+  # Bases that cannot be matched to terms keep the combined smooth.
+  broken <- model
+  broken$smoothers$labels[[2L]] <- broken$smoothers$labels[[1L]]
+  expect_warning(fallback <- influ(broken, focus = "year", uncertainty = "none"),
+    "could not be matched to individual smooth terms")
+  expect_true("smooths" %in% fallback$influence$term)
 })
 
 test_that("sdmTMB delta fixed effects have a joint unconditional mean", {
@@ -760,4 +820,73 @@ test_that("tinyVAST delta fixed effects have a joint unconditional mean", {
   expect_identical(checks$metadata$response_structure, "combined delta response")
   expect_equal(checks$observations$observed, data$catch)
   expect_true(all(is.finite(checks$observations$residual)))
+})
+
+test_that("mixed-model random effects are split by grouping factor", {
+  skip_if_not_installed("glmmTMB")
+  skip_if_not_installed("lme4", "1.1.36")
+  set.seed(45)
+  data <- expand.grid(replicate = seq_len(4), vessel = factor(sprintf("v%02d", 1:12)),
+    month = factor(sprintf("%02d", 1:6)), year = factor(2001:2005))
+  data$area <- factor(sample(c("A", "B", "C"), nrow(data), TRUE))
+  data$depth <- stats::rnorm(nrow(data))
+  vessel <- stats::rnorm(12, sd = 0.5)
+  slope <- stats::rnorm(12, sd = 0.2)
+  data$y <- stats::rpois(nrow(data), exp(0.5 + 0.1 * as.integer(data$year) +
+    stats::rnorm(6, sd = 0.3)[data$month] + vessel[data$vessel] +
+    slope[data$vessel] * data$depth))
+  formula <- y ~ year + (1 | month) + (1 + depth | vessel) + (1 | area:vessel)
+  fits <- list(
+    glmmTMB = glmmTMB::glmmTMB(formula, family = stats::poisson(), data = data),
+    lme4 = lme4::glmer(formula, family = stats::poisson(), data = data,
+      control = lme4::glmerControl(calc.derivs = FALSE))
+  )
+  contrast <- function(x) {
+    unname(as.numeric(tapply(x, data$year, mean) - mean(x)))
+  }
+
+  for (backend in names(fits)) {
+    model <- fits[[backend]]
+    expect_no_warning(diagnostic <- influ(model, focus = "year", uncertainty = "none"))
+    random <- subset(diagnostic$influence,
+      component == "random_effects" & scale == "link")
+    expect_setequal(unique(random$term), c("month", "vessel", "area:vessel"))
+    expect_true(all(diagnostic$metadata$random_effect_terms$identified))
+
+    # Link-scale contributions are additive, so the factor terms add up to
+    # the influence of all random effects together.
+    if (backend == "glmmTMB") {
+      Z <- glmmTMB::getME(model, "Z")
+      b <- .glmmTMB_random_modes(model)$conditional
+      modes <- glmmTMB::ranef(model)$cond
+    } else {
+      Z <- lme4::getME(model, "Z")
+      b <- lme4::getME(model, "b")
+      modes <- lme4::ranef(model)
+    }
+    expect_equal(unname(as.numeric(tapply(random$estimate, random$level, sum))),
+      contrast(as.numeric(Z %*% b)), tolerance = 1e-10)
+
+    # Each term is labelled by its grouping factor's fitted levels, and a
+    # random intercept's coefficients are its native modes.
+    month <- subset(diagnostic$coefficients, term == "month")
+    expect_identical(month$level, levels(data$month))
+    expect_equal(month$estimate, modes$month[month$level, "(Intercept)"],
+      tolerance = 1e-10)
+    expect_setequal(subset(diagnostic$coefficients, term == "vessel")$level,
+      levels(data$vessel))
+    expect_setequal(subset(diagnostic$coefficients, term == "area:vessel")$level,
+      levels(interaction(data$area, data$vessel, drop = TRUE, sep = ":")))
+    for (term in c("month", "vessel", "area:vessel")) {
+      expect_s3_class(plot(diagnostic, type = "cdi", term = term), "patchwork")
+    }
+  }
+
+  # A grouping factor containing the focus never defines the index.
+  year_area <- glmmTMB::glmmTMB(y ~ year + (1 | year:area),
+    family = stats::poisson(), data = data)
+  expect_no_warning(diagnostic <- influ(year_area, focus = "year"))
+  expect_true("year:area" %in% diagnostic$influence$term)
+  standardised <- subset(diagnostic$indices, series == "standardised")
+  expect_identical(unique(standardised$component), "conditional")
 })

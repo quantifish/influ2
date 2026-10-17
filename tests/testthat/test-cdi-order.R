@@ -150,7 +150,7 @@ ordered_mixed_cdi_fixture <- function(backend) {
   influ(fit, focus = "year")
 }
 
-check_ordered_mixed_cdi <- function(diagnostic, term = "random_effects") {
+check_ordered_mixed_cdi <- function(diagnostic, term = "vessel") {
   before <- serialize(diagnostic, NULL)
   original <- plot(diagnostic, type = "cdi", term = term)
   for (direction in c("ascending", "descending")) {

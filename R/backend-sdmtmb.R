@@ -196,7 +196,8 @@
 .sdmTMB_field_diag <- function(model, data, focus, component_index,
                                component, family_spec, weights,
                                reference_data = NULL,
-                               reference_weights = NULL) {
+                               reference_weights = NULL,
+                               smooth_terms = NULL) {
   report <- model$tmb_obj$report(model$last.par.best)
   candidates <- list(
     spatial_field = report$omega_s_A,
@@ -205,6 +206,18 @@
     smooths = report$eta_smooth_i,
     time_varying_effects = report$eta_rw_i
   )
+  contributions <- lapply(candidates, function(value) {
+    if (is.null(value) || !length(value)) return(NULL)
+    value <- as.matrix(value)
+    if (ncol(value) < component_index || nrow(value) != nrow(data)) return(NULL)
+    value[, component_index]
+  })
+  # Validated smooth terms replace their combined contribution.
+  if (isTRUE(smooth_terms$split)) {
+    contributions$smooths <- NULL
+    contributions <- c(contributions,
+      smooth_terms$components[[component_index]]$values)
+  }
   reference_report <- if (is.null(reference_data)) NULL else {
     prediction <- stats::predict(
       model, newdata = reference_data, return_tmb_object = TRUE
@@ -212,17 +225,14 @@
     prediction$obj$report(model$last.par.best)
   }
   smooth <- if (is.null(reference_data)) NULL else {
-    .sdmTMB_reference_smooth(model, reference_data, report)
+    .sdmTMB_reference_smooth(model, reference_data, smooth_terms)
   }
 
   pieces <- list()
   unprojected <- character()
-  for (term in names(candidates)) {
-    value <- candidates[[term]]
-    if (is.null(value) || !length(value)) next
-    value <- as.matrix(value)
-    if (ncol(value) < component_index || nrow(value) != nrow(data)) next
-    contribution <- value[, component_index]
+  for (term in names(contributions)) {
+    contribution <- contributions[[term]]
+    if (is.null(contribution)) next
     if (!any(abs(contribution) > sqrt(.Machine$double.eps), na.rm = TRUE)) next
 
     reference_contribution <- NULL
@@ -294,29 +304,113 @@
   time_varying_effects = "proj_rw_i"
 )
 
-# Smooth contribution from sdmTMB's own bases: the unpenalised part Xs %*% bs
-# plus each penalised block Zs[[k]] %*% b_smooth. Delta components share the
-# bases and each uses its own coefficient column.
+# Columns of Xs and blocks of Zs that belong to each formula smooth, in the
+# order sdmTMB builds them (one mgcv::smooth2random() per smoothCon basis).
+# Tensor products and factor-by levels stay together as one term.
+.sdmTMB_smooth_layout <- function(model, component_index = 1L) {
+  smoothers <- model$smoothers
+  if (is.null(smoothers$basis_out) && length(smoothers)) {
+    smoothers <- smoothers[[if (length(smoothers) == 1L) 1L else component_index]]
+  }
+  if (is.null(smoothers$basis_out) || !length(smoothers$basis_out)) return(NULL)
+  random <- linear <- 0L
+  layout <- vector("list", length(smoothers$basis_out))
+  for (i in seq_along(smoothers$basis_out)) {
+    basis <- smoothers$basis_out[[i]]
+    blocks <- columns <- integer()
+    for (b in basis) {
+      design <- mgcv::smooth2random(b, names(model$data), type = 2)
+      blocks <- c(blocks, random + seq_along(design$rand))
+      random <- random + length(design$rand)
+      k <- if (is.null(design$Xf)) 0L else ncol(design$Xf)
+      columns <- c(columns, linear + seq_len(k))
+      linear <- linear + k
+    }
+    layout[[i]] <- list(label = smoothers$labels[[i]] %||% basis[[1L]]$label,
+      columns = columns, blocks = blocks,
+      variables = unique(unlist(lapply(basis, function(b) {
+        c(b$term, if (!identical(b$by, "NA")) b$by)
+      }))))
+  }
+  attr(layout, "n_columns") <- linear
+  attr(layout, "n_blocks") <- random
+  layout
+}
+
+# Smooth contribution from sdmTMB's own bases: the unpenalised columns
+# Xs %*% bs plus each penalised block Zs[[k]] %*% b_smooth, optionally for one
+# smooth's columns and blocks. Delta components share the bases and each uses
+# its own coefficient column.
 .sdmTMB_smooth_contribution <- function(Xs, Zs, starts, parameters,
-                                        component_index) {
-  bs <- parameters$bs
-  b_smooth <- parameters$b_smooth
-  if (is.null(Xs) || is.null(bs) || ncol(bs) < component_index ||
-      nrow(bs) != ncol(Xs) || length(Zs) != length(starts) ||
-      (length(Zs) && (is.null(b_smooth) || ncol(b_smooth) < component_index))) {
+                                        component_index, columns = NULL,
+                                        blocks = NULL) {
+  if (is.null(parameters$bs) || is.null(Xs)) return(NULL)
+  bs <- as.matrix(parameters$bs)
+  b_smooth <- if (is.null(parameters$b_smooth)) NULL else as.matrix(parameters$b_smooth)
+  columns <- columns %||% seq_len(ncol(Xs))
+  blocks <- blocks %||% seq_along(Zs)
+  if (ncol(bs) < component_index || nrow(bs) != ncol(Xs) ||
+      length(Zs) != length(starts) || any(columns > ncol(Xs)) ||
+      any(blocks > length(Zs)) ||
+      (length(blocks) && (is.null(b_smooth) || ncol(b_smooth) < component_index))) {
     return(NULL)
   }
-  out <- if (ncol(Xs)) {
-    as.numeric(Xs %*% bs[, component_index])
+  out <- if (length(columns)) {
+    as.numeric(Xs[, columns, drop = FALSE] %*% bs[columns, component_index])
   } else {
     numeric(nrow(Xs))
   }
-  for (k in seq_along(Zs)) {
+  for (k in blocks) {
     index <- starts[k] + seq_len(ncol(Zs[[k]]))
     if (max(index) > nrow(b_smooth)) return(NULL)
     out <- out + as.numeric(Zs[[k]] %*% b_smooth[index, component_index])
   }
   out
+}
+
+# Fitted contribution of each formula smooth in each component. The pieces
+# must add up to sdmTMB's reported eta_smooth_i before they replace the
+# combined `smooths` term. NULL when no smooth is active.
+.sdmTMB_smooth_terms <- function(model, report, parameters, n_components) {
+  fitted <- report$eta_smooth_i
+  if (is.null(fitted) || !length(fitted) ||
+      !any(abs(fitted) > sqrt(.Machine$double.eps), na.rm = TRUE)) {
+    return(NULL)
+  }
+  fitted <- as.matrix(fitted)
+  native <- model$tmb_data
+  matches <- function(value, component_index) {
+    target <- fitted[, component_index]
+    !is.null(value) && length(value) == length(target) &&
+      max(abs(value - target)) <= 1e-8 * (1 + max(abs(target)))
+  }
+  contribution <- function(component_index, columns = NULL, blocks = NULL) {
+    .sdmTMB_smooth_contribution(native$Xs, native$Zs, native$b_smooth_start,
+      parameters, component_index, columns, blocks)
+  }
+  components <- seq_len(n_components)
+  total_valid <- !is.null(parameters) && ncol(fitted) >= n_components &&
+    all(vapply(components, function(m) matches(contribution(m), m), logical(1)))
+  split <- if (!total_valid) list(NULL) else lapply(components, function(m) {
+    layout <- tryCatch(.sdmTMB_smooth_layout(model, m), error = function(e) NULL)
+    if (is.null(layout) || attr(layout, "n_columns") != NCOL(native$Xs) ||
+        attr(layout, "n_blocks") != length(native$Zs)) {
+      return(NULL)
+    }
+    labels <- vapply(layout, `[[`, character(1), "label")
+    values <- lapply(layout, function(piece) {
+      contribution(m, piece$columns, piece$blocks)
+    })
+    if (anyDuplicated(labels) || any(vapply(values, is.null, logical(1))) ||
+        !matches(Reduce(`+`, values), m)) {
+      return(NULL)
+    }
+    list(pieces = stats::setNames(layout, labels),
+      values = stats::setNames(values, labels))
+  })
+  valid_split <- total_valid && !any(vapply(split, is.null, logical(1)))
+  list(split = valid_split, total_valid = total_valid,
+    n_components = n_components, components = if (valid_split) split)
 }
 
 # Smooth coefficients as matrices with one column per component, from the
@@ -337,32 +431,23 @@
   if (any(vapply(out, is.null, logical(1)))) NULL else out
 }
 
-# Reference-grid smooth bases. The same calculation on the fitted rows must
-# first reproduce sdmTMB's reported eta_smooth_i, so a changed native layout
-# makes the smooth unprojectable (with a warning) rather than silently wrong.
-.sdmTMB_reference_smooth <- function(model, reference_data, report) {
-  fitted <- report$eta_smooth_i
-  if (is.null(fitted) || !length(fitted) ||
-      !any(abs(fitted) > sqrt(.Machine$double.eps), na.rm = TRUE)) {
-    return(NULL)
-  }
-  fitted <- as.matrix(fitted)
-  native <- model$tmb_data
-  parameters <- .sdmTMB_smooth_parameters(model)
-  for (component_index in seq_len(ncol(fitted))) {
-    direct <- .sdmTMB_smooth_contribution(native$Xs, native$Zs,
-      native$b_smooth_start, parameters, component_index)
-    target <- fitted[, component_index]
-    if (is.null(direct) || length(direct) != length(target) ||
-        max(abs(direct - target)) > 1e-8 * (1 + max(abs(target)))) {
-      return(NULL)
-    }
-  }
+# Reference-grid smooth bases and the columns/blocks of each smooth term, or
+# of the combined `smooths` term when only the total could be validated on
+# the fitted rows. NULL when no validated smooth can be projected.
+.sdmTMB_reference_smooth <- function(model, reference_data, smooth_terms) {
+  if (is.null(smooth_terms) || !isTRUE(smooth_terms$total_valid)) return(NULL)
   projection <- stats::predict(
     model, newdata = reference_data, re_form = NA, return_tmb_data = TRUE
   )
+  pieces <- lapply(seq_len(smooth_terms$n_components), function(m) {
+    if (isTRUE(smooth_terms$split)) {
+      smooth_terms$components[[m]]$pieces
+    } else {
+      list(smooths = list(columns = NULL, blocks = NULL))
+    }
+  })
   list(Xs = projection$proj_Xs, Zs = projection$proj_Zs,
-    starts = native$b_smooth_start)
+    starts = model$tmb_data$b_smooth_start, pieces = pieces)
 }
 
 # Reference-grid contribution of one latent or smooth term. Fields, IID, and
@@ -371,10 +456,12 @@
 .sdmTMB_reference_contribution <- function(report, term, component_index,
                                            n_reference, smooth = NULL,
                                            smooth_parameters = NULL) {
-  if (identical(term, "smooths")) {
-    if (is.null(smooth) || is.null(smooth_parameters)) return(NULL)
+  pieces <- if (is.null(smooth)) NULL else smooth$pieces[[component_index]]
+  if (term %in% names(pieces)) {
+    if (is.null(smooth_parameters)) return(NULL)
+    piece <- pieces[[term]]
     out <- .sdmTMB_smooth_contribution(smooth$Xs, smooth$Zs, smooth$starts,
-      smooth_parameters, component_index)
+      smooth_parameters, component_index, piece$columns, piece$blocks)
     if (is.null(out) || length(out) != n_reference) return(NULL)
     return(out)
   }
@@ -400,7 +487,8 @@
                                             reference_data = NULL,
                                             reference_weights = NULL,
                                             batch_size = 25L,
-                                            probs = c(0.025, 0.975)) {
+                                            probs = c(0.025, 0.975),
+                                            smooth_terms = NULL) {
   report_mode <- model$tmb_obj$report(model$last.par.best)
   candidate_names <- c(
     spatial_field = "omega_s_A",
@@ -418,6 +506,13 @@
   } else {
     .resolve_influ_weights(reference_data, reference_weights)
   }
+  # Validated smooth terms are calculated per draw from the fitted bases and
+  # that draw's flat-vector smooth coefficients.
+  native <- model$tmb_data
+  smooth_pieces <- if (isTRUE(smooth_terms$split)) {
+    lapply(smooth_terms$components, `[[`, "pieces")
+  } else NULL
+  mode_smooth <- .sdmTMB_smooth_parameters(model, model$last.par.best)
   prediction_obj <- NULL
   smooth <- NULL
   if (!is.null(reference_data)) {
@@ -426,7 +521,7 @@
       newdata = reference_data,
       return_tmb_object = TRUE
     )$obj
-    smooth <- .sdmTMB_reference_smooth(model, reference_data, report_mode)
+    smooth <- .sdmTMB_reference_smooth(model, reference_data, smooth_terms)
     reference_mode <- prediction_obj$report(model$last.par.best)
   }
 
@@ -439,14 +534,15 @@
         report_mode, name, component_index, nrow(data)
       )
     })
+    if (!is.null(smooth_pieces)) {
+      point[[component_index]]$smooths <- NULL
+      point[[component_index]] <- c(point[[component_index]],
+        smooth_terms$components[[component_index]]$values)
+    }
     point[[component_index]] <- Filter(function(x) {
       !is.null(x) && any(abs(x) > sqrt(.Machine$double.eps), na.rm = TRUE)
     }, point[[component_index]])
     if (!is.null(reference_data)) {
-      # Draws use flat-vector smooth coefficients, so check those at the mode.
-      mode_smooth <- if (is.null(smooth)) NULL else {
-        .sdmTMB_smooth_parameters(model, model$last.par.best)
-      }
       projectable <- vapply(names(point[[component_index]]), function(term) {
         !is.null(.sdmTMB_reference_contribution(
           reference_mode, term, component_index, nrow(reference_data),
@@ -508,7 +604,7 @@
       reference_report <- if (is.null(prediction_obj)) NULL else {
         prediction_obj$report(samples[, j])
       }
-      draw_smooth <- if (is.null(smooth)) NULL else {
+      draw_smooth <- if (is.null(smooth) && is.null(smooth_pieces)) NULL else {
         .sdmTMB_smooth_parameters(model, samples[, j])
       }
       for (component_index in seq_len(n_components)) {
@@ -530,9 +626,16 @@
           )
         }
         for (term in active[[component_index]]) {
-          contribution <- .sdmTMB_report_component(
-            report, candidate_names[[term]], component_index, nrow(data)
-          )
+          piece <- smooth_pieces[[component_index]][[term]]
+          contribution <- if (is.null(piece)) {
+            .sdmTMB_report_component(
+              report, candidate_names[[term]], component_index, nrow(data)
+            )
+          } else {
+            .sdmTMB_smooth_contribution(native$Xs, native$Zs,
+              native$b_smooth_start, draw_smooth, component_index,
+              piece$columns, piece$blocks)
+          }
           reference_contribution <- if (is.null(reference_report)) NULL else {
             .sdmTMB_reference_contribution(
               reference_report, term, component_index, nrow(reference_data),
@@ -622,7 +725,10 @@
 #'
 #' Fixed effects use the marginal covariance from TMB. Spatial,
 #' spatiotemporal, IID, smooth, and time-varying contributions are projected
-#' from the fitted fields without retaining dense draw arrays. Field uncertainty
+#' from the fitted fields without retaining dense draw arrays. Each smooth is
+#' its own term, named by its label (for example `s(depth)`), once its pieces
+#' reproduce sdmTMB's combined smooth; otherwise a combined `smooths` term is
+#' reported with a warning. Field uncertainty
 #' uses sparse joint-precision simulation and is reduced directly to compact
 #' focus-level estimands. Delta fixed effects and latent fields are combined
 #' draw by draw to obtain unconditional-mean influence.
@@ -661,6 +767,20 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
   component_retain <- if (retain == "disk") "derived_draws" else retain
   fixed_uncertainty <- if (uncertainty == "auto") "analytic" else uncertainty
   n_components <- if (isTRUE(model$family$delta)) 2L else 1L
+  # Joint draws read smooth coefficients from the flat parameter vector, so
+  # validate the split with the same source the draws will use.
+  smooth_terms <- .sdmTMB_smooth_terms(
+    model, model$tmb_obj$report(model$last.par.best),
+    if (uncertainty == "none") .sdmTMB_smooth_parameters(model) else {
+      .sdmTMB_smooth_parameters(model, model$last.par.best)
+    },
+    n_components
+  )
+  if (!is.null(smooth_terms) && !smooth_terms$split) {
+    warning("sdmTMB smooth bases could not be matched to individual smooth ",
+      "terms; their combined contribution is reported as one 'smooths' term.",
+      call. = FALSE)
+  }
 
   components <- list()
   for (i in seq_len(n_components)) {
@@ -678,7 +798,7 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
     if (uncertainty == "none") {
       fields <- .sdmTMB_field_diag(
         model, data, focus, i, component, spec, weights,
-        reference_data, reference_weights
+        reference_data, reference_weights, smooth_terms = smooth_terms
       )
       components <- c(components, fields)
     }
@@ -689,7 +809,8 @@ influ.sdmTMB <- function(model, focus, data = NULL, weights = NULL,
   if (uncertainty != "none") {
     joint_projections <- .sdmTMB_joint_field_projections(
       model, data, focus, specs, weights, ndraws, seed,
-      reference_data, reference_weights, probs = probs
+      reference_data, reference_weights, probs = probs,
+      smooth_terms = smooth_terms
     )
     if (!is.null(joint_projections)) {
       field_diags <- .sdmTMB_joint_field_diags(

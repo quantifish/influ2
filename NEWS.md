@@ -1,5 +1,21 @@
 # influ2 1.1.0
 
+* glmmTMB and lme4 random effects now form one influence term per grouping
+  factor, named after the factor as for brms (for example `vessel`,
+  `month`, or `area:vessel`), instead of one `random_effects` term. Terms
+  sharing a factor, such as a random intercept and slope, stay together, and
+  each term's CDI categories are the factor's fitted levels. On the link
+  scale the factor terms add up to the former combined influence. Their
+  component is unchanged (`random_effects`, or a zero-probability or
+  occurrence component for zero-inflation random effects), and grouping
+  factors containing the year never define the standardised index.
+  sdmTMB smooths likewise form one term per smooth, named by its label (for
+  example `s(depth)`), after checking that the pieces reproduce sdmTMB's
+  combined smooth; otherwise a combined `smooths` term is kept with a
+  warning. Saved diagnostics with a `random_effects` term still plot, and
+  `plot_cdi()` overlays a random-effect term only when its levels were
+  identified.
+
 * Fixed ordering, data-alignment, and mixed-model reference bugs:
   - A character focus variable now uses the same sorted level order as its
     model coding. Previously its levels followed data row order, changing the

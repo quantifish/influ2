@@ -298,8 +298,10 @@
   if (ncol(Z) != length(b)) {
     stop("The glmmTMB random-effect design and mode vector do not conform.", call. = FALSE)
   }
-  term <- if (zero) "zi_random_effects" else "random_effects"
   colnames(Z) <- paste0(if (zero) "zi_random_" else "random_", seq_along(b))
+  component_name <- if (!zero) "random_effects" else if (family_spec$structure == "hurdle") {
+    "occurrence_random_effects"
+  } else "zero_probability_random_effects"
 
   reference_Z <- if (is.null(reference_data)) NULL else {
     out <- .glmmTMB_reference_random_matrix(model, reference_data, component)
@@ -317,38 +319,31 @@
   }
   random_uncertainty <- if (uncertainty == "auto") "analytic" else uncertainty
 
-  # A single random intercept has named, observed strata. Retain those
-  # identities rather than binning its fitted mode values, which differ
-  # between model runs and cannot serve as common category identifiers.
-  random_data <- data
-  random_terms <- model$modelInfo$reTrms[[component]]$cnms
-  random_groups <- model$modelInfo$reTrms[[component]]$flist
-  random_group <- NULL
-  if (length(random_terms) == 1L &&
-      identical(unname(random_terms[[1L]]), "(Intercept)") &&
-      length(random_groups) == 1L &&
-      length(random_groups[[1L]]) == nrow(data) &&
-      nlevels(random_groups[[1L]]) == ncol(Z)) {
-    random_group <- names(random_terms)[1L]
-    group <- random_groups[[1L]]
-    if (random_group %in% names(data) &&
-        !identical(as.character(data[[random_group]]), as.character(group))) {
-      stop("The glmmTMB grouping data do not match the fitted random-effect rows.", call. = FALSE)
-    }
-    random_data[[term]] <- group
+  # One term per grouping factor, labelled by the factor's fitted levels.
+  layout <- .glmmTMB_random_layout(model, component)
+  grouped <- if (!is.null(layout) && sum(layout$sizes) == length(b)) {
+    .random_group_terms(layout$groups, layout$sizes, layout$factors, data,
+      focus, "glmmTMB")
+  } else {
+    aggregate <- if (zero) "zi_random_effects" else "random_effects"
+    warning("glmmTMB random-effect columns could not be matched to grouping ",
+      "factors; they are reported as one aggregate '", aggregate, "' term.",
+      call. = FALSE)
+    list(term_columns = stats::setNames(list(seq_along(b)), aggregate),
+      data = data, identified = stats::setNames(FALSE, aggregate))
   }
 
   out <- .influ_linear_engine(
     backend = "glmmTMB",
     model = model,
-    data = random_data,
+    data = grouped$data,
     response = NULL,
     focus = focus,
     family_spec = family_spec,
     X = Z,
     beta = b,
     vcov = V,
-    term_columns = stats::setNames(list(seq_along(b)), term),
+    term_columns = grouped$term_columns,
     uncertainty = random_uncertainty,
     retain = retain,
     probs = probs,
@@ -356,9 +351,7 @@
     reference_data = reference_data,
     reference_X = reference_Z,
     reference_weights = reference_weights,
-    component = if (!zero) "random_effects" else if (family_spec$structure == "hurdle") {
-      "occurrence_random_effects"
-    } else "zero_probability_random_effects",
+    component = component_name,
     ndraws = ndraws,
     seed = seed,
     keep_model = FALSE,
@@ -369,21 +362,36 @@
       "Random-effect influence uses conditional modes and their joint",
       "conditional latent covariance from glmmTMB."
     ),
-    reference_eta_offset = reference_eta_offset
+    reference_eta_offset = reference_eta_offset,
+    standardise = FALSE
   )
-  out$metadata$random_cdi_group <- random_group
+  out$metadata$random_effect_terms <- .random_terms_table(grouped$identified,
+    component_name)
   out
+}
+
+# Grouping factor and Z column count of each random-effect term in one
+# glmmTMB component, in fitted order (blockReps x blockSize columns each).
+.glmmTMB_random_layout <- function(model, component) {
+  structure <- model$modelInfo$reStruc[[paste0(component, "ReStruc")]]
+  re_terms <- model$modelInfo$reTrms[[component]]
+  groups <- names(re_terms$cnms)
+  if (!length(structure) || length(structure) != length(groups)) return(NULL)
+  sizes <- vapply(structure, function(x) {
+    as.integer(x$blockReps * x$blockSize)
+  }, integer(1))
+  list(groups = groups, sizes = unname(sizes), factors = re_terms$flist)
 }
 
 #' Influence diagnostics for glmmTMB models
 #'
 #' The conditional model is handled with joint fixed-effect covariance.
 #' Zero-inflation or hurdle occurrence terms are returned as a separate
-#' component. Random-effect modes are included as a compact aggregate term,
-#' `random_effects`; zero-inflation or hurdle random effects form a separate
-#' `zi_random_effects` term on the probability scale.
-#' A single random-intercept grouping variable retains its actual stratum
-#' labels for CDI displays; more complex random structures remain aggregates.
+#' component. Random effects form one term per grouping factor, named after
+#' the factor as for brms (for example `vessel` or `area:vessel`) in the
+#' `random_effects` component; zero-inflation or hurdle random effects use a
+#' separate probability-scale component. Terms sharing a factor are combined,
+#' and each term's CDI categories are the factor's fitted levels.
 #' Random-effect uncertainty uses the joint conditional latent covariance; the
 #' zero-inflation block comes from the inverse joint precision. Natural-scale
 #' differences for nonlinear links are evaluated at the full fixed-plus-random
@@ -478,7 +486,7 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
       component = "zi", reference_eta_offset = zero_parts$fixed
     )
     zero_random_note <- paste(
-      "Zero-inflation random effects are a separate zi_random_effects term",
+      "Zero-inflation random effects are separate probability-scale terms",
       "with joint uncertainty from the inverse joint precision."
     )
   }
@@ -496,9 +504,11 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
       zero_random_note
     )
   )
+  out$metadata$random_effect_terms <- rbind(
+    components$random$metadata$random_effect_terms,
+    components$zero_random$metadata$random_effect_terms
+  )
   out$metadata$glmmTMB <- list(
-    random_cdi_group = components$random$metadata$random_cdi_group,
-    zi_random_cdi_group = components$zero_random$metadata$random_cdi_group,
     reference_predictor = c(conditional = cond_parts$fixed + cond_parts$random,
       zero_inflation = if (has_zero) zero_parts$fixed + zero_parts$random)
   )
