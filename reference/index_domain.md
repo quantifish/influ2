@@ -103,7 +103,10 @@ autoplot(object, ...)
   half the nearest distinct grid-centre spacing, with a warning. Supply
   a rule explicitly when this default does not describe the sampling
   design. GAMs always require an explicit rule; coordinates are not
-  inferred.
+  inferred. Cell-ID and coordinate rules count observed fitted responses
+  with positive likelihood weights and, where applicable, positive trial
+  counts. A logical matrix instead declares support directly; its
+  interpretation is the caller's responsibility.
 
 - sampled_definition:
 
@@ -135,7 +138,10 @@ autoplot(object, ...)
 - reference_weights:
 
   Non-negative reference weights. With area these are within-cell
-  averaging weights, multiplied by area.
+  averaging weights, multiplied by area and not normalised internally.
+  For a seasonal mean, supply weights summing to one within each spatial
+  cell. Otherwise `sum(area * reference_weights)` is effective weighted
+  area, not necessarily unique geographic area.
 
 - decompose:
 
@@ -274,14 +280,18 @@ retained.
 Omission is a prediction-target counterfactual, **not a refit**; use
 [`plot_step()`](https://www.quantifish.co.nz/influ2/reference/plot_step.md)
 to study refitted models. Fields are set to zero; the year term is
-replaced by its first-year value at the same reference row.
+replaced by its first-year value at the same reference row. Separate
+year interactions and time-varying terms remain unless selected.
 `"sampled_mean"` replaces a covariate's additive contribution by its
 reference-weighted mean over cells sampled that year, separately in each
-joint draw and delta component. It is not the prediction at a mean raw
-covariate. `"zero"` is appropriate only for deliberately centred terms.
-`"fixed"` reevaluates the term at explicit raw predictor values,
-retaining its other predictors; this also handles interactions and
-smooths.
+joint draw and delta component, regardless of `omission_definition`. It
+is not the prediction at a mean raw covariate. `"zero"` is appropriate
+only for deliberately centred terms. `"fixed"` reevaluates the term at
+explicit raw predictor values, retaining its other predictors; this also
+handles interactions and smooths. These contrasts depend on the fitted
+decomposition and its centring and identifiability constraints.
+Correlated terms can share signal; omission is not a causal effect or a
+unique allocation of importance or variance.
 
 Weighted-mean restricted indices renormalise weights each year. An empty
 restricted mean is undefined (`NA`); an empty restricted total is zero.

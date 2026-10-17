@@ -156,7 +156,11 @@ or the first formula predictor for a GAM.</p></dd>
 reference rows and years in index order. When omitted or <code>NULL</code>, use half
 the nearest distinct grid-centre spacing, with a warning. Supply a rule
 explicitly when this default does not describe the sampling design.
-GAMs always require an explicit rule; coordinates are not inferred.</p></dd>
+GAMs always require an explicit rule; coordinates are not inferred.
+Cell-ID and coordinate rules count observed fitted responses with positive
+likelihood weights and, where applicable, positive trial counts. A logical
+matrix instead declares support directly; its interpretation is the
+caller's responsibility.</p></dd>
 
 
 <dt id="arg-sampled-definition">sampled_definition<a class="anchor" aria-label="anchor" href="#arg-sampled-definition"></a></dt>
@@ -188,7 +192,10 @@ Supplying areas requests totals rather than weighted means.</p></dd>
 
 <dt id="arg-reference-weights">reference_weights<a class="anchor" aria-label="anchor" href="#arg-reference-weights"></a></dt>
 <dd><p>Non-negative reference weights. With area these
-are within-cell averaging weights, multiplied by area.</p></dd>
+are within-cell averaging weights, multiplied by area and not normalised
+internally. For a seasonal mean, supply weights summing to one within
+each spatial cell. Otherwise <code>sum(area * reference_weights)</code> is effective
+weighted area, not necessarily unique geographic area.</p></dd>
 
 
 <dt id="arg-decompose">decompose<a class="anchor" aria-label="anchor" href="#arg-decompose"></a></dt>
@@ -319,12 +326,17 @@ annual summaries and histograms are accumulated, unless cells are retained.</p>
 <p>Omission is a prediction-target counterfactual, <strong>not a refit</strong>; use
 <code><a href="plot_step.html">plot_step()</a></code> to study refitted models. Fields are set to zero; the year
 term is replaced by its first-year value at the same reference row.
+Separate year interactions and time-varying terms remain unless selected.
 <code>"sampled_mean"</code> replaces a covariate's additive contribution by its
 reference-weighted mean over cells sampled that year, separately in each
-joint draw and delta component. It is not the prediction at a mean raw
+joint draw and delta component, regardless of <code>omission_definition</code>.
+It is not the prediction at a mean raw
 covariate. <code>"zero"</code> is appropriate only for deliberately centred terms.
 <code>"fixed"</code> reevaluates the term at explicit raw predictor values, retaining
-its other predictors; this also handles interactions and smooths.</p>
+its other predictors; this also handles interactions and smooths.
+These contrasts depend on the fitted decomposition and its centring and
+identifiability constraints. Correlated terms can share signal; omission
+is not a causal effect or a unique allocation of importance or variance.</p>
 <p>Weighted-mean restricted indices renormalise weights each year. An empty
 restricted mean is undefined (<code>NA</code>); an empty restricted total is zero.
 <code>"cell_time"</code> is a variable-domain diagnostic, not an alternative index.

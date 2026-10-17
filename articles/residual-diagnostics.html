@@ -559,12 +559,17 @@ fitted smooths; parameter uncertainty is not added.</td>
 their estimated distribution.</td>
 </tr>
 <tr class="odd">
+<td align="left">lme4</td>
+<td align="left">Native simulation with new random effects at fitted
+variance parameters.</td>
+</tr>
+<tr class="even">
 <td align="left">sdmTMB / tinyVAST</td>
 <td align="left">
 <code>mle-eb</code>: observation error conditional on
 fitted spatial, spatiotemporal, and other latent effects.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">brms</td>
 <td align="left">Existing joint posterior draws followed by response
 simulation, including existing group effects. This requires a complete
@@ -573,6 +578,7 @@ fit, not a compact influence fixture.</td>
 </tbody>
 </table>
 <p>The native documentation describes the respective <a href="https://glmmtmb.github.io/glmmTMB/reference/simulate.glmmTMB.html" class="external-link">glmmTMB</a>,
+<a href="https://lme4.github.io/lme4/reference/simulate.merMod.html" class="external-link">lme4</a>,
 <a href="https://sdmtmb.github.io/sdmTMB/reference/simulate.sdmTMB.html" class="external-link">sdmTMB</a>,
 <a href="https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html" class="external-link">tinyVAST</a>,
 and <a href="https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html" class="external-link">brms</a>
@@ -606,20 +612,26 @@ models, and check the recorded scheme:</p>
 </td>
 </tr>
 <tr class="odd">
+<td align="left">lme4</td>
+<td align="left">
+<code>"new_effects"</code>, <code>"fitted"</code>
+</td>
+</tr>
+<tr class="even">
 <td align="left">sdmTMB</td>
 <td align="left">
 <code>"fitted"</code>, <code>"conditional_draw"</code>,
 <code>"new_effects"</code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">tinyVAST</td>
 <td align="left">
 <code>"fitted"</code>,
 <code>"conditional_draw"</code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">brms</td>
 <td align="left"><code>"posterior_predictive"</code></td>
 </tr>

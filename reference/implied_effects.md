@@ -95,7 +95,8 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 - level:
 
-  Conditional profile-likelihood interval coverage; default 0.95.
+  Nominal conditional profile-likelihood interval level; default 0.95.
+  This is not a guarantee of fitted-model coverage.
 
 - interval:
 

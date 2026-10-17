@@ -530,15 +530,20 @@ Review the following with Nicholas before changing statistical defaults:
     envelopes, repeated refitting, or held-out prediction checks. None
     is provided here.
 4.  Identify the next genuinely different design to validate, rather
-    than extending these conclusions to all six backends or all response
-    families.
+    than extending these conclusions to all supported backends or all
+    response families.
 
 Limitations include one family, one sample size, one fixed design and
 spatial mesh, balanced yearly effort, modest replication, and
-diagnostics evaluated on the fitting observations. There are no brms,
-tinyVAST, hurdle/delta, sparse sampling, range-boundary, or
+diagnostics evaluated on the fitting observations. There are no GLM/GAM,
+lme4, brms, tinyVAST, hurdle/delta, sparse sampling, range-boundary, or
 out-of-sample validation claims. In particular, the default four panels
-do not replace a spatial residual investigation.
+do not replace a spatial residual investigation. This study uses
+influ2’s default finite-simulation PIT engine. The later DHARMa engine
+and
+[`check_cpue()`](https://www.quantifish.co.nz/influ2/reference/check_cpue.md)
+statistics have separate numerical agreement tests, not false-positive
+or power calibration from this experiment.
 
 ## Reproduction and compact results
 

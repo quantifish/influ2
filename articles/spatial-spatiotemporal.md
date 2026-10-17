@@ -1079,12 +1079,23 @@ spatially varying coefficient (SVC) fields to zero, matching
 Use `"svc"` to remove only SVC fields, or `"spatiotemporal"` to remove
 only the time-varying field. Nothing is re-estimated. Year omission
 substitutes the first year’s contribution at the same reference
-location. By default a covariate contribution is replaced by its
+location; separate year interactions and time-varying terms remain
+unless selected. By default a covariate contribution is replaced by its
 reference-weighted mean over that year’s sampled cells, separately for
-each joint draw and component. This is not prediction at a mean raw
-covariate or a mean response; choose `"zero"` only for deliberately
-centred terms, or supply an explicit fixed-value rule. Pacific cod
-predictions above remain encounter probabilities, not biomass.
+each joint draw and component, regardless of `omission_definition`. This
+is not prediction at a mean raw covariate or a mean response; choose
+`"zero"` only for deliberately centred terms, or supply an explicit
+fixed-value rule. Pacific cod predictions above remain encounter
+probabilities, not biomass.
+
+Omission contrasts depend on the fitted term decomposition and its
+centring and identifiability constraints. Correlated terms can share
+signal, so these contrasts are not causal effects or unique allocations
+of importance or variance. For integrated totals, reference averaging
+weights are multiplied by cell areas without internal normalisation.
+Seasonal-mean weights should sum to one within each spatial cell;
+otherwise the resulting effective weighted area need not equal unique
+geographic area.
 
 ### tinyVAST: changing observation support on the simulated grid
 
@@ -1283,10 +1294,12 @@ vapply(gam_model$smooth, function(x) x$label, character(1))
 
 `data` supplies the original cell identifiers, which are not formula
 predictors. They are checked against the retained fitted rows and
-values; the external fitting call is never reevaluated. Coverage counts
-only observed responses with positive fitted likelihood weights and
-positive trial counts. Rows with missing responses or zero likelihood
-weights do not establish sampling support.
+values; the external fitting call is never reevaluated. For this cell-ID
+rule, coverage counts only observed responses with positive fitted
+likelihood weights and, where applicable, positive trial counts. Rows
+with missing responses or zero likelihood weights do not establish
+sampling support. A supplied logical support matrix instead declares
+support directly and must be justified by the analyst.
 
 ``` r
 

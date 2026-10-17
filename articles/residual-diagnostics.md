@@ -474,11 +474,13 @@ check.
 |:---|:---|
 | GLM / GAM | Observation error at fitted parameters, including fitted smooths; parameter uncertainty is not added. |
 | glmmTMB | Native simulation with random effects resimulated from their estimated distribution. |
+| lme4 | Native simulation with new random effects at fitted variance parameters. |
 | sdmTMB / tinyVAST | `mle-eb`: observation error conditional on fitted spatial, spatiotemporal, and other latent effects. |
 | brms | Existing joint posterior draws followed by response simulation, including existing group effects. This requires a complete fit, not a compact influence fixture. |
 
 The native documentation describes the respective
 [glmmTMB](https://glmmtmb.github.io/glmmTMB/reference/simulate.glmmTMB.html),
+[lme4](https://lme4.github.io/lme4/reference/simulate.merMod.html),
 [sdmTMB](https://sdmtmb.github.io/sdmTMB/reference/simulate.sdmTMB.html),
 [tinyVAST](https://vast-lib.github.io/tinyVAST/reference/simulate.tinyVAST.html),
 and
@@ -497,6 +499,7 @@ check the recorded scheme:
 |:----------|:-------------------------------------------------------------|
 | GLM / GAM | `"fitted"`                                                   |
 | glmmTMB   | `"new_effects"`, `"fitted"`                                  |
+| lme4      | `"new_effects"`, `"fitted"`                                  |
 | sdmTMB    | `"fitted"`, `"conditional_draw"`, `"new_effects"`            |
 | tinyVAST  | `"fitted"`, `"conditional_draw"`                             |
 | brms      | `"posterior_predictive"`                                     |

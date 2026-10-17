@@ -2,6 +2,14 @@
 
 ## influ2 1.1.0
 
+- Clarified the distinction between numerical verification and
+  scientific calibration in residual diagnostics, and the nominal,
+  conditional meaning of implied-effect intervals. Conditioning tables
+  now include lme4. Domain documentation makes declared support,
+  within-cell area averaging, and non-causal term-omission sensitivity
+  explicit. Calculations, defaults, and frozen validation results are
+  unchanged.
+
 - Added
   [`index_domain()`](https://www.quantifish.co.nz/influ2/reference/index_domain.md)
   for explicit sampled-domain coverage, link-scale decomposition,

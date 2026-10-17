@@ -41,7 +41,7 @@ print(x, ...)
 
 - model:
 
-  A fitted GLM, `mgcv` GAM, `glmmTMB`, `brmsfit`, `sdmTMB`, or
+  A fitted GLM, `mgcv` GAM, `glmmTMB`, `lme4`, `brmsfit`, `sdmTMB`, or
   single-response `tinyVAST` model. No CPUE model is fitted or refitted.
 
 - data:
