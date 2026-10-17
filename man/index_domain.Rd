@@ -89,7 +89,11 @@ or the first formula predictor for a GAM.}
 reference rows and years in index order. When omitted or \code{NULL}, use half
 the nearest distinct grid-centre spacing, with a warning. Supply a rule
 explicitly when this default does not describe the sampling design.
-GAMs always require an explicit rule; coordinates are not inferred.}
+GAMs always require an explicit rule; coordinates are not inferred.
+Cell-ID and coordinate rules count observed fitted responses with positive
+likelihood weights and, where applicable, positive trial counts. A logical
+matrix instead declares support directly; its interpretation is the
+caller's responsibility.}
 
 \item{sampled_definition}{One or more of \code{"cell_time"}, \code{"cell_ever"},
 \code{"cell_always"}. All are computed by default for sampled-only comparisons.}
@@ -107,7 +111,10 @@ Supplying areas requests totals rather than weighted means.}
 \item{area_units, response_units}{Required unit strings when supplying area.}
 
 \item{reference_weights}{Non-negative reference weights. With area these
-are within-cell averaging weights, multiplied by area.}
+are within-cell averaging weights, multiplied by area and not normalised
+internally. For a seasonal mean, supply weights summing to one within
+each spatial cell. Otherwise \code{sum(area * reference_weights)} is effective
+weighted area, not necessarily unique geographic area.}
 
 \item{decompose}{Summarise link-scale terms by year and domain class?}
 
@@ -203,12 +210,17 @@ annual summaries and histograms are accumulated, unless cells are retained.
 Omission is a prediction-target counterfactual, \strong{not a refit}; use
 \code{\link[=plot_step]{plot_step()}} to study refitted models. Fields are set to zero; the year
 term is replaced by its first-year value at the same reference row.
+Separate year interactions and time-varying terms remain unless selected.
 \code{"sampled_mean"} replaces a covariate's additive contribution by its
 reference-weighted mean over cells sampled that year, separately in each
-joint draw and delta component. It is not the prediction at a mean raw
+joint draw and delta component, regardless of \code{omission_definition}.
+It is not the prediction at a mean raw
 covariate. \code{"zero"} is appropriate only for deliberately centred terms.
 \code{"fixed"} reevaluates the term at explicit raw predictor values, retaining
 its other predictors; this also handles interactions and smooths.
+These contrasts depend on the fitted decomposition and its centring and
+identifiability constraints. Correlated terms can share signal; omission
+is not a causal effect or a unique allocation of importance or variance.
 
 Weighted-mean restricted indices renormalise weights each year. An empty
 restricted mean is undefined (\code{NA}); an empty restricted total is zero.

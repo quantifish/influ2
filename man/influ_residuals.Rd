@@ -32,7 +32,7 @@ influ_residuals(
 \method{print}{influ_residuals}(x, ...)
 }
 \arguments{
-\item{model}{A fitted GLM, \code{mgcv} GAM, \code{glmmTMB}, \code{brmsfit}, \code{sdmTMB}, or
+\item{model}{A fitted GLM, \code{mgcv} GAM, \code{glmmTMB}, \code{lme4}, \code{brmsfit}, \code{sdmTMB}, or
 single-response \code{tinyVAST} model. No CPUE model is fitted or refitted.}
 
 \item{data}{Original model data, retaining original row names. Usually not

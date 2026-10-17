@@ -2,6 +2,23 @@
 
 14 September 2026. Review baseline: `52d6c6e4d56ff2971c2e4c7a0f8aba6abebf641d`.
 
+## Release interpretation audit on 17 October 2026
+
+The [current scientific review](../scientific-release-review.md) audits source
+`180889a`, including lme4, the later DHARMa/checker work, and the merged
+prediction-domain diagnostics. Its saved-result audit and 869 frozen-result
+and worked-example assertions pass. Both frozen artefacts and N09's shared
+rank, conditioning, and simulation source hashes remain unchanged. No study
+fits or response simulations were rerun.
+
+The recommendations below still stand: exploratory plots, explicit predictive
+targets, and conditional implied-effect interpretation. The historical
+references to six backends predate lme4; its default is now `new_effects`, with
+`fitted` available explicitly. N09 does not calibrate the later DHARMa engine
+or `check_cpue()` p-values. Numerical cross-backend agreement is separate from
+false-positive calibration. The current review records three concise release
+decisions; Nicholas's personal scientific agreement remains pending.
+
 ## Follow-up: 15 September 2026
 
 The maintainer accepted the bounded practical follow-up recommended below:

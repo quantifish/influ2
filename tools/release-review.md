@@ -5,6 +5,37 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Scientific interpretation audit on 17 October 2026
+
+The [current scientific review](scientific-release-review.md) checks source
+`180889a` against the frozen N09/IV01 evidence and current residual/checker,
+implied-effect, and prediction-domain contracts. Its read-only numerical
+companion and 869 frozen-result/worked-example assertions pass. Frozen
+artefacts and N09's shared rank/conditioning/simulation hashes are unchanged;
+the study fits and response simulations were not rerun.
+
+No new calculation defect was demonstrated. Documentation is clarified for
+lme4 conditioning, the boundary between numerical agreement and calibration,
+nominal profile interval levels, truncated-count mean shifts, declared support
+matrices, effective area averaging, and non-causal term-omission sensitivity.
+These are documentation changes, not new algorithms, defaults, or fitted results.
+The full local source suite passes 13,286 assertions with zero failures,
+errors, warnings, or skips. Parsed executable expressions in the three edited
+R files are identical to the reviewed source; their changes are roxygen text.
+The regenerated help files parse successfully.
+All four affected articles and three help topics rebuild against a temporary
+installation of the current source, leaving the normal R library unchanged.
+The new wording is verified in the generated HTML, and site-wide caption and
+lightbox checks pass for 12 illustrated pages and 127 figures. These checks
+do not replace final-candidate archive, manual, or incoming checks.
+
+The technical interpretation audit is complete. Nicholas's agreement remains
+pending on three concise first-release positions: exploratory residual/checker
+interpretation, conditional implied effects, and declared-domain prediction
+sensitivity. This is not a claim of universal test calibration or his sign-off.
+Documentation-size work, legacy triage, final-candidate checking, and CRAN
+submission remain separate; none is advanced by this review.
+
 ## Overlaid CDI and separate index ratios: 15 October 2026
 
 `plot_cdi()` now overlays named diagnostic objects or fitted models in one

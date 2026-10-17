@@ -1,6 +1,22 @@
 # Development ideas and decisions
 
-Last reviewed: 15 October 2026.
+Last reviewed: 17 October 2026.
+
+## Scientific interpretation audit on 17 October 2026
+
+The maintainer prioritised the scientific review before documentation-size
+work or legacy triage. The [current review](scientific-release-review.md)
+rechecks N09/IV01, newer residual/checker targets, implied-effect semantics,
+and GAM/sdmTMB/tinyVAST prediction-domain sensitivity. The numerical companion
+and 869 frozen-result/worked-example assertions pass without rerunning study
+fits or simulations. No calculation defect was demonstrated. Documentation
+clarifications distinguish nominal interval levels, truncated-count shifts,
+declared support, and effective area, and include lme4 in conditioning tables.
+
+The technical interpretation audit is complete; Nicholas's personal agreement
+to its three release positions is still pending. Broader false-positive/power
+calibration is a separate candidate, not a silently added release requirement.
+Defaults, runtime calculations, and frozen results remain unchanged.
 
 ## Overlaid CDI and separate index ratios: 15 October 2026
 
@@ -178,7 +194,8 @@ used influ2 revision `7bb976c`.
 | N09 | Clarify finite-simulation calibration and diagnostic targets — **First increment and plotting correction completed, 12 September; interpretation review, 14 September; approved worked examples completed, 15 September** | 100 NB2 datasets per backend, 500 eligible glmmTMB/sdmTMB fits, and 1,960 diagnostic records cover omitted terms, conditioning, known-truth controls, and paired sensitivity. Compact results and the Residual validation article are reproducible via the [protocol](n09/protocol.md). The separately approved bayesplot 1.16.0 grid correction aligns both optional PIT plots without changing the interval calculation, stored ranks, defaults, or frozen study. The [follow-up control](n09/check-pit-alignment.R) reproduces 4.77% independent-uniform crossings instead of 12.46%. Following the [interpretation review](n09/interpretation-review.md), the maintainer approved practical guidance and saved-data covariate/spatial examples in the Residual diagnostics article. Guarded row matching, common scales, and all six spatial years are tested; no study was rerun or default changed. Nicholas's scientific review and broader calibration remain open. |
 | N10 | Competing native-residual Q-Q entry point — **Addressed** | `plot_qq()` was retired on 10 September. Use the generalised residual object and `plot(checks, type = "qq")`; do not restore the retired helper merely because the PDF refers to it. |
 
-Current priority: Nicholas's review of the [N09/IV01 interpretation review](n09/interpretation-review.md)
+Current priority: Nicholas's decisions in the [current scientific review](scientific-release-review.md),
+supported by the [N09/IV01 interpretation review](n09/interpretation-review.md)
 and the implemented practical guidance and worked covariate/spatial examples in
 the Residual diagnostics article. The maintainer approved this bounded follow-up;
 it reuses saved results without new study fitting or simulation. The examples

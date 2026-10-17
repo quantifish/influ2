@@ -69,7 +69,8 @@ original observation rows, without centring or reference-grid standardisation.}
 \item{min_n}{Minimum records in a year-by-group stratum. Sparse and empty
 strata remain in the table with an explicit status, but are not plotted.}
 
-\item{level}{Conditional profile-likelihood interval coverage; default 0.95.}
+\item{level}{Nominal conditional profile-likelihood interval level; default
+0.95. This is not a guarantee of fitted-model coverage.}
 
 \item{interval}{\code{"auto"} uses profile-likelihood intervals for the new
 method, or mean +/- one descriptive SE for traditional calculations.

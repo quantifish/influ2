@@ -4,7 +4,7 @@
 #' a normal-score rank Q-Q plot, residuals against the predictive mean,
 #' residuals by year, and a response-adaptive calibration or distribution panel.
 #'
-#' @param model A fitted GLM, `mgcv` GAM, `glmmTMB`, `brmsfit`, `sdmTMB`, or
+#' @param model A fitted GLM, `mgcv` GAM, `glmmTMB`, `lme4`, `brmsfit`, `sdmTMB`, or
 #'   single-response `tinyVAST` model. No CPUE model is fitted or refitted.
 #' @param data Original model data, retaining original row names. Usually not
 #'   needed; supply it if a transformed time term hides the raw year column.

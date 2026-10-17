@@ -15,6 +15,7 @@
 | `tools/references/` | Historical reference PDFs, moved without modification | No |
 | `tools/legacy/` | Fixture recipe and remaining retired-helper review copies | No |
 | `tools/release-review.md` | Pre-release decisions, issue queue, and checks | No |
+| `tools/scientific-release-review.md` | Current scientific interpretation audit and decisions for Darcy and Nicholas | No |
 | `tools/development-backlog.md` | Nicholas's proposals, Ginflu-inspired candidates, and parked decisions | No |
 | `tools/n09/` | Fixed residual-validation protocol, simulation driver, report builder, and developer tests | No |
 | `tools/implied-validation/` | IV01 NB2 implied-effect protocol, independent target checks, simulation driver, and compact report builder | No |

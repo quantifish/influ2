@@ -34,9 +34,12 @@ not separately fitted interactions or regional abundance indices.
 `plot_implied_residuals()` now defaults to a local **likelihood adjustment**.
 The original model's parameters, fitted random effects, smooths, dispersion,
 and exposure offsets stay fixed. Only one additional effect-scale shift is
-estimated in each supported group-year stratum. For a supported log-link model,
-that shift multiplies the expected response, while respecting the fitted
-response distribution. No full model is refitted and no MCMC is run.
+estimated in each supported group-year stratum. For an ordinary log-mean
+response model, that shift multiplies its expected response. In a zero-truncated
+count model it multiplies the underlying count-process mean; the conditional
+positive mean also includes the truncation correction, so it does not generally
+change by the same factor. Each route respects its fitted response distribution.
+No full model is refitted and no MCMC is run.
 
 The zero-centred PIT summaries previously displayed under this name are now
 available as `plot_grouped_residuals()`. That calculation has not changed.
