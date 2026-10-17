@@ -489,7 +489,7 @@ summary(glmmTMB_diagnostic)
 #>   Focus:   year
 #> 
 #>            term      component maximum_absolute_link_influence level_at_maximum
-#>  random_effects random_effects                       0.4208714             2000
+#>           month random_effects                       0.4208714             2000
 #>            year    conditional                       0.3507567             2002
 #>  poly(depth, 2)    conditional                       0.2498206             2008
 #>   poly(soak, 2)    conditional                       0.2345822             2014
@@ -544,7 +544,7 @@ summary(lme4_diagnostic)
 #>   Focus:   year
 #> 
 #>            term      component maximum_absolute_link_influence level_at_maximum
-#>  random_effects random_effects                       0.4208634             2000
+#>           month random_effects                       0.4208634             2000
 #>            year    conditional                       0.3506333             2002
 #>  poly(depth, 2)    conditional                       0.2497462             2008
 #>   poly(soak, 2)    conditional                       0.2345095             2014
@@ -560,29 +560,30 @@ to the same simulated lobster
 records.](influ2_files/figure-html/lobster-lme4-influence-1.png)
 
 Native lme4 influence ratios for the simulated lobster example. Fixed
-terms and the aggregate monthly random-effect contribution use the
-native joint conditional coefficient covariance. Random-effect variance
-and negative-binomial size are held at their fitted values; these
-intervals are not Bayesian posterior intervals.
+terms and the monthly random effect use the native joint conditional
+coefficient covariance. Random-effect variance and negative-binomial
+size are held at their fitted values; these intervals are not Bayesian
+posterior intervals.
 
-CDI plots use the same layout, including for the aggregate random term.
-With one random intercept, its categories use the fitted grouping labels
-(months here), rather than numeric contribution values. Random slopes or
-crossed effects retain an aggregate contribution display.
+CDI plots use the same layout for random effects. Each grouping factor
+is its own term, named after the factor (`month` here), and its
+categories are the fitted group levels. A factor with a random slope
+stays one term, so crossed effects such as `(1 | month) + (1 | vessel)`
+give `month` and `vessel` terms.
 
 ``` r
 
-plot(lme4_diagnostic, type = "cdi", term = "random_effects")
+plot(lme4_diagnostic, type = "cdi", term = "month")
 ```
 
 ![An lme4 random-effect CDI display aligns relative effects, sampled
 composition, and annual
 influence.](influ2_files/figure-html/lobster-lme4-cdi-1.png)
 
-CDI display of the aggregate monthly random-effect contribution in the
-lme4 lobster model. The term is a fitted random contribution, not twelve
-independent fixed coefficients. Its reference and uncertainty follow the
-same conventions as the influence calculation.
+CDI display of the monthly random effect in the lme4 lobster model. The
+term is a fitted random contribution, not twelve independent fixed
+coefficients. Its reference and uncertainty follow the same conventions
+as the influence calculation.
 
 ### Expected-response indices and assessment covariance
 
@@ -874,9 +875,9 @@ summary(sdmTMB_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>       as.factor(year)               conditional                      0.60757313
-#>         spatial_field conditional:latent_fields                      0.10520073
+#>         spatial_field conditional:latent_fields                      0.10523967
 #>          depth_scaled               conditional                      0.05400688
-#>  spatiotemporal_field conditional:latent_fields                      0.03291602
+#>  spatiotemporal_field conditional:latent_fields                      0.03415143
 #>  level_at_maximum
 #>              2013
 #>              2015

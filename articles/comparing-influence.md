@@ -41,9 +41,9 @@ stopifnot(full_model$fit$convergence == 0, full_model$sdr$pdHess,
 
 Both models have a monthly random intercept. We calculate each
 diagnostic once; changing the display does not refit models or
-recalculate uncertainty. In these diagnostics, the monthly random
-intercept is stored under the term `"random_effects"`; it is the only
-random-effect grouping in either model.
+recalculate uncertainty. Random effects are stored as one term per
+grouping factor, named after the factor, so the monthly random intercept
+is the term `"month"`.
 
 ``` r
 
@@ -63,7 +63,7 @@ both runs.
 
 ``` r
 
-plot_cdi(diagnostics, term = "random_effects", years = "union")
+plot_cdi(diagnostics, term = "month", years = "union")
 ```
 
 ![One CDI display with two coloured monthly-effect estimates, two dodged
@@ -82,10 +82,9 @@ records, using a shared size scale. Missing years remain blank, without
 an influence line across the internal gap.
 
 The model labels are taken from the named list. A single diagnostic is
-also accepted, so `plot_cdi(full_diagnostic, term = "random_effects")`
-keeps the ordinary single-run display. The existing
-`plot(full_diagnostic, type = "cdi", term = "random_effects")` remains
-available.
+also accepted, so `plot_cdi(full_diagnostic, term = "month")` keeps the
+ordinary single-run display. The existing
+`plot(full_diagnostic, type = "cdi", term = "month")` remains available.
 
 `years = "overlap"` restricts the view to years available in every run.
 It is a **display filter**, not a refit or a new calculation of the
@@ -95,7 +94,7 @@ sequence.
 
 ``` r
 
-plot_cdi(diagnostics, term = "random_effects", years = "overlap")
+plot_cdi(diagnostics, term = "month", years = "overlap")
 ```
 
 ![Overlaid CDI panels restricted to the common recent years, with the

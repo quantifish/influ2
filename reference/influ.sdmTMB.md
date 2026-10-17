@@ -3,7 +3,10 @@
 Fixed effects use the marginal covariance from TMB. Spatial,
 spatiotemporal, IID, smooth, and time-varying contributions are
 projected from the fitted fields without retaining dense draw arrays.
-Field uncertainty uses sparse joint-precision simulation and is reduced
+Each smooth is its own term, named by its label (for example
+\`s(depth)\`), once its pieces reproduce sdmTMB's combined smooth;
+otherwise a combined \`smooths\` term is reported with a warning. Field
+uncertainty uses sparse joint-precision simulation and is reduced
 directly to compact focus-level estimands. Delta fixed effects and
 latent fields are combined draw by draw to obtain unconditional-mean
 influence. Lognormal diagnostics require a log link for the arithmetic

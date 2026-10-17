@@ -514,7 +514,7 @@ treats month as a random intercept.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;            term      component maximum_absolute_link_influence level_at_maximum</span></span>
-<span><span class="co">#&gt;  random_effects random_effects                       0.4208714             2000</span></span>
+<span><span class="co">#&gt;           month random_effects                       0.4208714             2000</span></span>
 <span><span class="co">#&gt;            year    conditional                       0.3507567             2002</span></span>
 <span><span class="co">#&gt;  poly(depth, 2)    conditional                       0.2498206             2008</span></span>
 <span><span class="co">#&gt;   poly(soak, 2)    conditional                       0.2345822             2014</span></span></code></pre></div>
@@ -563,7 +563,7 @@ settings.</p>
 <span><span class="co">#&gt;   Focus:   year</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;            term      component maximum_absolute_link_influence level_at_maximum</span></span>
-<span><span class="co">#&gt;  random_effects random_effects                       0.4208634             2000</span></span>
+<span><span class="co">#&gt;           month random_effects                       0.4208634             2000</span></span>
 <span><span class="co">#&gt;            year    conditional                       0.3506333             2002</span></span>
 <span><span class="co">#&gt;  poly(depth, 2)    conditional                       0.2497462             2008</span></span>
 <span><span class="co">#&gt;   poly(soak, 2)    conditional                       0.2345095             2014</span></span></code></pre></div>
@@ -572,24 +572,26 @@ settings.</p>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-lme4-influence-1.png" class="r-plt" alt="Influence components from an lme4 negative-binomial mixed model fitted to the same simulated lobster records." width="768"><p class="caption">
 Native lme4 influence ratios for the simulated lobster example. Fixed
-terms and the aggregate monthly random-effect contribution use the
-native joint conditional coefficient covariance. Random-effect variance
-and negative-binomial size are held at their fitted values; these
-intervals are not Bayesian posterior intervals.
+terms and the monthly random effect use the native joint conditional
+coefficient covariance. Random-effect variance and negative-binomial
+size are held at their fitted values; these intervals are not Bayesian
+posterior intervals.
 </p>
 </div>
-<p>CDI plots use the same layout, including for the aggregate random
-term. With one random intercept, its categories use the fitted grouping
-labels (months here), rather than numeric contribution values. Random
-slopes or crossed effects retain an aggregate contribution display.</p>
+<p>CDI plots use the same layout for random effects. Each grouping
+factor is its own term, named after the factor (<code>month</code>
+here), and its categories are the fitted group levels. A factor with a
+random slope stays one term, so crossed effects such as
+<code>(1 | month) + (1 | vessel)</code> give <code>month</code> and
+<code>vessel</code> terms.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"random_effects"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lme4_diagnostic</span>, type <span class="op">=</span> <span class="st">"cdi"</span>, term <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="influ2_files/figure-html/lobster-lme4-cdi-1.png" class="r-plt" alt="An lme4 random-effect CDI display aligns relative effects, sampled composition, and annual influence." width="768"><p class="caption">
-CDI display of the aggregate monthly random-effect contribution in the
-lme4 lobster model. The term is a fitted random contribution, not twelve
-independent fixed coefficients. Its reference and uncertainty follow the
-same conventions as the influence calculation.
+CDI display of the monthly random effect in the lme4 lobster model. The
+term is a fitted random contribution, not twelve independent fixed
+coefficients. Its reference and uncertainty follow the same conventions
+as the influence calculation.
 </p>
 </div>
 <div class="section level3">
@@ -839,9 +841,9 @@ schema as the lobster examples.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                  term                 component maximum_absolute_link_influence</span></span>
 <span><span class="co">#&gt;       as.factor(year)               conditional                      0.60757313</span></span>
-<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10520073</span></span>
+<span><span class="co">#&gt;         spatial_field conditional:latent_fields                      0.10523967</span></span>
 <span><span class="co">#&gt;          depth_scaled               conditional                      0.05400688</span></span>
-<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03291602</span></span>
+<span><span class="co">#&gt;  spatiotemporal_field conditional:latent_fields                      0.03415143</span></span>
 <span><span class="co">#&gt;  level_at_maximum</span></span>
 <span><span class="co">#&gt;              2013</span></span>
 <span><span class="co">#&gt;              2015</span></span>

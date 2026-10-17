@@ -1,19 +1,20 @@
 # Influence diagnostics for lme4 mixed models
 
-Fixed terms and an aggregate random-effect contribution use the same
-joint native conditional covariance. Variance/dispersion parameters are
-held fixed; GLMM covariance is a local Gaussian approximation, not
-posterior draws. Singular fits remain flagged in metadata, rather than
-acquiring invented variance. Dense joint covariance calculations are
-limited to 256 MiB. Non-log natural differences are evaluated at the
-full fitted reference predictor, including random effects. Analytic
-difference intervals condition on that reference; joint simulations also
-propagate its coefficient dependence. Influence reference grids require
-focus values and existing grouping levels; response-index reference
-grids instead omit year and set group effects to zero. For a single
-random intercept, aggregate random-effect CDI categories use the fitted
-grouping labels. More complex random structures retain the aggregate
-contribution categories rather than inventing separate coefficients.
+Fixed terms and random effects use the same joint native conditional
+covariance. Variance/dispersion parameters are held fixed; GLMM
+covariance is a local Gaussian approximation, not posterior draws.
+Singular fits remain flagged in metadata, rather than acquiring invented
+variance. Dense joint covariance calculations are limited to 256 MiB.
+Non-log natural differences are evaluated at the full fitted reference
+predictor, including random effects. Analytic difference intervals
+condition on that reference; joint simulations also propagate its
+coefficient dependence. Influence reference grids require focus values
+and existing grouping levels; response-index reference grids instead
+omit year and set group effects to zero. Random effects form one term
+per grouping factor, named after the factor as for brms (for example
+\`vessel\` or \`area:vessel\`), in the \`random_effects\` component.
+Terms sharing a factor, such as a random intercept and slope, are
+combined, and each term's CDI categories are the factor's fitted levels.
 
 ## Usage
 
@@ -149,4 +150,4 @@ influ(
 
 ## Value
 
-An \[influ_diag\] with fixed and aggregate random-effect components.
+An \[influ_diag\] with fixed and random-effect components.

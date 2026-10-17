@@ -98,12 +98,12 @@ summary(pcod_diagnostic)
 #> 
 #>                  term                 component maximum_absolute_link_influence
 #>          depth_scaled               conditional                       0.5119533
-#>  spatiotemporal_field conditional:latent_fields                       0.5064357
+#>  spatiotemporal_field conditional:latent_fields                       0.4880374
 #>         depth_scaled2               conditional                       0.3191610
-#>         spatial_field conditional:latent_fields                       0.2805937
+#>         spatial_field conditional:latent_fields                       0.2806088
 #>  level_at_maximum
 #>              2003
-#>              2013
+#>              2011
 #>              2004
 #>              2003
 ```
@@ -789,15 +789,15 @@ knitr::kable(as.data.frame(pcod_area), digits = 3)
 
 | Year | Mean | Median | SD | CV | Qlower | Qupper | Method | Distribution | Link |
 |:---|---:|---:|---:|---:|---:|---:|:---|:---|:---|
-| 2003 | 13197.70 | NA | 567.760 | 0.043 | 12120.191 | 14445.29 | integrated | binomial | logit |
-| 2004 | 14240.84 | NA | 659.981 | 0.046 | 12871.285 | 15321.37 | integrated | binomial | logit |
-| 2005 | 14162.44 | NA | 655.869 | 0.046 | 12842.750 | 15305.50 | integrated | binomial | logit |
-| 2007 | 11457.21 | NA | 570.477 | 0.050 | 10481.084 | 12714.38 | integrated | binomial | logit |
-| 2009 | 12522.68 | NA | 624.629 | 0.050 | 11186.418 | 13563.70 | integrated | binomial | logit |
-| 2011 | 11371.78 | NA | 657.900 | 0.058 | 10314.141 | 12918.96 | integrated | binomial | logit |
-| 2013 | 14951.32 | NA | 663.933 | 0.044 | 13659.403 | 15994.24 | integrated | binomial | logit |
-| 2015 | 13845.19 | NA | 541.865 | 0.039 | 12804.742 | 14717.81 | integrated | binomial | logit |
-| 2017 | 11090.37 | NA | 715.216 | 0.064 | 9859.464 | 12518.32 | integrated | binomial | logit |
+| 2003 | 13197.70 | NA | 637.642 | 0.048 | 11873.52 | 14451.89 | integrated | binomial | logit |
+| 2004 | 14240.84 | NA | 639.456 | 0.045 | 12920.83 | 15311.44 | integrated | binomial | logit |
+| 2005 | 14162.44 | NA | 648.629 | 0.046 | 12714.45 | 15223.09 | integrated | binomial | logit |
+| 2007 | 11457.21 | NA | 597.825 | 0.052 | 10368.89 | 12677.48 | integrated | binomial | logit |
+| 2009 | 12522.68 | NA | 646.502 | 0.052 | 11595.07 | 13840.03 | integrated | binomial | logit |
+| 2011 | 11371.78 | NA | 668.356 | 0.059 | 10144.77 | 12537.46 | integrated | binomial | logit |
+| 2013 | 14951.32 | NA | 665.843 | 0.045 | 13555.40 | 15883.73 | integrated | binomial | logit |
+| 2015 | 13845.19 | NA | 580.896 | 0.042 | 12645.27 | 14793.95 | integrated | binomial | logit |
+| 2017 | 11090.37 | NA | 707.409 | 0.064 | 10071.08 | 12735.22 | integrated | binomial | logit |
 
 ``` r
 
@@ -1216,15 +1216,15 @@ knitr::kable(index_table(pcod_without_unsampled_spatial), digits = 3)
 
 | Year |  Mean |    SD |    CV | Q0.025 | Q0.975 | Method       | Distribution | Link  |
 |:-----|------:|------:|------:|-------:|-------:|:-------------|:-------------|:------|
-| 2003 | 0.511 | 0.052 | 0.102 |  0.393 |  0.594 | standardised | binomial     | logit |
-| 2004 | 0.536 | 0.055 | 0.102 |  0.414 |  0.613 | standardised | binomial     | logit |
-| 2005 | 0.585 | 0.061 | 0.105 |  0.456 |  0.678 | standardised | binomial     | logit |
-| 2007 | 0.447 | 0.052 | 0.116 |  0.348 |  0.528 | standardised | binomial     | logit |
-| 2009 | 0.521 | 0.054 | 0.103 |  0.395 |  0.608 | standardised | binomial     | logit |
-| 2011 | 0.501 | 0.056 | 0.113 |  0.384 |  0.576 | standardised | binomial     | logit |
-| 2013 | 0.547 | 0.055 | 0.101 |  0.424 |  0.614 | standardised | binomial     | logit |
-| 2015 | 0.575 | 0.059 | 0.102 |  0.434 |  0.649 | standardised | binomial     | logit |
-| 2017 | 0.421 | 0.053 | 0.127 |  0.325 |  0.521 | standardised | binomial     | logit |
+| 2003 | 0.511 | 0.047 | 0.092 |  0.407 |  0.581 | standardised | binomial     | logit |
+| 2004 | 0.536 | 0.055 | 0.103 |  0.410 |  0.623 | standardised | binomial     | logit |
+| 2005 | 0.585 | 0.053 | 0.091 |  0.483 |  0.664 | standardised | binomial     | logit |
+| 2007 | 0.447 | 0.052 | 0.117 |  0.362 |  0.544 | standardised | binomial     | logit |
+| 2009 | 0.521 | 0.054 | 0.103 |  0.406 |  0.598 | standardised | binomial     | logit |
+| 2011 | 0.501 | 0.058 | 0.116 |  0.377 |  0.579 | standardised | binomial     | logit |
+| 2013 | 0.547 | 0.053 | 0.098 |  0.419 |  0.616 | standardised | binomial     | logit |
+| 2015 | 0.575 | 0.056 | 0.098 |  0.446 |  0.645 | standardised | binomial     | logit |
+| 2017 | 0.421 | 0.060 | 0.143 |  0.300 |  0.513 | standardised | binomial     | logit |
 
 ``` r
 
