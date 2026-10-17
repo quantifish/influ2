@@ -211,13 +211,13 @@
     )
     prediction$obj$report(model$last.par.best)
   }
-  projected_names <- c(
-    spatial_field = "proj_omega_s_A",
-    spatiotemporal_field = "proj_epsilon_st_A_vec",
-    spatially_varying_effects = "proj_zeta_s_A"
-  )
+  reference_X <- if (is.null(reference_data)) NULL else {
+    .sdmTMB_reference_fixed_matrices(model, reference_data)
+  }
+  fixed_name <- if (component_index == 1L) "b_j" else "b_j2"
 
   pieces <- list()
+  unprojected <- character()
   for (term in names(candidates)) {
     value <- candidates[[term]]
     if (is.null(value) || !length(value)) next
@@ -228,12 +228,14 @@
 
     reference_contribution <- NULL
     if (!is.null(reference_report)) {
-      if (!term %in% names(projected_names)) next
-      reference_contribution <- .sdmTMB_report_component(
-        reference_report, projected_names[[term]], component_index,
-        nrow(reference_data)
+      reference_contribution <- .sdmTMB_reference_contribution(
+        reference_report, term, component_index, nrow(reference_data),
+        reference_X[[component_index]], model$parlist[[fixed_name]]
       )
-      if (is.null(reference_contribution)) next
+      if (is.null(reference_contribution)) {
+        unprojected <- c(unprojected, term)
+        next
+      }
     }
 
     pieces[[term]] <- .influ_linear_engine(
@@ -261,6 +263,7 @@
       notes = paste0(term, " uses empirical Bayes field modes because uncertainty = 'none'.")
     )
   }
+  .sdmTMB_warn_unprojected(unprojected)
   pieces
 }
 
@@ -284,6 +287,55 @@
   NULL
 }
 
+.sdmTMB_projected_names <- c(
+  spatial_field = "proj_omega_s_A",
+  spatiotemporal_field = "proj_epsilon_st_A_vec",
+  spatially_varying_effects = "proj_zeta_s_A",
+  iid_random_effects = "proj_iid_re_i",
+  time_varying_effects = "proj_rw_i"
+)
+
+.sdmTMB_reference_fixed_matrices <- function(model, reference_data) {
+  stats::predict(
+    model, newdata = reference_data, re_form = NA, return_tmb_data = TRUE
+  )$proj_X_ij
+}
+
+# Reference-grid contribution of one latent or smooth term. sdmTMB reports no
+# projected smooth: proj_fe is the parametric part plus the smooth, IID, and
+# time-varying contributions, so the smooth is what remains after removing
+# the other three. On the fitted rows this reproduces eta_smooth_i.
+.sdmTMB_reference_contribution <- function(report, term, component_index,
+                                           n_reference, reference_X = NULL,
+                                           fixed = NULL) {
+  if (identical(term, "smooths")) {
+    pieces <- lapply(c("proj_fe", "proj_iid_re_i", "proj_rw_i"), function(name) {
+      .sdmTMB_report_component(report, name, component_index, n_reference)
+    })
+    if (any(vapply(pieces, is.null, logical(1))) || is.null(reference_X) ||
+        is.null(fixed) || ncol(reference_X) != length(fixed)) {
+      return(NULL)
+    }
+    return(pieces[[1L]] - as.numeric(reference_X %*% fixed) -
+      pieces[[2L]] - pieces[[3L]])
+  }
+  if (!term %in% names(.sdmTMB_projected_names)) return(NULL)
+  .sdmTMB_report_component(
+    report, .sdmTMB_projected_names[[term]], component_index, n_reference
+  )
+}
+
+.sdmTMB_warn_unprojected <- function(terms) {
+  terms <- unique(terms)
+  if (!length(terms)) return(invisible(NULL))
+  warning(
+    "Reference-grid contributions are unavailable for sdmTMB term(s): ",
+    paste(terms, collapse = ", "), ". They are omitted from this diagnostic.",
+    call. = FALSE
+  )
+  invisible(terms)
+}
+
 .sdmTMB_joint_field_projections <- function(model, data, focus, specs,
                                             weights, ndraws, seed = NULL,
                                             reference_data = NULL,
@@ -299,11 +351,6 @@
     time_varying_effects = "eta_rw_i",
     spatially_varying_effects = "zeta_s_A"
   )
-  projected_names <- c(
-    spatial_field = "proj_omega_s_A",
-    spatiotemporal_field = "proj_epsilon_st_A_vec",
-    spatially_varying_effects = "proj_zeta_s_A"
-  )
   n_components <- if (isTRUE(model$family$delta)) 2L else 1L
   focus_info <- .focus_info(data, focus)
   weights <- .resolve_influ_weights(data, weights)
@@ -312,17 +359,23 @@
   } else {
     .resolve_influ_weights(reference_data, reference_weights)
   }
+  parameter_names <- names(model$last.par.best)
+  fixed_names <- c("b_j", "b_j2")
   prediction_obj <- NULL
+  reference_X <- NULL
   if (!is.null(reference_data)) {
     prediction_obj <- stats::predict(
       model,
       newdata = reference_data,
       return_tmb_object = TRUE
     )$obj
+    reference_X <- .sdmTMB_reference_fixed_matrices(model, reference_data)
+    reference_mode <- prediction_obj$report(model$last.par.best)
   }
 
   active <- vector("list", n_components)
   point <- vector("list", n_components)
+  unprojected <- character()
   for (component_index in seq_len(n_components)) {
     point[[component_index]] <- lapply(candidate_names, function(name) {
       .sdmTMB_report_component(
@@ -333,12 +386,19 @@
       !is.null(x) && any(abs(x) > sqrt(.Machine$double.eps), na.rm = TRUE)
     }, point[[component_index]])
     if (!is.null(reference_data)) {
-      point[[component_index]] <- point[[component_index]][
-        intersect(names(point[[component_index]]), names(projected_names))
-      ]
+      fixed <- model$last.par.best[parameter_names == fixed_names[component_index]]
+      projectable <- vapply(names(point[[component_index]]), function(term) {
+        !is.null(.sdmTMB_reference_contribution(
+          reference_mode, term, component_index, nrow(reference_data),
+          reference_X[[component_index]], fixed
+        ))
+      }, logical(1))
+      unprojected <- c(unprojected, names(point[[component_index]])[!projectable])
+      point[[component_index]] <- point[[component_index]][projectable]
     }
     active[[component_index]] <- names(point[[component_index]])
   }
+  .sdmTMB_warn_unprojected(unprojected)
   if (!any(lengths(active))) return(NULL)
 
   sd_report <- model$sd_report
@@ -411,9 +471,10 @@
             report, candidate_names[[term]], component_index, nrow(data)
           )
           reference_contribution <- if (is.null(reference_report)) NULL else {
-            .sdmTMB_report_component(
-              reference_report, projected_names[[term]], component_index,
-              nrow(reference_data)
+            .sdmTMB_reference_contribution(
+              reference_report, term, component_index, nrow(reference_data),
+              reference_X[[component_index]],
+              samples[parameter_names == fixed_names[component_index], j]
             )
           }
           term_deltas[[component_index]][[term]][draw_index, ] <-

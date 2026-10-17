@@ -61,6 +61,8 @@ An [influ_diag] object.
 The conditional model is handled with joint fixed-effect covariance.
 Zero-inflation or hurdle occurrence terms are returned as a separate
 component. Random-effect modes are included as a compact aggregate term.
+Only conditional-model random effects are decomposed; zero-inflation or
+hurdle random effects are not, and a warning says so.
 A single random-intercept grouping variable retains its actual stratum
 labels for CDI displays; more complex random structures remain aggregates.
 Random-effect uncertainty uses the joint conditional latent covariance.

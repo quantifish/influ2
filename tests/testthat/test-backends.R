@@ -211,6 +211,45 @@ test_that("glmmTMB separates conditional, zero, and random components", {
   expect_true(all(random_rows$method == "analytic covariance"))
 })
 
+test_that("glmmTMB zero-inflation random effects do not break conditional influence", {
+  skip_if_not_installed("glmmTMB")
+  set.seed(21)
+  data <- expand.grid(
+    replicate = seq_len(6),
+    vessel = factor(seq_len(12)),
+    year = factor(seq_len(4))
+  )
+  data$area <- factor(sample(letters[1:6], nrow(data), TRUE))
+  vessel_effect <- stats::rnorm(12, sd = 0.4)
+  area_zero <- stats::rnorm(6, sd = 0.6)
+  mu <- exp(0.4 + 0.1 * as.numeric(data$year) + vessel_effect[data$vessel])
+  zero <- stats::plogis(-1 + area_zero[data$area])
+  data$catch <- ifelse(stats::rbinom(nrow(data), 1, zero) == 1, 0,
+    stats::rpois(nrow(data), mu))
+  model <- glmmTMB::glmmTMB(
+    catch ~ year + (1 | vessel),
+    ziformula = ~ (1 | area),
+    family = stats::poisson(),
+    data = data
+  )
+  Z <- glmmTMB::getME(model, "Z")
+  expect_gt(length(glmmTMB::getME(model, "b")), ncol(Z))
+
+  expect_warning(
+    diagnostic <- influ(model, focus = "year", uncertainty = "none"),
+    "Zero-inflation/hurdle random effects are not decomposed"
+  )
+  expect_true(any(grepl("not decomposed", diagnostic$metadata$notes)))
+
+  # Random-effect influence uses the conditional modes only.
+  random_rows <- subset(diagnostic$influence,
+    component == "random_effects" & scale == "link")
+  contribution <- as.numeric(Z %*% glmmTMB::ranef(model)$cond$vessel[[1]])
+  expected <- tapply(contribution, data$year, mean) - mean(contribution)
+  expect_equal(random_rows$estimate, unname(as.numeric(expected)),
+    tolerance = 1e-10)
+})
+
 test_that("glmmTMB recognises an intercept-only zero-inflation component", {
   skip_if_not_installed("glmmTMB")
   set.seed(11)
@@ -343,6 +382,50 @@ test_that("sdmTMB exposes fixed and spatiotemporal influence components", {
     ),
     "ggplot"
   )
+})
+
+test_that("sdmTMB reference grids retain smooth and IID contributions", {
+  skip_if_not_installed("sdmTMB")
+  set.seed(41)
+  n <- 400
+  data <- data.frame(
+    year = factor(sample(2001:2005, n, TRUE)),
+    depth = stats::runif(n, 10, 100),
+    group = factor(sample(letters[1:6], n, TRUE))
+  )
+  group_effect <- stats::rnorm(6, sd = 0.4)
+  data$y <- stats::rpois(n, exp(0.3 + 0.012 * data$depth -
+    0.00012 * data$depth^2 + 0.1 * as.integer(data$year) +
+    group_effect[data$group]))
+  # The smooth and IID effects are latent, so the joint-draw path is used
+  # without needing a spatial field.
+  model <- sdmTMB::sdmTMB(y ~ year + s(depth) + (1 | group), data = data,
+    family = stats::poisson(), spatial = "off", silent = TRUE)
+  link_rows <- function(x) {
+    e <- subset(influ_effects(x), scale == "link")
+    e[order(e$component, e$term, e$level), c("component", "term", "level", "estimate")]
+  }
+
+  # The fitted rows as an explicit grid define the same reference
+  # distribution, so every term, including the smooth, must be unchanged.
+  observed <- influ(model, focus = "year", uncertainty = "none")
+  expect_true(all(c("smooths", "iid_random_effects") %in% observed$influence$term))
+  expect_no_warning(gridded <- influ(model, focus = "year",
+    uncertainty = "none", reference_data = data))
+  expect_equal(link_rows(gridded), link_rows(observed),
+    ignore_attr = TRUE, tolerance = 1e-8)
+
+  joint_observed <- influ(model, focus = "year", ndraws = 20, seed = 1)
+  joint_gridded <- influ(model, focus = "year", ndraws = 20, seed = 1,
+    reference_data = data)
+  expect_true(all(c("smooths", "iid_random_effects") %in%
+    joint_gridded$influence$term))
+  expect_equal(link_rows(joint_gridded), link_rows(joint_observed),
+    ignore_attr = TRUE, tolerance = 1e-8)
+
+  expect_null(influ2:::.sdmTMB_reference_contribution(list(), "unknown", 1L, 3L))
+  expect_warning(influ2:::.sdmTMB_warn_unprojected("unknown"),
+    "unavailable for sdmTMB term\\(s\\): unknown")
 })
 
 test_that("sdmTMB delta fixed effects have a joint unconditional mean", {

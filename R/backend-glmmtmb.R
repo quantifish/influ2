@@ -216,12 +216,23 @@
   latent$cov.fit[seq_len(n_random), seq_len(n_random), drop = FALSE]
 }
 
+# getME(model, "b") concatenates the conditional, zero-inflation, and
+# dispersion modes, whereas getME(model, "Z") is the conditional design only.
+.glmmTMB_random_modes <- function(model) {
+  parameters <- model$obj$env$parList(model$fit$par, model$fit$parfull)
+  list(
+    conditional = as.numeric(parameters$b),
+    zero_inflation = as.numeric(parameters$bzi),
+    dispersion = as.numeric(parameters$bdisp)
+  )
+}
+
 .glmmTMB_random_diag <- function(model, data, focus, family_spec, weights,
                                  uncertainty, retain, probs, ndraws, seed,
                                  reference_data = NULL,
                                  reference_weights = NULL) {
   Z <- glmmTMB::getME(model, "Z")
-  b <- as.numeric(glmmTMB::getME(model, "b"))
+  b <- .glmmTMB_random_modes(model)$conditional
   if (!length(b) || !ncol(Z)) return(NULL)
   if (ncol(Z) != length(b)) {
     stop("The glmmTMB random-effect design and mode vector do not conform.", call. = FALSE)
@@ -299,6 +310,8 @@
 #' The conditional model is handled with joint fixed-effect covariance.
 #' Zero-inflation or hurdle occurrence terms are returned as a separate
 #' component. Random-effect modes are included as a compact aggregate term.
+#' Only conditional-model random effects are decomposed; zero-inflation or
+#' hurdle random effects are not, and a warning says so.
 #' A single random-intercept grouping variable retains its actual stratum
 #' labels for CDI displays; more complex random structures remain aggregates.
 #' Random-effect uncertainty uses the joint conditional latent covariance.
@@ -324,7 +337,7 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     stop("Package 'glmmTMB' is required for this model.", call. = FALSE)
   }
   ndraws <- .validate_ndraws(ndraws)
-  data <- .resolve_influ_data(model, data)
+  data <- .resolve_influ_data(model, data, check_supplied = TRUE)
   response_structure <- .glmmTMB_structure(model)
   fam <- stats::family(model)
   overall_spec <- .new_family_spec(
@@ -373,6 +386,14 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     probs, ndraws, seed,
     reference_data, reference_weights
   )
+  zero_random_note <- NULL
+  if (length(.glmmTMB_random_modes(model)$zero_inflation)) {
+    zero_random_note <- paste(
+      "Zero-inflation/hurdle random effects are not decomposed; random-effect",
+      "influence describes the conditional model only."
+    )
+    warning(zero_random_note, call. = FALSE)
+  }
 
   out <- .combine_influ_diags(
     components,
@@ -383,7 +404,8 @@ influ.glmmTMB <- function(model, focus, data = NULL, weights = NULL,
     keep_model = keep_model,
     notes = c(
       "Hurdle and zero-inflation fixed components include joint unconditional-mean influence.",
-      "Random-effect influence includes joint conditional latent uncertainty."
+      "Random-effect influence includes joint conditional latent uncertainty.",
+      zero_random_note
     )
   )
   out$metadata$glmmTMB <- list(

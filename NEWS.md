@@ -1,5 +1,22 @@
 # influ2 1.1.0
 
+* Fixed four ordering and data-alignment bugs:
+  - A character focus variable now uses the same sorted level order as its
+    model coding. Previously its levels followed data row order, changing the
+    trend metric and the year order of `cpue_index()` tables. CDI categories
+    likewise follow declared factor levels and increasing bins or values;
+    binned continuous terms were previously plotted in row order.
+  - glmmTMB models with zero-inflation or hurdle random effects no longer
+    fail. Random-effect influence uses the conditional-model modes, and a
+    warning states that zero-inflation random effects are not decomposed.
+  - sdmTMB diagnostics with `reference_data` now project smooth, IID, and
+    time-varying contributions onto the reference grid instead of silently
+    omitting them. Any term that cannot be projected is named in a warning.
+  - `influ()` for GLM, GAM, and glmmTMB fits stops when the recovered or
+    supplied data no longer reproduce the fitted model frame, for example
+    after the data frame was changed following fitting. Previously CDI
+    composition could be built from the changed values.
+
 * Clarified the distinction between numerical verification and scientific
   calibration in residual diagnostics, and the nominal, conditional meaning
   of implied-effect intervals. Conditioning tables now include lme4.

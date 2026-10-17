@@ -139,7 +139,7 @@ influ.glm <- function(model, focus, data = NULL, weights = NULL,
                       uncertainty = "auto", retain = "summary",
                       probs = c(0.025, 0.975), ndraws = 1000L, seed = NULL,
                       draws_path = NULL, keep_model = FALSE, ...) {
-  data <- .resolve_influ_data(model, data)
+  data <- .resolve_influ_data(model, data, check_supplied = TRUE)
   X <- stats::model.matrix(model)
   term_columns <- .glm_term_columns(model, X)
   prepared <- .prepare_frequentist_matrix(model, X, term_columns)
@@ -194,7 +194,7 @@ influ.gam <- function(model, focus, data = NULL, weights = NULL,
                       uncertainty = "auto", retain = "summary",
                       probs = c(0.025, 0.975), ndraws = 1000L, seed = NULL,
                       draws_path = NULL, keep_model = FALSE, ...) {
-  data <- .resolve_influ_data(model, data)
+  data <- .resolve_influ_data(model, data, check_supplied = TRUE)
   X <- stats::predict(model, newdata = data, type = "lpmatrix")
   term_columns <- .gam_term_columns(model, X)
   prepared <- .prepare_frequentist_matrix(model, X, term_columns)

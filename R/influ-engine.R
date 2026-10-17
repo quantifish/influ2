@@ -1,7 +1,14 @@
-.resolve_influ_data <- function(model, data = NULL) {
-  if (!is.null(data)) return(as.data.frame(data))
-
+# Supplied data are checked only on request: residual and implied-effect
+# callers realign supplied rows themselves and report their own conflicts.
+.resolve_influ_data <- function(model, data = NULL, check_supplied = FALSE) {
+  if (!is.null(data) && !isTRUE(check_supplied)) return(as.data.frame(data))
   model_frame <- tryCatch(stats::model.frame(model), error = function(e) NULL)
+  if (!is.null(data)) {
+    return(.check_influ_data_alignment(
+      model, as.data.frame(data), model_frame, supplied = TRUE
+    ))
+  }
+
   call_data <- tryCatch(stats::getCall(model)$data, error = function(e) NULL)
   if (!is.null(call_data)) {
     formula_environment <- tryCatch(
@@ -15,12 +22,14 @@
     if (is.data.frame(original)) {
       original <- as.data.frame(original)
       if (is.null(model_frame) || nrow(original) == nrow(model_frame)) {
-        return(original)
+        return(.check_influ_data_alignment(model, original, model_frame))
       }
       used_rows <- row.names(model_frame)
       if (length(used_rows) == nrow(model_frame) &&
           all(used_rows %in% row.names(original))) {
-        return(original[used_rows, , drop = FALSE])
+        return(.check_influ_data_alignment(
+          model, original[used_rows, , drop = FALSE], model_frame
+        ))
       }
     }
   }
@@ -35,6 +44,41 @@
     "`data =`.",
     call. = FALSE
   )
+}
+
+# Re-evaluate the fitted model-frame variables on the recovered data. The
+# design matrix comes from the fitted model, but CDI composition and labels
+# come from these data; a data frame changed after fitting (or supplied in a
+# different row order) would otherwise be paired with the old design silently.
+.check_influ_data_alignment <- function(model, data, model_frame,
+                                        supplied = FALSE) {
+  if (is.null(model_frame) || nrow(data) != nrow(model_frame)) return(data)
+  recomputed <- tryCatch({
+    model_terms <- attr(model_frame, "terms")
+    variables <- attr(model_terms, "predvars") %||%
+      attr(model_terms, "variables")
+    if (is.null(variables)) NULL else {
+      eval(variables, data, environment(stats::formula(model)))
+    }
+  }, error = function(e) NULL)
+  # Data that cannot reproduce the frame expressions are left to the
+  # backend's own conformity checks.
+  if (!is.list(recomputed) || length(recomputed) > ncol(model_frame)) return(data)
+
+  stored <- as.list(model_frame)[seq_along(recomputed)]
+  matches <- mapply(.same_observation_column, recomputed, stored,
+    MoreArgs = list(tolerance = 1e-10))
+  if (all(matches)) return(data)
+  changed <- paste(names(model_frame)[seq_along(recomputed)][!matches],
+    collapse = ", ")
+  if (supplied) {
+    stop("The supplied `data` do not reproduce the fitted model frame (",
+      changed, "). Supply the data used to fit the model, in the same row order.",
+      call. = FALSE)
+  }
+  stop("The data named in the model call no longer reproduce the fitted ",
+    "model frame (", changed, "); they may have changed since fitting. ",
+    "Supply the original data with `data =`.", call. = FALSE)
 }
 
 .resolve_influ_weights <- function(data, weights = NULL) {
@@ -74,7 +118,9 @@
   } else if (is.numeric(value) || inherits(value, c("Date", "POSIXt"))) {
     as.character(sort(unique(value)))
   } else {
-    unique(as.character(value))
+    # Match the level order model.matrix() gives a character predictor, so
+    # positional summaries such as the trend metric do not follow row order.
+    levels(factor(as.character(value)))
   }
   list(value = as.character(value), levels = levels)
 }
@@ -331,7 +377,17 @@
       value <- cut(value, breaks = breaks, include.lowest = TRUE, ordered_result = TRUE)
     }
   }
-  as.character(value)
+  # Return a factor in the natural category order (declared factor levels,
+  # increasing bins or values), so CDI axes do not follow data row order.
+  if (is.factor(value)) {
+    return(factor(as.character(value), levels = levels(value)))
+  }
+  if (is.numeric(value) || is.logical(value) ||
+      inherits(value, c("Date", "POSIXt"))) {
+    observed <- sort(unique(value[!is.na(value)]))
+    return(factor(as.character(value), levels = unique(as.character(observed))))
+  }
+  factor(as.character(value))
 }
 
 .term_composition <- function(data, focus, focus_info, term, contribution,
@@ -350,7 +406,7 @@
       focus = focus,
       level = focus_value[i[1]],
       term = term,
-      term_level = value[i[1]],
+      term_level = as.character(value[i[1]]),
       n = length(i),
       weight = sum(weights[i]),
       effect = stats::weighted.mean(contribution[i], weights[i]),
