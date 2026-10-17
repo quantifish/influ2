@@ -53,7 +53,7 @@ test_that("glmmTMB reference random effects align with named vessel modes", {
     diagnostic <- influ(model, focus = "year", data = d, weights = "w",
       reference_data = reference, reference_weights = "w", uncertainty = uncertainty)
     expect_reference_contribution(diagnostic, d, reference, observed, projected,
-      "random_effects", "random_effects")
+      "vessel", "random_effects")
     slope <- glmmTMB::fixef(model)$cond[["x"]]
     expect_reference_contribution(diagnostic, d, reference, slope * d$x,
       slope * reference$x, "x", "conditional")

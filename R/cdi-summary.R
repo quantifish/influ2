@@ -1,7 +1,7 @@
 .cdi_level_groups <- function(data, term, contribution, weights, bins = 20L) {
   value <- .term_level_values(data, term, contribution, bins)
   keep <- weights > 0 & !is.na(value) & is.finite(contribution)
-  split(which(keep), factor(value[keep], levels = unique(value[keep])))
+  split(which(keep), droplevels(value[keep]))
 }
 
 # Keep uncertainty on compact term-level contrasts, including the uncertainty

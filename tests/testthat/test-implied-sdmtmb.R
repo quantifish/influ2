@@ -38,7 +38,9 @@ test_that("sdmTMB positive effects use native lognormal means, offsets, and join
   expect_identical(m$last.par.best, saved)
   expect_identical(.Random.seed, rng)
   p <- predict(m, type = "link", offset = m$offset)
-  sigma <- exp(m$parlist$ln_phi[2])
+  # Native delta models store only positive-component dispersion since 1.2.0;
+  # earlier versions prepend the unused encounter-component placeholder.
+  sigma <- exp(tail(m$parlist$ln_phi, 1L))
   X <- m$tmb_data$X_ij[[2]]
   columns <- which(attr(X, "assign") %in% c(1, 2))
   base <- drop(X[, columns] %*% m$parlist$b_j2[columns]); base <- base - mean(base)
@@ -93,13 +95,14 @@ test_that("sdmTMB spatial and yearly fields remain in component likelihoods", {
   native <- m$tmb_obj$report(mode)
   expect_equal(r$eta_i, native$eta_i)
   y <- d$density; positive <- y > 0
+  sigma <- tail(native$phi, 1L)
   ll <- sum(dbinom(as.numeric(positive), 1, plogis(r$eta_i[, 1]), log = TRUE)) +
-    sum(dlnorm(y[positive], r$eta_i[positive, 2] - r$phi[2]^2 / 2, r$phi[2], log = TRUE))
+    sum(dlnorm(y[positive], r$eta_i[positive, 2] - sigma^2 / 2, sigma, log = TRUE))
   expect_lt(abs(ll + sum(native$jnll_obs)), 1e-7)
   for (j in which(z$table$status == "ok")) {
     cell <- z$table[j, ]
     i <- d$year == cell$level & d$group == cell$group & positive
-    expect_equal(cell$adjustment, mean(log(y[i]) - r$eta_i[i, 2] + r$phi[2]^2 / 2))
+    expect_equal(cell$adjustment, mean(log(y[i]) - r$eta_i[i, 2] + sigma^2 / 2))
   }
   expect_identical(m$tmb_obj$env$last.par.best, mode)
 })
@@ -127,7 +130,7 @@ test_that("combined response shifts and profile limits match independent native 
   f <- implied_sdmtmb_fixture(); m <- f$model; d <- f$data
   z <- implied_effects(m, year = "year", groups = "area", component = "combined")
   p <- predict(m, type = "link", offset = m$offset)
-  sigma <- exp(m$parlist$ln_phi[2])
+  sigma <- exp(tail(m$parlist$ln_phi, 1L))
   for (j in seq_len(nrow(z$table))) {
     cell <- z$table[j, ]
     i <- d$year == cell$level & d$area == cell$group

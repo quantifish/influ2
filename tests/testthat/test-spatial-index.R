@@ -49,7 +49,12 @@ test_that("sdmTMB delta field indices agree with native integration", {
   expect_null(cpue_index(m, reference_data = ref, uncertainty = "none")$draws)
   total <- integrate_index(m, ref, "area", area_units = "km^2", response_units = "kg/km^2", uncertainty = "none")
   nd <- do.call(rbind, lapply(total$table$Year, function(y) transform(ref, year = as.numeric(y))))
-  native <- suppressMessages(sdmTMB::get_index(predict(m, nd, return_tmb_object = TRUE), area = nd$area, bias_correct = FALSE))
+  native <- suppressMessages(if (utils::packageVersion("sdmTMB") >= "1.2.0") {
+    sdmTMB::get_index(m, newdata = nd, area = nd$area, bias_correct = FALSE)
+  } else {
+    sdmTMB::get_index(predict(m, nd, return_tmb_object = TRUE),
+      area = nd$area, bias_correct = FALSE)
+  })
   expect_equal(total$table$Mean, native$est)
   report <- predict(m, nd, return_tmb_report = TRUE)
   for (fields in c("all", "spatial", "spatiotemporal", "none")) {

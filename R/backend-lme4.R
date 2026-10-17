@@ -104,8 +104,8 @@
 
 #' Influence diagnostics for lme4 mixed models
 #'
-#' Fixed terms and an aggregate random-effect contribution use the same joint
-#' native conditional covariance. Variance/dispersion parameters are held fixed;
+#' Fixed terms and random effects use the same joint native conditional
+#' covariance. Variance/dispersion parameters are held fixed;
 #' GLMM covariance is a local Gaussian approximation, not posterior draws.
 #' Singular fits remain flagged in metadata, rather than acquiring invented
 #' variance. Dense joint covariance calculations are limited to 256 MiB.
@@ -114,9 +114,10 @@
 #' on that reference; joint simulations also propagate its coefficient dependence.
 #' Influence reference grids require focus values and existing grouping levels;
 #' response-index reference grids instead omit year and set group effects to zero.
-#' For a single random intercept, aggregate random-effect CDI categories use
-#' the fitted grouping labels. More complex random structures retain the
-#' aggregate contribution categories rather than inventing separate coefficients.
+#' Random effects form one term per grouping factor, named after the factor as
+#' for brms (for example `vessel` or `area:vessel`), in the `random_effects`
+#' component. Terms sharing a factor, such as a random intercept and slope, are
+#' combined, and each term's CDI categories are the factor's fitted levels.
 #'
 #' @inheritParams influ.glm
 #' @param model A fit from [lme4::lmer()], [lme4::glmer()], or [lme4::glmer.nb()].
@@ -126,7 +127,7 @@
 #'   precomputed log-response column. Influence ratios are on the natural scale.
 #'   Response indices use `exp(eta + sigma^2/2)`; sigma and random-effect variance
 #'   parameters are treated as known. Other transformations are not supported.
-#' @return An [influ_diag] with fixed and aggregate random-effect components.
+#' @return An [influ_diag] with fixed and random-effect components.
 #' @export
 influ.merMod <- function(model, focus, data = NULL, weights = NULL,
     reference_data = NULL, reference_weights = NULL, uncertainty = "auto",
@@ -178,7 +179,8 @@ influ.merMod <- function(model, focus, data = NULL, weights = NULL,
   eta <- sum(fixed_reference * beta) + sum(random_reference * b)
   eta_draws <- if (is.null(joint_draws)) NULL else as.numeric(joint_draws %*%
     c(random_reference, fixed_reference))
-  run <- function(design, coefficients, covariance, terms, reference, component, response, columns, term_data = data) {
+  run <- function(design, coefficients, covariance, terms, reference, component,
+                  response, columns, term_data = data, standardise = TRUE) {
     .influ_linear_engine(backend = "lme4", model = model, data = term_data,
       response = response, focus = focus, family_spec = spec, X = design,
       beta = coefficients, vcov = covariance, term_columns = terms,
@@ -188,22 +190,20 @@ influ.merMod <- function(model, focus, data = NULL, weights = NULL,
       reference_X = reference, reference_weights = reference_weights,
       component = component, ndraws = ndraws, seed = seed,
       reference_eta = eta, reference_eta_draws = eta_draws,
-      notes = "Native joint conditional coefficient covariance; variance parameters held fixed.")
+      notes = "Native joint conditional coefficient covariance; variance parameters held fixed.",
+      standardise = standardise)
   }
   fixed_diag <- run(X, beta, if (is.null(V)) NULL else V[fixed, fixed, drop = FALSE],
     terms, if (is.null(reference_data)) NULL else reference_X, "conditional", response, fixed)
   colnames(Z) <- paste0("random_", seq_len(q))
   if (!is.null(reference_Z)) colnames(reference_Z) <- colnames(Z)
-  random_data <- data
-  random_terms <- lme4::getME(model, "cnms")
-  random_group <- NULL
-  if (length(random_terms) == 1L && identical(unname(random_terms[[1L]]), "(Intercept)")) {
-    random_group <- names(random_terms)[1L]
-    random_data$random_effects <- lme4::getME(model, "flist")[[1L]]
-  }
+  # One term per grouping factor; lme4 orders the Z blocks as cnms and Gp.
+  grouped <- .random_group_terms(names(lme4::getME(model, "cnms")),
+    diff(lme4::getME(model, "Gp")), lme4::getME(model, "flist"), data, focus,
+    "lme4")
   random_diag <- run(Z, b, if (is.null(V)) NULL else V[seq_len(q), seq_len(q), drop = FALSE],
-    list(random_effects = seq_len(q)), if (is.null(reference_data)) NULL else reference_Z,
-    "random_effects", NULL, seq_len(q), random_data)
+    grouped$term_columns, if (is.null(reference_data)) NULL else reference_Z,
+    "random_effects", NULL, seq_len(q), grouped$data, standardise = FALSE)
   out <- .combine_influ_diags(list(fixed = fixed_diag, random = random_diag),
     "lme4", spec, focus, model, keep_model,
     notes = "Joint fixed/random conditional covariance; Gaussian approximation; variance parameters not propagated.")
@@ -211,7 +211,8 @@ influ.merMod <- function(model, focus, data = NULL, weights = NULL,
     native_response = info$response,
     singular = info$singular, covariance = "native joint conditional covariance, variance parameters fixed")
   out$metadata$lme4$reference_predictor <- eta
-  out$metadata$lme4$random_cdi_group <- random_group
+  out$metadata$random_effect_terms <- .random_terms_table(grouped$identified,
+    "random_effects")
   if (retain == "disk") {
     if (is.null(draws_path)) stop("`draws_path` is required for disk retention.", call. = FALSE)
     saveRDS(out$draws, draws_path, compress = FALSE)

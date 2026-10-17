@@ -55,20 +55,21 @@ test_that("lme4 native predictions and joint covariance underpin shared influenc
     expect_equal(x$metadata$lme4$reference_predictor, mean(native_eta))
     Z <- lme4::getME(m, "Z")
     B <- .term_contrast(Z, .focus_info(f$data, "year"), rep(1, nrow(f$data)))
-    rows <- subset(x$influence, term == "random_effects" & scale == "link")
+    # The only grouping factor, month, holds every random-effect column
+    # (intercept and, for the slope fixture, depth slope).
+    rows <- subset(x$influence, term == "month" & scale == "link")
     expect_equal(rows$estimate, as.numeric(B %*% lme4::getME(m, "b")))
     expect_equal(rows$std_error, sqrt(pmax(0, rowSums((B %*% V[seq_len(q), seq_len(q), drop = FALSE]) * B))))
     if (kind %in% c("binomial", "trials")) {
-      natural <- subset(x$influence, term == "random_effects" & scale == "difference")
+      natural <- subset(x$influence, term == "month" & scale == "difference")
       expect_equal(natural$estimate, plogis(mean(native_eta) + rows$estimate) - plogis(mean(native_eta)))
     }
-    expect_s3_class(plot(x, type = "cdi", term = "random_effects"), "patchwork")
-    if (kind != "slope") {
-      random_coefficients <- subset(x$coefficients, term == "random_effects")
-      expect_setequal(random_coefficients$level, levels(f$data$month))
-      expect_setequal(subset(x$composition, term == "random_effects")$term_level, levels(f$data$month))
-      expect_identical(x$metadata$lme4$random_cdi_group, "month")
-    }
+    expect_s3_class(plot(x, type = "cdi", term = "month", component = "random_effects"), "patchwork")
+    random_coefficients <- subset(x$coefficients, term == "month")
+    expect_setequal(random_coefficients$level, levels(f$data$month))
+    expect_setequal(subset(x$composition, term == "month")$term_level, levels(f$data$month))
+    expect_identical(x$metadata$random_effect_terms,
+      data.frame(term = "month", component = "random_effects", identified = TRUE))
     expect_s3_class(plot(x, type = "cdi", term = "depth"), "patchwork")
     expect_s3_class(plot(x, type = "components"), "ggplot")
     expect_s3_class(plot_compare(list(A = x, B = x)), "ggplot")

@@ -54,8 +54,8 @@ stopifnot(full_model$fit$convergence == 0, full_model$sdr$pdHess,
 
 Both models have a monthly random intercept. We calculate each diagnostic
 once; changing the display does not refit models or recalculate uncertainty.
-In these diagnostics, the monthly random intercept is stored under the term
-`"random_effects"`; it is the only random-effect grouping in either model.
+Random effects are stored as one term per grouping factor, named after the
+factor, so the monthly random intercept is the term `"month"`.
 
 ```{r comparison-lobster-diagnostics, eval=has_glmmTMB}
 full_diagnostic <- influ(full_model, focus = "year")
@@ -72,13 +72,13 @@ Months are matched by their labels, rather than their positions in a table.
 Bubble area uses one common proportion scale for both runs.
 
 ```{r comparison-cdi-union, eval=has_glmmTMB, fig.height=7, fig.cap="Overlaid monthly coefficient-distribution-influence displays for the full 2000--2017 lobster model and a recent-period model fitted to 2007--2017 with 2012 omitted. Model colours identify two coefficient sets, dodged distribution bubbles, and influence lines within the same panels. Coefficients and influence retain each model's own reference distribution; they have not been re-centred to a common reference. Bubble area represents the within-year proportion of that model's records, using a shared size scale. Missing years remain blank, without an influence line across the internal gap.", fig.alt="One CDI display with two coloured monthly-effect estimates, two dodged bubble sets where both models have records, and two annual influence lines. The recent run starts in 2007 and has a gap in 2012."}
-plot_cdi(diagnostics, term = "random_effects", years = "union")
+plot_cdi(diagnostics, term = "month", years = "union")
 ```
 
 The model labels are taken from the named list. A single diagnostic is also
-accepted, so `plot_cdi(full_diagnostic, term = "random_effects")` keeps the ordinary
+accepted, so `plot_cdi(full_diagnostic, term = "month")` keeps the ordinary
 single-run display. The existing `plot(full_diagnostic, type = "cdi",
-term = "random_effects")` remains available.
+term = "month")` remains available.
 
 `years = "overlap"` restricts the view to years available in every run. It is
 a **display filter**, not a refit or a new calculation of the reference
@@ -86,7 +86,7 @@ distribution. The omitted 2012 still occupies its calendar position, so the
 remaining years are not presented as an uninterrupted sequence.
 
 ```{r comparison-cdi-overlap, eval=has_glmmTMB, fig.height=7, fig.cap="The same stored monthly CDI results restricted to years shared by both model runs. Coefficient estimates and reference distributions are unchanged from the union display. The missing 2012 is not interpolated or treated as zero; the common year axis preserves that gap.", fig.alt="Overlaid CDI panels restricted to the common recent years, with the 2012 gap retained and the same model-specific coefficient estimates as the full-range display."}
-plot_cdi(diagnostics, term = "random_effects", years = "overlap")
+plot_cdi(diagnostics, term = "month", years = "overlap")
 ```
 
 ### What is comparable?

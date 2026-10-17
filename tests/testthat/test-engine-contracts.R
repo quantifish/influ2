@@ -29,8 +29,9 @@ test_that("data recovery and focus ordering have explicit fallback contracts", {
   dates <- as.Date(c("2020-02-01", "2020-01-01", "2020-02-01"))
   expect_identical(influ2:::.focus_info(data.frame(year = dates), "year")$levels,
                    c("2020-01-01", "2020-02-01"))
+  # Character levels follow their model coding, not data row order.
   d$year <- c("B", "A", "B")
-  expect_identical(influ2:::.focus_info(d, "year")$levels, c("B", "A"))
+  expect_identical(influ2:::.focus_info(d, "year")$levels, c("A", "B"))
   d$year <- factor(d$year, levels = c("A", "B", "unused"))
   expect_identical(influ2:::.focus_info(d, "year")$levels, c("A", "B"))
   expect_error(influ2:::.focus_info(d[FALSE, ], "year"), "no observations")

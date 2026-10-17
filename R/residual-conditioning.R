@@ -32,7 +32,12 @@
       length(e$integrate)) {
     stop("This conditioning option needs a complete, unprofiled native TMB fit.", call. = FALSE)
   }
-  td <- e$data
+  rtmb <- backend == "sdmTMB" && (identical(model$backend, "rtmb") ||
+    identical(attr(original, "sdmTMB_backend"), "rtmb"))
+  # sdmTMB 1.2 can use an RTMB objective. Its environment stores the
+  # objective closure, not the native input list; the retained tmb_data are
+  # the inputs used by sdmTMB's own simulate() in that case.
+  td <- if (rtmb) model$tmb_data else e$data
   # The native environment contains TMB-sanitised doubles. Preserve those
   # types and its validation flag (some backends include native-only data).
   if (backend == "sdmTMB") {
@@ -56,9 +61,18 @@
     }
   }
   fixed <- e$lfixed()
-  obj <- TMB::MakeADFun(data = td,
-    parameters = e$parList(x = mode[fixed], par = mode), map = e$map,
-    random = unique(names(mode)[e$random]), DLL = e$DLL, silent = TRUE)
+  parameters <- e$parList(x = mode[fixed], par = mode)
+  if (rtmb) {
+    # The native factory validates and prepares all RTMB inputs, including
+    # component-specific simulation controls. Do not send an RTMB closure
+    # to the compiled TMB factory, or alter the fitted objective in place.
+    obj <- .sdmTMB_make_object(model, data = td, parameters = parameters,
+      map = model$tmb_map, random = unique(names(mode)[e$random]),
+      profile = NULL, silent = TRUE)
+  } else {
+    obj <- TMB::MakeADFun(data = td, parameters = parameters, map = e$map,
+      random = unique(names(mode)[e$random]), DLL = e$DLL, silent = TRUE)
+  }
   if (!identical(names(obj$env$last.par), names(mode)) ||
       !identical(obj$env$lrandom(), e$lrandom())) {
     stop("Native conditioning parameter order differs from the fitted model.", call. = FALSE)

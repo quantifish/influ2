@@ -70,6 +70,14 @@
     x <- as.character(x)
     y <- as.character(y)
   }
+  # Subsetting a fitted model frame can strip a numeric basis's S3 class
+  # (for example poly), although its values and dimensions are unchanged.
+  # Compare those array values without dispatching class-specific all.equal
+  # methods. Dimensions were checked above; no values or tolerance change.
+  if (is.numeric(x) && is.numeric(y) && !is.null(dim(x))) {
+    x <- as.numeric(x)
+    y <- as.numeric(y)
+  }
   isTRUE(all.equal(x, y, check.attributes = FALSE, tolerance = tolerance))
 }
 
