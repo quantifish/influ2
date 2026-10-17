@@ -21,8 +21,12 @@
       stop("The ", backend, " grouping data do not match the fitted random-effect rows.",
         call. = FALSE)
     }
-    # The focus column keeps its own type so all components share its levels.
-    if (!identical(group, focus)) random_data[[group]] <- values
+    # Every grouping variable is categorical, even when it is also a numeric
+    # focus. Preserve the focus's declared/numeric order so the fixed and
+    # random components still align, without binning its fitted group IDs.
+    random_data[[group]] <- if (identical(group, focus)) {
+      factor(as.character(values), levels = .focus_info(data, focus)$levels)
+    } else values
     identified[[group]] <- TRUE
   }
   list(term_columns = term_columns, data = random_data, identified = identified)

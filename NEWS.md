@@ -1,5 +1,11 @@
 # influ2 1.1.0
 
+* Fixed three regressions in per-term diagnostics: fitted polynomial matrices
+  remain valid after subsetting without bypassing changed-data checks;
+  numeric focus variables used as random groups retain every fitted grouping
+  level rather than being binned; and empty shrinkage-smooth basis selectors
+  remain empty, preserving individual sdmTMB smooths and domain decomposition.
+
 * Compatible with sdmTMB 1.2.0 while retaining 1.1.0 support. Private native
   objectives preserve the fitted TMB or RTMB backend, simulation conditioning,
   maps, and joint parameter order. Prediction no longer uses the deprecated

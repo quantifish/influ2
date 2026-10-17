@@ -385,8 +385,10 @@
   if (is.null(parameters$bs) || is.null(Xs)) return(NULL)
   bs <- as.matrix(parameters$bs)
   b_smooth <- if (is.null(parameters$b_smooth)) NULL else as.matrix(parameters$b_smooth)
-  columns <- columns %||% seq_len(ncol(Xs))
-  blocks <- blocks %||% seq_along(Zs)
+  # NULL selects the combined smooth. Empty selectors are meaningful for
+  # shrinkage bases with no unpenalised columns (or no penalised blocks).
+  if (is.null(columns)) columns <- seq_len(ncol(Xs))
+  if (is.null(blocks)) blocks <- seq_along(Zs)
   if (ncol(bs) < component_index || nrow(bs) != ncol(Xs) ||
       length(Zs) != length(starts) || any(columns > ncol(Xs)) ||
       any(blocks > length(Zs)) ||
