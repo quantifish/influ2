@@ -240,11 +240,14 @@ plot_cdi <- function(fits, labels = NULL, year = NULL, term = NULL,
 }
 
 .cdi_strata_signature <- function(x, term) {
-  if (term == "random_effects") {
-    group <- x$metadata$lme4$random_cdi_group %||%
-      x$metadata$glmmTMB$random_cdi_group
+  if (term %in% c("random_effects", "zi_random_effects")) {
+    group <- if (term == "zi_random_effects") {
+      x$metadata$glmmTMB$zi_random_cdi_group
+    } else {
+      x$metadata$lme4$random_cdi_group %||% x$metadata$glmmTMB$random_cdi_group
+    }
     if (!is.character(group) || length(group) != 1L || is.na(group) || !nzchar(group)) {
-      stop("Aggregate random_effects CDI cannot be overlaid without verified single random-intercept group and level IDs; recalculate supported diagnostics or select an identified term.", call. = FALSE)
+      stop("Aggregate ", term, " CDI cannot be overlaid without verified single random-intercept group and level IDs; recalculate supported diagnostics or select an identified term.", call. = FALSE)
     }
     return(list(kind = "random_intercept", group = group))
   }

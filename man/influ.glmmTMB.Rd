@@ -60,12 +60,15 @@ An [influ_diag] object.
 \description{
 The conditional model is handled with joint fixed-effect covariance.
 Zero-inflation or hurdle occurrence terms are returned as a separate
-component. Random-effect modes are included as a compact aggregate term.
-Only conditional-model random effects are decomposed; zero-inflation or
-hurdle random effects are not, and a warning says so.
+component. Random-effect modes are included as a compact aggregate term,
+`random_effects`; zero-inflation or hurdle random effects form a separate
+`zi_random_effects` term on the probability scale.
 A single random-intercept grouping variable retains its actual stratum
 labels for CDI displays; more complex random structures remain aggregates.
-Random-effect uncertainty uses the joint conditional latent covariance.
+Random-effect uncertainty uses the joint conditional latent covariance; the
+zero-inflation block comes from the inverse joint precision. Natural-scale
+differences for nonlinear links are evaluated at the full fixed-plus-random
+reference predictor of each component, as for lme4.
 Lognormal models require a log link for their arithmetic mean. Dispersion
 may vary, but its effects are not decomposed: the diagnostics describe
 mean-model terms. Unlike brms, glmmTMB does not parameterise log-location.

@@ -211,10 +211,9 @@
     )
     prediction$obj$report(model$last.par.best)
   }
-  reference_X <- if (is.null(reference_data)) NULL else {
-    .sdmTMB_reference_fixed_matrices(model, reference_data)
+  smooth <- if (is.null(reference_data)) NULL else {
+    .sdmTMB_reference_smooth(model, reference_data, report)
   }
-  fixed_name <- if (component_index == 1L) "b_j" else "b_j2"
 
   pieces <- list()
   unprojected <- character()
@@ -230,7 +229,7 @@
     if (!is.null(reference_report)) {
       reference_contribution <- .sdmTMB_reference_contribution(
         reference_report, term, component_index, nrow(reference_data),
-        reference_X[[component_index]], model$parlist[[fixed_name]]
+        smooth, .sdmTMB_smooth_parameters(model)
       )
       if (is.null(reference_contribution)) {
         unprojected <- c(unprojected, term)
@@ -295,29 +294,89 @@
   time_varying_effects = "proj_rw_i"
 )
 
-.sdmTMB_reference_fixed_matrices <- function(model, reference_data) {
-  stats::predict(
-    model, newdata = reference_data, re_form = NA, return_tmb_data = TRUE
-  )$proj_X_ij
+# Smooth contribution from sdmTMB's own bases: the unpenalised part Xs %*% bs
+# plus each penalised block Zs[[k]] %*% b_smooth. Delta components share the
+# bases and each uses its own coefficient column.
+.sdmTMB_smooth_contribution <- function(Xs, Zs, starts, parameters,
+                                        component_index) {
+  bs <- parameters$bs
+  b_smooth <- parameters$b_smooth
+  if (is.null(Xs) || is.null(bs) || ncol(bs) < component_index ||
+      nrow(bs) != ncol(Xs) || length(Zs) != length(starts) ||
+      (length(Zs) && (is.null(b_smooth) || ncol(b_smooth) < component_index))) {
+    return(NULL)
+  }
+  out <- if (ncol(Xs)) {
+    as.numeric(Xs %*% bs[, component_index])
+  } else {
+    numeric(nrow(Xs))
+  }
+  for (k in seq_along(Zs)) {
+    index <- starts[k] + seq_len(ncol(Zs[[k]]))
+    if (max(index) > nrow(b_smooth)) return(NULL)
+    out <- out + as.numeric(Zs[[k]] %*% b_smooth[index, component_index])
+  }
+  out
 }
 
-# Reference-grid contribution of one latent or smooth term. sdmTMB reports no
-# projected smooth: proj_fe is the parametric part plus the smooth, IID, and
-# time-varying contributions, so the smooth is what remains after removing
-# the other three. On the fitted rows this reproduces eta_smooth_i.
-.sdmTMB_reference_contribution <- function(report, term, component_index,
-                                           n_reference, reference_X = NULL,
-                                           fixed = NULL) {
-  if (identical(term, "smooths")) {
-    pieces <- lapply(c("proj_fe", "proj_iid_re_i", "proj_rw_i"), function(name) {
-      .sdmTMB_report_component(report, name, component_index, n_reference)
-    })
-    if (any(vapply(pieces, is.null, logical(1))) || is.null(reference_X) ||
-        is.null(fixed) || ncol(reference_X) != length(fixed)) {
+# Smooth coefficients as matrices with one column per component, from the
+# fitted parameter list or, for a joint draw, the flat parameter vector.
+.sdmTMB_smooth_parameters <- function(model, values = NULL) {
+  shapes <- model$parlist[c("bs", "b_smooth")]
+  if (length(shapes) != 2L || any(vapply(shapes, is.null, logical(1)))) {
+    return(NULL)
+  }
+  shapes <- lapply(shapes, as.matrix)
+  if (is.null(values)) return(shapes)
+  value_names <- names(model$last.par.best)
+  out <- lapply(c(bs = "bs", b_smooth = "b_smooth"), function(name) {
+    x <- values[value_names == name]
+    if (length(x) != length(shapes[[name]])) return(NULL)
+    matrix(x, nrow(shapes[[name]]), ncol(shapes[[name]]))
+  })
+  if (any(vapply(out, is.null, logical(1)))) NULL else out
+}
+
+# Reference-grid smooth bases. The same calculation on the fitted rows must
+# first reproduce sdmTMB's reported eta_smooth_i, so a changed native layout
+# makes the smooth unprojectable (with a warning) rather than silently wrong.
+.sdmTMB_reference_smooth <- function(model, reference_data, report) {
+  fitted <- report$eta_smooth_i
+  if (is.null(fitted) || !length(fitted) ||
+      !any(abs(fitted) > sqrt(.Machine$double.eps), na.rm = TRUE)) {
+    return(NULL)
+  }
+  fitted <- as.matrix(fitted)
+  native <- model$tmb_data
+  parameters <- .sdmTMB_smooth_parameters(model)
+  for (component_index in seq_len(ncol(fitted))) {
+    direct <- .sdmTMB_smooth_contribution(native$Xs, native$Zs,
+      native$b_smooth_start, parameters, component_index)
+    target <- fitted[, component_index]
+    if (is.null(direct) || length(direct) != length(target) ||
+        max(abs(direct - target)) > 1e-8 * (1 + max(abs(target)))) {
       return(NULL)
     }
-    return(pieces[[1L]] - as.numeric(reference_X %*% fixed) -
-      pieces[[2L]] - pieces[[3L]])
+  }
+  projection <- stats::predict(
+    model, newdata = reference_data, re_form = NA, return_tmb_data = TRUE
+  )
+  list(Xs = projection$proj_Xs, Zs = projection$proj_Zs,
+    starts = native$b_smooth_start)
+}
+
+# Reference-grid contribution of one latent or smooth term. Fields, IID, and
+# time-varying terms are reported by sdmTMB's prediction object; smooths are
+# calculated from their validated reference bases.
+.sdmTMB_reference_contribution <- function(report, term, component_index,
+                                           n_reference, smooth = NULL,
+                                           smooth_parameters = NULL) {
+  if (identical(term, "smooths")) {
+    if (is.null(smooth) || is.null(smooth_parameters)) return(NULL)
+    out <- .sdmTMB_smooth_contribution(smooth$Xs, smooth$Zs, smooth$starts,
+      smooth_parameters, component_index)
+    if (is.null(out) || length(out) != n_reference) return(NULL)
+    return(out)
   }
   if (!term %in% names(.sdmTMB_projected_names)) return(NULL)
   .sdmTMB_report_component(
@@ -359,17 +418,15 @@
   } else {
     .resolve_influ_weights(reference_data, reference_weights)
   }
-  parameter_names <- names(model$last.par.best)
-  fixed_names <- c("b_j", "b_j2")
   prediction_obj <- NULL
-  reference_X <- NULL
+  smooth <- NULL
   if (!is.null(reference_data)) {
     prediction_obj <- stats::predict(
       model,
       newdata = reference_data,
       return_tmb_object = TRUE
     )$obj
-    reference_X <- .sdmTMB_reference_fixed_matrices(model, reference_data)
+    smooth <- .sdmTMB_reference_smooth(model, reference_data, report_mode)
     reference_mode <- prediction_obj$report(model$last.par.best)
   }
 
@@ -386,11 +443,14 @@
       !is.null(x) && any(abs(x) > sqrt(.Machine$double.eps), na.rm = TRUE)
     }, point[[component_index]])
     if (!is.null(reference_data)) {
-      fixed <- model$last.par.best[parameter_names == fixed_names[component_index]]
+      # Draws use flat-vector smooth coefficients, so check those at the mode.
+      mode_smooth <- if (is.null(smooth)) NULL else {
+        .sdmTMB_smooth_parameters(model, model$last.par.best)
+      }
       projectable <- vapply(names(point[[component_index]]), function(term) {
         !is.null(.sdmTMB_reference_contribution(
           reference_mode, term, component_index, nrow(reference_data),
-          reference_X[[component_index]], fixed
+          smooth, mode_smooth
         ))
       }, logical(1))
       unprojected <- c(unprojected, names(point[[component_index]])[!projectable])
@@ -448,6 +508,9 @@
       reference_report <- if (is.null(prediction_obj)) NULL else {
         prediction_obj$report(samples[, j])
       }
+      draw_smooth <- if (is.null(smooth)) NULL else {
+        .sdmTMB_smooth_parameters(model, samples[, j])
+      }
       for (component_index in seq_len(n_components)) {
         eta <- .sdmTMB_report_component(
           report, "eta_i", component_index, nrow(data)
@@ -473,8 +536,7 @@
           reference_contribution <- if (is.null(reference_report)) NULL else {
             .sdmTMB_reference_contribution(
               reference_report, term, component_index, nrow(reference_data),
-              reference_X[[component_index]],
-              samples[parameter_names == fixed_names[component_index], j]
+              smooth, draw_smooth
             )
           }
           term_deltas[[component_index]][[term]][draw_index, ] <-

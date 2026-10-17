@@ -636,7 +636,8 @@
                                  ndraws = 1000L, seed = NULL,
                                  draws_path = NULL, keep_model = FALSE,
                                  notes = character(), reference_eta = NULL,
-                                 reference_eta_draws = NULL) {
+                                 reference_eta_draws = NULL,
+                                 reference_eta_offset = 0) {
   uncertainty <- match.arg(
     uncertainty,
     c("auto", "none", "analytic", "posterior", "simulation")
@@ -695,9 +696,12 @@
   } else {
     .weighted_col_mean(X, weights)
   }
-  eta_reference <- sum(reference_design * beta)
+  # The offset is the rest of the model's reference predictor (for example
+  # random effects when X is fixed), held at its estimate. Natural-scale
+  # differences for nonlinear links are evaluated at the full predictor.
+  eta_reference <- sum(reference_design * beta) + reference_eta_offset
   eta_reference_draws <- if (!is.null(beta_draws)) {
-    as.numeric(beta_draws %*% reference_design)
+    as.numeric(beta_draws %*% reference_design) + reference_eta_offset
   } else {
     NULL
   }

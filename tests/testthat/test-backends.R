@@ -211,43 +211,118 @@ test_that("glmmTMB separates conditional, zero, and random components", {
   expect_true(all(random_rows$method == "analytic covariance"))
 })
 
-test_that("glmmTMB zero-inflation random effects do not break conditional influence", {
+test_that("glmmTMB zero-inflation random effects form their own term", {
   skip_if_not_installed("glmmTMB")
   set.seed(21)
   data <- expand.grid(
-    replicate = seq_len(6),
+    replicate = seq_len(15),
     vessel = factor(seq_len(12)),
     year = factor(seq_len(4))
   )
   data$area <- factor(sample(letters[1:6], nrow(data), TRUE))
-  vessel_effect <- stats::rnorm(12, sd = 0.4)
-  area_zero <- stats::rnorm(6, sd = 0.6)
+  vessel_effect <- stats::rnorm(12, sd = 0.9)
+  area_zero <- stats::rnorm(6, sd = 0.8)
   mu <- exp(0.4 + 0.1 * as.numeric(data$year) + vessel_effect[data$vessel])
   zero <- stats::plogis(-1 + area_zero[data$area])
   data$catch <- ifelse(stats::rbinom(nrow(data), 1, zero) == 1, 0,
     stats::rpois(nrow(data), mu))
   model <- glmmTMB::glmmTMB(
     catch ~ year + (1 | vessel),
-    ziformula = ~ (1 | area),
+    ziformula = ~ year + (1 | area),
     family = stats::poisson(),
     data = data
   )
   Z <- glmmTMB::getME(model, "Z")
+  Zzi <- glmmTMB::getME(model, "Zzi")
+  # getME(model, "b") concatenates both blocks, which used to break influ().
   expect_gt(length(glmmTMB::getME(model, "b")), ncol(Z))
 
-  expect_warning(
-    diagnostic <- influ(model, focus = "year", uncertainty = "none"),
-    "Zero-inflation/hurdle random effects are not decomposed"
-  )
-  expect_true(any(grepl("not decomposed", diagnostic$metadata$notes)))
+  expect_no_warning(diagnostic <- influ(model, focus = "year"))
+  link_rows <- function(part) {
+    rows <- diagnostic$influence
+    rows[rows$component == part & rows$scale == "link", , drop = FALSE]
+  }
+  contrast <- function(contribution) {
+    unname(as.numeric(tapply(contribution, data$year, mean) - mean(contribution)))
+  }
 
-  # Random-effect influence uses the conditional modes only.
-  random_rows <- subset(diagnostic$influence,
-    component == "random_effects" & scale == "link")
-  contribution <- as.numeric(Z %*% glmmTMB::ranef(model)$cond$vessel[[1]])
-  expected <- tapply(contribution, data$year, mean) - mean(contribution)
-  expect_equal(random_rows$estimate, unname(as.numeric(expected)),
+  # Each random-effect term uses its own block of modes.
+  expect_equal(link_rows("random_effects")$estimate,
+    contrast(as.numeric(Z %*% glmmTMB::ranef(model)$cond$vessel[[1]])),
     tolerance = 1e-10)
+  zero_link <- link_rows("zero_probability_random_effects")
+  expect_identical(unique(zero_link$term), "zi_random_effects")
+  expect_equal(zero_link$estimate,
+    contrast(as.numeric(Zzi %*% glmmTMB::ranef(model)$zi$area[[1]])),
+    tolerance = 1e-10)
+  expect_true(all(is.finite(zero_link$std_error) & zero_link$std_error > 0))
+
+  # Probability differences are evaluated at the full zero-inflation predictor.
+  eta <- diagnostic$metadata$glmmTMB$reference_predictor[["zero_inflation"]]
+  zero_difference <- subset(diagnostic$influence,
+    term == "zi_random_effects" & scale == "difference")
+  expect_equal(zero_difference$estimate,
+    stats::plogis(eta + zero_link$estimate) - stats::plogis(eta),
+    tolerance = 1e-10)
+  expect_identical(diagnostic$metadata$glmmTMB$zi_random_cdi_group, "area")
+  expect_s3_class(plot(diagnostic, type = "cdi", term = "zi_random_effects"),
+    "patchwork")
+})
+
+test_that("glmmTMB covariance for zero-inflation random effects matches latent covariance", {
+  skip_if_not_installed("glmmTMB")
+  set.seed(22)
+  data <- expand.grid(replicate = seq_len(15), vessel = factor(seq_len(10)),
+    year = factor(seq_len(3)))
+  data$area <- factor(sample(letters[1:5], nrow(data), TRUE))
+  mu <- exp(0.5 + stats::rnorm(10, sd = 0.9)[data$vessel])
+  zero <- stats::plogis(-1 + stats::rnorm(5, sd = 0.8)[data$area])
+  data$catch <- ifelse(stats::rbinom(nrow(data), 1, zero) == 1, 0,
+    stats::rpois(nrow(data), mu))
+  model <- glmmTMB::glmmTMB(catch ~ year + (1 | vessel),
+    ziformula = ~ (1 | area), family = stats::poisson(), data = data)
+
+  # The joint-precision route used for the zero-inflation block reproduces
+  # glmmTMB's own latent covariance on the conditional block.
+  report <- TMB::sdreport(model$obj, par.fixed = model$fit$par,
+    getJointPrecision = TRUE)
+  index <- which(rownames(report$jointPrecision) == "b")
+  joint <- as.matrix(solve(report$jointPrecision))[index, index]
+  latent <- influ2:::.glmmTMB_random_covariance(model, length(index))
+  expect_gt(max(abs(latent)), 1e-3)
+  expect_equal(joint, latent, tolerance = 1e-8, ignore_attr = TRUE)
+  zero_covariance <- influ2:::.glmmTMB_zi_random_covariance(model)
+  expect_equal(dim(zero_covariance), c(5L, 5L))
+  expect_true(all(eigen(zero_covariance, only.values = TRUE)$values > 0))
+})
+
+test_that("glmmTMB probability-scale influence uses the full reference predictor", {
+  skip_if_not_installed("glmmTMB")
+  skip_if_not_installed("lme4")
+  set.seed(5)
+  data <- expand.grid(replicate = seq_len(20), vessel = factor(seq_len(15)),
+    year = factor(seq_len(5)))
+  late <- as.numeric(data$vessel) > 7
+  sampled <- stats::runif(nrow(data)) < stats::plogis(-1 +
+    0.4 * as.numeric(data$year) * ifelse(late, 1, -1))
+  data <- data[sampled, ]
+  data$y <- stats::rbinom(nrow(data), 1, stats::plogis(-2 +
+    0.2 * as.numeric(data$year) + stats::rnorm(15)[data$vessel]))
+  tmb <- influ(glmmTMB::glmmTMB(y ~ year + (1 | vessel),
+    family = stats::binomial(), data = data), focus = "year", uncertainty = "none")
+  lme4_fit <- influ(lme4::glmer(y ~ year + (1 | vessel),
+    family = stats::binomial(), data = data), focus = "year", uncertainty = "none")
+  probability <- function(x, part) {
+    rows <- x$influence
+    rows$estimate[rows$component == part & rows$scale == "difference"]
+  }
+
+  # Before, glmmTMB used a random-effects-only baseline (p near 0.5) and
+  # overstated these probability differences by about a third.
+  expect_equal(probability(tmb, "random_effects"),
+    probability(lme4_fit, "random_effects"), tolerance = 1e-3)
+  expect_equal(probability(tmb, "conditional"),
+    probability(lme4_fit, "conditional"), tolerance = 1e-3)
 })
 
 test_that("glmmTMB recognises an intercept-only zero-inflation component", {
@@ -423,9 +498,55 @@ test_that("sdmTMB reference grids retain smooth and IID contributions", {
   expect_equal(link_rows(joint_gridded), link_rows(joint_observed),
     ignore_attr = TRUE, tolerance = 1e-8)
 
+  # On a grid where only depth varies, the projected smooth must account for
+  # all variation in sdmTMB's own projected predictor.
+  grid <- data.frame(depth = seq(12, 98, length.out = 30),
+    year = factor("2003", levels = levels(data$year)),
+    group = factor("c", levels = levels(data$group)))
+  report <- model$tmb_obj$report(model$last.par.best)
+  smooth <- influ2:::.sdmTMB_reference_smooth(model, grid, report)
+  projected <- influ2:::.sdmTMB_reference_contribution(NULL, "smooths", 1L,
+    nrow(grid), smooth, influ2:::.sdmTMB_smooth_parameters(model))
+  predictor <- stats::predict(model, newdata = grid, return_tmb_object = TRUE)
+  remainder <- as.numeric(predictor$obj$report(model$last.par.best)$proj_eta) - projected
+  expect_gt(stats::sd(projected), 0.01)
+  expect_lt(diff(range(remainder)), 1e-10)
+
+  # A native layout that no longer reproduces eta_smooth_i is not used.
+  broken <- model
+  broken$tmb_data$b_smooth_start <- broken$tmb_data$b_smooth_start + 1L
+  expect_null(influ2:::.sdmTMB_reference_smooth(broken, grid, report))
+
   expect_null(influ2:::.sdmTMB_reference_contribution(list(), "unknown", 1L, 3L))
   expect_warning(influ2:::.sdmTMB_warn_unprojected("unknown"),
     "unavailable for sdmTMB term\\(s\\): unknown")
+})
+
+test_that("sdmTMB delta reference grids retain each component's smooth", {
+  skip_if_not_installed("sdmTMB")
+  set.seed(43)
+  n <- 400
+  data <- data.frame(
+    year = factor(sample(2001:2005, n, TRUE)),
+    depth = stats::runif(n, 10, 100)
+  )
+  encounter <- stats::plogis(-0.5 + 0.02 * (data$depth - 50))
+  data$density <- ifelse(stats::rbinom(n, 1, encounter) == 1,
+    stats::rgamma(n, 2, 2 / exp(0.3 + 0.0002 * (data$depth - 40)^2)), 0)
+  model <- sdmTMB::sdmTMB(density ~ year + s(depth), data = data,
+    family = sdmTMB::delta_gamma(), spatial = "off", silent = TRUE)
+  rows <- function(x) {
+    e <- subset(influ_effects(x), term == "smooths" & scale == "link")
+    e[order(e$component, e$level), c("component", "level", "estimate")]
+  }
+
+  observed <- influ(model, focus = "year", uncertainty = "none")
+  expect_no_warning(gridded <- influ(model, focus = "year",
+    uncertainty = "none", reference_data = data))
+  expect_setequal(unique(rows(gridded)$component),
+    c("occurrence:smooths", "positive:smooths"))
+  expect_equal(rows(gridded), rows(observed), ignore_attr = TRUE,
+    tolerance = 1e-8)
 })
 
 test_that("sdmTMB delta fixed effects have a joint unconditional mean", {
