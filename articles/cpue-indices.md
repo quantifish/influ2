@@ -45,13 +45,18 @@ model below includes a monthly random intercept and a negative-binomial
 observation distribution. No simulation of new catches is needed for its
 index.
 
+The documentation-only `example_model()` wrapper reuses the identical
+fit from other articles. For a standalone analysis, use the native
+`glmmTMB()` call inside it directly; the data, model, and uncertainty
+calculations are unchanged.
+
 ``` r
 
 data(lobsters_per_pot)
-lobster_model <- glmmTMB::glmmTMB(
+lobster_model <- example_model(lobsters_per_pot, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
-  family = glmmTMB::nbinom2(), data = lobsters_per_pot
-)
+  family = glmmTMB::nbinom2(link = "log"), data = lobsters_per_pot
+))
 ```
 
 We explicitly choose median observed depth and a 24-hour soak. The year

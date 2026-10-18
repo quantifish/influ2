@@ -43,13 +43,18 @@ pot. The negative-binomial model accounts for extra-Poisson variation;
 month is a random intercept. Soak time is an ordinary predictor here,
 not an exposure offset or a likelihood weight.
 
+The documentation-only `example_model()` helper can reuse the identical
+starting fit from another article. It does not cache or bypass the
+search’s distinct model refits. Use the enclosed native call directly in
+your own code.
+
 ``` r
 
 data(lobsters_per_pot)
-lobster_model <- glmmTMB::glmmTMB(
+lobster_model <- example_model(lobsters_per_pot, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
-  data = lobsters_per_pot, family = glmmTMB::nbinom2()
-)
+  data = lobsters_per_pot, family = glmmTMB::nbinom2(link = "log")
+))
 ```
 
 ### Inspect the plan before fitting

@@ -216,13 +216,20 @@ A Poisson GLM provides a transparent starting point. This is an example
 model, not a recommendation that Poisson variation is adequate for these
 data.
 
+`example_model(data, fit)` is a documentation-only helper, loaded in the
+setup chunk. It fits the native model on first use, then reuses that
+exact fit when another article requests the same data, specification,
+and software versions. The cache is temporary; no new fitted models are
+distributed with the package. In your own analysis, run the native
+fitting call inside the wrapper directly.
+
 ``` r
 
-lobster_glm <- glm(
+lobster_glm <- example_model(lobsters_per_pot, glm(
   lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
   family = poisson(link = "log"),
   data = lobsters_per_pot
-)
+))
 
 glm_diagnostic <- influ(lobster_glm, focus = "year")
 glm_diagnostic
@@ -1085,11 +1092,11 @@ the full model’s estimate. This example requires the suggested package
 
 ``` r
 
-lobster_nb <- MASS::glm.nb(
+lobster_nb <- example_model(lobsters_per_pot, MASS::glm.nb(
   lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
   link = log,
   data = lobsters_per_pot
-)
+))
 
 lobster_steps <- influ_steps(
   lobster_nb,

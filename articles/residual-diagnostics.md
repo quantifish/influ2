@@ -54,6 +54,11 @@ that omits depth and soak time, a fuller negative-binomial model, and a
 Poisson model with the same full mean formula. All use exactly the same
 observations.
 
+`example_model()` is a documentation-only helper for reusing identical
+native fits across articles; its enclosed fitting call can be used
+directly in an analysis. It does not reuse residual simulations or
+change their conditioning.
+
 ``` r
 
 data(lobsters_per_pot)
@@ -62,14 +67,15 @@ lobster_reduced <- MASS::glm.nb(
   lobsters ~ year + month,
   data = lobsters_per_pot
 )
-lobster_nb <- MASS::glm.nb(
+lobster_nb <- example_model(lobsters_per_pot, MASS::glm.nb(
   lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  link = log,
   data = lobsters_per_pot
-)
-lobster_poisson <- glm(
-  formula(lobster_nb), family = poisson(link = "log"),
-  data = lobsters_per_pot
-)
+))
+lobster_poisson <- example_model(lobsters_per_pot, glm(
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  family = poisson(link = "log"), data = lobsters_per_pot
+))
 ```
 
 `MASS` is optional. The executed model examples are skipped if it is not
@@ -138,10 +144,10 @@ simulated lobster dataset.
 ``` r
 
 data(lobsters_per_pot)
-lobster_nb_mixed <- glmmTMB::glmmTMB(
+lobster_nb_mixed <- example_model(lobsters_per_pot, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
   family = glmmTMB::nbinom2(link = "log"), data = lobsters_per_pot
-)
+))
 lobster_poisson_mixed <- glmmTMB::glmmTMB(
   formula(lobster_nb_mixed),
   family = poisson(link = "log"), data = lobsters_per_pot

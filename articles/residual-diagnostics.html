@@ -180,6 +180,10 @@ negative-binomial distribution. We fit a reduced negative-binomial model
 that omits depth and soak time, a fuller negative-binomial model, and a
 Poisson model with the same full mean formula. All use exactly the same
 observations.</p>
+<p><code>example_model()</code> is a documentation-only helper for
+reusing identical native fits across articles; its enclosed fitting call
+can be used directly in an analysis. It does not reuse residual
+simulations or change their conditioning.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">)</span></span>
 <span></span>
@@ -187,14 +191,15 @@ observations.</p>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">lobster_nb</span> <span class="op">&lt;-</span> <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">glm.nb</a></span><span class="op">(</span></span>
+<span><span class="va">lobster_nb</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">glm.nb</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  link <span class="op">=</span> <span class="va">log</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">lobster_poisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></span><span class="op">(</span><span class="va">lobster_nb</span><span class="op">)</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">lobster_poisson</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
+<span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><code>MASS</code> is optional. The executed model examples are
 skipped if it is not installed. Nothing in this article fits an MCMC
 model.</p>
@@ -261,10 +266,10 @@ and Poisson candidates use the same mean structure and the original,
 unchanged simulated lobster dataset.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">)</span></span>
-<span><span class="va">lobster_nb_mixed</span> <span class="op">&lt;-</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
+<span><span class="va">lobster_nb_mixed</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">month</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/nbinom2.html" class="external-link">nbinom2</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
-<span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">lobster_poisson_mixed</span> <span class="op">&lt;-</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a></span><span class="op">(</span><span class="va">lobster_nb_mixed</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>

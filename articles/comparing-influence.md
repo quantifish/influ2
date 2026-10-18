@@ -19,6 +19,11 @@ observations from 2007 onwards. We also omit 2012 from the second run to
 demonstrate an internal gap. Removing a year is only a display example,
 not a recommendation for model selection.
 
+The documentation helper `example_model()` reuses only the full-series
+fit shared with other articles. The recent-period model is fitted
+separately. For your own analysis, the native fitting call can be used
+without the wrapper.
+
 ``` r
 
 data(lobsters_per_pot)
@@ -27,10 +32,10 @@ year_number <- as.integer(as.character(full_data$year))
 recent_data <- droplevels(full_data[
   year_number >= 2007 & year_number != 2012, ])
 
-full_model <- glmmTMB::glmmTMB(
+full_model <- example_model(full_data, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
-  family = glmmTMB::nbinom2(), data = full_data
-)
+  family = glmmTMB::nbinom2(link = "log"), data = full_data
+))
 recent_model <- glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
   family = glmmTMB::nbinom2(), data = recent_data

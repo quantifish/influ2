@@ -272,12 +272,18 @@ Observed depth and soak-time distributions by year.
 <p>A Poisson GLM provides a transparent starting point. This is an
 example model, not a recommendation that Poisson variation is adequate
 for these data.</p>
+<p><code>example_model(data, fit)</code> is a documentation-only helper,
+loaded in the setup chunk. It fits the native model on first use, then
+reuses that exact fit when another article requests the same data,
+specification, and software versions. The cache is temporary; no new
+fitted models are distributed with the package. In your own analysis,
+run the native fitting call inside the wrapper directly.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lobster_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">lobster_glm</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
-<span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">glm_diagnostic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">lobster_glm</span>, focus <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span>
 <span><span class="va">glm_diagnostic</span></span>
@@ -1023,11 +1029,11 @@ A reduced model can absorb omitted structure into its dispersion, so
 <code>theta</code> is not held at the full model’s estimate. This
 example requires the suggested package <code>MASS</code>.</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lobster_nb</span> <span class="op">&lt;-</span> <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">glm.nb</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">lobster_nb</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu">MASS</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/MASS/man/glm.nb.html" class="external-link">glm.nb</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  link <span class="op">=</span> <span class="va">log</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
-<span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">lobster_steps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ_steps.html">influ_steps</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobster_nb</span>,</span>

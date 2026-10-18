@@ -101,15 +101,19 @@ testing.</p>
 <div class="section level2">
 <h2 id="fit-the-common-model">Fit the common model<a class="anchor" aria-label="anchor" href="#fit-the-common-model"></a>
 </h2>
+<p>The documentation-only <code>example_model()</code> wrapper reuses
+the identical native GLM from the main article; its enclosed
+<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> call is sufficient in your own analysis. The legacy
+comparison calculations still run in full below.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/quantifish/influ2" class="external-link">influ2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">bentley_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
+<span><span class="va">bentley_glm</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">month</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">poisson</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span></span>
-<span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">new_diagnostic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/influ.html">influ</a></span><span class="op">(</span><span class="va">bentley_glm</span>, focus <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
 <p>The shared Poisson model provides a transparent test of agreement
 between implementations. The simulated catches have negative-binomial

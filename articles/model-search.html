@@ -126,12 +126,16 @@ pot, so its expected response is lobsters per pot. The negative-binomial
 model accounts for extra-Poisson variation; month is a random intercept.
 Soak time is an ordinary predictor here, not an exposure offset or a
 likelihood weight.</p>
+<p>The documentation-only <code>example_model()</code> helper can reuse
+the identical starting fit from another article. It does not cache or
+bypass the search’s distinct model refits. Use the enclosed native call
+directly in your own code.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">lobsters_per_pot</span><span class="op">)</span></span>
-<span><span class="va">lobster_model</span> <span class="op">&lt;-</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
+<span><span class="va">lobster_model</span> <span class="op">&lt;-</span> <span class="fu">example_model</span><span class="op">(</span><span class="va">lobsters_per_pot</span>, <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/glmmTMB.html" class="external-link">glmmTMB</a></span><span class="op">(</span></span>
 <span>  <span class="va">lobsters</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">depth</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">soak</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">month</span><span class="op">)</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span>, family <span class="op">=</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/nbinom2.html" class="external-link">nbinom2</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>  data <span class="op">=</span> <span class="va">lobsters_per_pot</span>, family <span class="op">=</span> <span class="fu">glmmTMB</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/glmmTMB/man/nbinom2.html" class="external-link">nbinom2</a></span><span class="op">(</span>link <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="inspect-the-plan-before-fitting">Inspect the plan before fitting<a class="anchor" aria-label="anchor" href="#inspect-the-plan-before-fitting"></a>
 </h3>

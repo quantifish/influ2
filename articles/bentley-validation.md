@@ -18,16 +18,22 @@ testing.
 
 ## Fit the common model
 
+The documentation-only `example_model()` wrapper reuses the identical
+native GLM from the main article; its enclosed
+[`glm()`](https://rdrr.io/r/stats/glm.html) call is sufficient in your
+own analysis. The legacy comparison calculations still run in full
+below.
+
 ``` r
 
 library(influ2)
 data(lobsters_per_pot)
 
-bentley_glm <- glm(
+bentley_glm <- example_model(lobsters_per_pot, glm(
   lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
   family = poisson(link = "log"),
   data = lobsters_per_pot
-)
+))
 new_diagnostic <- influ(bentley_glm, focus = "year")
 ```
 
