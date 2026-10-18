@@ -19,3 +19,5 @@
 ^codecov\.yml$
 ^Rplots\.pdf$
 ^\.posit/assistant$
+^vignettes/[^/]+_files($|/)
+^vignettes/libs($|/)

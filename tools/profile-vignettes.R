@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
-# Developer-only timing of fully executed articles; no cached model results.
+# Developer-only timing of fully executed articles. Only identical native
+# example fits may be reused; calculations and plotted examples still execute.
 args <- commandArgs(trailingOnly = TRUE)
 root <- normalizePath(if (length(args)) args[1L] else ".", mustWork = TRUE)
 destination <- if (length(args) > 1L) args[2L] else tempfile("influ2-vignette-profile-")

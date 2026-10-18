@@ -2,16 +2,21 @@
 title: "Model comparison"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
 bibliography: references.bib
 link-citations: true
 vignette: >
   %\VignetteIndexEntry{Model comparison}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("article-resources.R", local = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
 library(influ2)
 library(ggplot2)

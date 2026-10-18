@@ -2,6 +2,10 @@
 title: "Bentley validation"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
     toc_depth: 3
 bibliography: references.bib
@@ -9,10 +13,12 @@ link-citations: true
 vignette: >
   %\VignetteIndexEntry{Bentley validation}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("example-models.R", local = TRUE)
+source("article-resources.R", local = TRUE)
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -41,15 +47,19 @@ regression testing.
 
 ## Fit the common model
 
+The documentation-only `example_model()` wrapper reuses the identical native
+GLM from the main article; its enclosed `glm()` call is sufficient in your own
+analysis. The legacy comparison calculations still run in full below.
+
 ```{r common-model}
 library(influ2)
 data(lobsters_per_pot)
 
-bentley_glm <- glm(
+bentley_glm <- example_model(lobsters_per_pot, glm(
   lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
   family = poisson(link = "log"),
   data = lobsters_per_pot
-)
+))
 new_diagnostic <- influ(bentley_glm, focus = "year")
 ```
 

@@ -2,6 +2,10 @@
 title: "Residual validation"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
     toc_depth: 3
 bibliography: references.bib
@@ -9,10 +13,11 @@ link-citations: true
 vignette: >
   %\VignetteIndexEntry{Residual validation}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("article-resources.R", local = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 10,
   fig.height = 6, message = FALSE, warning = FALSE, dev.args = list(bg = "white"))
 library(influ2)

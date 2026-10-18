@@ -95,8 +95,12 @@ search_vignette_chunk <- function(label) {
 }
 
 test_that("the worked lobster search vignette evaluates the real shared dataset and index", {
+  # The complete worked search still runs in its article and in full CI.
+  # Compact native/buildmer parity tests above always run on CRAN.
+  skip_on_cran()
   skip_if_not_installed("glmmTMB")
   e <- new.env(parent = environment())
+  source_article_models(e)
   utils::data("lobsters_per_pot", package = "influ2", envir = e)
   for (label in c("search-lobster-model", "search-lobster-preflight",
       "search-lobster-run", "search-lobster-index", "search-lobster-random")) {

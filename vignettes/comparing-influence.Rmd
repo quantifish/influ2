@@ -2,14 +2,20 @@
 title: "Comparing influence and indices"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
 vignette: >
   %\VignetteIndexEntry{Comparing influence and indices}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("example-models.R", local = TRUE)
+source("article-resources.R", local = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 9,
   fig.height = 6, message = FALSE)
 library(influ2)
@@ -33,6 +39,10 @@ This article uses the same simulated `lobsters_per_pot` observations as the
 omit 2012 from the second run to demonstrate an internal gap. Removing a year
 is only a display example, not a recommendation for model selection.
 
+The documentation helper `example_model()` reuses only the full-series fit
+shared with other articles. The recent-period model is fitted separately.
+For your own analysis, the native fitting call can be used without the wrapper.
+
 ```{r comparison-lobster-models, eval=has_glmmTMB}
 data(lobsters_per_pot)
 full_data <- lobsters_per_pot
@@ -40,10 +50,10 @@ year_number <- as.integer(as.character(full_data$year))
 recent_data <- droplevels(full_data[
   year_number >= 2007 & year_number != 2012, ])
 
-full_model <- glmmTMB::glmmTMB(
+full_model <- example_model(full_data, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
-  family = glmmTMB::nbinom2(), data = full_data
-)
+  family = glmmTMB::nbinom2(link = "log"), data = full_data
+))
 recent_model <- glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
   family = glmmTMB::nbinom2(), data = recent_data

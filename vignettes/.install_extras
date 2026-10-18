@@ -1,0 +1,5 @@
+^vignettes/[^/]+_files$
+^vignettes/libs$
+^vignettes/article-resources[.]R$
+^vignettes/example-models[.]R$
+^vignettes/references[.]bib$

@@ -5,6 +5,37 @@ make before release, rather than evidence that a check has passed. Keep the
 dated results for the final source archive in `cran-comments.md`. Submission
 is a separate, later step authorised by the maintainer.
 
+## Documentation and checking efficiency: 18 October 2026
+
+All twelve worked articles remain executable and retain their tables, figures,
+and complete sources. Installed documentation is 4,795,812 bytes, down 27.1%
+from 6,581,848 bytes, through shared portable dependencies and removal of duplicate
+generated assets/extracted scripts, not lower-resolution figures or missing
+examples. The exact checked archive and validation details are recorded in
+`cran-comments.md` and retained under
+`data-raw/release-candidates/2026-10-18-cran-efficiency/verified/`.
+
+Documentation-only reuse reduces nine identical native fitting calls to three
+distinct stored fits across the relevant articles. Cache identity includes exact
+data, formula, settings, R, and native package builds. Formula environments stay
+small, native fitted-call additions are preserved, and glmmTMB pointers are
+restored through its public interface without optimisation. All distinct models,
+including changed year ranges and spatial examples, still fit separately.
+
+Only three redundant, full-size article integration tests skip on CRAN; their
+complete examples rebuild there, compact numerical contracts remain, and both
+platform CI and coverage explicitly retain the exhaustive tests. No numerical
+tolerance, frozen result, or runtime implementation changes. The measured
+individual cached fitting chunks are faster, but the cold whole-article timing
+was essentially unchanged in noisy concurrent local runs; do not claim a
+controlled whole-build speed-up from those measurements.
+
+The final manual-enabled CRAN-style archive check passes with zero errors,
+warnings, or notes. Both sdmTMB source suites, isolated minimal installation,
+full website build, and caption/lightbox checks pass. Scientific agreement,
+remaining legacy-function decisions, final-candidate sign-off, and submission
+remain separate; this increment does not supply Nicholas's scientific sign-off.
+
 ## Scientific interpretation audit on 17 October 2026
 
 The [current scientific review](scientific-release-review.md) checks source

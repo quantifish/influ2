@@ -1,5 +1,13 @@
 # influ2 1.1.0
 
+* Kept all twelve fully executed worked articles while reducing documentation
+  duplication: installed HTML shares portable figure and stylesheet assets,
+  and retains complete R Markdown source instead of a second extracted R
+  script. Identical ordinary lobster fits can be reused from a temporary,
+  version- and data-keyed documentation cache; distinct models are not pooled.
+  Three full-size article integration tests remain in platform CI and coverage,
+  while CRAN keeps their compact numerical contracts and complete articles.
+
 * Fixed three regressions in per-term diagnostics: fitted polynomial matrices
   remain valid after subsetting without bypassing changed-data checks;
   numeric focus variables used as random groups retain every fitted grouping

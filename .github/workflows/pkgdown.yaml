@@ -36,6 +36,13 @@ jobs:
           use-public-rspm: true
           extra-repositories: https://vast-lib.r-universe.dev
 
+      - name: Share identical temporary example fits
+        shell: Rscript {0}
+        run: |
+          cache <- file.path(Sys.getenv("RUNNER_TEMP"), "influ2-example-models")
+          cat("INFLU2_EXAMPLE_CACHE=", normalizePath(cache, winslash = "/", mustWork = FALSE),
+              "\n", sep = "", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::.

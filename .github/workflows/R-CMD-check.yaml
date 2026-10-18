@@ -24,6 +24,8 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # Keep exhaustive article integration in CI; CRAN runs compact contracts.
+      NOT_CRAN: true
       # Keep numerical-library threading scoped to this check process.
       OPENBLAS_NUM_THREADS: 1
       OMP_NUM_THREADS: 1
@@ -41,6 +43,13 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: true
           extra-repositories: https://vast-lib.r-universe.dev
+
+      - name: Share identical temporary example fits
+        shell: Rscript {0}
+        run: |
+          cache <- file.path(Sys.getenv("RUNNER_TEMP"), "influ2-example-models")
+          cat("INFLU2_EXAMPLE_CACHE=", normalizePath(cache, winslash = "/", mustWork = FALSE),
+              "\n", sep = "", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
 
       - uses: r-lib/actions/setup-tinytex@v2
 

@@ -16,8 +16,12 @@ comparison_article_chunk <- function(label) {
 }
 
 test_that("the comparison article uses real unequal-period fits without inventing gap estimates", {
+  # Full-size article integration is also executed by each vignette rebuild.
+  # Keep it in both platform CI jobs and coverage, not in routine CRAN tests.
+  skip_on_cran()
   skip_if_not_installed("glmmTMB")
   e <- new.env(parent = environment())
+  source_article_models(e)
   utils::data("lobsters_per_pot", package = "influ2", envir = e)
   for (label in c("comparison-lobster-models", "comparison-lobster-diagnostics",
       "comparison-cpue-indices", "comparison-index-ratio", "comparison-nominal-ratio")) {

@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | `R/`, `man/` | Active implementation and generated R help | Yes |
 | `tests/testthat/` | Numerical, guard, backend, and visual regression tests | Yes |
-| `vignettes/` | Current articles, references, and shared rendering assets | Yes |
+| `vignettes/` | Complete executable articles, references, and rendering/model-reuse helpers | Yes |
 | `data/` | Simulated lobster example | Yes |
 | `data-raw/` | Recipes and local material for preparing data/fixtures | No |
 | `inst/extdata/` | Compact numerical and fitted-model fixtures | Yes |
@@ -39,13 +39,60 @@ until the maintainer completes their review.
 For per-chunk article timings, run
 `Rscript --vanilla tools/profile-vignettes.R . /absolute/temporary/output`.
 Optional trailing article names restrict the run. Every existing evaluated
-example is executed: this tool does not use cached fits, reduce simulations,
-or skip slow chunks. The output contains rendered HTML, `articles.csv`, and
+example is executed, without reducing data or simulations or skipping slow
+chunks. Identical ordinary native fits can be reused through the
+documentation-only `example_model()` helper; changed data, formulas, families,
+controls, or software builds produce different cache keys. The output contains
+rendered HTML, `articles.csv`, and
 `chunks.csv`. For a single-thread comparison, start the R process with
 `OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 BLIS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1`. These process-level controls
 are also used in CI to avoid excess numerical-library threading; the installed
 package does not change a user's thread settings.
+
+### Documentation size and exact-fit reuse
+
+All twelve articles remain complete executable R Markdown vignettes, including
+every worked model, calculation, table, figure, and caption. They use knitr's
+standard `rmarkdown_notangle` engine to avoid shipping a second, extracted R
+script containing the same code. Installed HTML refers to portable external
+PNG figures and shared CSS/JavaScript in `inst/doc/`, rather than base64 copies
+embedded in every HTML file. Standard bundled highlight.js provides coloured
+code without repeating Pandoc's token markup throughout every article; its
+JavaScript and stylesheet are installed once and work without the Internet.
+Code remains readable if JavaScript is disabled. The bibliography and helpers
+accompany the source.
+`.install_extras` preserves directory structure; narrow `.Rbuildignore` rules
+remove only duplicate generated assets from the source `vignettes/` directory,
+after R has installed their copies under `inst/doc/`. Website styling and
+lightbox handling remain pkgdown's responsibility.
+
+`example_model(data, fit)` wraps a displayed native fitting call, not a new
+public influ2 model interface. It evaluates the call in a small, private
+data-only environment and keys its temporary cache by the actual call,
+complete data and factor levels, relevant options, R, and backend builds.
+Only exactly matching GLM, MASS negative-binomial, and glmmTMB fits are reused;
+different year ranges, polynomial orders, families, and spatial specifications
+remain separate. Cached glmmTMB objectives are reconstructed by the native
+`up2date()` method without optimisation, with caller RNG and thread settings
+preserved. Cache integrity is checked. No new native fits are shipped, and no
+residual simulation, index calculation, model search, or plotted example is
+silently cached. The native fitting call inside the wrapper can be run directly
+in a user's own analysis.
+
+The default cache is scoped to R's temporary directory. The existing CI jobs
+set `INFLU2_EXAMPLE_CACHE` to a runner-temporary directory so separate article
+and check processes can reuse the same verified fits. Use a new empty temporary
+directory for cold timing, retain it for warm timing, or call the helper with
+`cache_dir = NULL` for an uncached numerical comparison. Never commit this cache.
+
+Only three full-size article integration tests use `skip_on_cran()`: the
+5,049-record area-CPUE, unequal-period CDI, and worked model-search reruns.
+Their articles still execute during build and check, and all independent
+compact engine, backend, family, covariance, and saved-result regressions
+remain active on CRAN. Both platform CI jobs and coverage explicitly set
+`NOT_CRAN=true`, retaining the exhaustive integration tests too. No test
+tolerances or frozen validation values are changed.
 
 The two release-platform checks request PDF-manual and HTML-help validation.
 They explicitly use `--as-cran --timings`, without `--no-manual`; TinyTeX is

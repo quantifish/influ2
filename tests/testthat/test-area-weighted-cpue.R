@@ -14,6 +14,9 @@ area_cpue_chunk <- function(lines, label) {
 }
 
 test_that("the worked CPUE area example preserves units and joint native uncertainty", {
+  # This reruns the full 5,049-record article. Independent compact area,
+  # covariance, and native prediction regression tests remain CRAN tests.
+  skip_on_cran()
   skip_if_not_installed("glmmTMB")
   skip_if_not_installed("knitr")
   lines <- area_cpue_article()

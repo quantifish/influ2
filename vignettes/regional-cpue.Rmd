@@ -2,14 +2,19 @@
 title: "Regional CPUE indices"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
 vignette: >
   %\VignetteIndexEntry{Regional CPUE indices}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("article-resources.R", local = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 8,
   fig.height = 5, message = FALSE, warning = FALSE)
 has_glmmTMB <- requireNamespace("glmmTMB", quietly = TRUE)

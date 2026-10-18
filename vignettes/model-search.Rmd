@@ -2,14 +2,20 @@
 title: "Model search"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
 vignette: >
   %\VignetteIndexEntry{Model search}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("example-models.R", local = TRUE)
+source("article-resources.R", local = TRUE)
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 8,
   fig.height = 5, message = FALSE)
 library(influ2)
@@ -51,12 +57,16 @@ expected response is lobsters per pot. The negative-binomial model accounts
 for extra-Poisson variation; month is a random intercept. Soak time is an
 ordinary predictor here, not an exposure offset or a likelihood weight.
 
+The documentation-only `example_model()` helper can reuse the identical
+starting fit from another article. It does not cache or bypass the search's
+distinct model refits. Use the enclosed native call directly in your own code.
+
 ```{r search-lobster-model, eval=has_glmmTMB}
 data(lobsters_per_pot)
-lobster_model <- glmmTMB::glmmTMB(
+lobster_model <- example_model(lobsters_per_pot, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
-  data = lobsters_per_pot, family = glmmTMB::nbinom2()
-)
+  data = lobsters_per_pot, family = glmmTMB::nbinom2(link = "log")
+))
 ```
 
 ### Inspect the plan before fitting

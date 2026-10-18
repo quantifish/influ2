@@ -2,6 +2,10 @@
 title: "Residual diagnostics"
 output:
   rmarkdown::html_vignette:
+    self_contained: false
+    highlight: default
+    css: []
+    lib_dir: libs
     toc: true
     toc_depth: 3
 bibliography: references.bib
@@ -9,10 +13,12 @@ link-citations: true
 vignette: >
   %\VignetteIndexEntry{Residual diagnostics}
   %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
 ---
 
 ```{r setup, include=FALSE}
+source("example-models.R", local = TRUE)
+source("article-resources.R", local = TRUE)
 has_mgcv <- requireNamespace("mgcv", quietly = TRUE)
 knitr::opts_chunk$set(
   collapse = TRUE, comment = "#>", fig.width = 8, fig.height = 5,
@@ -75,6 +81,10 @@ distribution. We fit a reduced negative-binomial model that omits depth and
 soak time, a fuller negative-binomial model, and a Poisson model with the same
 full mean formula. All use exactly the same observations.
 
+`example_model()` is a documentation-only helper for reusing identical native
+fits across articles; its enclosed fitting call can be used directly in an
+analysis. It does not reuse residual simulations or change their conditioning.
+
 ```{r residual-models, eval=has_MASS}
 data(lobsters_per_pot)
 
@@ -82,14 +92,15 @@ lobster_reduced <- MASS::glm.nb(
   lobsters ~ year + month,
   data = lobsters_per_pot
 )
-lobster_nb <- MASS::glm.nb(
+lobster_nb <- example_model(lobsters_per_pot, MASS::glm.nb(
   lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  link = log,
   data = lobsters_per_pot
-)
-lobster_poisson <- glm(
-  formula(lobster_nb), family = poisson(link = "log"),
-  data = lobsters_per_pot
-)
+))
+lobster_poisson <- example_model(lobsters_per_pot, glm(
+  lobsters ~ year + month + poly(depth, 3) + poly(soak, 3),
+  family = poisson(link = "log"), data = lobsters_per_pot
+))
 ```
 
 `MASS` is optional. The executed model examples are skipped if it is not
@@ -147,10 +158,10 @@ the original, unchanged simulated lobster dataset.
 
 ```{r residual-overview-models, eval=has_glmmTMB}
 data(lobsters_per_pot)
-lobster_nb_mixed <- glmmTMB::glmmTMB(
+lobster_nb_mixed <- example_model(lobsters_per_pot, glmmTMB::glmmTMB(
   lobsters ~ year + poly(depth, 3) + poly(soak, 3) + (1 | month),
   family = glmmTMB::nbinom2(link = "log"), data = lobsters_per_pot
-)
+))
 lobster_poisson_mixed <- glmmTMB::glmmTMB(
   formula(lobster_nb_mixed),
   family = poisson(link = "log"), data = lobsters_per_pot

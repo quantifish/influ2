@@ -1,3 +1,40 @@
+## Smaller documentation and repeated example fits: 18 October 2026
+
+All twelve worked articles still execute, with their 108 installed PNG figures,
+55 rendered tables, and complete R Markdown sources retained. Shared portable
+CSS/highlighting and shorter figure paths reduce installed documentation from
+6,581,848 to 4,795,812 bytes (27.1%); the source archive is 7,010,400 bytes.
+Identical ordinary lobster fits reuse a temporary, exact-data/specification/
+software-build cache. Distinct formulas, observations, and settings never share
+a fit. No fitted models are shipped, and native update/refit calls are preserved.
+
+The final Mac arm64 R 4.6.1 `R CMD check --as-cran --timings` is Status: OK,
+with zero errors, warnings, or notes. All twelve articles rebuild, and PDF/HTML
+manuals pass. Incoming-network checks are explicitly disabled. Archive tests
+pass 13,580 assertions with 15 expected CRAN/source-only skips. Three newly
+CRAN-skipped tests are full-size duplicate article integrations, not the compact
+numerical contracts; CI and coverage retain them with `NOT_CRAN=true`.
+
+The full source suite passes 13,742 assertions under sdmTMB 1.2.0, with zero
+failures, warnings, or skips, and 13,701 under 1.1.0, with only its expected
+1.2.0-only regression skipped. The final two output-directory asset assertions
+were added afterwards and pass in the focused 123-assertion resource suite and
+the archive check. The documentation-cache suite passes 66 assertions, including
+fresh-process native refit/prediction parity. Minimal installation reproduces
+24 saved compact results and passes 31 missing-package guards. The complete
+pkgdown build and twelve-page/127-image caption/lightbox checks pass against an
+isolated installation of the exact archive. The normal R library is unchanged.
+
+Archive: `data-raw/release-candidates/2026-10-18-cran-efficiency/verified/influ2_1.1.0.tar.gz`.
+SHA256: `0b38230ecb4dc6631c7a45a7c85e87e6567c125d31ff6ca6e262f9d42db5d68e`.
+All 296 comparable shipped source files and normalised DESCRIPTION fields match
+the reviewed checkout. Every article was fully executed before the final
+resource-prefix/test-only fix; the final metadata rebuild reused those outputs,
+and the final archive check independently rebuilt every article from its source.
+No runtime R code, frozen validation result, scientific default, or model data
+changed. GitHub publication is recorded separately after the push. No CRAN or
+win-builder submission is made.
+
 ## Overlaid CDI and separate index ratios: 15 October 2026
 
 The approved increment adds one overlaid CDI display for named model runs and

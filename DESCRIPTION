@@ -44,6 +44,7 @@ Suggests:
     DHARMa (>= 0.4.7),
     fmesher,
     glmmTMB,
+    htmltools,
     knitr,
     loo,
     lme4 (>= 1.1-36),
